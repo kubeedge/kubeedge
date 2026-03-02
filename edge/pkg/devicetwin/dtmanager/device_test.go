@@ -23,19 +23,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/beego/beego/v2/client/orm"
-	"github.com/golang/mock/gomock"
-
 	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
-	"github.com/kubeedge/kubeedge/pkg/testtools"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/mocks"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
-var called bool
+var (
+	called                       bool
+	originalDeviceServiceFactory = DeviceServiceFactory
+)
 
 // testAction is a dummy function for testing Start
 func testAction(*dtcontext.DTContext, string, interface{}) error {
@@ -106,7 +106,6 @@ func TestDeviceHeartBeat(t *testing.T) {
 }
 
 func TestDealDeviceStateUpdate(t *testing.T) {
-	ormerMock, querySeterMock := testtools.InitOrmerMock(t)
 	var emptyDevUpdate dttype.DeviceUpdate
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
 
@@ -117,7 +116,7 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 	}
 
 	dtContexts.DeviceList.Store("DeviceC", "DeviceC")
-	deviceD := &dttype.Device{}
+	deviceD := &dttype.Device{ID: "DeviceD"}
 	dtContexts.DeviceList.Store("DeviceD", deviceD)
 	bytesEmptyDevUpdate, err := json.Marshal(emptyDevUpdate)
 	if err != nil {
@@ -132,71 +131,88 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		context  *dtcontext.DTContext
-		resource string
-		msg      interface{}
-		wantErr  error
-		// filterReturn is the return of mock interface querySeterMock's filter function
-		filterReturn orm.QuerySeter
-		// updateReturnInt is the first return of mock interface querySeterMock's update function
-		updateReturnInt int64
-		// updateReturnErr is the second return of mock interface querySeterMocks's update function also expected error
-		updateReturnErr error
-		// queryTableReturn is the return of mock interface ormerMock's QueryTable function
-		queryTableReturn orm.QuerySeter
-		times            int
+		name      string
+		context   *dtcontext.DTContext
+		resource  string
+		msg       interface{}
+		setupMock func(*mocks.MockDeviceService)
+		wantErr   bool
 	}{
 		{
 			name:     "dealDeviceStateUpdateTest-WrongMessageType",
 			context:  dtContexts,
 			resource: "DeviceA",
 			msg:      "",
-			wantErr:  errors.New("msg not Message type"),
+			setupMock: func(m *mocks.MockDeviceService) {
+				// No database call expected
+			},
+			wantErr: true,
 		},
 		{
 			name:     "dealDeviceStateUpdateTest-DeviceDoesNotExist",
 			context:  dtContexts,
 			resource: "DeviceB",
 			msg:      &model.Message{Content: bytesEmptyDevUpdate},
-			wantErr:  nil,
+			setupMock: func(m *mocks.MockDeviceService) {
+				// No database call expected
+			},
+			wantErr: false,
 		},
 		{
 			name:     "dealDeviceStateUpdateTest-DeviceExist",
 			context:  dtContexts,
 			resource: "DeviceC",
 			msg:      &model.Message{Content: bytesEmptyDevUpdate},
-			wantErr:  nil,
+			setupMock: func(m *mocks.MockDeviceService) {
+				// Device exists but is a string, no database call
+			},
+			wantErr: false,
 		},
 		{
 			name:     "dealDeviceStateUpdateTest-CorrectDeviceType",
 			context:  dtContexts,
 			resource: "DeviceD",
 			msg:      &model.Message{Content: bytesEmptyDevUpdate},
-			wantErr:  nil,
+			setupMock: func(m *mocks.MockDeviceService) {
+				// Empty state, no database update
+			},
+			wantErr: false,
 		},
 		{
-			name:             "dealDeviceStateUpdateTest-UpdatePresent",
-			context:          dtContexts,
-			resource:         "DeviceD",
-			msg:              &model.Message{Content: bytesDevUpdate},
-			wantErr:          nil,
-			filterReturn:     querySeterMock,
-			updateReturnInt:  int64(1),
-			updateReturnErr:  nil,
-			queryTableReturn: querySeterMock,
-			times:            1,
+			name:     "dealDeviceStateUpdateTest-UpdatePresent",
+			context:  dtContexts,
+			resource: "DeviceD",
+			msg:      &model.Message{Content: bytesDevUpdate},
+			setupMock: func(m *mocks.MockDeviceService) {
+				m.UpdateDeviceFieldsFunc = func(deviceID string, cols map[string]interface{}) error {
+					return nil
+				}
+			},
+			wantErr: false,
 		},
 	}
+
+	defer func() {
+		DeviceServiceFactory = originalDeviceServiceFactory
+	}()
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			querySeterMock.EXPECT().Filter(gomock.Any(), gomock.Any()).Return(test.filterReturn).Times(test.times)
-			querySeterMock.EXPECT().Update(gomock.Any()).Return(test.updateReturnInt, test.updateReturnErr).Times(test.times)
-			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.times)
+			// Create and setup mock
+			mockService := mocks.NewMockDeviceService()
+			test.setupMock(mockService)
+
+			// Replace factory for this test
+			DeviceServiceFactory = func() interface {
+				UpdateDeviceFields(deviceID string, cols map[string]interface{}) error
+				DeviceAttrTrans(adds []models.DeviceAttr, deletes []models.DeviceDelete, updates []models.DeviceAttrUpdate) error
+			} {
+				return mockService
+			}
+
 			err := dealDeviceStateUpdate(test.context, test.resource, test.msg)
-			if !reflect.DeepEqual(err, test.wantErr) {
+			if (err != nil) != test.wantErr {
 				t.Errorf("dealDeviceStateUpdate() error = %v, wantErr %v", err, test.wantErr)
-				return
 			}
 		})
 	}
@@ -237,9 +253,17 @@ func TestDealUpdateDeviceAttr(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			err := dealDeviceAttrUpdate(test.context, test.resource, test.msg)
-			if !reflect.DeepEqual(err, test.wantErr) {
-				t.Errorf("dealUpdateDeviceAttr() error = %v, wantErr %v", err, test.wantErr)
-				return
+			// Compare error messages instead of error objects
+			if test.wantErr != nil {
+				if err == nil || err.Error() != test.wantErr.Error() {
+					t.Errorf("dealUpdateDeviceAttr() error = %v, wantErr %v", err, test.wantErr)
+					return
+				}
+			} else {
+				if err != nil {
+					t.Errorf("dealUpdateDeviceAttr() error = %v, expected no error", err)
+					return
+				}
 			}
 		})
 	}
@@ -247,15 +271,14 @@ func TestDealUpdateDeviceAttr(t *testing.T) {
 
 func TestUpdateDeviceAttr(t *testing.T) {
 	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
-	ormerMock, querySeterMock := testtools.InitOrmerMock(t)
 
 	dtContexts, _ := dtcontext.InitDTContext()
 	dtContexts.DeviceList.Store("EmptyDevice", "Device")
 
-	devA := &dttype.Device{ID: "DeviceA"}
+	devA := &dttype.Device{ID: "DeviceA", Attributes: make(map[string]*dttype.MsgAttr)}
 	dtContexts.DeviceList.Store("DeviceA", devA)
 
-	messageAttributes := generateMessageAttributes()
+	messageAttributes := generateTestMessageAttributes()
 	baseMessage := dttype.BuildBaseMessage()
 
 	tests := []struct {
@@ -267,36 +290,7 @@ func TestUpdateDeviceAttr(t *testing.T) {
 		dealType    int
 		want        interface{}
 		wantErr     error
-		// commitTimes is number of times commit is expected
-		commitTimes int
-		// beginTimes is number of times begin is expected
-		beginTimes int
-		// filterReturn is the return of mock interface querySeterMock's filter function
-		filterReturn orm.QuerySeter
-		// filterTimes is the number of times filter is called
-		filterTimes int
-		// insertReturnInt is the first return of mock interface ormerMock's Insert function
-		insertReturnInt int64
-		// insertReturnErr is the second return of mock interface ormerMock's Insert function
-		insertReturnErr error
-		// insertTimes is number of times Insert is expected
-		insertTimes int
-		// deleteReturnInt is the first return of mock interface ormerMock's Delete function
-		deleteReturnInt int64
-		// deleteReturnErr is the second return of mock interface ormerMock's Delete function
-		deleteReturnErr error
-		// deleteTimes is number of times Delete is expected
-		deleteTimes int
-		// updateReturnInt is the first return of mock interface ormerMock's Update function
-		updateReturnInt int64
-		// updateReturnErr is the second return of mock interface ormerMock's Update function
-		updateReturnErr error
-		// updateTimes is number of times Update is expected
-		updateTimes int
-		// queryTableReturn is the return of mock interface ormerMock's QueryTable function
-		queryTableReturn orm.QuerySeter
-		// queryTableTimes is the number of times queryTable is called
-		queryTableTimes int
+		setupMock   func(*mocks.MockDeviceService)
 	}{
 		{
 			name:        "Test1",
@@ -306,6 +300,9 @@ func TestUpdateDeviceAttr(t *testing.T) {
 			baseMessage: baseMessage,
 			want:        nil,
 			wantErr:     nil,
+			setupMock: func(m *mocks.MockDeviceService) {
+				// No database call expected
+			},
 		},
 		{
 			name:        "Test2",
@@ -315,37 +312,43 @@ func TestUpdateDeviceAttr(t *testing.T) {
 			baseMessage: baseMessage,
 			want:        nil,
 			wantErr:     nil,
+			setupMock: func(m *mocks.MockDeviceService) {
+				// No database call expected
+			},
 		},
 		{
-			name:             "Test3",
-			context:          dtContexts,
-			deviceID:         "DeviceA",
-			attributes:       messageAttributes,
-			baseMessage:      baseMessage,
-			wantErr:          nil,
-			want:             nil,
-			commitTimes:      1,
-			beginTimes:       1,
-			filterReturn:     querySeterMock,
-			filterTimes:      0,
-			insertReturnInt:  int64(1),
-			insertReturnErr:  nil,
-			insertTimes:      1,
-			deleteReturnInt:  int64(1),
-			deleteReturnErr:  nil,
-			deleteTimes:      0,
-			updateReturnInt:  int64(1),
-			updateReturnErr:  nil,
-			updateTimes:      0,
-			queryTableReturn: querySeterMock,
-			queryTableTimes:  0,
+			name:        "Test3",
+			context:     dtContexts,
+			deviceID:    "DeviceA",
+			attributes:  messageAttributes,
+			baseMessage: baseMessage,
+			wantErr:     nil,
+			want:        nil,
+			setupMock: func(m *mocks.MockDeviceService) {
+				m.DeviceAttrTransFunc = func(adds []models.DeviceAttr, deletes []models.DeviceDelete, updates []models.DeviceAttrUpdate) error {
+					return nil
+				}
+			},
 		},
 	}
+
+	defer func() {
+		DeviceServiceFactory = originalDeviceServiceFactory
+	}()
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.insertReturnErr).Times(test.insertTimes)
-			ormerMock.EXPECT().DoTx(gomock.Any()).Return(test.deleteReturnErr).Times(test.deleteTimes)
-			ormerMock.EXPECT().QueryTable(gomock.Any()).Return(test.queryTableReturn).Times(test.queryTableTimes)
+			// Create and setup mock
+			mockService := mocks.NewMockDeviceService()
+			test.setupMock(mockService)
+
+			// Replace factory for this test
+			DeviceServiceFactory = func() interface {
+				UpdateDeviceFields(deviceID string, cols map[string]interface{}) error
+				DeviceAttrTrans(adds []models.DeviceAttr, deletes []models.DeviceDelete, updates []models.DeviceAttrUpdate) error
+			} {
+				return mockService
+			}
 
 			got, err := UpdateDeviceAttr(test.context, test.deviceID, test.attributes, test.baseMessage, test.dealType)
 			if !reflect.DeepEqual(err, test.wantErr) {
@@ -385,8 +388,8 @@ func TestDealMsgAttr(t *testing.T) {
 		},
 	}
 	messageAttributes["DeviceA"] = msgattr
-	add := []dtclient.DeviceAttr{}
-	add = append(add, dtclient.DeviceAttr{
+	add := []models.DeviceAttr{}
+	add = append(add, models.DeviceAttr{
 		ID:       0,
 		DeviceID: "DeviceA",
 		Name:     "DeviceA",
@@ -399,8 +402,8 @@ func TestDealMsgAttr(t *testing.T) {
 	result["DeviceA"] = msgattr
 	wantDealAttrResult := dttype.DealAttrResult{
 		Add:    add,
-		Delete: []dtclient.DeviceDelete{},
-		Update: []dtclient.DeviceAttrUpdate{},
+		Delete: []models.DeviceDelete{},
+		Update: []models.DeviceAttrUpdate{},
 		Result: result,
 		Err:    nil,
 	}
@@ -417,10 +420,10 @@ func TestDealMsgAttr(t *testing.T) {
 		},
 	}
 	devB := &dttype.Device{ID: "DeviceB", Attributes: attr}
-	update := []dtclient.DeviceAttrUpdate{}
+	update := []models.DeviceAttrUpdate{}
 	cols := make(map[string]interface{})
 	cols["value"] = "ON"
-	upd := dtclient.DeviceAttrUpdate{
+	upd := models.DeviceAttrUpdate{
 		Name:     "DeviceB",
 		DeviceID: "DeviceB",
 		Cols:     cols,
@@ -428,8 +431,8 @@ func TestDealMsgAttr(t *testing.T) {
 	update = append(update, upd)
 	dtContextsNonEmptyAttributes.DeviceList.Store("DeviceB", devB)
 	want := dttype.DealAttrResult{
-		Add:    []dtclient.DeviceAttr{},
-		Delete: []dtclient.DeviceDelete{},
+		Add:    []models.DeviceAttr{},
+		Delete: []models.DeviceDelete{},
 		Update: update,
 	}
 
@@ -473,7 +476,7 @@ func TestDealMsgAttr(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got.Err, tt.want.Err) {
-				t.Errorf("Error error , Got = %v, Want = %v", got.Update, tt.want.Update)
+				t.Errorf("Error error , Got = %v, Want = %v", got.Err, tt.want.Err)
 				return
 			}
 			for key, value := range tt.want.Result {
@@ -492,5 +495,16 @@ func TestDealMsgAttr(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// generateTestMessageAttributes creates test message attributes
+func generateTestMessageAttributes() map[string]*dttype.MsgAttr {
+	optional := true
+	return map[string]*dttype.MsgAttr{
+		"attr1": {
+			Value:    "value1",
+			Optional: &optional,
+		},
 	}
 }

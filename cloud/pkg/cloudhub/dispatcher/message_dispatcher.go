@@ -40,7 +40,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	taskutil "github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha1/util"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
-	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
@@ -275,7 +275,7 @@ func (md *messageDispatcher) enqueueAckMessage(nodeID string, msg *beehivemodel.
 	// If the message doesn't exist in the store, then compare it with
 	// the version stored in the objectSync or clusterObjectSync.
 	resourceNamespace, _ := messagelayer.GetNamespace(*msg)
-	if resourceNamespace == v2.NullNamespace {
+	if resourceNamespace == models.NullNamespace {
 		shouldEnqueue = md.enqueueNonNamespacedResource(nodeID, msg)
 	} else {
 		shouldEnqueue = md.enqueueNamespacedResource(nodeID, msg)

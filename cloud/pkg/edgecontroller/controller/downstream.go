@@ -24,7 +24,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/manager"
 	commonconstants "github.com/kubeedge/kubeedge/common/constants"
-	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 // DownstreamController watch kubernetes api server and send change to edge
@@ -214,7 +214,7 @@ func (dc *DownstreamController) syncEdgeNodes() {
 			}
 
 			var msg *model.Message
-			resource, err := messagelayer.BuildResource(node.Name, v2.NullNamespace, constants.ResourceNode, node.Name)
+			resource, err := messagelayer.BuildResource(node.Name, models.NullNamespace, constants.ResourceNode, node.Name)
 			if err != nil {
 				klog.Warningf("Built message resource failed with error: %s", err)
 				continue

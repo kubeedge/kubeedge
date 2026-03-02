@@ -9,6 +9,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 var (
@@ -139,4 +140,10 @@ func (s *send) SendSync(message *model.Message) (*model.Message, error) {
 
 func (s *send) Send(message *model.Message) {
 	beehiveContext.Send(modules.MetaManagerModuleName, *message)
+}
+
+// MetaServiceInterface is interface for meta service operations
+type MetaServiceInterface interface {
+	InsertOrUpdate(meta *models.Meta) error
+	QueryMeta(key, value string) (*[]string, error)
 }

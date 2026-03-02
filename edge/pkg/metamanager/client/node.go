@@ -14,7 +14,8 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 // NodesGetter to get node interface
@@ -170,11 +171,11 @@ func updateNodeDB(resource string, node *api.Node) error {
 		constants.ResourceSep+model.ResourceTypeNodePatch+constants.ResourceSep,
 		constants.ResourceSep+model.ResourceTypeNode+constants.ResourceSep, 1)
 
-	meta := &dao.Meta{
+	meta := &models.Meta{
 		Key:   nodeKey,
 		Type:  model.ResourceTypeNode,
 		Value: string(nodeContent)}
-	err = dao.InsertOrUpdate(meta)
+	err = dbclient.NewMetaService().InsertOrUpdate(meta)
 	if err != nil {
 		return err
 	}

@@ -20,7 +20,6 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2/validation"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
@@ -28,6 +27,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgestream"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus"
 	"github.com/kubeedge/kubeedge/edge/pkg/taskmanager"
 	"github.com/kubeedge/kubeedge/edge/test"
@@ -200,6 +200,14 @@ func environmentCheck(skipCheck bool) error {
 
 // registerModules register all the modules started in edgecore
 func registerModules(c *v1alpha2.EdgeCoreConfig) {
+	dao.Init(
+		c.DataBase.DataSource,
+		c.Modules.DeviceTwin,
+		c.Modules.EventBus,
+		c.Modules.MetaManager,
+		c.Modules.ServiceBus,
+	)
+	// register all modules
 	devicetwin.Register(c.Modules.DeviceTwin, c.Modules.Edged.HostnameOverride)
 	edged.Register(c.Modules.Edged)
 	edgehub.Register(c.Modules.EdgeHub, c.Modules.Edged.HostnameOverride)
@@ -209,7 +217,4 @@ func registerModules(c *v1alpha2.EdgeCoreConfig) {
 	edgestream.Register(c.Modules.EdgeStream, c.Modules.Edged.HostnameOverride, c.Modules.Edged.NodeIP)
 	taskmanager.Register(c.Modules.TaskManager)
 	test.Register(c.Modules.DBTest)
-
-	// Note: Need to put it to the end, and wait for all models to register before executing
-	dbm.InitDBConfig(c.DataBase.DriverName, c.DataBase.AliasName, c.DataBase.DataSource)
 }

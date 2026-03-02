@@ -13,11 +13,12 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtmodule"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 var (
@@ -25,6 +26,17 @@ var (
 	EventActionMap map[string]map[string]string
 	//ActionModuleMap map for action to module
 	ActionModuleMap map[string]string
+
+	// DeviceServiceFactory is a function variable that can be mocked in tests
+	// By default it creates a real DeviceService, but tests can replace it with a mock
+	DeviceServiceFactory = func() interface {
+		QueryDeviceAll() ([]models.Device, error)
+		QueryDevice(key string, condition string) ([]models.Device, error)
+		QueryDeviceAttr(key, condition string) (*[]models.DeviceAttr, error)
+		QueryDeviceTwin(key, condition string) (*[]models.DeviceTwin, error)
+	} {
+		return dbclient.NewDeviceService()
+	}
 )
 
 // RegisterDTModule register dtmodule
@@ -117,7 +129,7 @@ func initActionModuleMap() {
 // SyncSqlite sync sqlite
 func SyncSqlite(context *dtcontext.DTContext) error {
 	klog.Info("Begin to sync sqlite ")
-	rows, queryErr := dtclient.QueryDeviceAll()
+	rows, queryErr := DeviceServiceFactory().QueryDeviceAll()
 	if queryErr != nil {
 		klog.Errorf("Query sqlite failed while syncing sqlite, err: %#v", queryErr)
 		return queryErr
@@ -126,7 +138,7 @@ func SyncSqlite(context *dtcontext.DTContext) error {
 		klog.Info("Query sqlite nil while syncing sqlite")
 		return nil
 	}
-	for _, device := range *rows {
+	for _, device := range rows {
 		err := SyncDeviceFromSqlite(context, device.ID)
 		if err != nil {
 			continue
@@ -147,30 +159,30 @@ func SyncDeviceFromSqlite(context *dtcontext.DTContext, deviceID string) error {
 	defer context.Unlock(deviceID)
 	context.Lock(deviceID)
 
-	devices, err := dtclient.QueryDevice("id", deviceID)
+	devices, err := DeviceServiceFactory().QueryDevice("id", deviceID)
 	if err != nil {
 		klog.Errorf("query device failed: %v", err)
 		return err
 	}
-	if len(*devices) <= 0 {
+	if len(devices) <= 0 {
 		return errors.New("Not found device from db")
 	}
-	device := (*devices)[0]
+	device := devices[0]
 
-	deviceAttr, err := dtclient.QueryDeviceAttr("deviceid", deviceID)
+	deviceAttr, err := DeviceServiceFactory().QueryDeviceAttr("deviceid", deviceID)
 	if err != nil {
 		klog.Errorf("query device attr failed: %v", err)
 		return err
 	}
-	attributes := make([]dtclient.DeviceAttr, 0)
+	attributes := make([]models.DeviceAttr, 0)
 	attributes = append(attributes, *deviceAttr...)
 
-	deviceTwin, err := dtclient.QueryDeviceTwin("deviceid", deviceID)
+	deviceTwin, err := DeviceServiceFactory().QueryDeviceTwin("deviceid", deviceID)
 	if err != nil {
 		klog.Errorf("query device twin failed: %v", err)
 		return err
 	}
-	twins := make([]dtclient.DeviceTwin, 0)
+	twins := make([]models.DeviceTwin, 0)
 	twins = append(twins, *deviceTwin...)
 
 	context.DeviceList.Store(deviceID, &dttype.Device{

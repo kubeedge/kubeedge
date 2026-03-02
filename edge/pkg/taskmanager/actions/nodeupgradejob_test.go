@@ -32,7 +32,7 @@ import (
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	daov2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/pkg/containers"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 	upgradeedge "github.com/kubeedge/kubeedge/pkg/upgrade/edge"
@@ -52,7 +52,7 @@ func TestNodeUpgradeJobPreRun(t *testing.T) {
 	patches := gomonkey.NewPatches()
 	defer patches.Reset()
 
-	patches.ApplyMethodFunc(reflect.TypeOf((*daov2.Upgrade)(nil)), "Save",
+	patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.Upgrade)(nil)), "Save",
 		func(jobname, nodename string, spec *operationsv1alpha2.NodeUpgradeJobSpec) error {
 			saveUpgradeSpecCalled = true
 			return nil
@@ -76,7 +76,7 @@ func TestNodeUpgradeJobPostRun(t *testing.T) {
 	patches := gomonkey.NewPatches()
 	defer patches.Reset()
 
-	patches.ApplyMethodFunc(reflect.TypeOf((*daov2.Upgrade)(nil)), "Delete",
+	patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.Upgrade)(nil)), "Delete",
 		func() error {
 			deleteUpgradeSpecCalled = true
 			return nil

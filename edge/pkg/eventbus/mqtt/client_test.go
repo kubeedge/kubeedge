@@ -29,7 +29,7 @@ import (
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
-	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/mocks"
 )
 
 type TestMessage struct {
@@ -112,6 +112,8 @@ func (c *TestMQTTClient) Unsubscribe(topics ...string) MQTT.Token             { 
 func (c *TestMQTTClient) AddRoute(topic string, callback MQTT.MessageHandler) {}
 func (c *TestMQTTClient) OptionsReader() MQTT.ClientOptionsReader             { return MQTT.ClientOptionsReader{} }
 
+var originalEventBusServiceFactory = EventBusServiceFactory
+
 func TestInitPubClient(t *testing.T) {
 	client := &Client{
 		MQTTUrl:  "tcp://localhost:1883",
@@ -183,6 +185,10 @@ func TestInitPubClientWithExistingID(t *testing.T) {
 }
 
 func TestInitSubClient(t *testing.T) {
+	defer func() {
+		EventBusServiceFactory = originalEventBusServiceFactory
+	}()
+
 	client := &Client{
 		MQTTUrl:  "tcp://localhost:1883",
 		Username: "user",
@@ -219,11 +225,19 @@ func TestInitSubClient(t *testing.T) {
 	})
 	defer patchCheckClientToken.Reset()
 
+	// Setup EventBusServiceFactory mock using MockEventBusService
 	customTopics := []string{"custom/topic1", "custom/topic2"}
-	patchQueryAllTopics := gomonkey.ApplyFunc(dao.QueryAllTopics, func() (*[]string, error) {
+	mockEventBusService := mocks.NewMockEventBusService()
+	mockEventBusService.QueryAllTopicsFunc = func() (*[]string, error) {
 		return &customTopics, nil
-	})
-	defer patchQueryAllTopics.Reset()
+	}
+	EventBusServiceFactory = func() interface {
+		InsertTopics(topic string) error
+		DeleteTopicsByKey(key string) error
+		QueryAllTopics() (*[]string, error)
+	} {
+		return mockEventBusService
+	}
 
 	client.InitSubClient()
 
@@ -317,6 +331,10 @@ func TestOnSubConnectionLost(t *testing.T) {
 }
 
 func TestOnSubConnect(t *testing.T) {
+	defer func() {
+		EventBusServiceFactory = originalEventBusServiceFactory
+	}()
+
 	mockClient := NewTestMQTTClient()
 
 	patchCheckClientToken := gomonkey.ApplyFunc(util.CheckClientToken, func(token MQTT.Token) (bool, error) {
@@ -324,11 +342,19 @@ func TestOnSubConnect(t *testing.T) {
 	})
 	defer patchCheckClientToken.Reset()
 
+	// Setup EventBusServiceFactory mock using MockEventBusService
 	customTopics := []string{"custom/topic1", "custom/topic2"}
-	patchQueryAllTopics := gomonkey.ApplyFunc(dao.QueryAllTopics, func() (*[]string, error) {
+	mockEventBusService := mocks.NewMockEventBusService()
+	mockEventBusService.QueryAllTopicsFunc = func() (*[]string, error) {
 		return &customTopics, nil
-	})
-	defer patchQueryAllTopics.Reset()
+	}
+	EventBusServiceFactory = func() interface {
+		InsertTopics(topic string) error
+		DeleteTopicsByKey(key string) error
+		QueryAllTopics() (*[]string, error)
+	} {
+		return mockEventBusService
+	}
 
 	onSubConnect(mockClient)
 
@@ -342,6 +368,10 @@ func TestOnSubConnect(t *testing.T) {
 }
 
 func TestOnSubConnectWithQueryError(t *testing.T) {
+	defer func() {
+		EventBusServiceFactory = originalEventBusServiceFactory
+	}()
+
 	mockClient := NewTestMQTTClient()
 
 	patchCheckClientToken := gomonkey.ApplyFunc(util.CheckClientToken, func(token MQTT.Token) (bool, error) {
@@ -349,10 +379,18 @@ func TestOnSubConnectWithQueryError(t *testing.T) {
 	})
 	defer patchCheckClientToken.Reset()
 
-	patchQueryAllTopics := gomonkey.ApplyFunc(dao.QueryAllTopics, func() (*[]string, error) {
+	// Setup EventBusServiceFactory mock using MockEventBusService with error
+	mockEventBusService := mocks.NewMockEventBusService()
+	mockEventBusService.QueryAllTopicsFunc = func() (*[]string, error) {
 		return nil, errors.New("database error")
-	})
-	defer patchQueryAllTopics.Reset()
+	}
+	EventBusServiceFactory = func() interface {
+		InsertTopics(topic string) error
+		DeleteTopicsByKey(key string) error
+		QueryAllTopics() (*[]string, error)
+	} {
+		return mockEventBusService
+	}
 
 	onSubConnect(mockClient)
 
@@ -364,6 +402,10 @@ func TestOnSubConnectWithQueryError(t *testing.T) {
 }
 
 func TestOnSubConnectWithEmptyTopics(t *testing.T) {
+	defer func() {
+		EventBusServiceFactory = originalEventBusServiceFactory
+	}()
+
 	mockClient := NewTestMQTTClient()
 
 	patchCheckClientToken := gomonkey.ApplyFunc(util.CheckClientToken, func(token MQTT.Token) (bool, error) {
@@ -371,11 +413,19 @@ func TestOnSubConnectWithEmptyTopics(t *testing.T) {
 	})
 	defer patchCheckClientToken.Reset()
 
+	// Setup EventBusServiceFactory mock using MockEventBusService with empty topics
 	emptyTopics := []string{}
-	patchQueryAllTopics := gomonkey.ApplyFunc(dao.QueryAllTopics, func() (*[]string, error) {
+	mockEventBusService := mocks.NewMockEventBusService()
+	mockEventBusService.QueryAllTopicsFunc = func() (*[]string, error) {
 		return &emptyTopics, nil
-	})
-	defer patchQueryAllTopics.Reset()
+	}
+	EventBusServiceFactory = func() interface {
+		InsertTopics(topic string) error
+		DeleteTopicsByKey(key string) error
+		QueryAllTopics() (*[]string, error)
+	} {
+		return mockEventBusService
+	}
 
 	onSubConnect(mockClient)
 
