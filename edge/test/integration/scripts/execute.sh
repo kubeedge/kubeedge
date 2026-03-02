@@ -15,8 +15,10 @@
 # limitations under the License.
 
 TEST_DIR=$(dirname $(dirname "${BASH_SOURCE[0]}"))
+ROOT_DIR="$(cd "${TEST_DIR}/../../.." && pwd -P)"
 SUDO=()
 source "${TEST_DIR}/scripts/privileged_runner.sh"
+source "${ROOT_DIR}/tests/scripts/ginkgo_runner.sh"
 
 function is_edgecore_running() {
   if command -v pidof >/dev/null 2>&1; then
@@ -42,8 +44,6 @@ function do_preparation() {
   local go_bin
   go_bin="$(go env GOPATH)/bin"
   export PATH="${go_bin}:${PATH}"
-
-  which ginkgo &>/dev/null || go install github.com/onsi/ginkgo/v2/ginkgo@latest
 
   # create cert files
   $TEST_DIR/scripts/generate_cert.sh

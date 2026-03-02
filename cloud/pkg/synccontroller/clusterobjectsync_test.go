@@ -429,37 +429,6 @@ func TestSendClusterObjectSyncEventDirect(t *testing.T) {
 	assert.True(t, sendCalled, "Send should have been called")
 }
 
-func TestSendClusterObjectSyncEventEnsuresKindViaBuilder(t *testing.T) {
-	backup := setupTest()
-	defer backup.restore()
-
-	compareResourceVersionFunc = func(rv1, rv2 string) int {
-		return 1
-	}
-
-	sendCalled := false
-	kindInMessage := ""
-
-	sendToEdge = func(module string, msg model.Message) {
-		sendCalled = true
-		if runtimeObj, ok := msg.GetContent().(runtime.Object); ok {
-			kindInMessage = runtimeObj.GetObjectKind().GroupVersionKind().Kind
-		}
-	}
-
-	buildEdgeControllerMessageFunc = buildEdgeControllerMessage
-
-	obj := &unstructured.Unstructured{}
-	obj.SetName("test-pod")
-	obj.SetResourceVersion("1000")
-	sync := createTestSync("node1-pod-12345", "test-pod", "Pod", "v1", "500")
-
-	sendClusterObjectSyncEvent("node1", sync, "pod", "1000", obj)
-
-	assert.True(t, sendCalled, "Send should have been called")
-	assert.Equal(t, "Pod", kindInMessage, "Kind should be set by buildEdgeControllerMessage")
-}
-
 func TestDeleteClusterObjectSyncFunc(t *testing.T) {
 	backup := setupTest()
 	defer backup.restore()

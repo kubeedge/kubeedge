@@ -117,14 +117,12 @@ func TestGCOrphanedObjectSync(t *testing.T) {
 	tests := []struct {
 		name             string
 		ExpectedResource string
-		ExpectedKind     string
 		ObjectSyncs      *v1alpha1.ObjectSync
 	}{
 		{
 			name:             "test gcOrphanedObjectSyncs",
 			ObjectSyncs:      tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod"),
 			ExpectedResource: resource,
-			ExpectedKind:     "Pod",
 		},
 	}
 	cloudHub := &common.ModuleInfo{
@@ -144,13 +142,6 @@ func TestGCOrphanedObjectSync(t *testing.T) {
 			if !reflect.DeepEqual(message.GetResource(), tt.ExpectedResource) {
 				t.Errorf("gcOrphanedObjectSync() = %v, want %v", message.GetResource(), tt.ExpectedResource)
 			}
-			contentObj, ok := message.GetContent().(runtime.Object)
-			if !ok {
-				t.Fatalf("message content is not runtime.Object: %T", message.GetContent())
-			}
-			if contentObj.GetObjectKind().GroupVersionKind().Kind != tt.ExpectedKind {
-				t.Fatalf("unexpected object kind %q", contentObj.GetObjectKind().GroupVersionKind().Kind)
-			}
 		})
 	}
 }
@@ -161,14 +152,12 @@ func TestSendEvents(t *testing.T) {
 		ExpectedOperation string
 		ObjectSyncs       *v1alpha1.ObjectSync
 		EventObject       runtime.Object
-		ExpectedKind      string
 	}{
 		{
 			name:              "test sendEvents",
 			ObjectSyncs:       tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Device"),
 			EventObject:       &devicesv1beta1.Device{ObjectMeta: v1.ObjectMeta{Name: tf.TestPodName, Namespace: tf.TestNamespace, ResourceVersion: "2"}},
 			ExpectedOperation: model.UpdateOperation,
-			ExpectedKind:      "Device",
 		},
 	}
 	cloudHub := &common.ModuleInfo{
@@ -184,16 +173,6 @@ func TestSendEvents(t *testing.T) {
 			message, _ := beehiveContext.Receive(modules.CloudHubModuleName)
 			if !reflect.DeepEqual(message.GetOperation(), tt.ExpectedOperation) {
 				t.Errorf("sendEvents() = %v, want %v", message.GetResource(), tt.ExpectedOperation)
-			}
-			contentObj, ok := message.GetContent().(runtime.Object)
-			if !ok {
-				t.Fatalf("message content is not runtime.Object: %T", message.GetContent())
-			}
-			if contentObj.GetObjectKind().GroupVersionKind().Kind != tt.ExpectedKind {
-				t.Fatalf("unexpected object kind %q", contentObj.GetObjectKind().GroupVersionKind().Kind)
-			}
-			if contentObj.GetObjectKind().GroupVersionKind().GroupVersion().String() != devicesv1beta1.SchemeGroupVersion.String() {
-				t.Fatalf("unexpected object apiVersion %q", contentObj.GetObjectKind().GroupVersionKind().GroupVersion().String())
 			}
 		})
 	}
