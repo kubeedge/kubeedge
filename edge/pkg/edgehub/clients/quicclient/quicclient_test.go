@@ -42,7 +42,7 @@ func init() {
 		err := util.GenerateTestCertificate("/tmp/", "edge", "edge")
 
 		if err != nil {
-			fmt.Printf("Failed to create certificate: %v\n", err)
+			klog.Errorf("Failed to create certificate: %v", err)
 		}
 	}
 }

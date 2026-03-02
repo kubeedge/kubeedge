@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
@@ -95,7 +96,7 @@ func (da Diagnose) ExecuteDiagnose(use string, ops *common.DiagnoseOptions, args
 		err = DiagnoseNode(ops)
 	case common.ArgDiagnosePod:
 		if len(args) == 0 {
-			fmt.Println("error: You must specify a pod name")
+			klog.Error("You must specify a pod name")
 			return
 		}
 		// diagnose Pod, first diagnose node
@@ -108,7 +109,7 @@ func (da Diagnose) ExecuteDiagnose(use string, ops *common.DiagnoseOptions, args
 	}
 
 	if err != nil {
-		fmt.Println(err.Error())
+		klog.Errorf("Diagnose failed: %v", err)
 		util.PrintFail(use, common.StrDiagnose)
 	} else {
 		util.PrintSucceed(use, common.StrDiagnose)
@@ -125,13 +126,13 @@ func DiagnoseNode(ops *common.DiagnoseOptions) error {
 	if !isEdgeRunning {
 		return fmt.Errorf("edgecore is not running")
 	}
-	fmt.Println("edgecore is running")
+	klog.Info("edgecore is running")
 
 	isFileExists := files.FileExists(ops.Config)
 	if !isFileExists {
 		return fmt.Errorf("edge config is not exists")
 	}
-	fmt.Printf("edge config is exists: %v\n", ops.Config)
+	klog.V(1).Infof("edge config exists: %v", ops.Config)
 
 	edgeconfig, err := util.ParseEdgecoreConfig(ops.Config)
 	if err != nil {
@@ -148,7 +149,7 @@ func DiagnoseNode(ops *common.DiagnoseOptions) error {
 	if !isFileExists {
 		return fmt.Errorf("dataSource is not exists")
 	}
-	fmt.Printf("dataSource is exists: %v\n", dataSource)
+	klog.V(1).Infof("dataSource exists: %v", dataSource)
 
 	//CheckNetWork
 	if !edgeconfig.Modules.EdgeHub.WebSocket.Enable {
@@ -160,7 +161,7 @@ func DiagnoseNode(ops *common.DiagnoseOptions) error {
 	if err != nil {
 		return fmt.Errorf("cloudcore websocket connection failed")
 	}
-	fmt.Printf("cloudcore websocket connection success")
+	klog.Info("cloudcore websocket connection success")
 
 	return nil
 }
@@ -174,13 +175,13 @@ func DiagnosePod(ops *common.DiagnoseOptions, podName string) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize database: %v ", err)
 	}
-	fmt.Printf("Database %s is exist \n", v1alpha2.DataBaseDataSource)
+	klog.V(1).Infof("Database %s exists", v1alpha2.DataBaseDataSource)
 	podStatus, err := QueryPodFromDatabase(ops.Namespace, podName)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("pod %v phase is %v \n", podName, podStatus.Phase)
+	klog.V(1).Infof("pod %s phase: %s", podName, podStatus.Phase)
 	if podStatus.Phase != "Running" {
 		ready = false
 	}
@@ -194,7 +195,7 @@ func DiagnosePod(ops *common.DiagnoseOptions, podName string) error {
 			ready = true
 		}
 		if v.Status != "True" {
-			fmt.Printf("conditions is not true, type: %v ,message: %v ,reason: %v \n",
+			klog.Warningf("condition is not true, type: %v, message: %v, reason: %v",
 				v.Type, v.Message, v.Reason)
 		}
 	}
@@ -202,20 +203,20 @@ func DiagnosePod(ops *common.DiagnoseOptions, podName string) error {
 	for _, v := range containerConditions {
 		if !v.Ready {
 			if v.State.Waiting != nil {
-				fmt.Printf("containerConditions %v Waiting, message: %v, reason: %v, RestartCount: %v \n", v.Name,
-					v.State.Waiting.Message, v.State.Waiting.Reason, v.RestartCount)
+				klog.Warningf("container %s waiting, message: %v, reason: %v, restart count: %v",
+					v.Name, v.State.Waiting.Message, v.State.Waiting.Reason, v.RestartCount)
 			} else if v.State.Terminated != nil {
-				fmt.Printf("containerConditions %v Terminated, message: %v, reason: %v, RestartCount: %v \n", v.Name,
-					v.State.Terminated.Message, v.State.Terminated.Reason, v.RestartCount)
+				klog.Warningf("container %s terminated, message: %v, reason: %v, restart count: %v",
+					v.Name, v.State.Terminated.Message, v.State.Terminated.Reason, v.RestartCount)
 			} else {
-				fmt.Printf("containerConditions %v is not ready\n", v.Name)
+				klog.Warningf("container %s is not ready", v.Name)
 			}
 		} else {
-			fmt.Printf("containerConditions %v is ready\n", v.Name)
+			klog.Infof("container %s is ready", v.Name)
 		}
 	}
 	if ready {
-		fmt.Printf("Pod %s is Ready", podName)
+		klog.Infof("pod %s is ready", podName)
 	} else {
 		return fmt.Errorf("pod %s is not Ready", podName)
 	}
@@ -234,7 +235,7 @@ func QueryPodFromDatabase(resNamePaces string, podName string) (*v1.PodStatus, e
 	if len(*resultPod) == 0 {
 		return nil, fmt.Errorf("not find %v in database", conditionsPod)
 	}
-	fmt.Printf("Pod %s is exist \n", podName)
+	klog.V(1).Infof("pod %s exists in database", podName)
 
 	conditionsStatus := fmt.Sprintf("%v/podstatus/%v",
 		resNamePaces,
@@ -244,7 +245,7 @@ func QueryPodFromDatabase(resNamePaces string, podName string) (*v1.PodStatus, e
 		return nil, fmt.Errorf("read database fail: %s", err.Error())
 	}
 	if len(*resultStatus) == 0 {
-		fmt.Printf("not find %v in database\n", conditionsStatus)
+		klog.Warningf("not found %s in database", conditionsStatus)
 		r := *resultPod
 		pod := &v1.Pod{}
 		err = json.Unmarshal([]byte(r[0]), pod)
@@ -253,7 +254,7 @@ func QueryPodFromDatabase(resNamePaces string, podName string) (*v1.PodStatus, e
 		}
 		return &pod.Status, nil
 	}
-	fmt.Printf("PodStatus %s is exist \n", podName)
+	klog.V(1).Infof("pod status %s exists in database", podName)
 
 	r := *resultStatus
 	podStatus := &types.PodStatusRequest{}

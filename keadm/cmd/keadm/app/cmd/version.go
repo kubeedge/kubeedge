@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 
 	"github.com/kubeedge/kubeedge/pkg/version"
@@ -40,22 +41,27 @@ func RunVersion(cmd *cobra.Command) error {
 
 	switch of {
 	case "":
-		fmt.Printf("version: %#v\n", v)
+		klog.V(2).Infof("Displayed version information: %#v", v)
 	case "short":
-		fmt.Printf("%s\n", v)
+		klog.V(2).Infof("Displayed short version: %s", v)
 	case "yaml":
-		y, err := yaml.Marshal(&v)
+		_, err := yaml.Marshal(&v)
 		if err != nil {
+			klog.Errorf("Failed to marshal version to YAML: %v", err)
 			return err
 		}
-		fmt.Println(string(y))
+		y, _ := yaml.Marshal(&v)
+		klog.V(2).Infof("Displayed version in YAML format: %s", y)
 	case "json":
-		y, err := json.MarshalIndent(&v, "", "  ")
+		_, err := json.MarshalIndent(&v, "", "  ")
 		if err != nil {
+			klog.Errorf("Failed to marshal version to JSON: %v", err)
 			return err
 		}
-		fmt.Println(string(y))
+		y, _ := json.MarshalIndent(&v, "", "  ")
+		klog.V(2).Infof("Displayed version in JSON format: %s", y)
 	default:
+		klog.Errorf("Invalid output format requested: %s", of)
 		return fmt.Errorf("invalid output format: %s", of)
 	}
 
