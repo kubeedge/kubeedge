@@ -211,6 +211,30 @@ func TestParseResourcePath(t *testing.T) {
 			wantTyp: "device",
 			wantID:  "test-device",
 		},
+		{
+			name:    "non-node scoped with unsupported extra segments",
+			path:    "default/device/test-device/subresource",
+			wantTyp: "",
+			wantID:  "",
+		},
+		{
+			name:    "node scoped with unsupported extra segments",
+			path:    "node/edge-node/default/device/test-device/subresource",
+			wantTyp: "",
+			wantID:  "",
+		},
+		{
+			name:    "node scoped with leading slash",
+			path:    "/node/edge-node/default/device/test-device",
+			wantTyp: "device",
+			wantID:  "test-device",
+		},
+		{
+			name:    "empty resource path",
+			path:    "",
+			wantTyp: "",
+			wantID:  "",
+		},
 	}
 
 	for _, tt := range tests {

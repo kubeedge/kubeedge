@@ -208,36 +208,35 @@ func UnsafeKindToResource(k string) string {
 // - <namespace>/<resourceType>[/resourceID]
 // - node/<node>/<namespace>/<resourceType>[/resourceID]
 func ParseResourcePath(resource string) (string, string) {
-	tokens := strings.Split(resource, constants.ResourceSep)
-	resType := ""
-	resID := ""
-	switch len(tokens) {
-	case 2:
-		resType = tokens[1]
-	case 3:
-		if tokens[0] == beehiveModel.ResourceTypeNode {
-			resType = tokens[2]
-		} else {
-			resType = tokens[1]
-			resID = tokens[2]
-		}
-	case 4:
-		if tokens[0] == beehiveModel.ResourceTypeNode {
-			resType = tokens[3]
-		} else {
-			resType = tokens[2]
-			resID = tokens[3]
-		}
-	default:
-		if len(tokens) >= 5 && tokens[0] == beehiveModel.ResourceTypeNode {
-			resType = tokens[3]
-			resID = tokens[4]
-		} else if len(tokens) >= 2 {
-			resType = tokens[len(tokens)-2]
-			resID = tokens[len(tokens)-1]
+	trimmed := strings.Trim(resource, constants.ResourceSep)
+	if trimmed == "" {
+		return "", ""
+	}
+
+	tokens := strings.Split(trimmed, constants.ResourceSep)
+	if tokens[0] == beehiveModel.ResourceTypeNode {
+		// node/<node>/<resourceType> OR node/<node>/<namespace>/<resourceType>[/resourceID]
+		switch len(tokens) {
+		case 3:
+			return tokens[2], ""
+		case 4:
+			return tokens[3], ""
+		case 5:
+			return tokens[3], tokens[4]
+		default:
+			return "", ""
 		}
 	}
-	return resType, resID
+
+	// <namespace>/<resourceType>[/resourceID]
+	switch len(tokens) {
+	case 2:
+		return tokens[1], ""
+	case 3:
+		return tokens[1], tokens[2]
+	default:
+		return "", ""
+	}
 }
 
 func UnstructuredAttr(obj runtime.Object) (labels.Set, fields.Set, error) {
