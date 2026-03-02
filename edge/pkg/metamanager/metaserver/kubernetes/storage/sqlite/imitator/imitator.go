@@ -259,9 +259,6 @@ func (s *imitator) Event(msg *model.Message) []watch.Event {
 		klog.V(4).Infof("[metaserver]skip delete options payload for resource %q", msg.Router.Resource)
 		return ret
 	}
-	if msg.Router.Group == "resource" {
-		contentBytes = patchMissingKindForJSONObject(contentBytes, resType)
-	}
 
 	//TODO: support array List like []obj
 	obj := new(unstructured.Unstructured)
