@@ -183,12 +183,10 @@ func addDevice(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage 
 				continue
 			}
 			if _, err := UpdateDeviceAttr(context, device.ID, device.Attributes, baseMessage, dealType); err != nil {
-				// TODO: handle err
-				klog.Error(err)
+				klog.Errorf("Update device attr failed for %s: %v", device.ID, err)
 			}
 			if err := DealDeviceTwin(context, device.ID, baseMessage.EventID, device.Twin, dealType); err != nil {
-				// TODO: handle err
-				klog.Error(err)
+				klog.Errorf("Deal device twin failed for %s: %v", device.ID, err)
 			}
 			//todo sync twin
 			continue
@@ -232,16 +230,14 @@ func addDevice(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage 
 		if device.Twin != nil {
 			klog.Infof("Add device twin during first adding device %s", device.ID)
 			if err := DealDeviceTwin(context, device.ID, baseMessage.EventID, device.Twin, dealType); err != nil {
-				// TODO: handle err
-				klog.Error(err)
+				klog.Errorf("Deal device twin failed for %s: %v", device.ID, err)
 			}
 		}
 
 		if device.Attributes != nil {
 			klog.Infof("Add device attr during first adding device %s", device.ID)
 			if _, err := UpdateDeviceAttr(context, device.ID, device.Attributes, baseMessage, dealType); err != nil {
-				// TODO: handle err
-				klog.Error(err)
+				klog.Errorf("Update device attr failed for %s: %v", device.ID, err)
 			}
 		}
 		topic := dtcommon.MemETPrefix + context.NodeName + dtcommon.MemETUpdateSuffix
@@ -256,8 +252,7 @@ func addDevice(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage 
 			err := context.Send("", dtcommon.SendToEdge, dtcommon.CommModule,
 				context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, result))
 			if err != nil {
-				// TODO: handle err
-				klog.Error(err)
+				klog.Errorf("failed to send membership update for device %s: %v", device.ID, err)
 			}
 		}
 		if delta {
@@ -314,8 +309,7 @@ func removeDevice(context *dtcontext.DTContext, toRemove []dttype.Device, baseMe
 		err = context.Send("", dtcommon.SendToEdge, dtcommon.CommModule,
 			context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, result))
 		if err != nil {
-			// TODO: handle err
-			klog.Error(err)
+			klog.Errorf("failed to send membership update for device %s: %v", device.ID, err)
 		}
 
 		klog.Infof("Remove device %s successful", device.ID)
