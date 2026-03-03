@@ -1,0 +1,21 @@
+flowchart TB
+    subgraph Cloud["Cloud"]
+        APIServer["API Server"]
+        ExternalADS["External Anomaly Detection System"]
+    end
+
+    subgraph Edge["Edge"]
+        Mapper["Mapper"]
+    end
+
+    subgraph EcoSystem["Eco System (MQ, DB, etc...)"]
+    end
+    style EcoSystem stroke-dasharray: 5 5,fill:#fff7cc,stroke:#999
+
+    Mapper -->|PushMethod| ExternalADS
+    Mapper -->|PushMethod| EcoSystem
+    ExternalADS -->|Push or Pull<br/>Properties Data| EcoSystem
+
+    ExternalADS -->|Update `DeviceStatus CRD extensions`<br/>Watch Device List| APIServer
+
+    Edge --- Cloud
