@@ -27,6 +27,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/debug"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/deprecated"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/edge"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/edgehub"
 )
 
 var (
@@ -82,6 +83,7 @@ func NewKubeedgeCommand() *cobra.Command {
 	// recommended cmds
 	cmds.AddCommand(edge.NewEdgeJoin())
 	cmds.AddCommand(edge.NewEdgeBatchProcess())
+	cmds.AddCommand(edgehub.NewEdgeHubCmd())
 	cmds.AddCommand(cloud.NewCloudInit())
 	cmds.AddCommand(cloud.NewManifestGenerate())
 	cmds.AddCommand(newCmdConfig())
