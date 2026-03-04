@@ -738,7 +738,16 @@ func TestPassThroughWriteError(t *testing.T) {
 	patches := gomonkey.NewPatches()
 	defer patches.Reset()
 
-	patches.ApplyFunc(klog.Error, func(_ ...interface{}) {})
+	// Mock ErrorS to verify arguments and suppress output
+	patches.ApplyFunc(klog.ErrorS, func(err error, msg string, keysAndValues ...interface{}) {
+		assert.Equal(t, "failed to write passthrough response", msg)
+		// Expected keysAndValues: "path", path, "method", method, "remoteAddr", remoteAddr
+		// Convert to map for easier verification or check slice
+		// keysAndValues should be: ["path", "/api/...", "method", "GET", "remoteAddr", "192.0.2.1:1234"]
+		assert.Contains(t, keysAndValues, "path")
+		assert.Contains(t, keysAndValues, "method")
+		assert.Contains(t, keysAndValues, "remoteAddr")
+	})
 
 	mockResult := []byte(`{"kind":"ConfigMap","metadata":{"name":"test-config"}}`)
 	mockStorage := &storage.REST{}
