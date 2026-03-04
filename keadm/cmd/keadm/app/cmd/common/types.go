@@ -170,6 +170,7 @@ type Keadm struct {
 	ArchGroup         []string          `yaml:"archGroup"`
 	OfflinePackageDir *string           `yaml:"offlinePackageDir,omitempty"`
 	CmdTplArgs        map[string]string `yaml:"cmdTplArgs,omitempty"`
+	KeadmBinDir       *string           `yaml:"keadmBinDir,omitempty"`
 }
 
 // Download defines the url and enable flag
