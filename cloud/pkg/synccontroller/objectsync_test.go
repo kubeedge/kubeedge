@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic/fake"
 
+	devicesv1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
 	"github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -150,10 +151,12 @@ func TestSendEvents(t *testing.T) {
 		name              string
 		ExpectedOperation string
 		ObjectSyncs       *v1alpha1.ObjectSync
+		EventObject       runtime.Object
 	}{
 		{
 			name:              "test sendEvents",
-			ObjectSyncs:       tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod"),
+			ObjectSyncs:       tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Device"),
+			EventObject:       &devicesv1beta1.Device{ObjectMeta: v1.ObjectMeta{Name: tf.TestPodName, Namespace: tf.TestNamespace, ResourceVersion: "2"}},
 			ExpectedOperation: model.UpdateOperation,
 		},
 	}
@@ -166,8 +169,7 @@ func TestSendEvents(t *testing.T) {
 	beehiveContext.AddModuleGroup(modules.CloudHubModuleName, modules.CloudHubModuleGroup)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tmp := tt.ObjectSyncs.DeepCopy()
-			go sendEvents(tf.TestNodeID, tt.ObjectSyncs, "pod", "2", tmp)
+			go sendEvents(tf.TestNodeID, tt.ObjectSyncs, "device", "2", tt.EventObject)
 			message, _ := beehiveContext.Receive(modules.CloudHubModuleName)
 			if !reflect.DeepEqual(message.GetOperation(), tt.ExpectedOperation) {
 				t.Errorf("sendEvents() = %v, want %v", message.GetResource(), tt.ExpectedOperation)

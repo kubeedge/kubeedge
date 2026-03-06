@@ -1,6 +1,6 @@
-#!/bin/bash -ex
+#!/usr/bin/env bash
 
-# Copyright 2019 The KubeEdge Authors.
+# Copyright 2026 The KubeEdge Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,23 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cd `dirname $0`
-workdir=`pwd`
-cd $workdir
-
-source "${workdir}/ginkgo_runner.sh"
-
-cd ../
-echo $PWD
-
-compilemodule=$1
-#compile all test if user doesn't specify the test else compile only specified tests.
-if [ $# -eq 0 ]
-then
-    echo "compiling all tests !!"
-    run_ginkgo build e2e
-    run_ginkgo build e2e_keadm
-    run_ginkgo build e2e_edgesite
-else
-   run_ginkgo build -r $compilemodule
-fi
+function run_ginkgo() {
+  go run github.com/onsi/ginkgo/v2/ginkgo "$@"
+}

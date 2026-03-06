@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	devicesv1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 )
 
@@ -101,25 +102,149 @@ func TestSetMetaType(t *testing.T) {
 		obj runtime.Object
 	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
+		name       string
+		args       args
+		wantErr    bool
+		wantKind   string
+		wantAPIVer string
 	}{
 		{
-			name:    "TestSetMetaType(): Case 1: Set MetaType success",
-			args:    args{obj: &appsv1.Deployment{}},
-			wantErr: false,
+			name:       "TestSetMetaType(): Case 1: Set MetaType success",
+			args:       args{obj: &appsv1.Deployment{}},
+			wantErr:    false,
+			wantKind:   "Deployment",
+			wantAPIVer: appsv1.SchemeGroupVersion.String(),
 		},
 		{
 			name:    "TestSetMetaType(): Case 2: Set MetaType fail",
 			args:    args{obj: nil},
 			wantErr: true,
 		},
+		{
+			name:       "TestSetMetaType(): Case 3: Set MetaType success for device",
+			args:       args{obj: &devicesv1beta1.Device{}},
+			wantErr:    false,
+			wantKind:   "Device",
+			wantAPIVer: devicesv1beta1.SchemeGroupVersion.String(),
+		},
+		{
+			name:       "TestSetMetaType(): Case 4: Set MetaType success for devicemodel",
+			args:       args{obj: &devicesv1beta1.DeviceModel{}},
+			wantErr:    false,
+			wantKind:   "DeviceModel",
+			wantAPIVer: devicesv1beta1.SchemeGroupVersion.String(),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := SetMetaType(tt.args.obj); (err != nil) != tt.wantErr {
+			err := SetMetaType(tt.args.obj)
+			if (err != nil) != tt.wantErr {
 				t.Errorf("SetMetaType() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err != nil {
+				return
+			}
+			gvk := tt.args.obj.GetObjectKind().GroupVersionKind()
+			if gvk.Kind != tt.wantKind {
+				t.Errorf("SetMetaType() kind = %v, want %v", gvk.Kind, tt.wantKind)
+			}
+			if gvk.GroupVersion().String() != tt.wantAPIVer {
+				t.Errorf("SetMetaType() apiversion = %v, want %v", gvk.GroupVersion().String(), tt.wantAPIVer)
+			}
+		})
+	}
+}
+
+func TestSetMetaTypeByResource(t *testing.T) {
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"name":      "test-device",
+				"namespace": "default",
+			},
+		},
+	}
+
+	if err := SetMetaTypeByResource(obj, "device"); err != nil {
+		t.Fatalf("SetMetaTypeByResource() error = %v", err)
+	}
+	if obj.GetObjectKind().GroupVersionKind().Kind != "Device" {
+		t.Fatalf("SetMetaTypeByResource() kind = %q, want %q", obj.GetObjectKind().GroupVersionKind().Kind, "Device")
+	}
+}
+
+func TestParseResourcePath(t *testing.T) {
+	tests := []struct {
+		name    string
+		path    string
+		wantTyp string
+		wantID  string
+	}{
+		{
+			name:    "namespace scoped without id",
+			path:    "default/device",
+			wantTyp: "device",
+			wantID:  "",
+		},
+		{
+			name:    "namespace scoped with id",
+			path:    "default/device/test-device",
+			wantTyp: "device",
+			wantID:  "test-device",
+		},
+		{
+			name:    "node scoped without id",
+			path:    "node/edge-node/default/device",
+			wantTyp: "device",
+			wantID:  "",
+		},
+		{
+			name:    "node scoped cluster resource without namespace",
+			path:    "node/edge-node/nodestatus",
+			wantTyp: "nodestatus",
+			wantID:  "",
+		},
+		{
+			name:    "node scoped with id",
+			path:    "node/edge-node/default/device/test-device",
+			wantTyp: "device",
+			wantID:  "test-device",
+		},
+		{
+			name:    "non-node scoped with unsupported extra segments",
+			path:    "default/device/test-device/subresource",
+			wantTyp: "",
+			wantID:  "",
+		},
+		{
+			name:    "node scoped with unsupported extra segments",
+			path:    "node/edge-node/default/device/test-device/subresource",
+			wantTyp: "",
+			wantID:  "",
+		},
+		{
+			name:    "node scoped with leading slash",
+			path:    "/node/edge-node/default/device/test-device",
+			wantTyp: "device",
+			wantID:  "test-device",
+		},
+		{
+			name:    "empty resource path",
+			path:    "",
+			wantTyp: "",
+			wantID:  "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotType, gotID := ParseResourcePath(tt.path)
+			if gotType != tt.wantTyp {
+				t.Fatalf("ParseResourcePath() type = %q, want %q", gotType, tt.wantTyp)
+			}
+			if gotID != tt.wantID {
+				t.Fatalf("ParseResourcePath() id = %q, want %q", gotID, tt.wantID)
 			}
 		})
 	}

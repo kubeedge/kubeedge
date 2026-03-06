@@ -41,7 +41,7 @@ function check_kind {
     # avoid modifying go.sum and go.mod when installing the kind
     git checkout -- go.mod go.sum
 
-    export PATH=$PATH:$GOPATH/bin
+    export PATH=$GOPATH/bin:$PATH
   else
     echo -n "found kind, version: " && kind version
   fi
@@ -51,7 +51,7 @@ function check_kind {
 function check_golangci-lint {
   GOPATH="${GOPATH:-$(go env GOPATH)}"
   echo "checking golangci-lint"
-  export PATH=$PATH:$GOPATH/bin
+  export PATH=$GOPATH/bin:$PATH
   expectedVersion="1.64.5"
   command -v golangci-lint >/dev/null 2>&1
   if [[ $? -ne 0 ]]; then
@@ -75,7 +75,7 @@ function install_golangci-lint {
     exit 1
   fi
 
-  export PATH=$PATH:$GOPATH/bin
+  export PATH=$GOPATH/bin:$PATH
 }
 
 verify_containerd_installed() {

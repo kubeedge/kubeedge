@@ -49,7 +49,9 @@ kubeedge::golang::verify_golang_version() {
 
 kubeedge::version::get_version_info() {
 
-  GIT_COMMIT=$(git rev-parse "HEAD^{commit}" 2>/dev/null)
+  # In containerized or shallow/nonstandard git contexts, rev-parse can fail.
+  # Keep version generation best-effort instead of aborting the whole build.
+  GIT_COMMIT=$(git rev-parse "HEAD^{commit}" 2>/dev/null || true)
 
   if git_status=$(git status --porcelain 2>/dev/null) && [[ -z ${git_status} ]]; then
     GIT_TREE_STATE="clean"
@@ -57,12 +59,14 @@ kubeedge::version::get_version_info() {
     GIT_TREE_STATE="dirty"
   fi
 
-  GIT_VERSION=$(git describe --tags --abbrev=14 "${GIT_COMMIT}^{commit}" 2>/dev/null)
+  GIT_VERSION=$(git describe --tags --abbrev=14 "${GIT_COMMIT}^{commit}" 2>/dev/null || true)
   if [[ -z "${GIT_VERSION}" ]]; then
-    echo 
-    echo "⚠️  No git tags found."
-    echo "⚠️  Falling back to default version: v0.0.0"
-    echo "⚠️  To avoid this, consider running: git fetch --tags"
+    {
+      echo
+      echo "WARNING: No git tags found."
+      echo "WARNING: Falling back to default version: v0.0.0"
+      echo "WARNING: To avoid this, consider running: git fetch --tags"
+    } >&2
 
     GIT_VERSION="v0.0.0"
   fi

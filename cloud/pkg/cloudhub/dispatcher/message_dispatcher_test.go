@@ -22,6 +22,8 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
@@ -33,6 +35,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	tf "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/testing"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/session"
+	edgectrconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	mockcon "github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn/testing"
 )
 
@@ -151,6 +154,43 @@ func TestGetNodeID(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNormalizeDownstreamMessageContent(t *testing.T) {
+	t.Run("set metatype for runtime object", func(t *testing.T) {
+		pod := &corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "test-pod",
+				Namespace:       "default",
+				ResourceVersion: "1",
+			},
+		}
+		msg := beehivemodel.NewMessage("").
+			SetResourceOperation("node/edge-node/default/pod/test-pod", "update").
+			SetRoute("edgecontroller", edgectrconst.GroupResource).
+			FillBody(pod)
+
+		normalizeDownstreamMessageContent(msg)
+
+		if pod.GetObjectKind().GroupVersionKind().Kind != "Pod" {
+			t.Fatalf("unexpected kind %q", pod.GetObjectKind().GroupVersionKind().Kind)
+		}
+		if pod.GetObjectKind().GroupVersionKind().GroupVersion().String() != "v1" {
+			t.Fatalf("unexpected apiVersion %q", pod.GetObjectKind().GroupVersionKind().GroupVersion().String())
+		}
+	})
+
+	t.Run("skip non runtime object", func(t *testing.T) {
+		msg := beehivemodel.NewMessage("").
+			SetResourceOperation("node/edge-node/default/pod/test-pod", "update").
+			SetRoute("edgecontroller", edgectrconst.GroupResource).
+			FillBody("non-runtime")
+
+		normalizeDownstreamMessageContent(msg)
+		if got, ok := msg.Content.(string); !ok || got != "non-runtime" {
+			t.Fatalf("message content changed unexpectedly: %#v", msg.Content)
+		}
+	})
 }
 
 func TestEnqueueAckMessage(t *testing.T) {

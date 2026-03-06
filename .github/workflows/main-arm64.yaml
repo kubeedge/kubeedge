@@ -23,7 +23,7 @@ env:
 
 jobs:
   image-prepare:
-    runs-on: openeuler-linux-arm64
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 30
     name: Prepare kubeedge/build-tools image
     steps:
@@ -40,7 +40,7 @@ jobs:
           path: /home/runner/build-tools
 
   docker_build:
-    runs-on: openeuler-linux-arm64
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 40
     name: Multiple build
     needs: image-prepare

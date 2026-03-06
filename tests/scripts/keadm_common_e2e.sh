@@ -16,10 +16,11 @@
 
 KUBEEDGE_ROOT=$PWD
 E2E_DIR=$(realpath $(dirname $0)/..)
+source "${KUBEEDGE_ROOT}/tests/scripts/ginkgo_runner.sh"
 
 function build_ginkgo() {
   cd $E2E_DIR
-  ginkgo build -r e2e_keadm/
+  run_ginkgo build -r e2e_keadm/
 }
 
 function prepare_cluster() {
@@ -40,17 +41,17 @@ function run_test() {
 
   export ACK_GINKGO_RC=true
 
-  ginkgo -v ./e2e_keadm/e2e_keadm.test -- \
+  run_ginkgo -v ./e2e_keadm/e2e_keadm.test -- \
   --image-url=nginx \
   --image-url=nginx \
   --kube-master="https://$MASTER_IP:6443" \
   --kubeconfig=$KUBECONFIG \
   --test.v
-  if [[ $? != 0 ]]; then
+  local rc=$?
+  if [[ $rc != 0 ]]; then
       echo "Integration suite has failures, Please check !!"
-      exit 1
-  else
-      echo "Integration suite successfully passed all the tests !!"
-      exit 0
+      return 1
   fi
+  echo "Integration suite successfully passed all the tests !!"
+  return 0
 }
