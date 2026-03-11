@@ -544,3 +544,42 @@ func TestSetEdgeCoreConfigWithMultiIntValue(t *testing.T) {
 	assert.Equal(t, int(9061), cfg.Modules.ServiceBus.Port)
 	assert.Equal(t, uint8(1), cfg.Modules.EventBus.MqttQOS)
 }
+
+func TestSetEdgeCoreConfigFeatureGatesSingleKey(t *testing.T) {
+	cfg := v1alpha2.NewDefaultEdgeCoreConfig()
+	// Test setting a single feature gate key
+	if err := ParseSet(cfg, `featureGates.requireAuthorization=true`); err != nil {
+		t.Fatal(err)
+	}
+	// Verify the feature gate was set
+	if cfg.FeatureGates == nil {
+		t.Fatal("FeatureGates should not be nil")
+	}
+	val, ok := cfg.FeatureGates["requireAuthorization"]
+	if !ok {
+		t.Fatal("FeatureGates should contain 'requireAuthorization' key")
+	}
+	if val != true {
+		t.Errorf("Expected requireAuthorization to be true, got %v", val)
+	}
+}
+
+func TestSetEdgeCoreConfigFeatureGatesMultipleKeys(t *testing.T) {
+	cfg := v1alpha2.NewDefaultEdgeCoreConfig()
+	// Test setting multiple feature gate keys
+	if err := ParseSet(cfg, `featureGates.requireAuthorization=true,featureGates.customFeature=false`); err != nil {
+		t.Fatal(err)
+	}
+	// Verify both feature gates were set
+	if cfg.FeatureGates == nil {
+		t.Fatal("FeatureGates should not be nil")
+	}
+	val1, ok1 := cfg.FeatureGates["requireAuthorization"]
+	if !ok1 || val1 != true {
+		t.Errorf("Expected requireAuthorization to be true, got %v (exists: %v)", val1, ok1)
+	}
+	val2, ok2 := cfg.FeatureGates["customFeature"]
+	if !ok2 || val2 != false {
+		t.Errorf("Expected customFeature to be false, got %v (exists: %v)", val2, ok2)
+	}
+}
