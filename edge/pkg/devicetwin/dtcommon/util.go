@@ -85,7 +85,7 @@ func ConvertDevice(device *v1beta1.Device) (*pb.Device, error) {
 		for k, v := range device.Spec.Protocol.ConfigData.Data {
 			anyValue, err := dataToAny(v)
 			if err != nil {
-				return nil, fmt.Errorf("failed to convert protocol config data: %v", err)
+				return nil, fmt.Errorf("failed to convert protocol config data: %w", err)
 			}
 			configAnyData[k] = anyValue
 		}
@@ -96,7 +96,7 @@ func ConvertDevice(device *v1beta1.Device) (*pb.Device, error) {
 	for i := range device.Spec.Properties {
 		property, err := convertDeviceProperty(&device.Spec.Properties[i])
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert property: %v", err)
+			return nil, fmt.Errorf("failed to convert property: %w", err)
 		}
 		edgePropertyVisitors = append(edgePropertyVisitors, property)
 	}
@@ -128,7 +128,7 @@ func convertDeviceProperty(prop *v1beta1.DeviceProperty) (*pb.DeviceProperty, er
 	item := new(pb.DeviceProperty)
 	propertyData, err := json.Marshal(prop)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal property: %v", err)
+		return nil, fmt.Errorf("failed to marshal property: %w", err)
 	}
 
 	err = json.Unmarshal(propertyData, item)
@@ -138,7 +138,7 @@ func convertDeviceProperty(prop *v1beta1.DeviceProperty) (*pb.DeviceProperty, er
 		for k, v := range prop.Visitors.ConfigData.Data {
 			anyValue, err := dataToAny(v)
 			if err != nil {
-				return nil, fmt.Errorf("failed to convert visitor config data: %v", err)
+				return nil, fmt.Errorf("failed to convert visitor config data: %w", err)
 			}
 			configAnyData[k] = anyValue
 		}
