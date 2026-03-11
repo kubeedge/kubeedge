@@ -302,7 +302,7 @@ func (c *CloudCoreHelmTool) Uninstall(opts *types.ResetOptions) error {
 func (c *CloudCoreHelmTool) verifyCloudCoreProcessRunning() error {
 	cloudcoreRunning, err := c.Common.OSTypeInstaller.IsKubeEdgeProcessRunning(util.KubeCloudBinaryName)
 	if err != nil {
-		return fmt.Errorf("failed to verify the cloudcore binnary already running, err: %v", err)
+		return fmt.Errorf("failed to verify the cloudcore binary already running, err: %v", err)
 	}
 	if cloudcoreRunning {
 		return fmt.Errorf("the cloudcore is already running on this node, please run reset to clean up first")
