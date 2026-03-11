@@ -199,6 +199,8 @@ type DBMethodConfig struct {
 	TDEngine *DBMethodTDEngine `json:"TDEngine,omitempty"`
 	// +optional
 	Mysql *DBMethodMySQL `json:"mysql,omitempty"`
+	// +optional
+	Kwdb *DBMethodKwdb `json:"Kwdb,omitempty"`
 }
 
 type DBMethodInfluxdb2 struct {
@@ -265,6 +267,20 @@ type TDEngineClientConfig struct {
 	// +optional
 	Addr string `json:"addr,omitempty"`
 	// dbname of tdEngine database
+	// +optional
+	DBName string `json:"dbName,omitempty"`
+}
+
+type DBMethodKwdb struct {
+	// kwdbClientConfig of Kaiwudb database
+	// +optional
+	KWDBClientConfig *KWDBClientConfig `json:"KWDBClientConfig,omitempty"`
+}
+type KWDBClientConfig struct {
+	// addr of Kaiwudb database
+	// +optional
+	Addr string `json:"addr,omitempty"`
+	// dbname of Kaiwudb database
 	// +optional
 	DBName string `json:"dbName,omitempty"`
 }

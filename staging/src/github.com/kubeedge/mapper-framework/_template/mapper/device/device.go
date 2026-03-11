@@ -13,15 +13,16 @@ import (
 
 	"k8s.io/klog/v2"
 
-	dbInflux "github.com/kubeedge/Template/data/dbmethod/influxdb2"
-	dbMysql "github.com/kubeedge/Template/data/dbmethod/mysql"
-	dbRedis "github.com/kubeedge/Template/data/dbmethod/redis"
-	dbTdengine "github.com/kubeedge/Template/data/dbmethod/tdengine"
-	httpMethod "github.com/kubeedge/Template/data/publish/http"
-	mqttMethod "github.com/kubeedge/Template/data/publish/mqtt"
-	otelMethod "github.com/kubeedge/Template/data/publish/otel"
-	"github.com/kubeedge/Template/data/stream"
-	"github.com/kubeedge/Template/driver"
+	dbInflux "github.com/kubeedge/virtualprotocol/data/dbmethod/influxdb2"
+	dbMysql "github.com/kubeedge/virtualprotocol/data/dbmethod/mysql"
+	dbRedis "github.com/kubeedge/virtualprotocol/data/dbmethod/redis"
+	dbTdengine "github.com/kubeedge/virtualprotocol/data/dbmethod/tdengine"
+	dbKwdb "github.com/kubeedge/virtualprotocol/data/dbmethod/kwdb"
+	httpMethod "github.com/kubeedge/virtualprotocol/data/publish/http"
+	mqttMethod "github.com/kubeedge/virtualprotocol/data/publish/mqtt"
+	otelMethod "github.com/kubeedge/virtualprotocol/data/publish/otel"
+	"github.com/kubeedge/virtualprotocol/data/stream"
+	"github.com/kubeedge/virtualprotocol/driver"
 	dmiapi "github.com/kubeedge/api/apis/dmi/v1beta1"
 	"github.com/kubeedge/mapper-framework/pkg/common"
 	"github.com/kubeedge/mapper-framework/pkg/global"
@@ -169,6 +170,19 @@ func dataHandler(ctx context.Context, dev *driver.CustomizedDev) {
 		// handle database
 		if twin.Property.PushMethod.DBMethod.DBMethodName != "" {
 			dbHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+			switch twin.Property.PushMethod.DBMethod.DBMethodName {
+			// TODO add more database
+			case "influx":
+				dbInflux.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+			case "redis":
+				dbRedis.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+			case "tdengine":
+				dbTdengine.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+			case "mysql":
+				dbMysql.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+			case "kwdb":
+				dbKwdb.DataHandler(ctx, &twin, dev.CustomizedClient, &visitorConfig, dataModel)
+			}
 		}
 	}
 }

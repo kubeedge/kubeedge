@@ -145,6 +145,16 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 				dbconfig = common.DBConfig{
 					TDEngineClientConfig: clientConfig,
 				}
+			case pptv.PushMethod.DbMethod.Kwdb != nil:
+				dbMethodName = "kwdb"
+				clientConfig, err := json.Marshal(pptv.PushMethod.DbMethod.Kwdb.KwdbClientConfig)
+				if err != nil {
+					klog.Errorf("Kaiwudb config err: %+v", err)
+					return nil
+				}
+				dbconfig = common.DBConfig{
+					KWDBClientConfig: clientConfig,
+				}
 			case pptv.PushMethod.DbMethod.Mysql != nil:
 				dbMethodName = "mysql"
 				clientConfig, err := json.Marshal(pptv.PushMethod.DbMethod.Mysql.MysqlClientConfig)

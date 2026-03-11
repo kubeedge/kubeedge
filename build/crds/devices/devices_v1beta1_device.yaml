@@ -658,6 +658,19 @@ spec:
                             DBMethod represents the method used to push data to database,
                             please ensure that the mapper can access the destination address.
                           properties:
+                            Kwdb:
+                              properties:
+                                KWDBClientConfig:
+                                  description: kwdbClientConfig of Kaiwudb database
+                                  properties:
+                                    addr:
+                                      description: addr of Kaiwudb database
+                                      type: string
+                                    dbName:
+                                      description: dbname of Kaiwudb database
+                                      type: string
+                                  type: object
+                              type: object
                             TDEngine:
                               properties:
                                 TDEngineClientConfig:
