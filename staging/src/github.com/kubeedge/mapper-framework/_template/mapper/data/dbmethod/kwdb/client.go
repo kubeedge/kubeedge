@@ -56,7 +56,7 @@ func (d *DataBaseConfig) InitDbClient() error {
 	return nil
 }
 
-func (d *DataBaseConfig) CloseSessio() {
+func (d *DataBaseConfig) CloseSession() {
 	if DBPool != nil {
 		DBPool.Close()
 		klog.V(1).Info("KWDB connection pool closed")
@@ -67,14 +67,14 @@ func (d *DataBaseConfig) AddData(data *common.DataModel) error {
 
 	ctx := context.Background()
 	tableName := data.Namespace + "_" + data.DeviceName
-	vaildTable := strings.Replace(tableName, "-", "_", -1)
+	validTable := strings.Replace(tableName, "-", "_", -1)
 	validPtag := strings.Replace(data.PropertyName, "-", "_", -1)
 
-	tableDDL := fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (ts timestamp not null, propertyname varchar(64), data varchar(64),type varchar(64)) TAGS (deviceid varchar(64) not null) PRIMARY TAGS(deviceid);", vaildTable)
+	tableDDL := fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (ts timestamp not null, propertyname varchar(64), data varchar(64),type varchar(64)) TAGS (deviceid varchar(64) not null) PRIMARY TAGS(deviceid);", validTable)
 
 	datatime := time.Unix(data.TimeStamp/1e3, 0).Format("2006-01-02 15:04:05")
 	insertSQL := fmt.Sprintf("INSERT INTO %s VALUES('%v','%s', '%s', '%s', '%s');",
-		vaildTable, datatime, data.PropertyName, data.Value, data.Type, validPtag)
+		validTable, datatime, data.PropertyName, data.Value, data.Type, validPtag)
 
 	_, err := DBPool.Exec(ctx, tableDDL)
 	if err != nil {
