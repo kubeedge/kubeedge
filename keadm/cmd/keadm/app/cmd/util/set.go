@@ -557,6 +557,8 @@ func findFieldByTag(obj interface{}, k int, tagName []string, fieldNames []strin
 		findFieldByTag(v.FieldByName(tagName[k]).Interface(), k+1, tagName, fieldNames)
 		return
 	}
+
+	// First, try to find in direct fields
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		tagValue := field.Tag.Get("json")
@@ -565,6 +567,37 @@ func findFieldByTag(obj interface{}, k int, tagName []string, fieldNames []strin
 			fieldNames[k] = field.Name
 			findFieldByTag(v.Field(i).Interface(), k+1, tagName, fieldNames)
 			return
+		}
+	}
+
+	// If not found in direct fields, search in embedded (anonymous) fields
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		// Check if this is an embedded field (anonymous field)
+		if field.Anonymous {
+			// Get the field value to search within it
+			fieldValue := v.Field(i)
+			// Handle pointer to embedded struct
+			if fieldValue.Kind() == reflect.Ptr {
+				if fieldValue.IsNil() {
+					// Create a new instance if nil to get the type
+					fieldValue = reflect.New(field.Type.Elem()).Elem()
+				} else {
+					fieldValue = fieldValue.Elem()
+				}
+			}
+			// Recursively search in the embedded field
+			// Save the current state to restore if not found
+			savedField := fieldNames[k]
+			fieldNames[k] = field.Name
+			findFieldByTag(fieldValue.Interface(), k, tagName, fieldNames)
+			// If the field was found in the embedded struct, fieldNames[k] would be updated
+			if fieldNames[k] != field.Name {
+				// Field was found deeper in the embedded struct
+				return
+			}
+			// Restore if not found
+			fieldNames[k] = savedField
 		}
 	}
 }
