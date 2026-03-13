@@ -544,3 +544,84 @@ func TestSetEdgeCoreConfigWithMultiIntValue(t *testing.T) {
 	assert.Equal(t, int(9061), cfg.Modules.ServiceBus.Port)
 	assert.Equal(t, uint8(1), cfg.Modules.EventBus.MqttQOS)
 }
+
+func TestSetEdgeCoreConfigFeatureGatesSingleKey(t *testing.T) {
+	cfg := v1alpha2.NewDefaultEdgeCoreConfig()
+	// Test setting a single feature gate key
+	if err := ParseSet(cfg, `featureGates.requireAuthorization=true`); err != nil {
+		t.Fatal(err)
+	}
+	// Verify the feature gate was set
+	if cfg.FeatureGates == nil {
+		t.Fatal("FeatureGates should not be nil")
+	}
+	val, ok := cfg.FeatureGates["requireAuthorization"]
+	if !ok {
+		t.Fatal("FeatureGates should contain 'requireAuthorization' key")
+	}
+	if val != true {
+		t.Errorf("Expected requireAuthorization to be true, got %v", val)
+	}
+}
+
+// TestEmbeddedStructFieldAccess tests accessing fields in embedded structs using lowercase path
+func TestEmbeddedStructFieldAccess(t *testing.T) {
+	cfg := v1alpha2.NewDefaultEdgeCoreConfig()
+
+	// Test accessing nodeIP field from TailoredKubeletFlag (embedded in Edged)
+	if err := ParseSet(cfg, `modules.edged.nodeIP="192.168.1.100"`); err != nil {
+		t.Fatalf("Failed to set nodeIP: %v", err)
+	}
+	if cfg.Modules.Edged.NodeIP != "192.168.1.100" {
+		t.Errorf("Expected NodeIP to be '192.168.1.100', got '%s'", cfg.Modules.Edged.NodeIP)
+	}
+
+	// Test accessing rootDirectory field from TailoredKubeletFlag (embedded in Edged)
+	if err := ParseSet(cfg, `modules.edged.rootDirectory="/var/lib/kubelet"`); err != nil {
+		t.Fatalf("Failed to set rootDirectory: %v", err)
+	}
+	if cfg.Modules.Edged.RootDirectory != "/var/lib/kubelet" {
+		t.Errorf("Expected RootDirectory to be '/var/lib/kubelet', got '%s'", cfg.Modules.Edged.RootDirectory)
+	}
+}
+
+// TestMixedPathFormats tests that both uppercase and lowercase paths work
+func TestMixedPathFormats(t *testing.T) {
+	// Test with uppercase path (original behavior)
+	cfg1 := v1alpha2.NewDefaultEdgeCoreConfig()
+	if err := ParseSet(cfg1, `Modules.Edged.TailoredKubeletFlag.HostnameOverride="test1"`); err != nil {
+		t.Fatalf("Failed with uppercase path: %v", err)
+	}
+	if cfg1.Modules.Edged.HostnameOverride != "test1" {
+		t.Errorf("Uppercase path: expected 'test1', got '%s'", cfg1.Modules.Edged.HostnameOverride)
+	}
+
+	// Test with lowercase path (new embedded struct support)
+	cfg2 := v1alpha2.NewDefaultEdgeCoreConfig()
+	if err := ParseSet(cfg2, `modules.edged.hostnameOverride="test2"`); err != nil {
+		t.Fatalf("Failed with lowercase path: %v", err)
+	}
+	if cfg2.Modules.Edged.HostnameOverride != "test2" {
+		t.Errorf("Lowercase path: expected 'test2', got '%s'", cfg2.Modules.Edged.HostnameOverride)
+	}
+}
+
+func TestSetEdgeCoreConfigFeatureGatesMultipleKeys(t *testing.T) {
+	cfg := v1alpha2.NewDefaultEdgeCoreConfig()
+	// Test setting multiple feature gate keys
+	if err := ParseSet(cfg, `featureGates.requireAuthorization=true,featureGates.customFeature=false`); err != nil {
+		t.Fatal(err)
+	}
+	// Verify both feature gates were set
+	if cfg.FeatureGates == nil {
+		t.Fatal("FeatureGates should not be nil")
+	}
+	val1, ok1 := cfg.FeatureGates["requireAuthorization"]
+	if !ok1 || val1 != true {
+		t.Errorf("Expected requireAuthorization to be true, got %v (exists: %v)", val1, ok1)
+	}
+	val2, ok2 := cfg.FeatureGates["customFeature"]
+	if !ok2 || val2 != false {
+		t.Errorf("Expected customFeature to be false, got %v (exists: %v)", val2, ok2)
+	}
+}
