@@ -54,9 +54,13 @@ func NewDataBaseClient(config json.RawMessage) (*DataBaseConfig, error) {
 func (d *DataBaseConfig) InitDbClient() error {
 	ctx := context.Background()
 	username := os.Getenv("USERNAME")
-	if (username == "") { username = "root" }
+	if username == "" { 
+		username = "root" 
+	}
 	password := os.Getenv("PASSWORD")
-	if (password== "") { password = "0" }
+	if password== "" { 
+		password = "0" 
+	}
 	connConfig, err := pgxpool.ParseConfig(fmt.Sprintf(
 		"postgresql://%s:%s@%s/%s",
 		username, password, d.KWDBClientConfig.Addr, d.KWDBClientConfig.DBName,

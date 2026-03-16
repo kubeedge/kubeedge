@@ -65,7 +65,7 @@ func DataHandler(ctx context.Context, twin *common.Twin, client *driver.Customiz
 					return
 				}
 			case <-ctx.Done():
-				dbConfig.CloseSessio()
+				dbConfig.CloseSession()
 				return
 			}
 		}
