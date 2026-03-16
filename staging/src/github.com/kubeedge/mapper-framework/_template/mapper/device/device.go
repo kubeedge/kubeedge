@@ -17,7 +17,7 @@ import (
 	dbMysql "github.com/kubeedge/Template/data/dbmethod/mysql"
 	dbRedis "github.com/kubeedge/Template/data/dbmethod/redis"
 	dbTdengine "github.com/kubeedge/Template/data/dbmethod/tdengine"
-	dbKwdb "github.com/kubeedge/virtualprotocol/data/dbmethod/kwdb"
+	dbKwdb "github.com/kubeedge/Template/data/dbmethod/kwdb"
 	httpMethod "github.com/kubeedge/Template/data/publish/http"
 	mqttMethod "github.com/kubeedge/Template/data/publish/mqtt"
 	otelMethod "github.com/kubeedge/Template/data/publish/otel"
