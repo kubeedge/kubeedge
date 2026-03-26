@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
@@ -46,7 +47,11 @@ func NewEdgeConfirm() *cobra.Command {
 }
 
 func confirmNodeUpgrade(ctx context.Context, clientSet kubernetes.Interface) error {
-	result := clientSet.CoreV1().RESTClient().Post().
+	return confirmNodeUpgradeWithRESTClient(ctx, clientSet.CoreV1().RESTClient())
+}
+
+func confirmNodeUpgradeWithRESTClient(ctx context.Context, restClient rest.Interface) error {
+	result := restClient.Post().
 		Resource("taskupgrade").
 		SubResource("confirm-upgrade").
 		Do(ctx)
