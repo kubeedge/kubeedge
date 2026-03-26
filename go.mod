@@ -57,7 +57,7 @@ require (
 	k8s.io/component-helpers v0.0.0
 	k8s.io/cri-api v0.32.10
 	k8s.io/cri-client v0.32.10
-	k8s.io/klog/v2 v2.130.1
+	k8s.io/klog/v2 v2.140.0
 	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f
 	k8s.io/kubectl v0.32.10
 	k8s.io/kubernetes v1.32.10
