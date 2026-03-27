@@ -35,8 +35,12 @@ func Run() error {
 	flags := cmd.Flags()
 	klog.InitFlags(flagSet)
 	// Opt into fixed stderrthreshold behavior (kubernetes/klog#212).
-	_ = flagSet.Set("legacy_stderr_threshold_behavior", "false")
-	_ = flagSet.Set("stderrthreshold", "INFO")
+	if err := flagSet.Set("legacy_stderr_threshold_behavior", "false"); err != nil {
+		return fmt.Errorf("error setting legacy_stderr_threshold_behavior: %v", err)
+	}
+	if err := flagSet.Set("stderrthreshold", "INFO"); err != nil {
+		return fmt.Errorf("error setting stderrthreshold: %v", err)
+	}
 	err := flagSet.Set("v", "0")
 	if err != nil {
 		return fmt.Errorf("error setting klog flags: %v", err)
