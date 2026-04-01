@@ -148,7 +148,7 @@ func RemoveContainers() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Rremoving containers success")
+	fmt.Println("Removing containers success")
 	return nil
 }
 

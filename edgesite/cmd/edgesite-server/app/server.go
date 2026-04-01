@@ -54,7 +54,7 @@ type StopFunc func()
 func (p *Proxy) run(o *options.ProxyRunOptions) error {
 	o.Print()
 	if err := o.Validate(); err != nil {
-		return fmt.Errorf("failed to validate server options with %v", err)
+		return fmt.Errorf("failed to validate server options with %w", err)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -63,7 +63,7 @@ func (p *Proxy) run(o *options.ProxyRunOptions) error {
 	if o.AgentNamespace != "" {
 		config, err := clientcmd.BuildConfigFromFlags("", o.KubeconfigPath)
 		if err != nil {
-			return fmt.Errorf("failed to load kubernetes client config: %v", err)
+			return fmt.Errorf("failed to load kubernetes client config: %w", err)
 		}
 
 		if o.KubeconfigQPS != 0 {
@@ -76,7 +76,7 @@ func (p *Proxy) run(o *options.ProxyRunOptions) error {
 		}
 		k8sClient, err = kubernetes.NewForConfig(config)
 		if err != nil {
-			return fmt.Errorf("failed to create kubernetes clientset: %v", err)
+			return fmt.Errorf("failed to create kubernetes clientset: %w", err)
 		}
 	}
 
@@ -96,13 +96,13 @@ func (p *Proxy) run(o *options.ProxyRunOptions) error {
 
 	masterStop, err := p.runMasterServer(ctx, o, server)
 	if err != nil {
-		return fmt.Errorf("failed to run the master server: %v", err)
+		return fmt.Errorf("failed to run the master server: %w", err)
 	}
 
 	klog.V(1).Infoln("Starting agent server for tunnel connections.")
 	err = p.runAgentServer(o, server)
 	if err != nil {
-		return fmt.Errorf("failed to run the agent server: %v", err)
+		return fmt.Errorf("failed to run the agent server: %w", err)
 	}
 	klog.V(1).Infoln("Starting admin server for debug connections.")
 	p.runAdminServer(o)
@@ -145,7 +145,7 @@ func getUDSListener(ctx context.Context, udsName string) (net.Listener, error) {
 	var lc net.ListenConfig
 	lis, err := lc.Listen(ctx, "unix", udsName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to listen(unix) name %s: %v", udsName, err)
+		return nil, fmt.Errorf("failed to listen(unix) name %s: %w", udsName, err)
 	}
 	return lis, nil
 }
@@ -169,7 +169,7 @@ func (p *Proxy) runUDSMasterServer(ctx context.Context, o *options.ProxyRunOptio
 		client.RegisterProxyServiceServer(grpcServer, s)
 		lis, err := getUDSListener(ctx, o.UdsName)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get uds listener: %v", err)
+			return nil, fmt.Errorf("failed to get uds listener: %w", err)
 		}
 		go func() {
 			if err := grpcServer.Serve(lis); err != nil {
@@ -186,8 +186,9 @@ func (p *Proxy) runUDSMasterServer(ctx context.Context, o *options.ProxyRunOptio
 			},
 		}
 		stop = func() {
-			err := server.Shutdown(ctx)
-			klog.ErrorS(err, "error shutting down server")
+			if err := server.Shutdown(ctx); err != nil {
+				klog.ErrorS(err, "error shutting down server")
+			}
 		}
 		go func() {
 			udsListener, err := getUDSListener(ctx, o.UdsName)
@@ -195,8 +196,9 @@ func (p *Proxy) runUDSMasterServer(ctx context.Context, o *options.ProxyRunOptio
 				klog.ErrorS(err, "failed to get uds listener")
 			}
 			defer func() {
-				err := udsListener.Close()
-				klog.ErrorS(err, "failed to close uds listener")
+				if err := udsListener.Close(); err != nil {
+					klog.ErrorS(err, "failed to close uds listener")
+				}
 			}()
 			err = server.Serve(udsListener)
 			if err != nil {
@@ -211,7 +213,7 @@ func (p *Proxy) runUDSMasterServer(ctx context.Context, o *options.ProxyRunOptio
 func (p *Proxy) getTLSConfig(caFile, certFile, keyFile string) (*tls.Config, error) {
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load X509 key pair %s and %s: %v", certFile, keyFile, err)
+		return nil, fmt.Errorf("failed to load X509 key pair %s and %s: %w", certFile, keyFile, err)
 	}
 
 	if caFile == "" {
@@ -221,7 +223,7 @@ func (p *Proxy) getTLSConfig(caFile, certFile, keyFile string) (*tls.Config, err
 	certPool := x509.NewCertPool()
 	caCert, err := os.ReadFile(filepath.Clean(caFile))
 	if err != nil {
-		return nil, fmt.Errorf("failed to read cluster CA cert %s: %v", caFile, err)
+		return nil, fmt.Errorf("failed to read cluster CA cert %s: %w", caFile, err)
 	}
 	ok := certPool.AppendCertsFromPEM(caCert)
 	if !ok {
@@ -254,7 +256,7 @@ func (p *Proxy) runMTLSMasterServer(ctx context.Context, o *options.ProxyRunOpti
 		client.RegisterProxyServiceServer(grpcServer, s)
 		lis, err := net.Listen("tcp", addr)
 		if err != nil {
-			return nil, fmt.Errorf("failed to listen on %s: %v", addr, err)
+			return nil, fmt.Errorf("failed to listen on %s: %w", addr, err)
 		}
 		go func() {
 			if err := grpcServer.Serve(lis); err != nil {
@@ -266,7 +268,7 @@ func (p *Proxy) runMTLSMasterServer(ctx context.Context, o *options.ProxyRunOpti
 	} else {
 		// http-connect with no tls
 		httpServer := &http.Server{
-			Addr: ":8088",
+			Addr: fmt.Sprintf(":%d", o.ServerPort+1),
 			Handler: &server.Tunnel{
 				Server: s,
 			},
@@ -324,7 +326,7 @@ func (p *Proxy) runAgentServer(o *options.ProxyRunOptions, server *server.ProxyS
 	agent.RegisterAgentServiceServer(grpcServer, server)
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
-		return fmt.Errorf("failed to listen on %s: %v", addr, err)
+		return fmt.Errorf("failed to listen on %s: %w", addr, err)
 	}
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {
