@@ -31,6 +31,7 @@ import (
 )
 
 const grpcMode = "grpc"
+const defaultHTTPServerPort = 8088
 
 var udsListenerLock sync.Mutex
 
@@ -190,18 +191,17 @@ func (p *Proxy) runUDSMasterServer(ctx context.Context, o *options.ProxyRunOptio
 				klog.ErrorS(err, "error shutting down server")
 			}
 		}
+		udsListener, err := getUDSListener(ctx, o.UdsName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get uds listener: %w", err)
+		}
 		go func() {
-			udsListener, err := getUDSListener(ctx, o.UdsName)
-			if err != nil {
-				klog.ErrorS(err, "failed to get uds listener")
-			}
 			defer func() {
 				if err := udsListener.Close(); err != nil {
 					klog.ErrorS(err, "failed to close uds listener")
 				}
 			}()
-			err = server.Serve(udsListener)
-			if err != nil {
+			if err := server.Serve(udsListener); err != nil {
 				klog.ErrorS(err, "failed to serve uds requests")
 			}
 		}()
@@ -268,7 +268,7 @@ func (p *Proxy) runMTLSMasterServer(ctx context.Context, o *options.ProxyRunOpti
 	} else {
 		// http-connect with no tls
 		httpServer := &http.Server{
-			Addr: fmt.Sprintf(":%d", o.ServerPort+1),
+			Addr: fmt.Sprintf(":%d", defaultHTTPServerPort),
 			Handler: &server.Tunnel{
 				Server: s,
 			},
