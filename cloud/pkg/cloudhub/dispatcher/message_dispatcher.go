@@ -73,20 +73,15 @@ type MessageDispatcher interface {
 	// and according to the content of the message, the message is dispatched
 	// to the message queue of each edge node.
 	DispatchDownstream()
-
 	// DispatchUpstream dispatch messages sent from edge nodes to the cloud,
 	// such as node status messages, pod status messages, etc.
 	DispatchUpstream(message *beehivemodel.Message, info *model.HubInfo)
-
 	// AddNodeMessagePool add the given node message pool to the dispatcher.
 	AddNodeMessagePool(nodeID string, pool *common.NodeMessagePool)
-
 	// DeleteNodeMessagePool deletes the given node message pool from the dispatcher.
 	DeleteNodeMessagePool(nodeID string, pool *common.NodeMessagePool)
-
 	// GetNodeMessagePool provides the nodeMessagePool that matches node ID
 	GetNodeMessagePool(nodeID string) *common.NodeMessagePool
-
 	// Publish sends the given message to module according to the message source
 	Publish(msg *beehivemodel.Message) error
 }
@@ -95,16 +90,12 @@ type messageDispatcher struct {
 	// NodeMessagePools stores and manages access to nodeMessagePool, maintaining
 	// the mappings between nodeID and its nodeMessagePool.
 	NodeMessagePools sync.Map
-
 	// SessionManager
 	SessionManager *session.Manager
-
 	// objectSync client for interacting with Kubernetes API servers.
 	reliableClient reliableclient.Interface
-
 	// objectSyncLister can list/get objectSync from the shared informer's store
 	objectSyncLister synclisters.ObjectSyncLister
-
 	// clusterObjectSyncLister can list/get clusterObjectSync from the shared informer's store
 	clusterObjectSyncLister synclisters.ClusterObjectSyncLister
 }
@@ -216,7 +207,11 @@ func (md *messageDispatcher) PubToController(info *model.HubInfo, msg *beehivemo
 func (md *messageDispatcher) enqueueNoAckMessage(nodeID string, msg *beehivemodel.Message) {
 	nodeMessagePool := md.GetNodeMessagePool(nodeID)
 
-	messageKey, _ := common.NoAckMessageKeyFunc(msg)
+	messageKey, err := common.NoAckMessageKeyFunc(msg)
+	if err != nil {
+		klog.Errorf("failed to get key for no-ack message: %s, err: %v", msg.String(), err)
+		return
+	}
 	if err := nodeMessagePool.NoAckMessageStore.Add(msg); err != nil {
 		klog.Errorf("failed to add msg: %v", err)
 		return
@@ -302,7 +297,6 @@ func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *be
 	case err != nil && apierrors.IsNotFound(err):
 		// If clusterObjectSync is not exist, this indicates that the message is coming
 		// for the first time, We create clusterObjectSync for the resource directly.
-
 		clusterObjectSync := &v1alpha1.ClusterObjectSync{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: clusterObjectSyncName,
@@ -367,7 +361,6 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 	case err != nil && apierrors.IsNotFound(err):
 		// If objectSync is not exist, this indicates that the message is coming
 		// for the first time, We create objectSync for the resource directly.
-
 		objectSync := &v1alpha1.ObjectSync{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      objectSyncName,
