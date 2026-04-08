@@ -93,7 +93,6 @@ func TestHttpClientFor(t *testing.T) {
 	}
 }
 
-
 func invalidTLSConfig() *rest.Config {
 	return &rest.Config{
 		Host: "http://localhost:6443",
