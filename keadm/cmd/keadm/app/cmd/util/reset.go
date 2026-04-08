@@ -73,7 +73,7 @@ func CleanDirectories(isEdgeNode bool) error {
 	for _, dir := range dirToClean {
 		klog.V(2).Infof("remove dir %s", dir)
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
-			return nil
+			continue
 		}
 		if err := os.RemoveAll(dir); err != nil {
 			klog.Warningf("failed to delete dir %s, err: %v", dir, err)

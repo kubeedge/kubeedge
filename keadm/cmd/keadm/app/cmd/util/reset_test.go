@@ -216,4 +216,32 @@ func TestCleanDirectories(t *testing.T) {
 			t.Errorf("CleanDirectories(false) with removal failure should still return nil, got: %v", err)
 		}
 	})
+
+	t.Run("MissingDirectoryDoesNotStopCleanup", func(t *testing.T) {
+		patches.Reset()
+
+		statCalls := 0
+
+		patches.ApplyFunc(os.Stat,
+			func(string) (os.FileInfo, error) {
+				statCalls++
+				if statCalls == 2 {
+					return nil, os.ErrNotExist
+				}
+				return nil, nil
+			})
+
+		patches.ApplyFunc(os.IsNotExist,
+			func(err error) bool {
+				return errors.Is(err, os.ErrNotExist)
+			})
+
+		if err := CleanDirectories(false); err != nil {
+			t.Errorf("CleanDirectories(false) failed: %v", err)
+		}
+
+		if statCalls != 4 {
+			t.Fatalf("expected cleanup to continue checking remaining directories, got %d stat calls", statCalls)
+		}
+	})
 }
