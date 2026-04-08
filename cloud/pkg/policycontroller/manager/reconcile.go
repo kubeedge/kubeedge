@@ -440,12 +440,14 @@ func (c *Controller) syncRules(ctx context.Context, acc *policyv1alpha1.ServiceA
 	} else {
 		addNodes := subtractSlice(acc.Status.NodeList, nodes)
 		klog.V(4).Infof("serviceaccountaccess spec %s/%s is up to date", acc.Namespace, acc.Name)
-		if len(addNodes) != 0 {
+		if !equality.Semantic.DeepEqual(acc.Status.NodeList, nodes) {
 			acc.Status.NodeList = append([]string{}, nodes...)
 			if err := c.Client.Status().Update(ctx, acc); err != nil {
 				klog.Errorf("failed to update serviceaccountaccess status %s/%s, %v", acc.Namespace, acc.Name, err)
 				return controllerruntime.Result{Requeue: true}, err
 			}
+		}
+		if len(addNodes) != 0 {
 			c.send2Edge(acc, addNodes, model.InsertOperation)
 		}
 	}
