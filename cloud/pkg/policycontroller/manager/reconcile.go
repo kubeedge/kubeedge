@@ -393,24 +393,25 @@ func (c *Controller) syncRules(ctx context.Context, acc *policyv1alpha1.ServiceA
 	}
 	currentAcc.Spec.ServiceAccount = *newSA
 	currentAcc.Spec.ServiceAccountUID = newSA.UID
-	if len(nodes) == 0 && len(acc.Status.NodeList) == 0 {
-		klog.Warningf("no nodes found for serviceaccountaccess %s/%s", acc.Namespace, acc.Name)
-		return controllerruntime.Result{}, nil
-	}
-	deleteNodes := subtractSlice(nodes, acc.Status.NodeList)
-	if len(deleteNodes) != 0 {
-		// no nodes in the current acc status, delete the acc
-		if len(nodes) == 0 {
-			if err = c.Client.Delete(ctx, acc); err != nil {
-				klog.Errorf("failed to delete serviceaccountaccess %s/%s, %v", acc.Namespace, acc.Name, err)
-				return controllerruntime.Result{Requeue: true}, err
-			}
-			klog.V(4).Infof("delete serviceaccountaccess %s/%s", acc.Namespace, acc.Name)
-			c.send2Edge(acc, deleteNodes, model.DeleteOperation)
+
+	if len(nodes) == 0 {
+		if len(acc.Status.NodeList) == 0 {
+			klog.Warningf("no nodes found for serviceaccountaccess %s/%s", acc.Namespace, acc.Name)
 			return controllerruntime.Result{}, nil
 		}
-		c.send2Edge(acc, deleteNodes, model.DeleteOperation)
+
+		// no nodes in the current acc status, delete the acc
+		if err = c.Client.Delete(ctx, acc); err != nil {
+			klog.Errorf("failed to delete serviceaccountaccess %s/%s, %v", acc.Namespace, acc.Name, err)
+			return controllerruntime.Result{Requeue: true}, err
+		}
+		klog.V(4).Infof("delete serviceaccountaccess %s/%s", acc.Namespace, acc.Name)
+		c.send2Edge(acc, acc.Status.NodeList, model.DeleteOperation)
+		return controllerruntime.Result{}, nil
 	}
+
+	addNodes := subtractSlice(acc.Status.NodeList, nodes)
+	deleteNodes := subtractSlice(nodes, acc.Status.NodeList)
 	sort.Slice(currentAcc.Spec.AccessRoleBinding, func(i, j int) bool {
 		return currentAcc.Spec.AccessRoleBinding[i].RoleBinding.Name < currentAcc.Spec.AccessRoleBinding[j].RoleBinding.Name
 	})
@@ -420,6 +421,14 @@ func (c *Controller) syncRules(ctx context.Context, acc *policyv1alpha1.ServiceA
 	sort.Slice(nodes, func(i, j int) bool {
 		return nodes[i] < nodes[j]
 	})
+	if len(addNodes) != 0 || len(deleteNodes) != 0 {
+		acc.Status.NodeList = append([]string{}, nodes...)
+		if err := c.Client.Status().Update(ctx, acc); err != nil {
+			klog.Errorf("failed to update serviceaccountaccess status %s/%s, %v", acc.Namespace, acc.Name, err)
+			return controllerruntime.Result{Requeue: true}, err
+		}
+		klog.V(4).Infof("update serviceaccountaccess %s/%s status.nodeList %v", acc.Namespace, acc.Name, nodes)
+	}
 	if !equalAccessBindingSlice(acc.Spec.AccessClusterRoleBinding, currentAcc.Spec.AccessClusterRoleBinding) ||
 		!equalAccessBindingSlice(acc.Spec.AccessRoleBinding, currentAcc.Spec.AccessRoleBinding) ||
 		!equalServiceAccount(&acc.Spec.ServiceAccount, &currentAcc.Spec.ServiceAccount) ||
@@ -429,25 +438,16 @@ func (c *Controller) syncRules(ctx context.Context, acc *policyv1alpha1.ServiceA
 			klog.Errorf("failed to update serviceaccountaccess %s/%s, %v", acc.Namespace, acc.Name, err)
 			return controllerruntime.Result{Requeue: true}, err
 		}
-		if !equality.Semantic.DeepEqual(acc.Status.NodeList, nodes) {
-			acc.Status.NodeList = append([]string{}, nodes...)
-			if err := c.Client.Status().Update(ctx, acc); err != nil {
-				klog.Errorf("failed to update serviceaccountaccess status %s/%s, %v", acc.Namespace, acc.Name, err)
-				return controllerruntime.Result{Requeue: true}, err
-			}
-		}
+		klog.V(4).Infof("update serviceaccountaccess %s/%s", acc.Namespace, acc.Name)
 		c.send2Edge(acc, nodes, model.UpdateOperation)
 	} else {
-		addNodes := subtractSlice(acc.Status.NodeList, nodes)
 		klog.V(4).Infof("serviceaccountaccess spec %s/%s is up to date", acc.Namespace, acc.Name)
 		if len(addNodes) != 0 {
-			acc.Status.NodeList = append([]string{}, nodes...)
-			if err := c.Client.Status().Update(ctx, acc); err != nil {
-				klog.Errorf("failed to update serviceaccountaccess status %s/%s, %v", acc.Namespace, acc.Name, err)
-				return controllerruntime.Result{Requeue: true}, err
-			}
 			c.send2Edge(acc, addNodes, model.InsertOperation)
 		}
+	}
+	if len(deleteNodes) != 0 {
+		c.send2Edge(acc, deleteNodes, model.DeleteOperation)
 	}
 	return controllerruntime.Result{}, nil
 }
