@@ -41,7 +41,7 @@ func StartHTTPServer() error {
 		pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: hubconfig.Config.Key}),
 	)
 	if err != nil {
-		return fmt.Errorf("failed to create a x509 tls certificate")
+		return fmt.Errorf("failed to load x509 key pair: %w", err)
 	}
 
 	server := &http.Server{
