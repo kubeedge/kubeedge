@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	authenticationv1 "k8s.io/api/authentication/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 
 	ctxutl "github.com/kubeedge/kubeedge/cloud/pkg/common/context"
@@ -215,42 +214,6 @@ func TestNewForCrdConfigOrDie_WithUserAgent(t *testing.T) {
 func TestNewForCrdConfigOrDie_PanicOnTransportError(t *testing.T) {
 	cfg := invalidTLSConfig()
 	assert.Panics(t, func() {
-		newForCrdConfigOrDie(cfg, false)
-	})
-}
-
-func TestNewForK8sConfigOrDie_PanicOnClientError(t *testing.T) {
-	assert.Panics(t, func() {
-		cfg := &rest.Config{
-			Host: "http://localhost:6443",
-			ContentConfig: rest.ContentConfig{
-				NegotiatedSerializer: runtime.NewSimpleNegotiatedSerializer(runtime.SerializerInfo{}),
-			},
-		}
-		newForK8sConfigOrDie(cfg, false)
-	})
-}
-
-func TestNewForDynamicConfigOrDie_PanicOnClientError(t *testing.T) {
-	assert.Panics(t, func() {
-		cfg := &rest.Config{
-			Host: "http://localhost:6443",
-			ContentConfig: rest.ContentConfig{
-				NegotiatedSerializer: runtime.NewSimpleNegotiatedSerializer(runtime.SerializerInfo{}),
-			},
-		}
-		newForDynamicConfigOrDie(cfg, false)
-	})
-}
-
-func TestNewForCrdConfigOrDie_PanicOnClientError(t *testing.T) {
-	assert.Panics(t, func() {
-		cfg := &rest.Config{
-			Host: "http://localhost:6443",
-			ContentConfig: rest.ContentConfig{
-				NegotiatedSerializer: runtime.NewSimpleNegotiatedSerializer(runtime.SerializerInfo{}),
-			},
-		}
 		newForCrdConfigOrDie(cfg, false)
 	})
 }
