@@ -20,14 +20,12 @@ import (
 	"context"
 	"crypto/tls"
 	stdx509 "crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"net/http"
 
 	"k8s.io/apiserver/pkg/authentication/request/x509"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
 
@@ -117,9 +115,11 @@ func (r *cloudhubAuthorizer) authenticateConnection(connection conn.Connection) 
 	options := x509.DefaultVerifyOptions()
 	// ca cloud be available util CloudHub starts
 	options.Roots = stdx509.NewCertPool()
-	if ok := options.Roots.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: hubconfig.Config.Ca})); !ok {
-		return fmt.Errorf("node %q: failed to load CA certificate into cert pool", nodeID)
+	caCert, err := stdx509.ParseCertificate(hubconfig.Config.Ca)
+	if err != nil {
+		return fmt.Errorf("node %q: failed to parse CA certificate: %w", nodeID, err)
 	}
+	options.Roots.AddCert(caCert)
 
 	authenticator := x509.New(options, x509.CommonNameUserConversion)
 	resp, ok, err := authenticator.AuthenticateRequest(&http.Request{TLS: &tls.ConnectionState{PeerCertificates: peerCerts}})
