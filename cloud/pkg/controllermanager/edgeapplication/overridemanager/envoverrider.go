@@ -18,6 +18,7 @@ package overridemanager
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -162,27 +163,17 @@ func overrideEnv(curEnv []corev1.EnvVar, envOverrider *v1alpha1.EnvOverrider) ([
 }
 
 func replaceEnv(curEnv []corev1.EnvVar, replaceValues []corev1.EnvVar) []corev1.EnvVar {
-	replaceMap := make(map[string]corev1.EnvVar, len(replaceValues))
-	for _, envVar := range replaceValues {
-		replaceMap[envVar.Name] = envVar
-	}
-
 	newEnv := make([]corev1.EnvVar, len(curEnv))
-	for i, envVar := range curEnv {
-		if replaced, ok := replaceMap[envVar.Name]; ok {
-			newEnv[i] = replaced
-			delete(replaceMap, envVar.Name)
+	copy(newEnv, curEnv)
+	for _, rplVal := range replaceValues {
+		if idx := slices.IndexFunc(newEnv, func(it corev1.EnvVar) bool {
+			return rplVal.Name == it.Name
+		}); idx > -1 {
+			newEnv[idx] = rplVal
 		} else {
-			newEnv[i] = envVar
+			newEnv = append(newEnv, rplVal)
 		}
 	}
-
-	for _, replaceVar := range replaceValues {
-		if _, remaining := replaceMap[replaceVar.Name]; remaining {
-			newEnv = append(newEnv, replaceVar)
-		}
-	}
-
 	return newEnv
 }
 
@@ -263,7 +254,10 @@ func processResourceFieldRef(value map[string]interface{}) (*corev1.ResourceFiel
 	if err != nil {
 		return nil, err
 	}
-	c, rcOK, err := unstructured.NestedString(value, "resourceFieldRef", "containerName")
+	if !rrOK {
+		return nil, nil
+	}
+	c, _, err := unstructured.NestedString(value, "resourceFieldRef", "containerName")
 	if err != nil {
 		return nil, err
 	}
@@ -271,15 +265,16 @@ func processResourceFieldRef(value map[string]interface{}) (*corev1.ResourceFiel
 	if err != nil {
 		return nil, err
 	}
-
-	if rrOK && rcOK && rdOK {
-		return &corev1.ResourceFieldSelector{
-			ContainerName: c,
-			Resource:      r,
-			Divisor:       resource.MustParse(divisor),
-		}, nil
+	sel := &corev1.ResourceFieldSelector{
+		Resource:      r,
+		ContainerName: c,
 	}
-	return nil, nil
+	if rdOK {
+		sel.Divisor = resource.MustParse(divisor)
+	} else {
+		sel.Divisor = resource.MustParse("1")
+	}
+	return sel, nil
 }
 
 func processConfigMapKeyRef(value map[string]interface{}) (*corev1.ConfigMapKeySelector, error) {
