@@ -1099,3 +1099,224 @@ func TestOverrideImage(t *testing.T) {
 		})
 	}
 }
+
+func TestSpliceInitImagePath(t *testing.T) {
+	assert := assert.New(t)
+
+	testCases := []struct {
+		name           string
+		prefixPath     string
+		containerIndex int
+		expectedPath   string
+	}{
+		{
+			name:           "first init container with pod prefix",
+			prefixPath:     "/spec",
+			containerIndex: 0,
+			expectedPath:   "/spec/initContainers/0/image",
+		},
+		{
+			name:           "second init container with pod template prefix",
+			prefixPath:     "/spec/template/spec",
+			containerIndex: 1,
+			expectedPath:   "/spec/template/spec/initContainers/1/image",
+		},
+		{
+			name:           "empty prefix",
+			prefixPath:     "",
+			containerIndex: 0,
+			expectedPath:   "/initContainers/0/image",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			path := spliceInitImagePath(tc.prefixPath, tc.containerIndex)
+			assert.Equal(tc.expectedPath, path)
+		})
+	}
+}
+
+func TestExtractPatchesBy_InitContainers(t *testing.T) {
+	assert := assert.New(t)
+
+	testCases := []struct {
+		name            string
+		podSpec         corev1.PodSpec
+		prefixPath      string
+		imageOverrider  *appsv1alpha1.ImageOverrider
+		expectedPatches []overrideOption
+		expectError     bool
+	}{
+		{
+			name: "init containers only",
+			podSpec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  "init-container1",
+						Image: "busybox:1.33",
+					},
+				},
+			},
+			prefixPath: "/spec",
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Tag,
+				Operator:  appsv1alpha1.OverriderOpReplace,
+				Value:     "latest",
+			},
+			expectedPatches: []overrideOption{
+				{
+					Op:    "replace",
+					Path:  "/spec/initContainers/0/image",
+					Value: "busybox:latest",
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "both init containers and regular containers",
+			podSpec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  "init-container1",
+						Image: "busybox:1.33",
+					},
+					{
+						Name:  "init-container2",
+						Image: "alpine:3.14",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  "main-container",
+						Image: "nginx:1.14.2",
+					},
+				},
+			},
+			prefixPath: "/spec",
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Tag,
+				Operator:  appsv1alpha1.OverriderOpReplace,
+				Value:     "latest",
+			},
+			expectedPatches: []overrideOption{
+				{
+					Op:    "replace",
+					Path:  "/spec/initContainers/0/image",
+					Value: "busybox:latest",
+				},
+				{
+					Op:    "replace",
+					Path:  "/spec/initContainers/1/image",
+					Value: "alpine:latest",
+				},
+				{
+					Op:    "replace",
+					Path:  "/spec/containers/0/image",
+					Value: "nginx:latest",
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "init containers with registry override",
+			podSpec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:  "init-container1",
+						Image: "busybox:1.33",
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:  "main-container",
+						Image: "nginx:1.14.2",
+					},
+				},
+			},
+			prefixPath: "/spec/template/spec",
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Registry,
+				Operator:  appsv1alpha1.OverriderOpReplace,
+				Value:     "test-registry.com",
+			},
+			expectedPatches: []overrideOption{
+				{
+					Op:    "replace",
+					Path:  "/spec/template/spec/initContainers/0/image",
+					Value: "test-registry.com/busybox:1.33",
+				},
+				{
+					Op:    "replace",
+					Path:  "/spec/template/spec/containers/0/image",
+					Value: "test-registry.com/nginx:1.14.2",
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "init containers appear before regular containers in patches",
+			podSpec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{Name: "init1", Image: "busybox:1.33"},
+				},
+				Containers: []corev1.Container{
+					{Name: "main", Image: "nginx:1.14.2"},
+				},
+			},
+			prefixPath: "/spec",
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Tag,
+				Operator:  appsv1alpha1.OverriderOpRemove,
+			},
+			expectedPatches: []overrideOption{
+				{
+					Op:    "replace",
+					Path:  "/spec/initContainers/0/image",
+					Value: "busybox",
+				},
+				{
+					Op:    "replace",
+					Path:  "/spec/containers/0/image",
+					Value: "nginx",
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "no init containers falls back to containers only",
+			podSpec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{Name: "main", Image: "nginx:1.14.2"},
+				},
+			},
+			prefixPath: "/spec",
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Tag,
+				Operator:  appsv1alpha1.OverriderOpReplace,
+				Value:     "latest",
+			},
+			expectedPatches: []overrideOption{
+				{
+					Op:    "replace",
+					Path:  "/spec/containers/0/image",
+					Value: "nginx:latest",
+				},
+			},
+			expectError: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			patches, err := extractPatchesBy(tc.podSpec, tc.prefixPath, tc.imageOverrider)
+
+			if tc.expectError {
+				assert.Error(err)
+			} else {
+				assert.NoError(err)
+				assert.Equal(tc.expectedPatches, patches)
+			}
+		})
+	}
+}
