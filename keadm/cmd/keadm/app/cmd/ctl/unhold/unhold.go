@@ -23,6 +23,7 @@ import (
 
 	"github.com/spf13/cobra"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/rest"
 
 	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
@@ -80,7 +81,15 @@ func unholdResourceUpgrade(resource, target string) error {
 		return err
 	}
 
-	result := clientset.CoreV1().RESTClient().Post().
+	return unholdResourceUpgradeWithRESTClient(ctx, clientset.CoreV1().RESTClient(), resource, target)
+}
+
+func unholdResourceUpgradeWithRESTClient(
+	ctx context.Context,
+	restClient rest.Interface,
+	resource, target string,
+) error {
+	result := restClient.Post().
 		Resource(resource).
 		SubResource("unhold-upgrade").
 		SetHeader("Content-Type", "text/plain").
