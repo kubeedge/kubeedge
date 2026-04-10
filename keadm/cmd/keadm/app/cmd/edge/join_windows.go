@@ -30,13 +30,14 @@ import (
 	"github.com/blang/semver"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/util/wait"
-	klog "k8s.io/klog/v2"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 
 	apiconsts "github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2/validation"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/helm"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	extsys "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/extsystem"
 	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
@@ -165,11 +166,20 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	}
 
 	if len(opt.Sets) > 0 {
-		for _, set := range opt.Sets {
-			if err := util.ParseSet(edgeCoreConfig, set); err != nil {
-				return err
-			}
+		data, err := yaml.Marshal(edgeCoreConfig)
+		if err != nil {
+			return err
 		}
+		mergedData, err := helm.MergeSetsToBytes(data, opt.Sets)
+		if err != nil {
+			return fmt.Errorf("failed to merge sets to edgecore's config with err:%v", err)
+		}
+		edgeConfigure := &v1alpha2.EdgeCoreConfig{}
+		//Check if there are any unknown fields in the set.
+		if err := yaml.UnmarshalStrict(mergedData, edgeConfigure); err != nil {
+			return err
+		}
+		edgeCoreConfig = edgeConfigure
 	}
 
 	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
