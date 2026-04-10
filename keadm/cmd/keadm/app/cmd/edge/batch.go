@@ -112,12 +112,13 @@ func processBatchProcess(cfg *common.Config, step *common.Step) error {
 	// Ensure all log entries are written to file
 	defer logWriter.Flush()
 
-	// Get keadm packages
-	step.Printf("Preparing keadm packages.")
-	if err = prepareKeadmPackages(cfg); err != nil {
-		return errors.Errorf("failed to prepare keadm packages, %v", err)
+	if cfg.Keadm.KeadmBinDir == nil {
+		// Get keadm packages
+		step.Printf("Preparing keadm packages.")
+		if err = prepareKeadmPackages(cfg); err != nil {
+			return errors.Errorf("failed to prepare keadm packages, %v", err)
+		}
 	}
-
 	step.Printf("Batch process nodes.")
 	// Batch process edge nodes
 	if err = batchProcessNodes(cfg, logWriter); err != nil {
@@ -274,17 +275,19 @@ func processNode(node *common.Node, cfg *common.Config) error {
 		}
 	}
 
-	// get node Arch
-	arch, err := getNodeArch(client)
-	if err != nil {
-		return err
-	}
-	keadmPath := filepath.Join(binDir, arch, fmt.Sprintf("keadm-%s-linux-%s/keadm/keadm", cfg.Keadm.KeadmVersion, arch))
-	if err = uploadFile(client, node.NodeName, keadmPath, filepath.Join(baseDir, "keadm")); err != nil {
-		return err
+	if cfg.Keadm.KeadmBinDir == nil {
+		// get node Arch
+		arch, err := getNodeArch(client)
+		if err != nil {
+			return err
+		}
+		keadmPath := filepath.Join(binDir, arch, fmt.Sprintf("keadm-%s-linux-%s/keadm/keadm", cfg.Keadm.KeadmVersion, arch))
+		if err = uploadFile(client, node.NodeName, keadmPath, filepath.Join(baseDir, "keadm")); err != nil {
+			return err
+		}
 	}
 
-	if err = executeKeadmCommand(client, node.NodeName, node.KeadmCmd); err != nil {
+	if err = executeKeadmCommand(client, node.NodeName, node.KeadmCmd, cfg.Keadm.KeadmBinDir); err != nil {
 		return err
 	}
 
@@ -410,7 +413,7 @@ func uploadFiles(client *ssh.Client, nodeName, srcDir, destDir string) error {
 }
 
 // execute keadm command
-func executeKeadmCommand(client *ssh.Client, nodeName, cmd string) error {
+func executeKeadmCommand(client *ssh.Client, nodeName, cmd string, keadmBinDirectory *string) error {
 	session, err := client.NewSession()
 	if err != nil {
 		return errors.Errorf("failed to create new SSH session: %v", err)
@@ -418,10 +421,18 @@ func executeKeadmCommand(client *ssh.Client, nodeName, cmd string) error {
 	defer session.Close()
 	var execCmd string
 	parts := strings.Fields(cmd)
-	if len(parts) >= 1 && parts[0] == "reset" {
-		execCmd = fmt.Sprintf("cd %s && yes |./keadm %s", baseDir, cmd)
+	if keadmBinDirectory == nil {
+		if len(parts) >= 1 && parts[0] == "reset" {
+			execCmd = fmt.Sprintf("cd %s && yes |./keadm %s", baseDir, cmd)
+		} else {
+			execCmd = fmt.Sprintf("cd %s && ./keadm %s", baseDir, cmd)
+		}
 	} else {
-		execCmd = fmt.Sprintf("cd %s && ./keadm %s", baseDir, cmd)
+		if len(parts) >= 1 && parts[0] == "reset" {
+			execCmd = fmt.Sprintf("cd %s && yes |./keadm %s", *keadmBinDirectory, cmd)
+		} else {
+			execCmd = fmt.Sprintf("cd %s && ./keadm %s", *keadmBinDirectory, cmd)
+		}
 	}
 	klog.Infof("%s: Executing command %s", nodeName, execCmd)
 
