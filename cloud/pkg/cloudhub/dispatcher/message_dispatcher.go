@@ -216,9 +216,13 @@ func (md *messageDispatcher) PubToController(info *model.HubInfo, msg *beehivemo
 func (md *messageDispatcher) enqueueNoAckMessage(nodeID string, msg *beehivemodel.Message) {
 	nodeMessagePool := md.GetNodeMessagePool(nodeID)
 
-	messageKey, _ := common.NoAckMessageKeyFunc(msg)
+	messageKey, err := common.NoAckMessageKeyFunc(msg)
+	if err != nil {
+		klog.Errorf("failed to get key for no-ack message: %s, err: %v", msg.String(), err)
+		return
+	}
 	if err := nodeMessagePool.NoAckMessageStore.Add(msg); err != nil {
-		klog.Errorf("failed to add msg: %v", err)
+		klog.Errorf("failed to add message %v to NoAckMessageStore, err: %v", msg, err)
 		return
 	}
 	nodeMessagePool.NoAckMessageQueue.Add(messageKey)
@@ -302,7 +306,6 @@ func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *be
 	case err != nil && apierrors.IsNotFound(err):
 		// If clusterObjectSync is not exist, this indicates that the message is coming
 		// for the first time, We create clusterObjectSync for the resource directly.
-
 		clusterObjectSync := &v1alpha1.ClusterObjectSync{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: clusterObjectSyncName,
@@ -367,7 +370,6 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 	case err != nil && apierrors.IsNotFound(err):
 		// If objectSync is not exist, this indicates that the message is coming
 		// for the first time, We create objectSync for the resource directly.
-
 		objectSync := &v1alpha1.ObjectSync{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      objectSyncName,
