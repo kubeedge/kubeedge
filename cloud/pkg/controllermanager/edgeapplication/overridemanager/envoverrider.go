@@ -84,7 +84,10 @@ func buildEnvPatchesWithPath(specContainersPath string, rawObj *unstructured.Uns
 			var patch overrideOption
 			// if env is nil, to add new [env]
 			if container.(map[string]interface{})["env"] == nil {
-				patch, _ = acquireAddEnvOverrideOption(envPath, envOverrider)
+				patch, err = acquireAddEnvOverrideOption(envPath, envOverrider)
+				if err != nil {
+					return nil, fmt.Errorf("failed to acquire add env override option: %w", err)
+				}
 			} else {
 				env, ok := container.(map[string]interface{})["env"].([]interface{})
 				if !ok {
@@ -97,7 +100,10 @@ func buildEnvPatchesWithPath(specContainersPath string, rawObj *unstructured.Uns
 					}
 					envValue = append(envValue, *envVar)
 				}
-				patch, _ = acquireReplaceEnvOverrideOption(envPath, envValue, envOverrider)
+				patch, err = acquireReplaceEnvOverrideOption(envPath, envValue, envOverrider)
+				if err != nil {
+					return nil, fmt.Errorf("failed to acquire replace env override option: %w", err)
+				}
 			}
 
 			klog.V(4).Infof("[buildEnvPatchesWithPath] containers patch info (%+v)", patch)
@@ -156,22 +162,26 @@ func overrideEnv(curEnv []corev1.EnvVar, envOverrider *v1alpha1.EnvOverrider) ([
 }
 
 func replaceEnv(curEnv []corev1.EnvVar, replaceValues []corev1.EnvVar) []corev1.EnvVar {
-	newEnv := make([]corev1.EnvVar, 0, len(curEnv))
-	currentMap := make(map[string]corev1.EnvVar)
-
-	// Populate current map with existing environment variables
-	for _, envVar := range curEnv {
-		currentMap[envVar.Name] = envVar
+	replaceMap := make(map[string]corev1.EnvVar, len(replaceValues))
+	for _, envVar := range replaceValues {
+		replaceMap[envVar.Name] = envVar
 	}
 
-	// Replace or add new environment variables
+	newEnv := make([]corev1.EnvVar, len(curEnv))
+	for i, envVar := range curEnv {
+		if replaced, ok := replaceMap[envVar.Name]; ok {
+			newEnv[i] = replaced
+			delete(replaceMap, envVar.Name)
+		} else {
+			newEnv[i] = envVar
+		}
+	}
+
 	for _, replaceVar := range replaceValues {
-		currentMap[replaceVar.Name] = replaceVar
-	}
-
-	// Convert map back to slice
-	for _, envVar := range currentMap {
-		newEnv = append(newEnv, envVar)
+		if v, remaining := replaceMap[replaceVar.Name]; remaining {
+			newEnv = append(newEnv, v)
+			delete(replaceMap, replaceVar.Name)
+		}
 	}
 
 	return newEnv
