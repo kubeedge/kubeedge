@@ -218,7 +218,7 @@ func (md *messageDispatcher) enqueueNoAckMessage(nodeID string, msg *beehivemode
 
 	messageKey, err := common.NoAckMessageKeyFunc(msg)
 	if err != nil {
-		klog.Errorf("failed to get key for no-ack message: %s, err: %v", msg.String(), err)
+		klog.Errorf("failed to get key for no-ack message, err: %v", err)
 		return
 	}
 	if err := nodeMessagePool.NoAckMessageStore.Add(msg); err != nil {
