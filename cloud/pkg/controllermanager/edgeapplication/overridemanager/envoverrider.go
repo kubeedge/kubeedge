@@ -178,8 +178,9 @@ func replaceEnv(curEnv []corev1.EnvVar, replaceValues []corev1.EnvVar) []corev1.
 	}
 
 	for _, replaceVar := range replaceValues {
-		if _, remaining := replaceMap[replaceVar.Name]; remaining {
-			newEnv = append(newEnv, replaceVar)
+		if v, remaining := replaceMap[replaceVar.Name]; remaining {
+			newEnv = append(newEnv, v)
+			delete(replaceMap, replaceVar.Name)
 		}
 	}
 
