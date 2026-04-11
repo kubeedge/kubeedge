@@ -150,7 +150,7 @@ func (r *ActionRunner) RunAction(ctx context.Context, jobname, nodename, action 
 		actionFn, err := r.mustGetAction(act.Name)
 		if err != nil {
 			logger.Error(err, "failed to get action handler, report to cloud")
-			r.ReportActionStatus(act.Name, jobname, nodename, &baseActionResponse{err: err})
+			r.ReportActionStatus(jobname, nodename, act.Name, &baseActionResponse{err: err})
 			return
 		}
 		resp := actionFn(ctx, jobname, nodename, ser)
