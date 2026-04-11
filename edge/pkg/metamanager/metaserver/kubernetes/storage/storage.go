@@ -121,7 +121,7 @@ func (r *REST) Get(ctx context.Context, _ string, options *metav1.GetOptions) (r
 			klog.V(3).Infof("failed to save obj to metav2, err: %v", err)
 		}
 		klog.Infof("[metaserver/reststorage] successfully process get req (%v) through cloud", info.Path)
-		return obj, nil
+		return DecodeAndConvert(app.RespBody, info.APIGroup)
 	}()
 
 	// If we get object from cloud failed, try to get the object from the local metaManager
@@ -131,6 +131,13 @@ func (r *REST) Get(ctx context.Context, _ string, options *metav1.GetOptions) (r
 			return nil, errors.NewNotFound(schema.GroupResource{Group: info.APIGroup, Resource: info.Resource}, info.Name)
 		}
 		klog.Infof("[metaserver/reststorage] successfully process get req (%v) at local", info.Path)
+		// The object from local storage is unstructured, we must convert it to a typed object
+		// for protobuf serialization.
+		body, err := json.Marshal(obj)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal unstructured object: %w", err)
+		}
+		return DecodeAndConvert(body, info.APIGroup)
 	}
 	return obj, err
 }
@@ -193,9 +200,16 @@ func (r *REST) List(ctx context.Context, options *metainternalversion.ListOption
 		if err != nil {
 			return nil, err
 		}
-		// imitator.DefaultV2Client.InsertOrUpdateObj(context.TODO(), list)
-		klog.Infof("[metaserver/reststorage] successfully process list req (%v) through cloud", info.Path)
-		return list, nil
+		// save to local, ignore error
+		err = list.EachListItem(func(obj runtime.Object) error {
+			return imitator.DefaultV2Client.InsertOrUpdateObj(context.TODO(), obj)
+		})
+		if err != nil {
+			klog.V(3).Infof("failed to save list items to metav2, err: %v", err)
+		}
+		// The object that is returned must be able to be encoded into protobuf.
+		// We decode the raw JSON into a typed list object using the scheme.
+		return DecodeAndConvert(app.RespBody, info.APIGroup)
 	}()
 
 	// If we list object from cloud failed, try to list the object from the local metaManager
@@ -205,11 +219,73 @@ func (r *REST) List(ctx context.Context, options *metainternalversion.ListOption
 			return nil, err
 		}
 		klog.Infof("[metaserver/reststorage] successfully process list req (%v) at local", info.Path)
+		// The list from local storage is unstructured, we must convert it to a typed object
+		// for protobuf serialization.
+		body, err := json.Marshal(list)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal unstructured list: %w", err)
+		}
+		list, err = DecodeAndConvert(body, info.APIGroup)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert list to runtime.Object: %w", err)
+		}
 	}
 
 	decorateList(ctx, list)
 	return list, err
 }
+
+// typedWatcher wraps a watch.Interface and converts any unstructured.Unstructured
+// objects in the watch events into strongly-typed, external objects. This is
+// necessary to support protobuf serialization.
+type typedWatcher struct {
+	watcher watch.Interface
+	group   string
+	out     chan watch.Event
+	stopCh  chan struct{}
+}
+
+func newTypedWatcher(watcher watch.Interface, group string) watch.Interface {
+	tw := &typedWatcher{
+		watcher: watcher,
+		group:   group,
+		out:     make(chan watch.Event),
+		stopCh:  make(chan struct{}),
+	}
+	go tw.translate()
+	return tw
+}
+
+func (tw *typedWatcher) translate() {
+	defer close(tw.out)
+	for {
+		select {
+		case event, ok := <-tw.watcher.ResultChan():
+			if !ok {
+				return
+			}
+			if unstr, ok := event.Object.(*unstructured.Unstructured); ok {
+				body, err := json.Marshal(unstr)
+				if err != nil {
+					klog.Warningf("Failed to marshal unstructured object in typedWatcher, falling back to original: %v", err)
+				} else {
+					typedObj, err := DecodeAndConvert(body, tw.group)
+					if err != nil {
+						klog.Warningf("Failed to convert object in typedWatcher, falling back to original unstructured object: %v", err)
+					} else {
+						event.Object = typedObj
+					}
+				}
+			}
+			tw.out <- event
+		case <-tw.stopCh:
+			return
+		}
+	}
+}
+
+func (tw *typedWatcher) Stop()                          { close(tw.stopCh); tw.watcher.Stop() }
+func (tw *typedWatcher) ResultChan() <-chan watch.Event { return tw.out }
 
 func (r *REST) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
 	info, _ := apirequest.RequestInfoFrom(ctx)
@@ -239,7 +315,8 @@ func (r *REST) Watch(ctx context.Context, options *metainternalversion.ListOptio
 		klog.Errorf("[metaserver/reststorage] failed to get a approved application for watch(%v) from cloud application center, %v", info.Path, err)
 	}
 
-	return r.Store.Watch(ctx, options)
+	watcher, err := r.Store.Watch(ctx, options)
+	return newTypedWatcher(watcher, info.APIGroup), err
 }
 
 func (r *REST) Create(ctx context.Context, obj runtime.Object, _ rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
@@ -256,11 +333,11 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, _ rest.ValidateOb
 			return nil, err
 		}
 
-		retObj := new(unstructured.Unstructured)
-		if err := json.Unmarshal(app.RespBody, retObj); err != nil {
-			return nil, err
-		}
-		return retObj, nil
+		info, _ := apirequest.RequestInfoFrom(ctx)
+		// The object that is returned must be able to be encoded into protobuf.
+		// We decode the raw JSON into a typed object using the scheme.
+		retObj, err := DecodeAndConvert(app.RespBody, info.APIGroup)
+		return retObj, err
 	}()
 
 	if err != nil {
@@ -310,11 +387,10 @@ func (r *REST) Update(ctx context.Context, _ string, objInfo rest.UpdatedObjectI
 	if err := r.Agent.Apply(app); err != nil {
 		return nil, false, err
 	}
-	retObj := new(unstructured.Unstructured)
-	if err := json.Unmarshal(app.RespBody, retObj); err != nil {
-		return nil, false, errors.NewInternalError(err)
-	}
-	return retObj, false, nil
+	// The object that is returned must be able to be encoded into protobuf.
+	// We decode the raw JSON into a typed object using the scheme.
+	decoded, err := DecodeAndConvert(app.RespBody, reqInfo.APIGroup)
+	return decoded, false, err
 }
 
 func (r *REST) Patch(ctx context.Context, pi metaserver.PatchInfo) (runtime.Object, error) {
@@ -327,11 +403,10 @@ func (r *REST) Patch(ctx context.Context, pi metaserver.PatchInfo) (runtime.Obje
 	if err := r.Agent.Apply(app); err != nil {
 		return nil, err
 	}
-	retObj := new(unstructured.Unstructured)
-	if err := json.Unmarshal(app.RespBody, retObj); err != nil {
-		return nil, errors.NewInternalError(err)
-	}
-	return retObj, nil
+	info, _ := apirequest.RequestInfoFrom(ctx)
+	// The object that is returned must be able to be encoded into protobuf.
+	// We decode the raw JSON into a typed object using the scheme.
+	return DecodeAndConvert(app.RespBody, info.APIGroup)
 }
 
 func (r *REST) Restart(ctx context.Context, restartInfo common.RestartInfo) *types.RestartResponse {
