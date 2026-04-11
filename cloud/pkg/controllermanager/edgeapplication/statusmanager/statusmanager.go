@@ -89,7 +89,9 @@ func (s *statusManager) Start() error {
 	if s.reconcileTrigger == nil {
 		return fmt.Errorf("reconcileTrigger cannot be nil")
 	}
-	s.started.Store(true)
+	if s.started.Swap(true) {
+		return nil
+	}
 	go s.watchStatusWorker()
 	go s.cancelWatchWorker()
 	go s.waitForTerminatingWorkers()
