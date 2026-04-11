@@ -88,7 +88,7 @@ func isKubeedgeResourceMessage(router beehivemodel.MessageRoute) bool {
 		return true
 	}
 
-	_, resourceType, resourceName := splitResource(router.Resource)
+	_, resourceType, resourceName, _ := splitResource(router.Resource)
 	switch resourceType {
 	case beehivemodel.ResourceTypeRuleStatus:
 		return true
@@ -109,7 +109,10 @@ func getKubeedgeResourceAttributes(router beehivemodel.MessageRoute) *authorizat
 }
 
 func getBuiltinResourceAttributes(router beehivemodel.MessageRoute) (*authorization.ResourceAttributes, error) {
-	namespace, resourceType, resourceName := splitResource(router.Resource)
+	namespace, resourceType, resourceName, err := splitResource(router.Resource)
+	if err != nil {
+		return nil, fmt.Errorf("invalid resource %q: %w", router.Resource, err)
+	}
 	switch router.Operation {
 	// nodestatus, podstatus is not allowed to insert
 	case beehivemodel.InsertOperation:
@@ -160,13 +163,15 @@ func getBuiltinResourceAttributes(router beehivemodel.MessageRoute) (*authorizat
 	}, nil
 }
 
-func splitResource(resource string) (namespace string, resourceType string, resourceName string) {
+func splitResource(resource string) (namespace, resourceType, resourceName string, err error) {
+	if resource == "" {
+		return "", "", "", fmt.Errorf("empty resource string")
+	}
 	sli := strings.Split(resource, "/")
 	for i := len(sli); i < 3; i++ {
 		sli = append(sli, "")
 	}
-	namespace, resourceType, resourceName = sli[0], sli[1], sli[2]
-	return
+	return sli[0], sli[1], sli[2], nil
 }
 
 func isKubeedgeResourceAttributes(attrs authorizer.Attributes) bool {
