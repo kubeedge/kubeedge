@@ -88,7 +88,7 @@ func isKubeedgeResourceMessage(router beehivemodel.MessageRoute) bool {
 		return true
 	}
 
-	_, resourceType, resourceName, _ := splitResource(router.Resource)
+	_, resourceType, resourceName := splitResource(router.Resource)
 	switch resourceType {
 	case beehivemodel.ResourceTypeRuleStatus:
 		return true
@@ -109,7 +109,7 @@ func getKubeedgeResourceAttributes(router beehivemodel.MessageRoute) *authorizat
 }
 
 func getBuiltinResourceAttributes(router beehivemodel.MessageRoute) (*authorization.ResourceAttributes, error) {
-	namespace, resourceType, resourceName, err := splitResource(router.Resource)
+	namespace, resourceType, resourceName, err := parseResourceStrict(router.Resource)
 	if err != nil {
 		return nil, fmt.Errorf("invalid resource %q: %w", router.Resource, err)
 	}
@@ -163,15 +163,13 @@ func getBuiltinResourceAttributes(router beehivemodel.MessageRoute) (*authorizat
 	}, nil
 }
 
-func splitResource(resource string) (namespace, resourceType, resourceName string, err error) {
-	if resource == "" {
-		return "", "", "", fmt.Errorf("empty resource string")
-	}
+func splitResource(resource string) (namespace string, resourceType string, resourceName string) {
 	sli := strings.Split(resource, "/")
 	for i := len(sli); i < 3; i++ {
 		sli = append(sli, "")
 	}
-	return sli[0], sli[1], sli[2], nil
+	namespace, resourceType, resourceName = sli[0], sli[1], sli[2]
+	return
 }
 
 func isKubeedgeResourceAttributes(attrs authorizer.Attributes) bool {
@@ -180,6 +178,27 @@ func isKubeedgeResourceAttributes(attrs authorizer.Attributes) bool {
 	}
 	_, ok := attrs.GetUser().GetExtra()[kubeedgeResourceKey]
 	return ok
+}
+
+// parseResourceStrict parses a resource string with strict validation.
+// It requires the resource to have exactly 2 or 3 slash-separated segments,
+// and the resourceType segment must be non-empty.
+// Format: namespace/resourceType or namespace/resourceType/resourceName
+func parseResourceStrict(resource string) (namespace, resourceType, resourceName string, err error) {
+	if resource == "" {
+		return "", "", "", fmt.Errorf("empty resource string")
+	}
+	sli := strings.Split(resource, "/")
+	if len(sli) < 2 || len(sli) > 3 {
+		return "", "", "", fmt.Errorf("malformed resource %q: expected namespace/resourceType or namespace/resourceType/resourceName", resource)
+	}
+	if sli[1] == "" {
+		return "", "", "", fmt.Errorf("malformed resource %q: resourceType cannot be empty", resource)
+	}
+	if len(sli) == 2 {
+		return sli[0], sli[1], "", nil
+	}
+	return sli[0], sli[1], sli[2], nil
 }
 
 type kubeResource struct {
