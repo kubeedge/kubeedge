@@ -168,8 +168,17 @@ func splitResource(resource string) (namespace, resourceType, resourceName strin
 		return "", "", "", fmt.Errorf("empty resource string")
 	}
 	sli := strings.Split(resource, "/")
+	if len(sli) > 3 {
+		return "", "", "", fmt.Errorf("too many segments in resource string")
+	}
+	if len(sli) < 2 {
+		return "", "", "", fmt.Errorf("too few segments in resource string")
+	}
 	for i := len(sli); i < 3; i++ {
 		sli = append(sli, "")
+	}
+	if sli[1] == "" {
+		return "", "", "", fmt.Errorf("resourceType cannot be empty")
 	}
 	return sli[0], sli[1], sli[2], nil
 }
