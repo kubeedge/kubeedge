@@ -405,3 +405,138 @@ func TestDeleteNodeMessagePool(t *testing.T) {
 		t.Errorf("expected pool not exist but got it")
 	}
 }
+
+func TestEnqueueNoAckMessage(t *testing.T) {
+	client := &fake.Clientset{}
+	manager := session.NewSessionManager(10)
+
+	objectSyncInformer := syncinformer.NewSharedInformerFactory(client, 0).Reliablesyncs().V1alpha1().ObjectSyncs()
+	clusterObjectSyncInformer := syncinformer.NewSharedInformerFactory(client, 0).Reliablesyncs().V1alpha1().ClusterObjectSyncs()
+
+	dispatcher := &messageDispatcher{
+		reliableClient:          client,
+		SessionManager:          manager,
+		objectSyncLister:        objectSyncInformer.Lister(),
+		clusterObjectSyncLister: clusterObjectSyncInformer.Lister(),
+	}
+
+	nmp := common.InitNodeMessagePool(tf.TestNodeID)
+	dispatcher.AddNodeMessagePool(tf.TestNodeID, nmp)
+
+	msg := beehivemodel.NewMessage("").SetResourceOperation("node/edge-node/default/podlist", "response")
+	dispatcher.enqueueNoAckMessage(tf.TestNodeID, msg)
+
+	if nmp.NoAckMessageStore.List() == nil {
+		t.Errorf("expected message in store but got nil")
+	}
+}
+
+func TestIsVolumeOperation(t *testing.T) {
+	tests := []struct {
+		name string
+		op   string
+		want bool
+	}{
+		{name: "createvolume", op: "createvolume", want: true},
+		{name: "deletevolume", op: "deletevolume", want: true},
+		{name: "controllerpublishvolume", op: "controllerpublishvolume", want: true},
+		{name: "controllerunpublishvolume", op: "controllerunpublishvolume", want: true},
+		{name: "update", op: "update", want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isVolumeOperation(tt.op); got != tt.want {
+				t.Errorf("isVolumeOperation() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIsDeleteMessage(t *testing.T) {
+	tests := []struct {
+		name    string
+		message *beehivemodel.Message
+		want    bool
+	}{
+		{
+			name:    "delete operation",
+			message: beehivemodel.NewMessage("").SetResourceOperation("node/edge-node/default/pod/test-pod", "delete"),
+			want:    true,
+		},
+		{
+			name:    "update operation",
+			message: beehivemodel.NewMessage("").SetResourceOperation("node/edge-node/default/pod/test-pod", "update"),
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isDeleteMessage(tt.message); got != tt.want {
+				t.Errorf("isDeleteMessage() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetNodeMessagePool_NotFound(t *testing.T) {
+	client := &fake.Clientset{}
+	manager := session.NewSessionManager(10)
+
+	objectSyncInformer := syncinformer.NewSharedInformerFactory(client, 0).Reliablesyncs().V1alpha1().ObjectSyncs()
+	clusterObjectSyncInformer := syncinformer.NewSharedInformerFactory(client, 0).Reliablesyncs().V1alpha1().ClusterObjectSyncs()
+
+	dispatcher := &messageDispatcher{
+		reliableClient:          client,
+		SessionManager:          manager,
+		objectSyncLister:        objectSyncInformer.Lister(),
+		clusterObjectSyncLister: clusterObjectSyncInformer.Lister(),
+	}
+
+	pool := dispatcher.GetNodeMessagePool("non-existent-node")
+	if pool == nil {
+		t.Errorf("expected pool to be created but got nil")
+	}
+}
+
+func TestDeleteNodeMessagePool_NotFound(t *testing.T) {
+	client := &fake.Clientset{}
+	manager := session.NewSessionManager(10)
+
+	objectSyncInformer := syncinformer.NewSharedInformerFactory(client, 0).Reliablesyncs().V1alpha1().ObjectSyncs()
+	clusterObjectSyncInformer := syncinformer.NewSharedInformerFactory(client, 0).Reliablesyncs().V1alpha1().ClusterObjectSyncs()
+
+	dispatcher := &messageDispatcher{
+		reliableClient:          client,
+		SessionManager:          manager,
+		objectSyncLister:        objectSyncInformer.Lister(),
+		clusterObjectSyncLister: clusterObjectSyncInformer.Lister(),
+	}
+
+	dispatcher.DeleteNodeMessagePool("non-existent-node", nil)
+}
+
+func TestDeleteNodeMessagePool_WrongPool(t *testing.T) {
+	client := &fake.Clientset{}
+	manager := session.NewSessionManager(10)
+
+	objectSyncInformer := syncinformer.NewSharedInformerFactory(client, 0).Reliablesyncs().V1alpha1().ObjectSyncs()
+	clusterObjectSyncInformer := syncinformer.NewSharedInformerFactory(client, 0).Reliablesyncs().V1alpha1().ClusterObjectSyncs()
+
+	dispatcher := &messageDispatcher{
+		reliableClient:          client,
+		SessionManager:          manager,
+		objectSyncLister:        objectSyncInformer.Lister(),
+		clusterObjectSyncLister: clusterObjectSyncInformer.Lister(),
+	}
+
+	nmp1 := common.InitNodeMessagePool(tf.TestNodeID)
+	nmp2 := common.InitNodeMessagePool(tf.TestNodeID)
+	dispatcher.AddNodeMessagePool(tf.TestNodeID, nmp1)
+
+	dispatcher.DeleteNodeMessagePool(tf.TestNodeID, nmp2)
+
+	_, exist := dispatcher.NodeMessagePools.Load(tf.TestNodeID)
+	if !exist {
+		t.Errorf("expected pool to still exist but it was deleted")
+	}
+}
