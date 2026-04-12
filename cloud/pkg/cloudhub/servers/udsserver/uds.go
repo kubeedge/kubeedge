@@ -2,6 +2,7 @@ package udsserver
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"strings"
@@ -83,13 +84,16 @@ func (us *UnixDomainSocket) StartServer() error {
 // handleServerConn handler for server
 func (us *UnixDomainSocket) handleServerConn(c net.Conn) {
 	defer c.Close()
-	buf := make([]byte, us.buffersize)
-	nr, err := c.Read(buf)
+	data, err := io.ReadAll(io.LimitReader(c, int64(us.buffersize)+1))
 	if err != nil {
 		klog.Errorf("failed to read buffer: %v", err)
 		return
 	}
-	result := us.handleServerContext(string(buf[0:nr]))
+	if len(data) > us.buffersize {
+		klog.Errorf("failed to read buffer: request exceeds maximum size of %d bytes", us.buffersize)
+		return
+	}
+	result := us.handleServerContext(string(data))
 	_, err = c.Write([]byte(result))
 	if err != nil {
 		klog.Errorf("failed to write buffer: %v", err)
