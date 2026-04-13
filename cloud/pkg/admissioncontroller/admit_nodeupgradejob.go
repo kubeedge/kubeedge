@@ -94,10 +94,10 @@ func validateNodeUpgradeJob(upgrade *v1alpha1.NodeUpgradeJob) error {
 
 	// we must specify NodeNames or LabelSelector, and we can only specify only one
 	if len(upgrade.Spec.NodeNames) == 0 && upgrade.Spec.LabelSelector == nil {
-		return fmt.Errorf("both NodeNames and LabelSelctor are NOT specified")
+		return fmt.Errorf("both NodeNames and LabelSelector are NOT specified")
 	}
 	if len(upgrade.Spec.NodeNames) != 0 && upgrade.Spec.LabelSelector != nil {
-		return fmt.Errorf("both NodeNames and LabelSelctor are specified")
+		return fmt.Errorf("both NodeNames and LabelSelector are specified")
 	}
 
 	return nil
@@ -151,7 +151,7 @@ func generateNodeUpgradeJobPatch(spec v1alpha1.NodeUpgradeJobSpec) []patchValue 
 	// mutate .spec.concurrency to default value 1 if not specified
 	if spec.Concurrency == 0 {
 		patch = append(patch, patchValue{
-			Op:    "replace",
+			Op:    "add",
 			Path:  "/spec/concurrency",
 			Value: 1,
 		})
@@ -160,7 +160,7 @@ func generateNodeUpgradeJobPatch(spec v1alpha1.NodeUpgradeJobSpec) []patchValue 
 	if spec.TimeoutSeconds == nil {
 		var defaultTimeoutSeconds uint32 = 300
 		patch = append(patch, patchValue{
-			Op:    "replace",
+			Op:    "add",
 			Path:  "/spec/timeoutSeconds",
 			Value: &defaultTimeoutSeconds,
 		})
