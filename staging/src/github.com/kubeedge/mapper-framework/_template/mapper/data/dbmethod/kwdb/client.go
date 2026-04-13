@@ -84,7 +84,6 @@ func (d *DataBaseConfig) CloseSession() {
 }
 
 func (d *DataBaseConfig) AddData(data *common.DataModel) error {
-
 	ctx := context.Background()
 	tsTableName := data.Namespace + "_" + data.DeviceName
 	validTableName := strings.Replace(tsTableName, "-", "_", -1)
@@ -93,16 +92,23 @@ func (d *DataBaseConfig) AddData(data *common.DataModel) error {
 	tableDDL := fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (ts timestamp not null, propertyname varchar(64), data varchar(64),type varchar(64)) TAGS (deviceid varchar(64) not null) PRIMARY TAGS(deviceid);", validTableName)
 
 	datatime := time.Unix(data.TimeStamp/1e3, 0).Format("2006-01-02 15:04:05")
-	insertSQL := fmt.Sprintf("INSERT INTO %s VALUES('%v','%s', '%s', '%s', '%s');",
-		validTableName, datatime, data.PropertyName, data.Value, data.Type, validPtagName)
+	insertSQL := fmt.Sprintf(`INSERT INTO %s VALUES($1, $2, $3, $4, $5);`, validTableName)
 
 	_, err := DBPool.Exec(ctx, tableDDL)
 	if err != nil {
 		klog.Errorf("create table failed %v\n", err)
 	}
-	_, err = DBPool.Exec(ctx, insertSQL)
+	
+	_, err = DBPool.Exec(ctx, insertSQL, 
+		datatime,          // $1
+		data.PropertyName, // $2
+		data.Value,        // $3
+		data.Type,         // $4
+		validPtagName,     // $5
+	)
 	if err != nil {
-		klog.Errorf("failed add data to KWDB:%v", err)
+		klog.Errorf("failed add data to KWDB: %v", err)
+		return err
 	}
 
 	return nil
