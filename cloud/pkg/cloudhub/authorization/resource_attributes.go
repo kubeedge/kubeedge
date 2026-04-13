@@ -172,14 +172,6 @@ func splitResource(resource string) (namespace string, resourceType string, reso
 	return
 }
 
-func isKubeedgeResourceAttributes(attrs authorizer.Attributes) bool {
-	if attrs == nil || attrs.GetUser() == nil {
-		return false
-	}
-	_, ok := attrs.GetUser().GetExtra()[kubeedgeResourceKey]
-	return ok
-}
-
 // parseResourceStrict parses a resource string with strict validation.
 // It requires the resource to have exactly 2 or 3 slash-separated segments,
 // and the resourceType segment must be non-empty.
@@ -200,6 +192,16 @@ func parseResourceStrict(resource string) (namespace, resourceType, resourceName
 	}
 	return sli[0], sli[1], sli[2], nil
 }
+
+func isKubeedgeResourceAttributes(attrs authorizer.Attributes) bool {
+	if attrs == nil || attrs.GetUser() == nil {
+		return false
+	}
+	_, ok := attrs.GetUser().GetExtra()[kubeedgeResourceKey]
+	return ok
+}
+
+
 
 type kubeResource struct {
 	resource     string
