@@ -133,18 +133,22 @@ func (mh *messageHandler) HandleConnection(connection conn.Connection) {
 
 	nodeInfo := &model.HubInfo{ProjectID: projectID, NodeID: nodeID}
 
+	// Register the node message pool in the dispatcher BEFORE publishing the
+	// connect event or starting the session, so any downstream dispatch for
+	// this node routes into this pool rather than into a silently-created
+	// orphan pool that would be overwritten later.
+	nodeMessagePool := common.InitNodeMessagePool(nodeID)
+	mh.MessageDispatcher.AddNodeMessagePool(nodeID, nodeMessagePool)
+
 	if err := mh.OnEdgeNodeConnect(nodeInfo, connection); err != nil {
 		klog.Errorf("publish connect event for node %s, err %v", nodeInfo.NodeID, err)
+		mh.MessageDispatcher.DeleteNodeMessagePool(nodeID, nodeMessagePool)
 		return
 	}
 
 	// start a goroutine for serving the node connection
 	go func() {
 		klog.Infof("edge node %s for project %s connected", nodeInfo.NodeID, nodeInfo.ProjectID)
-
-		// init node message pool and add to the dispatcher
-		nodeMessagePool := common.InitNodeMessagePool(nodeID)
-		mh.MessageDispatcher.AddNodeMessagePool(nodeID, nodeMessagePool)
 
 		keepaliveInterval := time.Duration(mh.KeepaliveInterval) * time.Second
 		// create a node session for each edge node
