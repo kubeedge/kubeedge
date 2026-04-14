@@ -109,7 +109,10 @@ func getKubeedgeResourceAttributes(router beehivemodel.MessageRoute) *authorizat
 }
 
 func getBuiltinResourceAttributes(router beehivemodel.MessageRoute) (*authorization.ResourceAttributes, error) {
-	namespace, resourceType, resourceName := splitResource(router.Resource)
+	namespace, resourceType, resourceName, err := parseResourceStrict(router.Resource)
+	if err != nil {
+		return nil, fmt.Errorf("invalid resource %q: %w", router.Resource, err)
+	}
 	switch router.Operation {
 	// nodestatus, podstatus is not allowed to insert
 	case beehivemodel.InsertOperation:
@@ -169,6 +172,27 @@ func splitResource(resource string) (namespace string, resourceType string, reso
 	return
 }
 
+// parseResourceStrict parses a resource string with strict validation.
+// It requires the resource to have exactly 2 or 3 slash-separated segments,
+// and the resourceType segment must be non-empty.
+// Format: namespace/resourceType or namespace/resourceType/resourceName
+func parseResourceStrict(resource string) (namespace, resourceType, resourceName string, err error) {
+	if resource == "" {
+		return "", "", "", fmt.Errorf("empty resource string")
+	}
+	sli := strings.Split(resource, "/")
+	if len(sli) < 2 || len(sli) > 3 {
+		return "", "", "", fmt.Errorf("malformed resource %q: expected namespace/resourceType or namespace/resourceType/resourceName", resource)
+	}
+	if sli[1] == "" {
+		return "", "", "", fmt.Errorf("malformed resource %q: resourceType cannot be empty", resource)
+	}
+	if len(sli) == 2 {
+		return sli[0], sli[1], "", nil
+	}
+	return sli[0], sli[1], sli[2], nil
+}
+
 func isKubeedgeResourceAttributes(attrs authorizer.Attributes) bool {
 	if attrs == nil || attrs.GetUser() == nil {
 		return false
@@ -176,6 +200,8 @@ func isKubeedgeResourceAttributes(attrs authorizer.Attributes) bool {
 	_, ok := attrs.GetUser().GetExtra()[kubeedgeResourceKey]
 	return ok
 }
+
+
 
 type kubeResource struct {
 	resource     string
