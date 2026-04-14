@@ -94,14 +94,21 @@ func buildPatchesWithEmptyPredicate(rawObj *unstructured.Unstructured, imageOver
 }
 
 func extractPatchesBy(podSpec corev1.PodSpec, prefixPath string, imageOverrider *appsv1alpha1.ImageOverrider) ([]overrideOption, error) {
-	patches := make([]overrideOption, 0)
+	patches := make([]overrideOption, 0, len(podSpec.InitContainers)+len(podSpec.Containers))
+
+	for containerIndex, container := range podSpec.InitContainers {
+		patch, err := acquireOverrideOption(spliceInitImagePath(prefixPath, containerIndex), container.Image, imageOverrider)
+		if err != nil {
+			return nil, err
+		}
+		patches = append(patches, patch)
+	}
 
 	for containerIndex, container := range podSpec.Containers {
 		patch, err := acquireOverrideOption(spliceImagePath(prefixPath, containerIndex), container.Image, imageOverrider)
 		if err != nil {
 			return nil, err
 		}
-
 		patches = append(patches, patch)
 	}
 
@@ -110,6 +117,10 @@ func extractPatchesBy(podSpec corev1.PodSpec, prefixPath string, imageOverrider 
 
 func spliceImagePath(prefixPath string, containerIndex int) string {
 	return fmt.Sprintf("%s/containers/%d/image", prefixPath, containerIndex)
+}
+
+func spliceInitImagePath(prefixPath string, containerIndex int) string {
+	return fmt.Sprintf("%s/initContainers/%d/image", prefixPath, containerIndex)
 }
 
 func buildPatchesWithPredicate(rawObj *unstructured.Unstructured, imageOverrider *appsv1alpha1.ImageOverrider) ([]overrideOption, error) {
