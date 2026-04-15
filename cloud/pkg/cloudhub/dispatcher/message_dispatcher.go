@@ -215,6 +215,10 @@ func (md *messageDispatcher) PubToController(info *model.HubInfo, msg *beehivemo
 
 func (md *messageDispatcher) enqueueNoAckMessage(nodeID string, msg *beehivemodel.Message) {
 	nodeMessagePool := md.GetNodeMessagePool(nodeID)
+	if nodeMessagePool == nil {
+		klog.Errorf("drop no-ack message for node %s, no message pool registered: %s", nodeID, msg.String())
+		return
+	}
 
 	messageKey, err := common.NoAckMessageKeyFunc(msg)
 	if err != nil {
@@ -235,6 +239,10 @@ func (md *messageDispatcher) enqueueAckMessage(nodeID string, msg *beehivemodel.
 	}
 
 	nodeMessagePool := md.GetNodeMessagePool(nodeID)
+	if nodeMessagePool == nil {
+		klog.Errorf("drop ack message for node %s, no message pool registered: %s", nodeID, msg.String())
+		return
+	}
 	nodeQueue := nodeMessagePool.AckMessageQueue
 	nodeStore := nodeMessagePool.AckMessageStore
 
@@ -503,14 +511,16 @@ func isVolumeOperation(op string) bool {
 		op == commonconst.CSIOperationTypeControllerUnpublishVolume
 }
 
-// GetNodeMessagePool returns the message pool for given node
+// GetNodeMessagePool returns the message pool for given node, or nil if the
+// node has no registered pool. Returning nil here is deliberate: silently
+// auto-creating a pool masks lifecycle ordering bugs (the newly-created pool
+// would be overwritten by the real AddNodeMessagePool call, and any messages
+// enqueued to it in the interim would be lost).
 func (md *messageDispatcher) GetNodeMessagePool(nodeID string) *common.NodeMessagePool {
 	nsp, exist := md.NodeMessagePools.Load(nodeID)
 	if !exist {
-		klog.Warningf("message pool for edge node %s not found and created now", nodeID)
-		nodeMessagePool := common.InitNodeMessagePool(nodeID)
-		md.NodeMessagePools.Store(nodeID, nodeMessagePool)
-		return nodeMessagePool
+		klog.Errorf("message pool for edge node %s not found, dropping message", nodeID)
+		return nil
 	}
 
 	return nsp.(*common.NodeMessagePool)
