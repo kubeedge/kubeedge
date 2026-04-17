@@ -61,7 +61,8 @@ const (
 // Cloud init flag names
 const (
 	// FlagNameSkipCRDs skip CRDs
-	FlagNameSkipCRDs = "skip-crds"
+	FlagNameSkipCRDs            = "skip-crds"
+	FlagNameSkipPreflightChecks = "skip-preflight-checks"
 
 	// FlagNameMaster sets the address of K8s master
 	// Deprecated: only used in deprecated/init.go
