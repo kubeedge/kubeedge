@@ -71,8 +71,9 @@ func (b CloudInitUpdateBase) HasSets(key string) bool {
 
 // InitOptions defines cloud init flags
 type InitOptions struct {
-	Manifests string
-	SkipCRDs  bool
+	Manifests            string
+	SkipCRDs             bool
+	SkipPreflightChecks  bool
 	CloudInitUpdateBase
 }
 
