@@ -17,6 +17,8 @@ limitations under the License.
 package application
 
 import (
+	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -154,4 +156,102 @@ func TestGetListenersForGVR(t *testing.T) {
 	nonExistentGVR := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "nonexistent"}
 	nonExistentGVRListeners := lm.GetListenersForGVR(nonExistentGVR)
 	assert.Nil(nonExistentGVRListeners)
+}
+
+// TestConcurrentGetListenersForGVR verifies that concurrent Add/Delete/Get
+// operations do not cause a data race.
+func TestConcurrentGetListenersForGVR(t *testing.T) {
+	lm := newListenerManager()
+	gvr := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "configmaps"}
+
+	const numListeners = 100
+	const numIterations = 200
+
+	for i := 0; i < numListeners; i++ {
+		listener := NewSelectorListener(
+			fmt.Sprintf("listener-%d", i),
+			fmt.Sprintf("node-%d", i%10),
+			gvr,
+			NewSelector("", ""),
+		)
+		lm.AddListener(listener)
+	}
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < numIterations; i++ {
+			listener := NewSelectorListener(
+				fmt.Sprintf("dynamic-listener-%d", i),
+				fmt.Sprintf("node-%d", i%10),
+				gvr,
+				NewSelector("", ""),
+			)
+			lm.AddListener(listener)
+			lm.DeleteListener(listener)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < numIterations; i++ {
+			listeners := lm.GetListenersForGVR(gvr)
+			for range listeners {
+			}
+		}
+	}()
+
+	wg.Wait()
+}
+
+// TestConcurrentGetListenersForNode verifies the same concurrent safety
+// for GetListenersForNode.
+func TestConcurrentGetListenersForNode(t *testing.T) {
+	lm := newListenerManager()
+	gvr := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
+	nodeName := "test-node"
+
+	const numIterations = 200
+
+	for i := 0; i < 50; i++ {
+		listener := NewSelectorListener(
+			fmt.Sprintf("listener-%d", i),
+			nodeName,
+			gvr,
+			NewSelector("", ""),
+		)
+		lm.AddListener(listener)
+	}
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < numIterations; i++ {
+			listener := NewSelectorListener(
+				fmt.Sprintf("dynamic-listener-%d", i),
+				nodeName,
+				gvr,
+				NewSelector("", ""),
+			)
+			lm.AddListener(listener)
+			lm.DeleteListener(listener)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < numIterations; i++ {
+			listeners := lm.GetListenersForNode(nodeName)
+			for range listeners {
+			}
+		}
+	}()
+
+	wg.Wait()
 }
