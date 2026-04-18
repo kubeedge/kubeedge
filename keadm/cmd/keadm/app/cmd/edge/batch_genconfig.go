@@ -57,6 +57,7 @@ keadm:
   cmdTplArgs:                 # <Optional> This parameter is the execution command template, which can be optionally configured and used in conjunction with nodes[x].keadmCmd.
     cmd: ""                   # This is an example parameter, which can be used in conjunction with nodes[x].keadmCmd.
     token: ""                 # This is an example parameter, which can be used in conjunction with nodes[x].keadmCmd.
+  keadmBinDir: ""             # This parameter is used to configure the path where the existing keadm binary file is located.
 nodes:
   - nodeName: edge-node       # <Required> Unique name, used to identify the node
     keadmCmd: ""              # <Required> The command to be executed on the node, can used in conjunction with keadm.cmdTplArgs. for example: "{{.cmd}} --edgenode-name=containerd-node1 --token={{.token}}"
