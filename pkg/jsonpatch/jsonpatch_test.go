@@ -1,11 +1,10 @@
 /*
 Copyright 2025 The KubeEdge Authors.
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,7 +12,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
 package jsonpatch
 
 import (
@@ -77,4 +75,22 @@ func TestJosnPath(t *testing.T) {
 			assert.Equal(t, c.want, string(bff))
 		})
 	}
+}
+
+func TestAdd_NilValue(t *testing.T) {
+	items := New().Add(OpAdd, "/a/b/c", nil)
+	bff, err := items.ToJSON()
+	assert.NoError(t, err)
+	assert.Equal(t, `[{"op":"add","path":"/a/b/c"}]`, string(bff))
+}
+
+func TestAdd_UnmarshalableValue(t *testing.T) {
+	ch := make(chan int)
+
+	items := New().Add(OpAdd, "/a/b/c", ch)
+	assert.Len(t, items, 0)
+
+	bff, err := items.ToJSON()
+	assert.NoError(t, err)
+	assert.Equal(t, `[]`, string(bff))
 }
