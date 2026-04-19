@@ -8,6 +8,9 @@ env:
   CONTAINER_RUN_OPTIONS: " "
   IMAGE_REPOSITORY: kubeedge
 
+permissions:
+  contents: read
+
 jobs:
   release-assests:
     name: release kubeedge components
