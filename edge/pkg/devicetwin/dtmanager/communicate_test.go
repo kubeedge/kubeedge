@@ -18,6 +18,7 @@ package dtmanager
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -200,6 +201,12 @@ func TestDealLifeCycle(t *testing.T) {
 			context: dtContext,
 			msg:     &model.Message{Content: cloudconn.CloudDisconnected},
 			wantErr: nil,
+		},
+		{
+			name:    "dealLifeCycleTest-WrongContentType",
+			context: dtContext,
+			msg:     &model.Message{Content: []byte("cloud_connected")},
+			wantErr: fmt.Errorf("lifecycle message content type %T is not string", []byte(nil)),
 		},
 	}
 	for _, test := range tests {
