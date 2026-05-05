@@ -1,0 +1,170 @@
+## NPU Metrics Exporter — DaemonSet + Dockerfile
+## Runs npu_exporter.py on every AI PC node labeled feature.node.kubernetes.io/npu=intel
+##
+## Build image first:
+##   docker build -t your-registry/npu-exporter:v0.1.0 -f Dockerfile.npu-exporter .
+##   docker push your-registry/npu-exporter:v0.1.0
+##
+## Or use the pre-built multi-arch image (once published):
+##   your-registry/npu-exporter:v0.1.0
+##
+## Deploy: kubectl apply -f npu-exporter-daemonset.yaml -n monitoring
+
+## ─── Dockerfile (inline for reference — save as Dockerfile.npu-exporter) ───
+## FROM python:3.12-slim
+## WORKDIR /app
+## COPY npu_exporter.py .
+## RUN pip install --no-cache-dir prometheus-client==0.20.0
+## EXPOSE 9101
+## USER 0
+## ENTRYPOINT ["python3", "/app/npu_exporter.py"]
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    purpose: observability
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: npu-metrics-exporter
+  namespace: monitoring
+  labels:
+    app: npu-exporter
+    component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: npu-exporter
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: npu-exporter
+      annotations:
+        ## Prometheus auto-discovery annotations
+        prometheus.io/scrape: "true"
+        prometheus.io/port:   "9101"
+        prometheus.io/path:   "/metrics"
+        description: "Intel NPU metrics exporter for KubeEdge AI PC nodes"
+    spec:
+      nodeSelector:
+        feature.node.kubernetes.io/npu: "intel"
+      tolerations:
+      - key: "node-role.kubernetes.io/edge"
+        operator: "Exists"
+        effect: "NoSchedule"
+      - key: "CriticalAddonsOnly"
+        operator: "Exists"
+      hostPID: true           # needed to correlate with host processes
+      hostNetwork: false
+      serviceAccountName: npu-exporter-sa
+      containers:
+      - name: npu-exporter
+        image: your-registry/npu-exporter:v0.1.0    # ← replace with your registry
+        imagePullPolicy: Always
+        args:
+        - "--port=9101"
+        - "--interval=5"      # scrape every 5 seconds
+        ports:
+        - name: metrics
+          containerPort: 9101
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "32Mi"
+          limits:
+            cpu: "200m"
+            memory: "128Mi"
+        securityContext:
+          privileged: true    # required to read /sys/class/accel/*
+          runAsUser: 0
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        volumeMounts:
+        - name: sysfs
+          mountPath: /sys
+          readOnly: true
+        - name: procfs
+          mountPath: /proc
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9101
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9101
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      volumes:
+      - name: sysfs
+        hostPath:
+          path: /sys
+          type: Directory
+      - name: procfs
+        hostPath:
+          path: /proc
+          type: Directory
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: npu-exporter-sa
+  namespace: monitoring
+---
+## Service for Prometheus scraping
+apiVersion: v1
+kind: Service
+metadata:
+  name: npu-exporter-svc
+  namespace: monitoring
+  labels:
+    app: npu-exporter
+spec:
+  type: ClusterIP
+  clusterIP: None    # headless service — Prometheus discovers each pod
+  selector:
+    app: npu-exporter
+  ports:
+  - name: metrics
+    port: 9101
+    targetPort: 9101
+---
+## ServiceMonitor for Prometheus Operator (if using kube-prometheus-stack)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: npu-exporter-monitor
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack    # must match Prometheus operator selector
+spec:
+  selector:
+    matchLabels:
+      app: npu-exporter
+  endpoints:
+  - port: metrics
+    interval: 15s
+    scrapeTimeout: 10s
+    path: /metrics
+  namespaceSelector:
+    matchNames:
+    - monitoring

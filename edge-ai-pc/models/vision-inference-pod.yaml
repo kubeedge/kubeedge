@@ -1,0 +1,174 @@
+## Vision Inference Pod — YOLOv8n via OpenVINO Model Server (OVMS)
+## Target: Intel NPU (Core Ultra) or Intel iGPU
+## Model: YOLOv8n INT8 quantized, exported to OpenVINO IR format
+##
+## Pre-requisites on edge node:
+##   1. Intel NPU device plugin running (intel-npu-plugin-daemonset.yaml)
+##   2. Model exported to /opt/edge-models/yolov8n/ (see export steps below)
+##   3. Namespace edge-ai created: kubectl create namespace edge-ai
+##
+## Model export (run once on AI PC):
+##   pip install ultralytics openvino
+##   python3 -c "
+##     from ultralytics import YOLO
+##     model = YOLO('yolov8n.pt')
+##     model.export(format='openvino', half=False, int8=True, imgsz=640)
+##   "
+##   # Outputs: yolov8n_openvino_model/ — copy to /opt/edge-models/yolov8n/
+##
+## Deploy: kubectl apply -f vision-inference-pod.yaml -n edge-ai
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: edge-ai
+  labels:
+    purpose: edge-inference
+---
+## ConfigMap: OVMS model configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ovms-model-config
+  namespace: edge-ai
+data:
+  config.json: |
+    {
+      "model_config_list": [
+        {
+          "config": {
+            "name": "yolov8n",
+            "base_path": "/models/yolov8n",
+            "target_device": "NPU",
+            "batch_size": "1",
+            "plugin_config": {
+              "PERFORMANCE_HINT": "LATENCY",
+              "NUM_STREAMS": "1"
+            }
+          }
+        }
+      ]
+    }
+---
+## Deployment: OpenVINO Model Server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yolov8n-ovms
+  namespace: edge-ai
+  labels:
+    app: yolov8n-ovms
+    model: yolov8n
+    runtime: openvino
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: yolov8n-ovms
+  template:
+    metadata:
+      labels:
+        app: yolov8n-ovms
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port:   "9000"
+        prometheus.io/path:   "/v2/metrics"
+    spec:
+      # Pin to the AI PC edge node
+      nodeSelector:
+        kubernetes.io/hostname: ai-pc-node-01
+        feature.node.kubernetes.io/npu: "intel"
+      tolerations:
+      - key: "node-role.kubernetes.io/edge"
+        operator: "Exists"
+        effect: "NoSchedule"
+      # Pull model from OCI registry via initContainer
+      initContainers:
+      - name: model-puller
+        image: ghcr.io/oras-project/oras:v1.2.0
+        command:
+        - sh
+        - -c
+        - |
+          oras pull \
+            registry.example.com/models/yolov8n:openvino-int8 \
+            -o /models/yolov8n || echo "WARN: OCI pull failed, using hostPath fallback"
+        volumeMounts:
+        - name: model-store
+          mountPath: /models
+      containers:
+      - name: ovms
+        image: openvino/model_server:2024.3
+        imagePullPolicy: IfNotPresent
+        args:
+        - --config_path=/config/config.json
+        - --port=9000               # gRPC
+        - --rest_port=8080          # REST
+        - --log_level=DEBUG
+        ports:
+        - name: grpc
+          containerPort: 9000
+          protocol: TCP
+        - name: rest
+          containerPort: 8080
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+          limits:
+            cpu: "2000m"
+            memory: "2Gi"
+            gpu.intel.com/i915: "1"    # Intel NPU/iGPU resource
+        env:
+        - name: OPENVINO_LOG_LEVEL
+          value: "2"
+        - name: OMP_NUM_THREADS
+          value: "4"
+        volumeMounts:
+        - name: model-store
+          mountPath: /models
+          readOnly: true
+        - name: model-config
+          mountPath: /config
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /v2/health/live
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /v2/health/ready
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 5
+      volumes:
+      - name: model-store
+        hostPath:
+          path: /opt/edge-models
+          type: DirectoryOrCreate
+      - name: model-config
+        configMap:
+          name: ovms-model-config
+---
+## Service: expose OVMS within cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: yolov8n-ovms-svc
+  namespace: edge-ai
+  labels:
+    app: yolov8n-ovms
+spec:
+  type: ClusterIP
+  selector:
+    app: yolov8n-ovms
+  ports:
+  - name: grpc
+    port: 9000
+    targetPort: 9000
+  - name: rest
+    port: 8080
+    targetPort: 8080

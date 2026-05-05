@@ -1,0 +1,327 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "KubeEdge Edge AI Prometheus datasource",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__requires": [
+    {"type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.0.0"},
+    {"type": "datasource", "id": "prometheus", "name": "Prometheus", "version": "1.0.0"},
+    {"type": "panel", "id": "timeseries", "name": "Time series", "version": ""},
+    {"type": "panel", "id": "gauge", "name": "Gauge", "version": ""},
+    {"type": "panel", "id": "stat", "name": "Stat", "version": ""},
+    {"type": "panel", "id": "table", "name": "Table", "version": ""}
+  ],
+  "annotations": {"list": []},
+  "description": "KubeEdge AI PC — NPU/GPU utilization, LLM & vision model inference metrics",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+      "id": 100,
+      "title": "🖥️ AI PC Node Overview",
+      "type": "row"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 70},
+              {"color": "red", "value": 90}
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 1},
+      "id": 1,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["lastNotNull"]},
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "title": "NPU Utilization %",
+      "type": "gauge",
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "npu_utilization_percent{node=~\"$node\"}",
+          "legendFormat": "NPU {{device_id}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 70},
+              {"color": "red", "value": 90}
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 6, "y": 1},
+      "id": 2,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {"calcs": ["lastNotNull"]},
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "title": "GPU Utilization %",
+      "type": "gauge",
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "DCGM_FI_DEV_GPU_UTIL{node=~\"$node\"}",
+          "legendFormat": "GPU {{gpu}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 70},
+              {"color": "red", "value": 85}
+            ]
+          },
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 12, "y": 1},
+      "id": 3,
+      "title": "GPU Memory Used %",
+      "type": "gauge",
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "DCGM_FI_DEV_FB_USED{node=~\"$node\"} / (DCGM_FI_DEV_FB_USED{node=~\"$node\"} + DCGM_FI_DEV_FB_FREE{node=~\"$node\"})",
+          "legendFormat": "GPU Mem {{gpu}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 75},
+              {"color": "red", "value": 90}
+            ]
+          },
+          "unit": "watts"
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 18, "y": 1},
+      "id": 4,
+      "title": "GPU Power Draw (W)",
+      "type": "stat",
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "DCGM_FI_DEV_POWER_USAGE{node=~\"$node\"}",
+          "legendFormat": "GPU {{gpu}} Power",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 7},
+      "id": 101,
+      "title": "📈 NPU Utilization Over Time",
+      "type": "row"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "spanNulls": false
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "id": 10,
+      "options": {
+        "legend": {"displayMode": "list", "placement": "bottom"},
+        "tooltip": {"mode": "multi"}
+      },
+      "title": "NPU Utilization % (5m avg)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "avg_over_time(npu_utilization_percent{node=~\"$node\"}[5m])",
+          "legendFormat": "NPU {{device_id}} @ {{node}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"lineWidth": 2, "fillOpacity": 10},
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "id": 11,
+      "title": "GPU Utilization % Over Time",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "DCGM_FI_DEV_GPU_UTIL{node=~\"$node\"}",
+          "legendFormat": "GPU {{gpu}} @ {{node}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 16},
+      "id": 102,
+      "title": "🤖 Inference Latency & Throughput",
+      "type": "row"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"lineWidth": 2},
+          "unit": "ms"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 17},
+      "id": 20,
+      "title": "OVMS Inference Latency (P50/P95/P99)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(ovms_request_time_us_bucket{interface=\"gRPC\"}[2m])) / 1000",
+          "legendFormat": "P50",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(ovms_request_time_us_bucket{interface=\"gRPC\"}[2m])) / 1000",
+          "legendFormat": "P95",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(ovms_request_time_us_bucket{interface=\"gRPC\"}[2m])) / 1000",
+          "legendFormat": "P99",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"lineWidth": 2},
+          "unit": "reqps"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 17},
+      "id": 21,
+      "title": "Inference Requests/sec",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(ovms_requests_success_total[1m])",
+          "legendFormat": "OVMS Success RPS",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(ovms_requests_fail_total[1m])",
+          "legendFormat": "OVMS Failed RPS",
+          "refId": "B"
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "tags": ["kubeedge", "edge-ai", "npu", "gpu", "inference"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+        "definition": "label_values(npu_utilization_percent, node)",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "node",
+        "options": [],
+        "query": "label_values(npu_utilization_percent, node)",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "type": "query",
+        "label": "Edge Node"
+      }
+    ]
+  },
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "KubeEdge AI PC — NPU/GPU Monitoring",
+  "uid": "kubeedge-ai-pc-npu-gpu",
+  "version": 1
+}
