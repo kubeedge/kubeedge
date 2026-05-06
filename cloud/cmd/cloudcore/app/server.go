@@ -75,20 +75,27 @@ kubernetes controller which manages devices so that the device metadata/status d
 			flag.PrintDefaultConfigAndExitIfRequested(v1alpha1.NewDefaultCloudCoreConfig())
 			flag.PrintFlags(cmd.Flags())
 
+			klog.Info("Starting cloudcore...")
+			klog.Info("Validating command line options...")
 			if errs := opts.Validate(); len(errs) > 0 {
-				klog.Exit(util.SpliceErrors(errs))
+				klog.Exitf("Configuration-related error: command line options validation failed: %v", util.SpliceErrors(errs))
 			}
+
+			klog.Info("Loading configuration...")
 
 			config, err := opts.Config()
 			if err != nil {
-				klog.Exit(err)
+				klog.Exitf("Configuration-related error: failed to load configuration: %v", err)
 			}
+			klog.Info("Validating configuration...")
 			if errs := validation.ValidateCloudCoreConfiguration(config); len(errs) > 0 {
-				klog.Exit(util.SpliceErrors(errs.ToAggregate().Errors()))
+				klog.Exitf("Configuration-related error: configuration validation failed: %v", util.SpliceErrors(errs.ToAggregate().Errors()))
 			}
 
+			klog.Info("Setting feature gates...")
+
 			if err := features.DefaultMutableFeatureGate.SetFromMap(config.FeatureGates); err != nil {
-				klog.Exit(err)
+				klog.Exitf("Configuration-related error: failed to set feature gates: %v", err)
 			}
 
 			// start monitor server
@@ -101,12 +108,13 @@ kubernetes controller which manages devices so that the device metadata/status d
 				!config.Modules.CloudHub.Authorization.Debug
 			client.InitKubeEdgeClient(config.KubeAPIConfig, enableImpersonation)
 
+			klog.Info("Negotiating tunnel port...")
 			// Negotiate TunnelPort for multi cloudcore instances
 			waitTime := rand.Int31n(10)
 			time.Sleep(time.Duration(waitTime) * time.Second)
 			tunnelport, err := NegotiateTunnelPort()
 			if err != nil {
-				panic(err)
+				klog.Exitf("Kubernetes-related error: failed to negotiate tunnel port: %v", err)
 			}
 
 			config.CommonConfig.TunnelPort = *tunnelport
