@@ -259,3 +259,97 @@ modules:
     websocket:
       server: <cloud-ip>:10000
     httpserver: https://<cloud-ip>:10002
+  edgeStream:
+    enable: true
+    tunnelServer: <cloud-ip>:10004
+```
+
+---
+
+## 7. NAT, Firewalls, and Private Networks
+
+KubeEdge is designed for edge nodes that sit behind NAT, firewalls, or private
+networks without public IPs. No inbound port forwarding, no VPN, no STUN/TURN
+is required.
+
+### Why NAT is transparent
+
+All communication is **outbound from edge to cloud**. The edge node initiates
+every connection — it behaves like a web browser, not a server. CloudHub and
+CloudStream never attempt to reach the edge node directly.
+
+```
+  Edge node (behind NAT)           Cloud (public / reachable IP)
+  ┌──────────────────┐            ┌──────────────────────────────┐
+  │  EdgeHub ── WSS ──┼──────────→│  :10000  CloudHub WebSocket   │
+  │  EdgeHub ── HTTPS ─┼─────────→│  :10002  CloudHub HTTPS       │
+  │  EdgeStream ─WSS ──┼─────────→│  :10004  CloudStream Tunnel   │
+  └──────────────────┘            └──────────────────────────────┘
+```
+
+Because the edge opens the TCP connection, NAT gateways along the path
+automatically create the return mapping. The cloud responds over the same
+established connection. No special NAT traversal protocol is needed.
+
+### What the edge node needs
+
+The edge node must be able to make outbound TCP connections to the cloud's IP
+on these ports:
+
+| Port | Required | Protocol | Purpose |
+|------|----------|----------|---------|
+| 10000 | Yes | WSS (TLS) | Control-plane sync |
+| 10002 | Yes | HTTPS (TLS) | Certificate lifecycle |
+| 10004 | Only if using `kubectl exec/logs` | WSS (TLS) | Data-plane stream tunnel |
+| 10001 | No | QUIC (UDP) | Alternative control-plane transport |
+
+The cloud does **not** need to reach the edge node. No inbound ports, no port
+forwarding, no public IP on the edge side.
+
+### Proxy environments
+
+If the edge node requires an HTTP/HTTPS proxy to reach the internet, set the
+`HTTPS_PROXY` and `NO_PROXY` environment variables before starting edgecore.
+The WebSocket connections (ports 10000, 10004) tunnel through the proxy via
+HTTP CONNECT.
+
+### Streaming through NAT
+
+`kubectl exec`, `kubectl logs`, and `kubectl attach` work without direct
+cloud-to-edge connectivity because:
+
+1. EdgeStream establishes a **persistent outbound** WebSocket to CloudStream
+   Tunnel (:10004).
+
+2. When kube-apiserver needs to exec/log/attach into an edge pod, it sends the
+   request to the CloudStream Stream Server (:10003) — which is on the cloud
+   side, always reachable.
+
+3. CloudStream multiplexes the request over the edge node's already-established
+   tunnel WebSocket. The response flows back over the same connection.
+
+No second inbound channel is ever opened from cloud to edge.
+
+### Common deployment patterns
+
+| Edge Location | Works? | Notes |
+|---------------|--------|-------|
+| Home/office behind consumer NAT | Yes | Outbound WebSocket passes through NAT like any HTTPS website. |
+| Factory floor behind corporate firewall | Yes | If outbound port 10000/10002 is allowed. WebSocket over port 443 is also possible if the cloud listens on 443. |
+| 4G/5G cellular (carrier-grade NAT) | Yes | Works the same as home NAT. May see more connection resets; EdgeHub auto-reconnects. |
+| Behind an HTTP proxy | Yes | Requires proxy config. WebSocket tunnels through HTTP CONNECT. |
+| Air-gapped network (no internet) | No (*) | Edge node must reach the cloud. If no path exists, a relay or satellite cloudcore instance is needed inside the private network. |
+| Cloud in private VPC, edge on public internet | Yes | Reverse of typical setup. Edge needs outbound access to the cloud VPC. |
+
+> (*) Air-gapped: KubeEdge requires edge-to-cloud outbound connectivity.
+> If the edge network has no route to the cloud at all, consider running a
+> secondary cloudcore instance inside the private network, or use EdgeSite
+> standalone mode.
+
+### Quick checklist
+
+- Cloud must have ports 10000, 10002, and optionally 10004 reachable from edge nodes.
+- Edge nodes need outbound internet (or outbound to cloud IP) on those ports.
+- No inbound ports, public IP, or port forwarding needed on edge nodes.
+- If `kubectl exec` fails but pod sync works, check that port 10004 is open on
+  the cloud side and that EdgeStream is enabled on the edge node.
