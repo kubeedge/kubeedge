@@ -29,6 +29,7 @@ import (
 	"github.com/kubeedge/kubeedge/examples/predictive-maintenance/mapper/pkg/config"
 	"github.com/kubeedge/kubeedge/examples/predictive-maintenance/mapper/pkg/driver"
 	"github.com/kubeedge/kubeedge/examples/predictive-maintenance/mapper/pkg/dmi"
+	"github.com/kubeedge/kubeedge/examples/predictive-maintenance/mapper/pkg/inference"
 )
 
 func main() {
@@ -45,6 +46,7 @@ func main() {
 	defer cancel()
 
 	sensor := driver.NewVirtualSensor(cfg.SensorConfig)
+	detector := inference.NewDetector()
 
 	client, err := dmi.NewClient(cfg.DMIConfig)
 	if err != nil {
@@ -55,7 +57,7 @@ func main() {
 		klog.Fatalf("mapper register failed: %v", err)
 	}
 
-	go runLoop(ctx, sensor, client, cfg.ReportIntervalSec)
+	go runLoop(ctx, sensor, detector, client, cfg.ReportIntervalSec)
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
@@ -64,7 +66,7 @@ func main() {
 	time.Sleep(500 * time.Millisecond)
 }
 
-func runLoop(ctx context.Context, sensor *driver.VirtualSensor, client *dmi.Client, interval int) {
+func runLoop(ctx context.Context, sensor *driver.VirtualSensor, detector *inference.Detector, client *dmi.Client, interval int) {
 	ticker := time.NewTicker(time.Duration(interval) * time.Second)
 	defer ticker.Stop()
 	for {
@@ -73,9 +75,10 @@ func runLoop(ctx context.Context, sensor *driver.VirtualSensor, client *dmi.Clie
 			return
 		case <-ticker.C:
 			r := sensor.Read()
+			result := detector.Analyze(r)
+			r.IsAnomaly = result.IsAnomaly
 			if err := client.ReportStatus(ctx, r); err != nil {
-				// keep running offline
-				klog.Warningf("report failed (autonomous): %v", err)
+				klog.Warningf("report failed (entering autonomous mode): %v", err)
 			}
 		}
 	}

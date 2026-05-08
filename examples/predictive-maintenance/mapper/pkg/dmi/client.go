@@ -40,10 +40,7 @@ type Client struct {
 
 // NewClient connects to EdgeCore DMI socket.
 func NewClient(cfg config.DMIConfig) (*Client, error) {
-	dialCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	conn, err := grpc.DialContext(dialCtx, //nolint:staticcheck
+	conn, err := grpc.NewClient(
 		"unix://"+cfg.SocketPath,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
@@ -60,6 +57,9 @@ func NewClient(cfg config.DMIConfig) (*Client, error) {
 
 // Register announces this mapper to EdgeCore.
 func (c *Client) Register(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	req := &pb.MapperRegisterRequest{
 		WithData: true,
 		Mapper: &pb.MapperInfo{
