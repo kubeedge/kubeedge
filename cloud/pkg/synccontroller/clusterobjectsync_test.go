@@ -43,7 +43,7 @@ type testFuncBackup struct {
 	originalBuildEdgeControllerMessageFunc func(string, string, string, string, string, interface{}) *model.Message
 	originalGetNodeNameFunc                func(string) string
 	originalGetObjectUIDFunc               func(string) string
-	originalCompareResourceVersionFunc     func(string, string) int
+	originalCompareResourceVersionFunc     func(string, string) (int, error)
 	originalGcFunc                         func(*SyncController, *v1alpha1.ClusterObjectSync)
 	originalDeleteFunc                     func(*SyncController, string) error
 }
@@ -87,17 +87,17 @@ func mockGetObjectUID(syncName string) string {
 	return ""
 }
 
-func mockCompareResourceVersion(rv1, rv2 string) int {
+func mockCompareResourceVersion(rv1, rv2 string) (int, error) {
 	if rv1 == "1000" && rv2 == "500" {
-		return 1
+		return 1, nil
 	}
 	if rv1 == rv2 {
-		return 0
+		return 0, nil
 	}
 	if rv1 > rv2 {
-		return 1
+		return 1, nil
 	}
-	return -1
+	return -1, nil
 }
 
 type MockLister struct {
@@ -294,7 +294,10 @@ func TestReconcileClusterObjectSync(t *testing.T) {
 			ctrl.reconcileClusterObjectSync(tt.sync)
 
 			if tt.name == "Object found with newer resource version" {
-				result := compareResourceVersionFunc("1000", "500")
+				result, err := compareResourceVersionFunc("1000", "500")
+				if err != nil {
+					t.Fatalf("compareResourceVersionFunc returned unexpected error: %v", err)
+				}
 				if result <= 0 {
 					t.Errorf("Mock compareResourceVersionFunc returned unexpected result %d for 1000 vs 500", result)
 				}
@@ -401,11 +404,11 @@ func TestSendClusterObjectSyncEventDirect(t *testing.T) {
 	backup := setupTest()
 	defer backup.restore()
 
-	compareResourceVersionFunc = func(rv1, rv2 string) int {
+	compareResourceVersionFunc = func(rv1, rv2 string) (int, error) {
 		if rv1 == "1000" && rv2 == "500" {
-			return 1
+			return 1, nil
 		}
-		return 0
+		return 0, nil
 	}
 
 	sendCalled := false
