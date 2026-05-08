@@ -40,9 +40,11 @@ func TestWarmupPhase(t *testing.T) {
 func TestNoAnomalyOnNormalData(t *testing.T) {
 	d := NewDetector()
 	for i := 0; i < 20; i++ {
-		d.Analyze(reading(0.5+float64(i%3)*0.01, 45.0))
+		// vary both dims so std is non-trivial
+		d.Analyze(reading(0.48+float64(i%5)*0.01, 44.0+float64(i%5)*0.5))
 	}
-	assert.False(t, d.Analyze(reading(0.51, 45.1)).IsAnomaly)
+	// 0.50 and 45.0 are the mean — clearly normal
+	assert.False(t, d.Analyze(reading(0.50, 45.0)).IsAnomaly)
 }
 
 func TestAnomalyDetectedOnSpike(t *testing.T) {
