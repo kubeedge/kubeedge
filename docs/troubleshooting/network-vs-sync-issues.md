@@ -58,17 +58,17 @@ ping <cloudcore-ip>
 
 ```bash
 # On the edge node
-journalctl -u edgecore -n 100 --no-pager | grep -E "connect|disconnect|error|timeout"
+journalctl -u edgecore -n 100 --no-pager | grep -E "connection failed|connection is broken|websocket read error|websocket write error"
 ```
 
 Key log patterns:
 
 | Log message | Meaning |
 |---|---|
-| `Connected to cloudcore` | Network OK |
-| `error dialing backend` | Network failure |
-| `entering autonomous mode` | Disconnected, running offline |
-| `websocket: close` | CloudCore dropped connection |
+| `connection failed: ...` | Could not reach CloudCore, will retry |
+| `connection is broken, will reconnect after ...` | Connection dropped mid-session |
+| `websocket read error: ...` | CloudCore closed the connection |
+| `websocket write error: ...` | Failed to send keepalive to CloudCore |
 
 ### Step 3 — Check edge node status from cloud
 
