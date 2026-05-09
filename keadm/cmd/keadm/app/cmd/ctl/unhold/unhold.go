@@ -42,12 +42,13 @@ func NewEdgeUnholdUpgrade() *cobra.Command {
 				resourceName = args[1]
 			}
 			namespace, _ := cmd.Flags().GetString("namespace")
-			if resourceType == "pod" {
+			switch resourceType {
+			case "pod":
 				if resourceName == "" {
 					return fmt.Errorf("pod name is required")
 				}
 				return unholdPodUpgrade(fmt.Sprintf("%s/%s", namespace, resourceName))
-			} else if resourceType == "node" {
+			case "node":
 				if resourceName == "" {
 					var err error
 					resourceName, err = getCurrentNodeName()
@@ -56,7 +57,7 @@ func NewEdgeUnholdUpgrade() *cobra.Command {
 					}
 				}
 				return unholdNodeUpgrade(resourceName)
-			} else {
+			default:
 				return fmt.Errorf("error: unknown resource type: %s", resourceType)
 			}
 		},
