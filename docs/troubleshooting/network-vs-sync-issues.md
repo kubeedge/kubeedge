@@ -126,7 +126,7 @@ Is the edge node Ready in kubectl?
 |---|---|
 | CloudCore IP changed | Update `edgehub.websocket.server` in edgecore config, restart |
 | Expired TLS certificate | Rotate certs with `keadm certgen` |
-| MetaDB stale state | Delete `/var/lib/kubeedge/edgecore.db` and restart edgecore |
+| MetaDB stale state | **Destructive:** Delete `/var/lib/kubeedge/edgecore.db` and restart edgecore. All cached pod specs and device states will be lost and must re-sync from CloudCore on reconnect. |
 | DeviceTwin version conflict | Restart edgecore; cloud state wins on reconnect |
 | Firewall blocking port 10000 | Open TCP 10000 (websocket) and 10002 (quic) on CloudCore host |
 
@@ -134,6 +134,4 @@ Is the edge node Ready in kubectl?
 
 ## Related
 
-- [EdgeHub configuration](../../pkg/edgehub/README.md)
-- [MetaManager design](../../docs/proposals/edgecore-metamanager.md)
-- [keadm debug](../../docs/proposals/sig-cluster-lifecycle/keadm-debug.md)
+- [keadm debug proposal](../proposals/sig-cluster-lifecycle/keadm-debug.md)
