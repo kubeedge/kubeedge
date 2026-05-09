@@ -303,15 +303,7 @@ func (g *GetOptions) getPodsFromDatabase(resNS string, resNames []string) ([]mod
 	if err != nil {
 		return nil, err
 	}
-	for _, v := range *podRecords {
-		namespaceParsed, _, _, _ := commonmsg.ParseResourceEdge(v.Key, model.QueryOperation)
-		if namespaceParsed != resNS && !g.AllNamespace {
-			continue
-		}
-		if len(resNames) > 0 && !isExistName(resNames, v.Key) {
-			continue
-		}
-
+	for _, v := range g.filterMetaRecords(*podRecords, resNS, resNames) {
 		podKey := strings.Replace(v.Key, constants.ResourceSep+model.ResourceTypePod+constants.ResourceSep,
 			constants.ResourceSep+model.ResourceTypePodStatus+constants.ResourceSep, 1)
 		podStatusRecords, err := ms.QueryMeta("key", podKey)
@@ -349,15 +341,7 @@ func (g *GetOptions) getNodeFromDatabase(resNS string, resNames []string) ([]mod
 	if err != nil {
 		return nil, err
 	}
-	for _, v := range *nodeRecords {
-		namespaceParsed, _, _, _ := commonmsg.ParseResourceEdge(v.Key, model.QueryOperation)
-		if namespaceParsed != resNS && !g.AllNamespace {
-			continue
-		}
-		if len(resNames) > 0 && !isExistName(resNames, v.Key) {
-			continue
-		}
-
+	for _, v := range g.filterMetaRecords(*nodeRecords, resNS, resNames) {
 		nodeKey := strings.Replace(v.Key, constants.ResourceSep+model.ResourceTypeNode+constants.ResourceSep,
 			constants.ResourceSep+model.ResourceTypeNodeStatus+constants.ResourceSep, 1)
 		nodeStatusRecords, err := ms.QueryMeta("key", nodeKey)
@@ -387,13 +371,17 @@ func (g *GetOptions) getNodeFromDatabase(resNS string, resNames []string) ([]mod
 }
 
 func (g *GetOptions) getResourceFromDatabase(resNS string, resNames []string, resType string) ([]models.Meta, error) {
-	var results []models.Meta
-
 	resRecords, err := ms.QueryAllMeta("type", resType)
 	if err != nil {
 		return nil, err
 	}
-	for _, v := range *resRecords {
+	return g.filterMetaRecords(*resRecords, resNS, resNames), nil
+}
+
+func (g *GetOptions) filterMetaRecords(records []models.Meta, resNS string, resNames []string) []models.Meta {
+	var results []models.Meta
+
+	for _, v := range records {
 		namespaceParsed, _, _, _ := commonmsg.ParseResourceEdge(v.Key, model.QueryOperation)
 		if namespaceParsed != resNS && !g.AllNamespace {
 			continue
@@ -404,24 +392,22 @@ func (g *GetOptions) getResourceFromDatabase(resNS string, resNames []string, re
 		results = append(results, v)
 	}
 
-	return results, nil
+	return results
 }
 
 // FilterSelector filter resource by selector
 func FilterSelector(data []models.Meta, selector string) ([]models.Meta, error) {
 	var results []models.Meta
-	var jsonValue = make(map[string]interface{})
 
 	selectors, err := SplitSelectorParameters(selector)
 	if err != nil {
 		return nil, err
 	}
 	for _, v := range data {
-		err := json.Unmarshal([]byte(v.Value), &jsonValue)
+		labels, err := getMetaLabels(v.Value)
 		if err != nil {
 			return nil, err
 		}
-		labels := jsonValue["metadata"].(map[string]interface{})["labels"]
 		if labels == nil {
 			results = append(results, v)
 			continue
@@ -429,10 +415,10 @@ func FilterSelector(data []models.Meta, selector string) ([]models.Meta, error) 
 		flag := true
 		for _, v := range selectors {
 			if !v.Exist {
-				flag = flag && labels.(map[string]interface{})[v.Key] != v.Value
+				flag = flag && labels[v.Key] != v.Value
 				continue
 			}
-			flag = flag && (labels.(map[string]interface{})[v.Key] == v.Value)
+			flag = flag && labels[v.Key] == v.Value
 		}
 		if flag {
 			results = append(results, v)
@@ -440,6 +426,20 @@ func FilterSelector(data []models.Meta, selector string) ([]models.Meta, error) 
 	}
 
 	return results, nil
+}
+
+type metaObject struct {
+	Metadata struct {
+		Labels map[string]string `json:"labels"`
+	} `json:"metadata"`
+}
+
+func getMetaLabels(value string) (map[string]string, error) {
+	var obj metaObject
+	if err := json.Unmarshal([]byte(value), &obj); err != nil {
+		return nil, err
+	}
+	return obj.Metadata.Labels, nil
 }
 
 // IsAvailableResources verification support resource type
