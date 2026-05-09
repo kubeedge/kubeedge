@@ -20,31 +20,12 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/testutil"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/kubernetes/fake"
-	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/rest"
 	fakerest "k8s.io/client-go/rest/fake"
 	"k8s.io/kubectl/pkg/scheme"
 )
-
-type mockCoreV1 struct {
-	corev1.CoreV1Interface
-	restClient rest.Interface
-}
-
-func (m *mockCoreV1) RESTClient() rest.Interface {
-	return m.restClient
-}
-
-type mockClientset struct {
-	*fake.Clientset
-	coreV1 *mockCoreV1
-}
-
-func (m *mockClientset) CoreV1() corev1.CoreV1Interface {
-	return m.coreV1
-}
 
 func TestNewEdgeConfirm(t *testing.T) {
 	cmd := NewEdgeConfirm()
@@ -91,16 +72,17 @@ func TestConfirmNodeUpgrade(t *testing.T) {
 					}, nil
 				}),
 			}
-			mockClient := &mockClientset{
+			mockClient := &testutil.MockClientset{
 				Clientset: fake.NewSimpleClientset(),
-				coreV1: &mockCoreV1{
-					restClient: client,
+				Corev1: &testutil.MockCoreV1{
+					RestClient: client,
 				},
 			}
 			err := confirmNodeUpgrade(context.Background(), mockClient)
 			if tt.wantErr {
-				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedErrMsg)
+				if assert.Error(t, err) {
+					assert.Contains(t, err.Error(), tt.expectedErrMsg)
+				}
 			} else {
 				assert.NoError(t, err)
 			}

@@ -27,33 +27,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
-	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/rest"
 	fakerest "k8s.io/client-go/rest/fake"
 	"k8s.io/kubectl/pkg/scheme"
 
 	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/testutil"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
-
-type mockCoreV1 struct {
-	corev1.CoreV1Interface
-	restClient rest.Interface
-}
-
-func (m *mockCoreV1) RESTClient() rest.Interface {
-	return m.restClient
-}
-
-type mockClientset struct {
-	*fake.Clientset
-	coreV1 *mockCoreV1
-}
-
-func (m *mockClientset) CoreV1() corev1.CoreV1Interface {
-	return m.coreV1
-}
 
 func TestPodRestart(t *testing.T) {
 	tests := []struct {
@@ -80,7 +61,8 @@ func TestPodRestart(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			respBytes, _ := json.Marshal(tt.resp)
+			respBytes, err := json.Marshal(tt.resp)
+			assert.NoError(t, err)
 			client := &fakerest.RESTClient{
 				NegotiatedSerializer: scheme.Codecs.WithoutConversion(),
 				Client: fakerest.CreateHTTPClient(func(req *http.Request) (*http.Response, error) {
@@ -90,16 +72,17 @@ func TestPodRestart(t *testing.T) {
 					}, nil
 				}),
 			}
-			mockClient := &mockClientset{
+			mockClient := &testutil.MockClientset{
 				Clientset: fake.NewSimpleClientset(),
-				coreV1: &mockCoreV1{
-					restClient: client,
+				Corev1: &testutil.MockCoreV1{
+					RestClient: client,
 				},
 			}
 			resp, err := podRestart(context.Background(), mockClient, "default", []string{"pod1"})
 			if tt.wantErr {
-				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedErrMsg)
+				if assert.Error(t, err) {
+					assert.Contains(t, err.Error(), tt.expectedErrMsg)
+				}
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.resp, resp)
@@ -116,17 +99,18 @@ func TestRestartPod(t *testing.T) {
 			resp := &types.RestartResponse{
 				LogMessages: []string{"restarted"},
 			}
-			respBytes, _ := json.Marshal(resp)
+			respBytes, err := json.Marshal(resp)
+			assert.NoError(t, err)
 			return &http.Response{
 				StatusCode: http.StatusOK,
 				Body:       io.NopCloser(bytes.NewReader(respBytes)),
 			}, nil
 		}),
 	}
-	mockClient := &mockClientset{
+	mockClient := &testutil.MockClientset{
 		Clientset: fake.NewSimpleClientset(),
-		coreV1: &mockCoreV1{
-			restClient: client,
+		Corev1: &testutil.MockCoreV1{
+			RestClient: client,
 		},
 	}
 	patches.ApplyFunc(metaclient.KubeClient, func() (kubernetes.Interface, error) {

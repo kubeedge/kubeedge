@@ -23,33 +23,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
-	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"k8s.io/client-go/rest"
 	fakerest "k8s.io/client-go/rest/fake"
 	"k8s.io/kubectl/pkg/scheme"
 
 	cfgv1alpha2 "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/testutil"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
-
-type mockCoreV1 struct {
-	corev1.CoreV1Interface
-	restClient rest.Interface
-}
-
-func (m *mockCoreV1) RESTClient() rest.Interface {
-	return m.restClient
-}
-
-type mockClientset struct {
-	*fake.Clientset
-	coreV1 *mockCoreV1
-}
-
-func (m *mockClientset) CoreV1() corev1.CoreV1Interface {
-	return m.coreV1
-}
 
 func TestNewEdgeUnholdUpgrade(t *testing.T) {
 	cmd := NewEdgeUnholdUpgrade()
@@ -109,10 +90,10 @@ func TestUnholdResourceUpgrade(t *testing.T) {
 						}, nil
 					}),
 				}
-				mockClient := &mockClientset{
+				mockClient := &testutil.MockClientset{
 					Clientset: fake.NewSimpleClientset(),
-					coreV1: &mockCoreV1{
-						restClient: client,
+					Corev1: &testutil.MockCoreV1{
+						RestClient: client,
 					},
 				}
 				patches.ApplyFunc(metaclient.KubeClient, func() (kubernetes.Interface, error) {
@@ -121,8 +102,9 @@ func TestUnholdResourceUpgrade(t *testing.T) {
 			}
 			err := unholdResourceUpgrade(tt.resource, tt.target)
 			if tt.wantErr {
-				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedErrMsg)
+				if assert.Error(t, err) {
+					assert.Contains(t, err.Error(), tt.expectedErrMsg)
+				}
 			} else {
 				assert.NoError(t, err)
 			}

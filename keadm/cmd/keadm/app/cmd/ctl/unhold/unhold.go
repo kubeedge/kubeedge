@@ -58,7 +58,7 @@ func NewEdgeUnholdUpgrade() *cobra.Command {
 				}
 				return unholdNodeUpgrade(resourceName)
 			default:
-				return fmt.Errorf("error: unknown resource type: %s", resourceType)
+				return fmt.Errorf("unknown resource type: %s", resourceType)
 			}
 		},
 	}

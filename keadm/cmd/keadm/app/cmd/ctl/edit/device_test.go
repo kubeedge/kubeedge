@@ -130,8 +130,9 @@ func TestEditDevice(t *testing.T) {
 			o := NewEditDeviceOpts()
 			err := o.editDevice(tt.args)
 			if tt.wantErr {
-				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedErrMsg)
+				if assert.Error(t, err) {
+					assert.Contains(t, err.Error(), tt.expectedErrMsg)
+				}
 			} else {
 				assert.NoError(t, err)
 			}
