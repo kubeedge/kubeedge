@@ -60,6 +60,26 @@ func TestCompareResourceVersion(t *testing.T) {
 			testNumber: []string{"123", "123"},
 			want:       0,
 		},
+		{
+			name:       "malformed first resource version",
+			testNumber: []string{"abc", "123"},
+			want:       0,
+		},
+		{
+			name:       "malformed second resource version",
+			testNumber: []string{"123", "xyz"},
+			want:       0,
+		},
+		{
+			name:       "empty first resource version",
+			testNumber: []string{"", "123"},
+			want:       0,
+		},
+		{
+			name:       "both resource versions malformed",
+			testNumber: []string{"foo", "bar"},
+			want:       0,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
