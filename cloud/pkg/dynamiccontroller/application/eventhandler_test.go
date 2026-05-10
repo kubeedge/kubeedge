@@ -212,6 +212,33 @@ func TestHandlerCenter(t *testing.T) {
 		assert.Nil(t, lm.GetListenersForNode("test-node"))
 	})
 
+	t.Run("DeleteListener with missing handler should not panic", func(t *testing.T) {
+		lm := newListenerManager()
+		center := &handlerCenter{
+			listenerManager: lm,
+			handlers:        make(map[schema.GroupVersionResource]*CommonResourceEventHandler),
+		}
+
+		gvr := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
+		listener := &SelectorListener{
+			gvr:      gvr,
+			nodeName: "test-node",
+			id:       "orphan-listener",
+		}
+
+		// Add listener to manager but not to handlers map
+		lm.AddListener(listener)
+		assert.NotNil(t, lm.GetListenersForNode("test-node"))
+
+		// Should not panic and should still clean up the listener from manager
+		assert.NotPanics(t, func() {
+			center.DeleteListener(listener)
+		})
+
+		// Listener should be removed from manager even without a handler
+		assert.Nil(t, lm.GetListenersForNode("test-node"))
+	})
+
 	t.Run("ForResource", func(t *testing.T) {
 		center := &handlerCenter{
 			listenerManager: newListenerManager(),
