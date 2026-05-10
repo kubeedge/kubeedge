@@ -21,6 +21,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	corev1 "k8s.io/api/core/v1"
 	"fmt"
 	"net/http"
 	"strings"
@@ -54,6 +55,8 @@ type TunnelServer struct {
 	sessions      map[string]*Session
 	nodeNameIP    sync.Map
 	tunnelPort    int
+	streamPort    int
+	cloudCoreIP   string
 	kubeClient    v1.CoreV1Interface
 	retrySleep    time.Duration
 	updateTimeout time.Duration
@@ -61,20 +64,26 @@ type TunnelServer struct {
 
 func newTunnelServer(tunnelPort int) *TunnelServer {
 	var kubeClient v1.CoreV1Interface
-	// Safely get the kube client, handling the nil case for tests
 	k8sClient := client.GetKubeClient()
 	if k8sClient != nil {
 		kubeClient = k8sClient.CoreV1()
 	}
 
-	return newTunnelServerWithClient(tunnelPort, kubeClient, DefaultRetrySleepTime, DefaultNodeStatusUpdateTimeout)
+	cloudCoreIP := ""
+	if len(hubconfig.Config.AdvertiseAddress) > 0 {
+		cloudCoreIP = hubconfig.Config.AdvertiseAddress[0]
+	}
+
+	return newTunnelServerWithClient(tunnelPort, int(streamconfig.Config.StreamPort), cloudCoreIP, kubeClient, DefaultRetrySleepTime, DefaultNodeStatusUpdateTimeout)
 }
 
-func newTunnelServerWithClient(tunnelPort int, kubeClient v1.CoreV1Interface, retrySleep, updateTimeout time.Duration) *TunnelServer {
+func newTunnelServerWithClient(tunnelPort int, streamPort int, cloudCoreIP string, kubeClient v1.CoreV1Interface, retrySleep, updateTimeout time.Duration) *TunnelServer {
 	return &TunnelServer{
 		container:     restful.NewContainer(),
 		sessions:      make(map[string]*Session),
 		tunnelPort:    tunnelPort,
+		streamPort:    streamPort,
+		cloudCoreIP:   cloudCoreIP,
 		kubeClient:    kubeClient,
 		retrySleep:    retrySleep,
 		updateTimeout: updateTimeout,
@@ -146,15 +155,21 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 	}
 
 	err = s.updateNodeKubeletEndpoint(hostNameOverride)
-	if err != nil {
-		msg := stream.NewMessage(0, stream.MessageTypeCloseConnect, []byte(err.Error()))
-		if err := session.tunnel.WriteMessage(msg); err == nil {
-			klog.V(4).Infof("CloudStream send close connection message to edge successfully")
-		} else {
-			klog.Errorf("CloudStream failed to send close connection message to edge, error: %v", err)
-		}
-		return
-	}
+if err != nil {
+    msg := stream.NewMessage(0, stream.MessageTypeCloseConnect, []byte(err.Error()))
+    if err := session.tunnel.WriteMessage(msg); err == nil {
+        klog.V(4).Infof("CloudStream send close connection message to edge successfully")
+    } else {
+        klog.Errorf("CloudStream failed to send close connection message to edge, error: %v", err)
+    }
+    return
+}
+
+if s.cloudCoreIP != "" {
+    if err := s.updateNodeCloudCoreAddress(hostNameOverride, s.cloudCoreIP); err != nil {
+        klog.Warningf("Failed to update node %s CloudCore address, falling back to iptables: %v", hostNameOverride, err)
+    }
+}
 	s.addSession(hostNameOverride, session)
 	s.addSession(internalIP, session)
 	s.addNodeIP(hostNameOverride, internalIP)
@@ -218,15 +233,17 @@ func (s *TunnelServer) updateNodeKubeletEndpoint(nodeName string) error {
 		klog.V(4).Info("Skip updating node kubelet endpoint in test mode")
 		return fmt.Errorf("kubeclient is nil, cannot update node kubelet endpoint")
 	}
-	if err := wait.PollImmediate(s.retrySleep, s.updateTimeout, func() (bool, error) {
-		getNode, err := s.kubeClient.Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
+	ctx, cancel := context.WithTimeout(context.Background(), s.updateTimeout)
+	defer cancel()
+	if err := wait.PollUntilContextTimeout(ctx, s.retrySleep, s.updateTimeout, true, func(ctx context.Context) (bool, error) {
+		getNode, err := s.kubeClient.Nodes().Get(ctx, nodeName, metav1.GetOptions{})
 		if err != nil {
 			klog.Errorf("Failed while getting a Node to retry updating node KubeletEndpoint Port, node: %s, error: %v", nodeName, err)
 			return false, nil
 		}
 
-		getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(s.tunnelPort)
-		_, err = s.kubeClient.Nodes().UpdateStatus(context.Background(), getNode, metav1.UpdateOptions{})
+		getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(s.streamPort)
+		_, err = s.kubeClient.Nodes().UpdateStatus(ctx, getNode, metav1.UpdateOptions{})
 		if err != nil {
 			klog.Errorf("Failed to update node KubeletEndpoint Port, node: %s, tunnelPort: %d, err: %v", nodeName, s.tunnelPort, err)
 			return false, nil
@@ -237,5 +254,38 @@ func (s *TunnelServer) updateNodeKubeletEndpoint(nodeName string) error {
 		return fmt.Errorf("failed to Update KubeletEndpoint Port")
 	}
 	klog.V(4).Infof("Update node KubeletEndpoint Port successfully, node: %s, tunnelPort: %d", nodeName, s.tunnelPort)
+	return nil
+}
+
+func (s *TunnelServer) updateNodeCloudCoreAddress(nodeName, cloudCoreIP string) error {
+	if s.kubeClient == nil {
+		return fmt.Errorf("kubeclient is nil, cannot update node address")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), s.updateTimeout)
+	defer cancel()
+	if err := wait.PollUntilContextTimeout(ctx, s.retrySleep, s.updateTimeout, true, func(ctx context.Context) (bool, error) {
+		node, err := s.kubeClient.Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+		if err != nil {
+			klog.Errorf("Failed to get node %s for address update, err: %v", nodeName, err)
+			return false, nil
+		}
+
+		for i, addr := range node.Status.Addresses {
+			if addr.Type == corev1.NodeInternalIP {
+				node.Status.Addresses[i].Address = cloudCoreIP
+				_, err = s.kubeClient.Nodes().UpdateStatus(ctx, node, metav1.UpdateOptions{})
+				if err != nil {
+					klog.Errorf("Failed to update node %s address to CloudCore IP %s, err: %v", nodeName, cloudCoreIP, err)
+					return false, nil
+				}
+				klog.V(4).Infof("Updated node %s InternalIP to CloudCore IP %s", nodeName, cloudCoreIP)
+				return true, nil
+			}
+		}
+		klog.Warningf("Node %s has no InternalIP address to update", nodeName)
+		return true, nil
+	}); err != nil {
+		return fmt.Errorf("failed to update node %s address to CloudCore IP: %w", nodeName, err)
+	}
 	return nil
 }

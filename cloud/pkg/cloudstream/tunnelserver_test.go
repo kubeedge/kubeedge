@@ -44,7 +44,7 @@ const (
 
 func setupTest(_ *testing.T) (*TunnelServer, *fake.Clientset) {
 	fakeClient := fake.NewSimpleClientset()
-	ts := newTunnelServerWithClient(testTunnelPort, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*100)
+	ts := newTunnelServerWithClient(testTunnelPort, 10003, "", fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
 	return ts, fakeClient
 }
 
@@ -116,29 +116,29 @@ func TestSessionManagement(t *testing.T) {
 
 func TestUpdateNodeKubeletEndpoint(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		fakeClient := fake.NewSimpleClientset(
-			&corev1.Node{
-				ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
-				Status: corev1.NodeStatus{
-					DaemonEndpoints: corev1.NodeDaemonEndpoints{
-						KubeletEndpoint: corev1.DaemonEndpoint{Port: 0},
-					},
-				},
-			},
-		)
+    fakeClient := fake.NewSimpleClientset(
+        &corev1.Node{
+            ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+            Status: corev1.NodeStatus{
+                DaemonEndpoints: corev1.NodeDaemonEndpoints{
+                    KubeletEndpoint: corev1.DaemonEndpoint{Port: 0},
+                },
+            },
+        },
+    )
 
-		tunnelPort := testTunnelPort
-		ts := newTunnelServerWithClient(tunnelPort, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+    streamPort := 10003  // renamed from tunnelPort, matches what updateNodeKubeletEndpoint sets
+    ts := newTunnelServerWithClient(testTunnelPort, streamPort, "", fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
 
-		err := ts.updateNodeKubeletEndpoint(testNodeName)
-		assert.NoError(t, err)
+    err := ts.updateNodeKubeletEndpoint(testNodeName)
+    assert.NoError(t, err)
 
-		node, err := fakeClient.CoreV1().Nodes().Get(context.Background(), testNodeName, metav1.GetOptions{})
-		assert.NoError(t, err)
-		assert.Equal(t, int32(tunnelPort), node.Status.DaemonEndpoints.KubeletEndpoint.Port)
-	})
+    node, err := fakeClient.CoreV1().Nodes().Get(context.Background(), testNodeName, metav1.GetOptions{})
+    assert.NoError(t, err)
+    assert.Equal(t, int32(streamPort), node.Status.DaemonEndpoints.KubeletEndpoint.Port)  // was int32(tunnelPort)
+})
 	t.Run("NilKubeClient", func(t *testing.T) {
-		ts := newTunnelServerWithClient(testTunnelPort, nil, time.Millisecond*10, time.Millisecond*100)
+		ts := newTunnelServerWithClient(testTunnelPort, 10003, "", nil, time.Millisecond*10, time.Millisecond*300)
 
 		err := ts.updateNodeKubeletEndpoint(testNodeName)
 
@@ -150,7 +150,7 @@ func TestUpdateNodeKubeletEndpoint(t *testing.T) {
 		fakeClient := fake.NewSimpleClientset()
 
 		tunnelPort := testTunnelPort
-		ts := newTunnelServerWithClient(tunnelPort, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*100)
+		ts := newTunnelServerWithClient(tunnelPort, 10003, "", fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
 
 		err := ts.updateNodeKubeletEndpoint("non-existent-node")
 		assert.Error(t, err)
@@ -167,7 +167,7 @@ func TestUpdateNodeKubeletEndpoint(t *testing.T) {
 		}
 
 		tunnelPort := testTunnelPort
-		ts := newTunnelServerWithClient(tunnelPort, customClient, time.Millisecond*10, time.Millisecond*100)
+		ts := newTunnelServerWithClient(tunnelPort, 10003, "", customClient, time.Millisecond*10, time.Millisecond*300)
 
 		err := ts.updateNodeKubeletEndpoint(nodeName)
 		assert.Error(t, err, "updateNodeKubeletEndpoint should return an error when update fails")
@@ -272,7 +272,7 @@ func TestConnect(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			fakeClient := tc.setupClient()
-			ts := newTunnelServerWithClient(testTunnelPort, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*100)
+			ts := newTunnelServerWithClient(testTunnelPort, 10003, "", fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
 
 			req := httptest.NewRequest("GET", "/v1/kubeedge/connect", nil)
 			tc.setupRequest(req)
