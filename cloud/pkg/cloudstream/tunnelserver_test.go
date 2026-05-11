@@ -369,3 +369,60 @@ func TestTLSSetup(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateNodeCloudCoreAddress(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset(
+			&corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+				Status: corev1.NodeStatus{
+					Addresses: []corev1.NodeAddress{
+						{Type: corev1.NodeInternalIP, Address: "192.168.1.1"},
+					},
+				},
+			},
+		)
+		ts := newTunnelServerWithClient(testTunnelPort, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		err := ts.updateNodeCloudCoreAddress(testNodeName, "10.0.0.1")
+		assert.NoError(t, err)
+
+		node, err := fakeClient.CoreV1().Nodes().Get(context.Background(), testNodeName, metav1.GetOptions{})
+		assert.NoError(t, err)
+		for _, addr := range node.Status.Addresses {
+			if addr.Type == corev1.NodeInternalIP {
+				assert.Equal(t, "10.0.0.1", addr.Address)
+			}
+		}
+	})
+
+	t.Run("NilKubeClient", func(t *testing.T) {
+		ts := newTunnelServerWithClient(testTunnelPort, nil, time.Millisecond*10, time.Millisecond*100)
+		err := ts.updateNodeCloudCoreAddress(testNodeName, "10.0.0.1")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "kubeclient is nil")
+	})
+
+	t.Run("NodeNotFound", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset()
+		ts := newTunnelServerWithClient(testTunnelPort, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*100)
+		err := ts.updateNodeCloudCoreAddress("non-existent-node", "10.0.0.1")
+		assert.Error(t, err)
+	})
+
+	t.Run("NoInternalIP", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset(
+			&corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+				Status: corev1.NodeStatus{
+					Addresses: []corev1.NodeAddress{
+						{Type: corev1.NodeExternalIP, Address: "1.2.3.4"},
+					},
+				},
+			},
+		)
+		ts := newTunnelServerWithClient(testTunnelPort, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+		err := ts.updateNodeCloudCoreAddress(testNodeName, "10.0.0.1")
+		assert.NoError(t, err)
+	})
+}

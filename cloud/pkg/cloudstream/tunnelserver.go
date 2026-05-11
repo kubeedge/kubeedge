@@ -22,6 +22,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	corev1 "k8s.io/api/core/v1"
 	"net/http"
 	"strings"
 	"sync"
@@ -237,5 +238,38 @@ func (s *TunnelServer) updateNodeKubeletEndpoint(nodeName string) error {
 		return fmt.Errorf("failed to Update KubeletEndpoint Port")
 	}
 	klog.V(4).Infof("Update node KubeletEndpoint Port successfully, node: %s, tunnelPort: %d", nodeName, s.tunnelPort)
+	return nil
+}
+
+func (s *TunnelServer) updateNodeCloudCoreAddress(nodeName, cloudCoreIP string) error {
+	if s.kubeClient == nil {
+		return fmt.Errorf("kubeclient is nil, cannot update node address")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), s.updateTimeout)
+	defer cancel()
+	if err := wait.PollUntilContextTimeout(ctx, s.retrySleep, s.updateTimeout, true, func(ctx context.Context) (bool, error) {
+		node, err := s.kubeClient.Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+		if err != nil {
+			klog.Errorf("Failed to get node %s for address update, err: %v", nodeName, err)
+			return false, nil
+		}
+
+		for i, addr := range node.Status.Addresses {
+			if addr.Type == corev1.NodeInternalIP {
+				node.Status.Addresses[i].Address = cloudCoreIP
+				_, err = s.kubeClient.Nodes().UpdateStatus(ctx, node, metav1.UpdateOptions{})
+				if err != nil {
+					klog.Errorf("Failed to update node %s address to CloudCore IP %s, err: %v", nodeName, cloudCoreIP, err)
+					return false, nil
+				}
+				klog.V(4).Infof("Updated node %s InternalIP to CloudCore IP %s", nodeName, cloudCoreIP)
+				return true, nil
+			}
+		}
+		klog.Warningf("Node %s has no InternalIP address to update", nodeName)
+		return true, nil
+	}); err != nil {
+		return fmt.Errorf("failed to update node %s address to CloudCore IP: %w", nodeName, err)
+	}
 	return nil
 }
