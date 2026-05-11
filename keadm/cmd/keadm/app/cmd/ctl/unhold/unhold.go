@@ -29,12 +29,61 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
+var (
+	edgeUnholdLongDescription = `
+Release the upgrade hold on a pod or node, allowing a previously
+paused (held) upgrade to resume.
+
+KubeEdge supports a hold/unhold mechanism during upgrades. When an
+upgrade task is created with hold enabled, the upgrade process pauses
+at a checkpoint and waits for explicit user approval before continuing.
+
+This command sends an unhold signal via the local MetaService API to
+release that checkpoint for the specified resource.
+
+Resource types:
+  pod   Unhold the upgrade for a specific pod in a namespace.
+        Requires the pod name. Uses --namespace (default: "default").
+  node  Unhold the upgrade for the entire edge node.
+        If no node name is given, reads the node name from the local
+        EdgeCore configuration file automatically.
+
+Upgrade workflow with hold/unhold:
+  1. Cloud creates an upgrade task with hold=true.
+  2. EdgeCore upgrades but pauses at the checkpoint.
+  3. User inspects the node and confirms it is safe to proceed.
+  4. User runs 'keadm ctl unhold-upgrade node' (or 'pod') to release.
+  5. Upgrade resumes and completes.
+
+WARNING: Releasing a hold resumes the upgrade immediately. Ensure
+the node and its workloads are in a healthy state before running
+this command.
+
+Note: This command must be run directly on the edge node where
+EdgeCore is running. It communicates with the local MetaService API.`
+
+	edgeUnholdExample = `
+  # Unhold the upgrade for the current edge node (node name read from EdgeCore config)
+  keadm ctl unhold-upgrade node
+
+  # Unhold the upgrade for a specific edge node by name
+  keadm ctl unhold-upgrade node <node-name>
+
+  # Unhold the upgrade for a specific pod in the default namespace
+  keadm ctl unhold-upgrade pod <pod-name>
+
+  # Unhold the upgrade for a pod in a specific namespace
+  keadm ctl unhold-upgrade pod <pod-name> --namespace <namespace>`
+)
+
 // NewEdgeUnholdUpgrade returns KubeEdge unhold-upgrade command.
 func NewEdgeUnholdUpgrade() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "unhold-upgrade <resource-type> [<name>] [--namespace namespace]",
-		Short: "Unhold an upgrade for a pod or node-wide",
-		Args:  cobra.MinimumNArgs(1),
+		Use:     "unhold-upgrade <resource-type> [<name>] [--namespace namespace]",
+		Short:   "Unhold an upgrade for a pod or node, allowing it to resume.",
+		Long:    edgeUnholdLongDescription,
+		Example: edgeUnholdExample,
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			resourceType := args[0]
 			var resourceName string
