@@ -241,9 +241,6 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 				klog.Errorf("SyncDeviceFromSqlite failed: %v", err2)
 			}
 			klog.Errorf("Update device twin failed due to writing sql error: %v", err)
-			if dealType != RestDealType {
-				return err
-			}
 		}
 	}
 
@@ -252,9 +249,9 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 		if err2 := dealUpdateResult(context, deviceID, eventID, dtcommon.InternalErrorCode, err, updateResult); err2 != nil {
 			klog.Errorf("dealUpdateResult failed: %v", err2)
 		}
-		if err != nil { // The error returned by TwinServiceFactory().DeviceTwinTrans()
-			return err
-		}
+	}
+	if err != nil { // The error returned by TwinServiceFactory().DeviceTwinTrans()
+		return err
 	}
 	if len(dealTwinResult.Document) > 0 {
 		if err := dealDocument(context, deviceID, dttype.BaseMessage{EventID: eventID, Timestamp: now}, dealTwinResult.Document); err != nil {
