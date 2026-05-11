@@ -114,8 +114,7 @@ func dealTwinSync(context *dtcontext.DTContext, resource string, msg interface{}
 	msgTwin, err := dttype.UnmarshalDeviceTwinUpdate(content)
 	if err != nil {
 		klog.Errorf("Unmarshal update request body failed, err: %#v", err)
-		if err2 := dealUpdateResult(context, "", "", dtcommon.BadRequestCode,
-			errors.New("unmarshal update request body failed, Please check the request"), result); err2 != nil {
+		if err2 := dealUpdateResult(context, resource, "", dtcommon.BadRequestCode, err, result); err2 != nil {
 			klog.Errorf("dealUpdateResult failed: %v", err2)
 		}
 		return err
@@ -177,7 +176,7 @@ func Updated(context *dtcontext.DTContext, deviceID string, payload []byte) erro
 	msg, err := dttype.UnmarshalDeviceTwinUpdate(payload)
 	if err != nil {
 		klog.Errorf("Unmarshal update request body failed, err: %#v", err)
-		if err2 := dealUpdateResult(context, "", "", dtcommon.BadRequestCode, err, result); err2 != nil {
+		if err2 := dealUpdateResult(context, deviceID, "", dtcommon.BadRequestCode, err, result); err2 != nil {
 			klog.Errorf("dealUpdateResult failed: %v", err2)
 		}
 		return err
@@ -242,6 +241,9 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 				klog.Errorf("SyncDeviceFromSqlite failed: %v", err2)
 			}
 			klog.Errorf("Update device twin failed due to writing sql error: %v", err)
+			if dealType != RestDealType {
+				return err
+			}
 		}
 	}
 
