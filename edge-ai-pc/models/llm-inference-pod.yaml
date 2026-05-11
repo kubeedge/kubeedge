@@ -1,0 +1,232 @@
+## LLM Inference Pod — Phi-3 Mini 4K Instruct (Q4_K_M) via llama.cpp
+## Target: NVIDIA GPU (primary) with CPU fallback
+## Model: microsoft/Phi-3-mini-4k-instruct-gguf (Q4_K_M quantization, ~2.2GB)
+##
+## Pre-requisites:
+##   1. NVIDIA device plugin running (nvidia-device-plugin.yaml)
+##   2. Model downloaded to /opt/llm-models/ on edge node:
+##      huggingface-cli download microsoft/Phi-3-mini-4k-instruct-gguf \
+##        Phi-3-mini-4k-instruct-q4.gguf \
+##        --local-dir /opt/llm-models/
+##   3. PVC created (see PersistentVolumeClaim below)
+##
+## Deploy: kubectl apply -f llm-inference-pod.yaml -n edge-ai
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: llm-model-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+  - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /opt/llm-models
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - ai-pc-node-01
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llm-model-pvc
+  namespace: edge-ai
+spec:
+  accessModes:
+  - ReadOnlyMany
+  storageClassName: local-storage
+  resources:
+    requests:
+      storage: 10Gi
+  volumeName: llm-model-pv
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phi3-mini-llama-cpp
+  namespace: edge-ai
+  labels:
+    app: phi3-mini
+    model: phi3-mini-4k
+    runtime: llama-cpp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: phi3-mini
+  template:
+    metadata:
+      labels:
+        app: phi3-mini
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port:   "8080"
+        prometheus.io/path:   "/metrics"
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: ai-pc-node-01
+        accelerator: nvidia-gpu
+      tolerations:
+      - key: "node-role.kubernetes.io/edge"
+        operator: "Exists"
+        effect: "NoSchedule"
+      runtimeClassName: nvidia
+      # Download model via initContainer if not cached on hostPath
+      initContainers:
+      - name: model-check
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          if [ ! -f /models/Phi-3-mini-4k-instruct-q4.gguf ]; then
+            echo "Model not found at /models/. Downloading..."
+            wget -q -O /models/Phi-3-mini-4k-instruct-q4.gguf \
+              "https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf"
+          else
+            echo "Model already cached. Skipping download."
+          fi
+        volumeMounts:
+        - name: model-store
+          mountPath: /models
+      containers:
+      - name: llama-cpp-server
+        image: ghcr.io/ggerganov/llama.cpp:server-cuda-b3733
+        imagePullPolicy: IfNotPresent
+        command: ["./llama-server"]
+        args:
+        - --model
+        - /models/Phi-3-mini-4k-instruct-q4.gguf
+        - --n-gpu-layers
+        - "32"             # offload all 32 transformer layers to GPU
+        - --ctx-size
+        - "4096"           # context window (4K tokens)
+        - --batch-size
+        - "512"
+        - --port
+        - "8080"
+        - --host
+        - "0.0.0.0"
+        - --threads
+        - "4"              # CPU threads for tokenization
+        - --n-predict
+        - "512"            # max tokens per response
+        - --log-disable    # disable file logging (use stdout)
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "1000m"
+            memory: "4Gi"
+          limits:
+            cpu: "4000m"
+            memory: "8Gi"
+            nvidia.com/gpu: "1"
+        env:
+        - name: LLAMA_CUBLAS
+          value: "1"
+        - name: CUDA_VISIBLE_DEVICES
+          value: "0"
+        volumeMounts:
+        - name: model-store
+          mountPath: /models
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 60    # model load takes ~30s
+          periodSeconds: 15
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 45
+          periodSeconds: 10
+      volumes:
+      - name: model-store
+        persistentVolumeClaim:
+          claimName: llm-model-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: phi3-mini-svc
+  namespace: edge-ai
+  labels:
+    app: phi3-mini
+spec:
+  type: ClusterIP
+  selector:
+    app: phi3-mini
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+---
+## CPU-only fallback Deployment (no GPU, uses OpenVINO or llama.cpp CPU)
+## Useful for nodes without NVIDIA GPU (e.g., Intel Core Ultra with iGPU)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phi3-mini-cpu-fallback
+  namespace: edge-ai
+  labels:
+    app: phi3-mini-cpu
+spec:
+  replicas: 0    # Scale to 1 manually if GPU path unavailable
+  selector:
+    matchLabels:
+      app: phi3-mini-cpu
+  template:
+    metadata:
+      labels:
+        app: phi3-mini-cpu
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: ai-pc-node-01
+      tolerations:
+      - key: "node-role.kubernetes.io/edge"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: llama-cpp-cpu
+        image: ghcr.io/ggerganov/llama.cpp:server
+        command: ["./llama-server"]
+        args:
+        - --model
+        - /models/Phi-3-mini-4k-instruct-q4.gguf
+        - --ctx-size
+        - "2048"
+        - --threads
+        - "8"
+        - --port
+        - "8081"
+        - --host
+        - "0.0.0.0"
+        resources:
+          requests:
+            cpu: "2000m"
+            memory: "4Gi"
+          limits:
+            cpu: "8000m"
+            memory: "6Gi"
+        volumeMounts:
+        - name: model-store
+          mountPath: /models
+          readOnly: true
+      volumes:
+      - name: model-store
+        persistentVolumeClaim:
+          claimName: llm-model-pvc
