@@ -1,0 +1,36 @@
+# DeviceModel: describes the vibration + temperature sensor's capabilities
+# This is the "blueprint" — shared across all factory-floor sensors of this type.
+apiVersion: devices.kubeedge.io/v1beta1
+kind: DeviceModel
+metadata:
+  name: factory-vibration-temp-sensor
+  namespace: default
+  labels:
+    app: predictive-maintenance
+    scenario: embodied-intelligence
+spec:
+  properties:
+    - name: vibration
+      description: "Vibration level measured in g-force (gravitational acceleration)"
+      type:
+        float:
+          accessMode: ReadOnly
+          defaultValue: 0.0
+          minimum: 0.0
+          maximum: 50.0
+          unit: "g"
+    - name: temperature
+      description: "Component temperature in degrees Celsius"
+      type:
+        float:
+          accessMode: ReadOnly
+          defaultValue: 25.0
+          minimum: -20.0
+          maximum: 200.0
+          unit: "°C"
+    - name: anomaly-detected
+      description: "Edge AI inference result: true if the sensor reading is anomalous"
+      type:
+        boolean:
+          accessMode: ReadOnly
+          defaultValue: false
