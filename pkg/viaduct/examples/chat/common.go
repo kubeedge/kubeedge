@@ -47,8 +47,7 @@ func GetTlsConfig(cfg *config.Config) (*tls.Config, error) {
 	}
 
 	return &tls.Config{
-		ClientCAs:    pool,
+		RootCAs:      pool,
 		Certificates: []tls.Certificate{cert},
-		ClientAuth:   tls.RequireAndVerifyClientCert,
 	}, nil
 }
