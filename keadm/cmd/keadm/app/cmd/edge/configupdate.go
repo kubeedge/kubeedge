@@ -17,16 +17,20 @@ limitations under the License.
 package edge
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
-	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
+	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2/validation"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/helm"
 	upgrdeedge "github.com/kubeedge/kubeedge/pkg/upgrade/edge"
+	pkgutil "github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
@@ -90,20 +94,21 @@ func (executor *configUpdateExecutor) configUpdate(opts ConfigUpdateOptions) err
 	if err != nil {
 		return fmt.Errorf("failed to read configfile %s, err: %v", opts.Config, err)
 	}
+	sets := strings.Split(opts.Sets, ",")
+	mergedData, err := helm.MergeSetsToBytes(data, sets)
+	if err != nil {
+		return fmt.Errorf("failed to merge sets to edgecore's config with err:%v", err)
+	}
 	edgeConfigure := &v1alpha2.EdgeCoreConfig{}
-	err = yaml.Unmarshal(data, edgeConfigure)
-	if err != nil {
-		return fmt.Errorf("failed to unmarshal configfile %s, err: %v", opts.Config, err)
+	//Check if there are any unknown fields in the set.
+	if err = yaml.UnmarshalStrict(mergedData, edgeConfigure); err != nil {
+		return err
 	}
-
-	err = util.ParseSet(edgeConfigure, opts.Sets)
-	if err != nil {
-		return fmt.Errorf("failed to parse sets value to config file: %v", err)
+	if errs := validation.ValidateEdgeCoreConfiguration(edgeConfigure); len(errs) > 0 {
+		return errors.New(pkgutil.SpliceErrors(errs.ToAggregate().Errors()))
 	}
-
-	err = edgeConfigure.WriteTo(opts.Config)
-	if err != nil {
-		return fmt.Errorf("failed to write new edgecore config: %v", err)
+	if err = writeFile(opts.Config, mergedData); err != nil {
+		return err
 	}
 
 	cmd := execs.NewCommand("sudo systemctl restart edgecore.service")
@@ -111,6 +116,15 @@ func (executor *configUpdateExecutor) configUpdate(opts ConfigUpdateOptions) err
 	if err != nil {
 		return fmt.Errorf("failed restart edgecore %v", err)
 	}
-
 	return nil
+}
+
+func writeFile(filename string, data []byte) error {
+	fileInfo, err := os.Stat(filename)
+	if err != nil {
+		// If the file does not exist, the default permissions are 0644.
+		return os.WriteFile(filename, data, 0644)
+	}
+	// Write the file using the original file permissions.
+	return os.WriteFile(filename, data, fileInfo.Mode())
 }
