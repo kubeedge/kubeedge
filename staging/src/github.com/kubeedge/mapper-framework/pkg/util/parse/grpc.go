@@ -159,6 +159,16 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 				dbconfig = common.DBConfig{
 					MySQLClientConfig: clientConfig,
 				}
+			case pptv.PushMethod.DbMethod.Kwdb != nil:
+				dbMethodName = "kwdb"
+				clientConfig, err := json.Marshal(pptv.PushMethod.DbMethod.Kwdb.KwdbClientConfig)
+				if err != nil {
+					klog.Errorf("Kaiwudb config err: %+v", err)
+					return nil
+				}
+				dbconfig = common.DBConfig{
+					KWDBClientConfig: clientConfig,
+				}
 			default:
 				klog.Errorf("get DBMethod err: Unsupported database type")
 			}
