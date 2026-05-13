@@ -238,11 +238,28 @@ func setCommonValue(structPtr interface{}, fieldPath string, value interface{}) 
 	path := strings.Split(fieldPath, ".")
 	var fieldVal reflect.Value
 	fieldVal = structVal
-	for _, p := range path {
+
+	// Traverse all but the last path element
+	for i := 0; i < len(path)-1; i++ {
+		p := path[i]
 		fieldVal = getFieldValue(fieldVal, p)
 		if !fieldVal.IsValid() {
 			return fmt.Errorf("%s: No such field: %s in Config", fieldPath, p)
 		}
+	}
+
+	// Handle the last path element
+	lastPath := path[len(path)-1]
+
+	// Check if the current fieldVal is a map
+	if fieldVal.Kind() == reflect.Map {
+		return setMapValue(fieldVal, lastPath, value)
+	}
+
+	// For non-map types, get the final field
+	fieldVal = getFieldValue(fieldVal, lastPath)
+	if !fieldVal.IsValid() {
+		return fmt.Errorf("%s: No such field: %s in Config", fieldPath, lastPath)
 	}
 
 	// Set new value
@@ -253,6 +270,39 @@ func setCommonValue(structPtr interface{}, fieldPath string, value interface{}) 
 	}
 	fieldVal.Set(convertedValue)
 
+	return nil
+}
+
+// setMapValue sets a value in a map using the provided key
+func setMapValue(mapVal reflect.Value, key string, value interface{}) error {
+	if mapVal.Kind() != reflect.Map {
+		return fmt.Errorf("target is not a map")
+	}
+
+	// If map is nil, initialize it
+	if mapVal.IsNil() {
+		mapVal.Set(reflect.MakeMap(mapVal.Type()))
+	}
+
+	// Convert the key string to the map's key type
+	keyType := mapVal.Type().Key()
+	mapKey := reflect.ValueOf(key)
+	if mapKey.Type() != keyType {
+		// For string keys, no conversion needed
+		if keyType.Kind() != reflect.String {
+			return fmt.Errorf("unsupported map key type: %v", keyType)
+		}
+	}
+
+	// Convert the value to the map's value type
+	elemType := mapVal.Type().Elem()
+	valueRef := reflect.ValueOf(value)
+	convertedValue, err := convertTargetValue(elemType, valueRef)
+	if err != nil {
+		return fmt.Errorf("failed to convert map value: %w", err)
+	}
+
+	mapVal.SetMapIndex(mapKey, convertedValue)
 	return nil
 }
 
@@ -486,33 +536,70 @@ func findFieldByTag(obj interface{}, k int, tagName []string, fieldNames []strin
 		t = t.Elem()
 	}
 
+	// Handle map type - map keys cannot be traversed by struct field lookup
+	if t.Kind() == reflect.Map {
+		// For maps, we keep the original tag name since map keys are not struct fields
+		fieldNames[k] = tagName[k]
+		// Mark that we've reached a map by setting remaining fields to original names
+		for j := k + 1; j < len(tagName); j++ {
+			fieldNames[j] = tagName[j]
+		}
+		return
+	}
+
+	// Only process struct types
+	if t.Kind() != reflect.Struct {
+		return
+	}
+
 	if isFirstLetterUpper(tagName[k]) {
 		fieldNames[k] = tagName[k]
 		findFieldByTag(v.FieldByName(tagName[k]).Interface(), k+1, tagName, fieldNames)
+		return
 	}
+
+	// First, try to find in direct fields
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		tagValue := field.Tag.Get("json")
-		if !isFirstLetterUpper(tagName[k]) && tagValue == "" && i >= t.NumField() {
-			upperTagName := upperFirstLetter(tagName[k])
-			fieldNames[k] = upperTagName
-			findFieldByTag(v.FieldByName(upperTagName).Interface(), k+1, tagName, fieldNames)
-		}
 		tagVals := strings.Split(tagValue, ",")
 		if tagVals[0] == tagName[k] {
 			fieldNames[k] = field.Name
 			findFieldByTag(v.Field(i).Interface(), k+1, tagName, fieldNames)
+			return
 		}
 	}
-}
 
-func upperFirstLetter(s string) string {
-	if len(s) > 0 {
-		firstChar := []rune(s)[0]
-		upperFirstChar := unicode.ToUpper(firstChar)
-		return string(upperFirstChar) + s[1:]
+	// If not found in direct fields, search in embedded (anonymous) fields
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		// Check if this is an embedded field (anonymous field)
+		if field.Anonymous {
+			// Get the field value to search within it
+			fieldValue := v.Field(i)
+			// Handle pointer to embedded struct
+			if fieldValue.Kind() == reflect.Ptr {
+				if fieldValue.IsNil() {
+					// Create a new instance if nil to get the type
+					fieldValue = reflect.New(field.Type.Elem()).Elem()
+				} else {
+					fieldValue = fieldValue.Elem()
+				}
+			}
+			// Recursively search in the embedded field
+			// Save the current state to restore if not found
+			savedField := fieldNames[k]
+			fieldNames[k] = field.Name
+			findFieldByTag(fieldValue.Interface(), k, tagName, fieldNames)
+			// If the field was found in the embedded struct, fieldNames[k] would be updated
+			if fieldNames[k] != field.Name {
+				// Field was found deeper in the embedded struct
+				return
+			}
+			// Restore if not found
+			fieldNames[k] = savedField
+		}
 	}
-	return ""
 }
 
 // Determine whether the first letter is capitalized
