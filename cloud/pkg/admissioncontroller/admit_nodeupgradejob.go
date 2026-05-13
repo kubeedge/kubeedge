@@ -26,7 +26,6 @@ import (
 
 	"github.com/blang/semver"
 	admissionv1 "k8s.io/api/admission/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/operations/v1alpha1"
@@ -101,21 +100,6 @@ func validateNodeUpgradeJob(upgrade *v1alpha1.NodeUpgradeJob) error {
 	}
 
 	return nil
-}
-
-func admissionResponse(err error) *admissionv1.AdmissionResponse {
-	if err != nil {
-		return &admissionv1.AdmissionResponse{
-			Allowed: false,
-			Result: &metav1.Status{
-				Message: err.Error(),
-			},
-		}
-	}
-
-	return &admissionv1.AdmissionResponse{
-		Allowed: true,
-	}
 }
 
 func mutatingNodeUpgradeJob(review admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
