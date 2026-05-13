@@ -140,6 +140,7 @@ func (mh *messageHandler) HandleConnection(connection conn.Connection) {
 
 	// start a goroutine for serving the node connection
 	go func() {
+		connectionStart := time.Now()
 		klog.Infof("edge node %s for project %s connected", nodeInfo.NodeID, nodeInfo.ProjectID)
 
 		// init node message pool and add to the dispatcher
@@ -152,6 +153,9 @@ func (mh *messageHandler) HandleConnection(connection conn.Connection) {
 			keepaliveInterval, nodeMessagePool, mh.reliableClient)
 		// add node session to the session manager
 		mh.SessionManager.AddSession(nodeSession)
+		
+		klog.V(2).Infof("Node %s connection established in %v", nodeID, time.Since(connectionStart))
+
 		go func() {
 			err := retry.Do(
 				func() error {
@@ -170,7 +174,8 @@ func (mh *messageHandler) HandleConnection(connection conn.Connection) {
 		// it encounters some Transport Error from underlying connection.
 		nodeSession.Start()
 
-		klog.Infof("edge node %s for project %s disConnected", nodeInfo.NodeID, nodeInfo.ProjectID)
+		sessionDuration := time.Since(connectionStart)
+		klog.Infof("edge node %s for project %s disconnected after %v", nodeInfo.NodeID, nodeInfo.ProjectID, sessionDuration)
 
 		// clean node message pool and session
 		mh.MessageDispatcher.DeleteNodeMessagePool(nodeInfo.NodeID, nodeMessagePool)
