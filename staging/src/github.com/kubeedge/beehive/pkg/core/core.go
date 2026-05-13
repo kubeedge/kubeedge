@@ -21,24 +21,13 @@ func StartModules() {
 	modules := GetModules()
 
 	for name, module := range modules {
-		var m common.ModuleInfo
-		switch module.contextType {
-		case common.MsgCtxTypeChannel:
-			m = common.ModuleInfo{
-				ModuleName: name,
-				ModuleType: module.contextType,
-			}
-		case common.MsgCtxTypeUS:
-			m = common.ModuleInfo{
-				ModuleName: name,
-				ModuleType: module.contextType,
-				// the below field ModuleSocket is only required for using socket.
-				ModuleSocket: common.ModuleSocket{
-					IsRemote: module.remote,
-				},
-			}
-		default:
-			klog.Exitf("unsupported context type: %s", module.contextType)
+		m := common.ModuleInfo{
+			ModuleName: name,
+			ModuleType: module.contextType,
+			// the below field ModuleSocket is only required for using socket.
+			ModuleSocket: common.ModuleSocket{
+				IsRemote: module.remote,
+			},
 		}
 
 		beehiveContext.AddModule(&m)
