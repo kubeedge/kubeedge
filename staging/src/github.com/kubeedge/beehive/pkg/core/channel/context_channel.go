@@ -1,6 +1,7 @@
 package channel
 
 import (
+	gocontext "context"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -86,6 +87,22 @@ func (ctx *Context) Receive(module string) (model.Message, error) {
 
 	klog.Warningf("Failed to get channel for module:%s when receive message", module)
 	return model.Message{}, fmt.Errorf("failed to get channel for module(%s)", module)
+}
+
+// ReceiveWithContext receives a message from the module's channel, returning
+// immediately with ctx.Err() if ctx is cancelled before a message is available.
+func (ctx *Context) ReceiveWithContext(goCtx gocontext.Context, module string) (model.Message, error) {
+	channel := ctx.getChannel(module)
+	if channel == nil {
+		klog.Warningf("Failed to get channel for module:%s when receive message", module)
+		return model.Message{}, fmt.Errorf("failed to get channel for module(%s)", module)
+	}
+	select {
+	case <-goCtx.Done():
+		return model.Message{}, goCtx.Err()
+	case content := <-channel:
+		return content, nil
+	}
 }
 
 func getAnonChannelName(msgID string) string {
