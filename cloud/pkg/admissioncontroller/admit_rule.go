@@ -48,6 +48,9 @@ func admitRule(review admissionv1.AdmissionReview) *admissionv1.AdmissionRespons
 }
 
 func validateRule(rule *rulesv1.Rule) error {
+	if rule.Namespace == "" {
+		return fmt.Errorf("empty rule")
+	}
 	sourceKey := fmt.Sprintf("%s/%s", rule.Namespace, rule.Spec.Source)
 	sourceEndpoint, err := controller.getRuleEndpoint(rule.Namespace, rule.Spec.Source)
 	if err != nil {
