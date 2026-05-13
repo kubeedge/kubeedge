@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
@@ -34,76 +35,74 @@ import (
 )
 
 const (
-	numGoroutines  = 10
-	numOperations  = 100
-	testTimeout    = 5 * time.Second
-	defaultTimeout = 1 * time.Second
+	numGoroutines = 10
+	numOperations = 100
+	testTimeout   = 5 * time.Second
 )
 
 func init() {
-	dc := &v1alpha1.DeviceController{
+	// Initialize global configuration for tests
+	config.InitConfigure(&v1alpha1.DeviceController{
 		Buffer: &v1alpha1.DeviceControllerBuffer{
 			DeviceEvent: 1024,
 		},
-	}
-	config.InitConfigure(dc)
+	})
 }
 
+// ---------------------- Mock utilities ----------------------
+
+// mockSharedIndexInformer mocks the AddEventHandler behavior of a SharedIndexInformer.
 type mockSharedIndexInformer struct {
 	cache.SharedIndexInformer
-	handler   cache.ResourceEventHandler
-	handlerFn func(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error)
+	handlerFn func(cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error)
 }
 
-func (m *mockSharedIndexInformer) AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
+func (m *mockSharedIndexInformer) AddEventHandler(h cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
 	if m.handlerFn != nil {
-		return m.handlerFn(handler)
+		return m.handlerFn(h)
 	}
-	m.handler = handler
 	return &mockEventHandlerRegistration{}, nil
 }
 
+// mockEventHandlerRegistration is a stub for ResourceEventHandlerRegistration.
 type mockEventHandlerRegistration struct{}
 
-func (m *mockEventHandlerRegistration) HasSynced() bool                     { return true }
-func (m *mockEventHandlerRegistration) Handler() cache.ResourceEventHandler { return nil }
+func (*mockEventHandlerRegistration) HasSynced() bool                     { return true }
+func (*mockEventHandlerRegistration) Handler() cache.ResourceEventHandler { return nil }
 
-func newMockInformer(returnError bool) *mockSharedIndexInformer {
-	m := &mockSharedIndexInformer{}
-	if returnError {
-		m.handlerFn = func(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
-			return nil, errors.New("mock error")
+// newMockInformer returns a mockSharedIndexInformer which optionally returns an error
+// when AddEventHandler is called.
+func newMockInformer(shouldError bool) *mockSharedIndexInformer {
+	if shouldError {
+		return &mockSharedIndexInformer{
+			handlerFn: func(cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
+				return nil, errors.New("mock error")
+			},
 		}
 	}
-	return m
+	return &mockSharedIndexInformer{}
 }
 
+// ---------------------- Unit tests ----------------------
+
 func TestNewDeviceManager(t *testing.T) {
-	testCases := []struct {
-		name         string
-		mockInformer *mockSharedIndexInformer
-		expectError  bool
+	cases := []struct {
+		name        string
+		informerErr bool
+		wantErr     bool
 	}{
-		{
-			name:         "Success case",
-			mockInformer: newMockInformer(false),
-			expectError:  false,
-		},
-		{
-			name:         "Error case",
-			mockInformer: newMockInformer(true),
-			expectError:  true,
-		},
+		{"success", false, false},
+		{"informer returns error", true, true},
 	}
 
-	for _, tc := range testCases {
+	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			dm, err := NewDeviceManager(tc.mockInformer)
-			if tc.expectError {
-				assert.Error(t, err)
+			dm, err := NewDeviceManager(newMockInformer(tc.informerErr))
+			if tc.wantErr {
+				require.Error(t, err)
 				assert.Nil(t, dm)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.NotNil(t, dm)
 				assert.NotNil(t, dm.events)
 			}
@@ -112,77 +111,64 @@ func TestNewDeviceManager(t *testing.T) {
 }
 
 func TestDeviceManager_Events(t *testing.T) {
-	eventChan := make(chan watch.Event, 10)
-	dm := &DeviceManager{
-		events: eventChan,
-		Device: sync.Map{},
-	}
+	eventChan := make(chan watch.Event, 1)
+	dm := &DeviceManager{events: eventChan}
 
-	resultChan := dm.Events()
-	assert.Equal(t, eventChan, resultChan)
+	assert.Equal(t, eventChan, dm.Events(), "Events() should return the internal events channel")
 }
 
 func TestDeviceManagerWithRealEvents(t *testing.T) {
-	mockInformer := newMockInformer(false)
-	dm, err := NewDeviceManager(mockInformer)
-	assert.NoError(t, err)
-	assert.NotNil(t, dm)
+	dm, err := NewDeviceManager(newMockInformer(false))
+	require.NoError(t, err)
 
 	testDevice := &v1beta1.Device{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-device",
 			Namespace: "default",
 		},
-		Spec: v1beta1.DeviceSpec{
-			NodeName: "test-node",
-		},
+		Spec: v1beta1.DeviceSpec{NodeName: "test-node"},
 	}
 
-	eventReceived := make(chan bool)
+	done := make(chan bool)
 	go func() {
 		select {
-		case event := <-dm.Events():
-			assert.Equal(t, watch.Added, event.Type)
-			assert.Equal(t, testDevice, event.Object)
-			eventReceived <- true
+		case e := <-dm.Events():
+			assert.Equal(t, watch.Added, e.Type)
+			assert.Equal(t, testDevice, e.Object)
+			done <- true
 		case <-time.After(time.Second):
-			eventReceived <- false
+			done <- false
 		}
 	}()
 
-	dm.events <- watch.Event{
-		Type:   watch.Added,
-		Object: testDevice,
-	}
-
-	received := <-eventReceived
-	assert.True(t, received)
+	dm.events <- watch.Event{Type: watch.Added, Object: testDevice}
+	assert.True(t, <-done, "Event was not received before timeout")
 }
 
 func TestDeviceManagerDeviceMap(t *testing.T) {
-	dm := &DeviceManager{
-		Device: sync.Map{},
-	}
+	dm := &DeviceManager{Device: sync.Map{}}
 
-	deviceID := "default/test-device"
-	testDevice := &v1beta1.Device{
+	id := "default/test-device"
+	dev := &v1beta1.Device{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-device",
 			Namespace: "default",
 		},
 	}
 
-	dm.Device.Store(deviceID, testDevice)
+	// Store device in the map
+	dm.Device.Store(id, dev)
+	v, ok := dm.Device.Load(id)
+	assert.True(t, ok)
+	assert.Equal(t, dev, v)
 
-	storedDevice, exists := dm.Device.Load(deviceID)
-	assert.True(t, exists)
-	assert.Equal(t, testDevice, storedDevice)
-
-	dm.Device.Delete(deviceID)
-	_, exists = dm.Device.Load(deviceID)
-	assert.False(t, exists)
+	// Delete device and ensure it is removed
+	dm.Device.Delete(id)
+	_, ok = dm.Device.Load(id)
+	assert.False(t, ok)
 }
 
+// TestDeviceManagerConcurrency does not use t, so use _ to avoid compile error
 func TestDeviceManagerConcurrency(_ *testing.T) {
 	dm := &DeviceManager{
 		Device: sync.Map{},
@@ -196,16 +182,12 @@ func TestDeviceManagerConcurrency(_ *testing.T) {
 		go func(routineID int) {
 			defer wg.Done()
 			for j := 0; j < numOperations; j++ {
-				deviceID := fmt.Sprintf("device-%d-%d", routineID, j)
-				device := &v1beta1.Device{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: deviceID,
-					},
-				}
+				id := fmt.Sprintf("device-%d-%d", routineID, j)
+				d := &v1beta1.Device{ObjectMeta: metav1.ObjectMeta{Name: id}}
 
-				dm.Device.Store(deviceID, device)
-				_, _ = dm.Device.Load(deviceID)
-				dm.Device.Delete(deviceID)
+				dm.Device.Store(id, d)
+				_, _ = dm.Device.Load(id)
+				dm.Device.Delete(id)
 			}
 		}(i)
 	}
