@@ -38,8 +38,12 @@ import (
 )
 
 const (
-	testNodeName   = "test-node"
-	testTunnelPort = 10350
+	testNodeName    = "test-node"
+	testTunnelPort  = 10350
+	testCloudCoreIP = "10.0.2.15"
+	testStreamPort  = 10003
+	testNamespace   = "kubeedge"
+	testServiceName = "edge-node-" + testNodeName
 )
 
 func setupTest(_ *testing.T) (*TunnelServer, *fake.Clientset) {
@@ -116,27 +120,27 @@ func TestSessionManagement(t *testing.T) {
 
 func TestUpdateNodeKubeletEndpoint(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-    fakeClient := fake.NewSimpleClientset(
-        &corev1.Node{
-            ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
-            Status: corev1.NodeStatus{
-                DaemonEndpoints: corev1.NodeDaemonEndpoints{
-                    KubeletEndpoint: corev1.DaemonEndpoint{Port: 0},
-                },
-            },
-        },
-    )
+		fakeClient := fake.NewSimpleClientset(
+			&corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+				Status: corev1.NodeStatus{
+					DaemonEndpoints: corev1.NodeDaemonEndpoints{
+						KubeletEndpoint: corev1.DaemonEndpoint{Port: 0},
+					},
+				},
+			},
+		)
 
-    streamPort := 10003  // renamed from tunnelPort, matches what updateNodeKubeletEndpoint sets
-    ts := newTunnelServerWithClient(testTunnelPort, streamPort, "", fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+		streamPort := 10003 // renamed from tunnelPort, matches what updateNodeKubeletEndpoint sets
+		ts := newTunnelServerWithClient(testTunnelPort, streamPort, "", fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
 
-    err := ts.updateNodeKubeletEndpoint(testNodeName)
-    assert.NoError(t, err)
+		err := ts.updateNodeKubeletEndpoint(testNodeName)
+		assert.NoError(t, err)
 
-    node, err := fakeClient.CoreV1().Nodes().Get(context.Background(), testNodeName, metav1.GetOptions{})
-    assert.NoError(t, err)
-    assert.Equal(t, int32(streamPort), node.Status.DaemonEndpoints.KubeletEndpoint.Port)  // was int32(tunnelPort)
-})
+		node, err := fakeClient.CoreV1().Nodes().Get(context.Background(), testNodeName, metav1.GetOptions{})
+		assert.NoError(t, err)
+		assert.Equal(t, int32(streamPort), node.Status.DaemonEndpoints.KubeletEndpoint.Port) // was int32(tunnelPort)
+	})
 	t.Run("NilKubeClient", func(t *testing.T) {
 		ts := newTunnelServerWithClient(testTunnelPort, 10003, "", nil, time.Millisecond*10, time.Millisecond*300)
 
@@ -368,4 +372,346 @@ func TestTLSSetup(t *testing.T) {
 			assert.NotNil(t, ts.container, "Container should be initialized")
 		})
 	}
+}
+
+func TestEnsureNodeService(t *testing.T) {
+	t.Run("NilKubeClient", func(t *testing.T) {
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, testCloudCoreIP, nil, time.Millisecond*10, time.Millisecond*300)
+		err := ts.ensureNodeService(context.Background(), testNodeName, testCloudCoreIP, testStreamPort)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "kubeclient is nil")
+	})
+
+	t.Run("CreatesServiceAndEndpointsWhenNotExist", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset()
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, testCloudCoreIP, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		_, err := fakeClient.CoreV1().Nodes().Create(context.Background(), &corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+			Status: corev1.NodeStatus{
+				Addresses: []corev1.NodeAddress{
+					{Type: corev1.NodeInternalIP, Address: "10.0.2.15"},
+				},
+			},
+		}, metav1.CreateOptions{})
+		assert.NoError(t, err)
+
+		err = ts.ensureNodeService(context.Background(), testNodeName, testCloudCoreIP, testStreamPort)
+		assert.NoError(t, err)
+
+		svc, err := fakeClient.CoreV1().Services(testNamespace).Get(context.Background(), testServiceName, metav1.GetOptions{})
+		assert.NoError(t, err)
+		assert.Equal(t, int32(testStreamPort), svc.Spec.Ports[0].Port)
+
+		ep, err := fakeClient.CoreV1().Endpoints(testNamespace).Get(context.Background(), testServiceName, metav1.GetOptions{})
+		assert.NoError(t, err)
+		assert.Equal(t, testCloudCoreIP, ep.Subsets[0].Addresses[0].IP)
+		assert.Equal(t, int32(testStreamPort), ep.Subsets[0].Ports[0].Port)
+	})
+
+	t.Run("UsesExistingServiceClusterIP", func(t *testing.T) {
+		existingClusterIP := "10.96.100.1"
+		fakeClient := fake.NewSimpleClientset(
+			&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testServiceName,
+					Namespace: testNamespace,
+				},
+				Spec: corev1.ServiceSpec{
+					ClusterIP: existingClusterIP,
+					Ports:     []corev1.ServicePort{{Port: int32(testStreamPort)}},
+				},
+			},
+			&corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+				Status: corev1.NodeStatus{
+					Addresses: []corev1.NodeAddress{
+						{Type: corev1.NodeInternalIP, Address: "10.0.2.15"},
+					},
+				},
+			},
+		)
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, testCloudCoreIP, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		err := ts.ensureNodeService(context.Background(), testNodeName, testCloudCoreIP, testStreamPort)
+		assert.NoError(t, err)
+
+		ep, err := fakeClient.CoreV1().Endpoints(testNamespace).Get(context.Background(), testServiceName, metav1.GetOptions{})
+		assert.NoError(t, err)
+		assert.Equal(t, testCloudCoreIP, ep.Subsets[0].Addresses[0].IP)
+	})
+}
+
+func TestEnsureNodeEndpoints(t *testing.T) {
+	t.Run("CreatesEndpointsWhenNotExist", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset(
+			&corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+				Status: corev1.NodeStatus{
+					Addresses: []corev1.NodeAddress{
+						{Type: corev1.NodeInternalIP, Address: "10.0.2.15"},
+					},
+				},
+			},
+		)
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, testCloudCoreIP, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		err := ts.ensureNodeEndpoints(context.Background(), testNodeName, testCloudCoreIP, testStreamPort, "10.96.1.1", testNamespace)
+		assert.NoError(t, err)
+
+		ep, err := fakeClient.CoreV1().Endpoints(testNamespace).Get(context.Background(), testServiceName, metav1.GetOptions{})
+		assert.NoError(t, err)
+		assert.Equal(t, testCloudCoreIP, ep.Subsets[0].Addresses[0].IP)
+		assert.Equal(t, int32(testStreamPort), ep.Subsets[0].Ports[0].Port)
+	})
+
+	t.Run("UpdatesExistingEndpoints", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset(
+			&corev1.Endpoints{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testServiceName,
+					Namespace: testNamespace,
+				},
+				Subsets: []corev1.EndpointSubset{
+					{
+						Addresses: []corev1.EndpointAddress{{IP: "10.0.1.1"}},
+						Ports:     []corev1.EndpointPort{{Port: int32(testStreamPort)}},
+					},
+				},
+			},
+			&corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+				Status: corev1.NodeStatus{
+					Addresses: []corev1.NodeAddress{
+						{Type: corev1.NodeInternalIP, Address: "10.0.2.15"},
+					},
+				},
+			},
+		)
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, testCloudCoreIP, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		err := ts.ensureNodeEndpoints(context.Background(), testNodeName, testCloudCoreIP, testStreamPort, "10.96.1.1", testNamespace)
+		assert.NoError(t, err)
+
+		ep, err := fakeClient.CoreV1().Endpoints(testNamespace).Get(context.Background(), testServiceName, metav1.GetOptions{})
+		assert.NoError(t, err)
+		assert.Equal(t, testCloudCoreIP, ep.Subsets[0].Addresses[0].IP)
+	})
+}
+
+func TestUpdateNodeAddressToClusterIP(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		clusterIP := "10.96.50.1"
+		fakeClient := fake.NewSimpleClientset(
+			&corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+				Status: corev1.NodeStatus{
+					Addresses: []corev1.NodeAddress{
+						{Type: corev1.NodeInternalIP, Address: "10.0.2.15"},
+					},
+				},
+			},
+		)
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, testCloudCoreIP, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		err := ts.updateNodeAddressToClusterIP(context.Background(), testNodeName, clusterIP)
+		assert.NoError(t, err)
+
+		node, err := fakeClient.CoreV1().Nodes().Get(context.Background(), testNodeName, metav1.GetOptions{})
+		assert.NoError(t, err)
+		assert.Equal(t, clusterIP, node.Status.Addresses[0].Address)
+	})
+
+	t.Run("AlreadyCorrect", func(t *testing.T) {
+		clusterIP := "10.96.50.1"
+		fakeClient := fake.NewSimpleClientset(
+			&corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+				Status: corev1.NodeStatus{
+					Addresses: []corev1.NodeAddress{
+						{Type: corev1.NodeInternalIP, Address: clusterIP},
+					},
+				},
+			},
+		)
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, testCloudCoreIP, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		err := ts.updateNodeAddressToClusterIP(context.Background(), testNodeName, clusterIP)
+		assert.NoError(t, err)
+	})
+
+	t.Run("NodeNotFound", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset()
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, testCloudCoreIP, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		err := ts.updateNodeAddressToClusterIP(context.Background(), "non-existent", "10.96.50.1")
+		assert.Error(t, err)
+	})
+
+	t.Run("NoInternalIPAddress", func(t *testing.T) {
+		clusterIP := "10.96.50.1"
+		fakeClient := fake.NewSimpleClientset(
+			&corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+				Status: corev1.NodeStatus{
+					Addresses: []corev1.NodeAddress{
+						{Type: corev1.NodeHostName, Address: "ubuntu"},
+					},
+				},
+			},
+		)
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, testCloudCoreIP, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		err := ts.updateNodeAddressToClusterIP(context.Background(), testNodeName, clusterIP)
+		assert.NoError(t, err)
+	})
+}
+
+func TestCleanupNodeService(t *testing.T) {
+	t.Run("NilKubeClient", func(t *testing.T) {
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, testCloudCoreIP, nil, time.Millisecond*10, time.Millisecond*300)
+		ts.cleanupNodeService(context.Background(), testNodeName)
+	})
+
+	t.Run("DeletesServiceAndEndpoints", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset(
+			&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testServiceName,
+					Namespace: testNamespace,
+				},
+			},
+			&corev1.Endpoints{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testServiceName,
+					Namespace: testNamespace,
+				},
+			},
+		)
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, testCloudCoreIP, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		ts.cleanupNodeService(context.Background(), testNodeName)
+
+		_, err := fakeClient.CoreV1().Services(testNamespace).Get(context.Background(), testServiceName, metav1.GetOptions{})
+		assert.Error(t, err, "Service should be deleted")
+
+		_, err = fakeClient.CoreV1().Endpoints(testNamespace).Get(context.Background(), testServiceName, metav1.GetOptions{})
+		assert.Error(t, err, "Endpoints should be deleted")
+	})
+
+	t.Run("NotFoundIsNotAnError", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset()
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, testCloudCoreIP, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+		ts.cleanupNodeService(context.Background(), testNodeName)
+	})
+}
+
+func TestReconcileNodeAddress(t *testing.T) {
+	t.Run("NilKubeClient", func(t *testing.T) {
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, testCloudCoreIP, nil, time.Millisecond*10, time.Millisecond*300)
+		ts.reconcileNodeAddress(context.Background(), &corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+		})
+	})
+
+	t.Run("EmptyCloudCoreIP", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset()
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, "", fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+		ts.reconcileNodeAddress(context.Background(), &corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+		})
+	})
+
+	t.Run("NoServiceExists", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset()
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, testCloudCoreIP, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+		ts.reconcileNodeAddress(context.Background(), &corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+			Status: corev1.NodeStatus{
+				Addresses: []corev1.NodeAddress{
+					{Type: corev1.NodeInternalIP, Address: "10.0.2.15"},
+				},
+			},
+		})
+	})
+
+	t.Run("AddressAlreadyCorrect", func(t *testing.T) {
+		clusterIP := "10.96.50.1"
+		fakeClient := fake.NewSimpleClientset(
+			&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testServiceName,
+					Namespace: testNamespace,
+				},
+				Spec: corev1.ServiceSpec{ClusterIP: clusterIP},
+			},
+		)
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, testCloudCoreIP, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+		ts.reconcileNodeAddress(context.Background(), &corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+			Status: corev1.NodeStatus{
+				Addresses: []corev1.NodeAddress{
+					{Type: corev1.NodeInternalIP, Address: clusterIP},
+				},
+			},
+		})
+	})
+
+	t.Run("AddressDriftedReconciles", func(t *testing.T) {
+		clusterIP := "10.96.50.1"
+		fakeClient := fake.NewSimpleClientset(
+			&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testServiceName,
+					Namespace: testNamespace,
+				},
+				Spec: corev1.ServiceSpec{ClusterIP: clusterIP},
+			},
+			&corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+				Status: corev1.NodeStatus{
+					Addresses: []corev1.NodeAddress{
+						{Type: corev1.NodeInternalIP, Address: "10.0.2.15"},
+					},
+				},
+			},
+		)
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, testCloudCoreIP, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		ts.reconcileNodeAddress(context.Background(), &corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+			Status: corev1.NodeStatus{
+				Addresses: []corev1.NodeAddress{
+					{Type: corev1.NodeInternalIP, Address: "10.0.2.15"},
+				},
+			},
+		})
+
+		time.Sleep(50 * time.Millisecond)
+
+		node, err := fakeClient.CoreV1().Nodes().Get(context.Background(), testNodeName, metav1.GetOptions{})
+		assert.NoError(t, err)
+		assert.Equal(t, clusterIP, node.Status.Addresses[0].Address)
+	})
+
+	t.Run("ServiceHasNoClusterIP", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset(
+			&corev1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testServiceName,
+					Namespace: testNamespace,
+				},
+				Spec: corev1.ServiceSpec{ClusterIP: "None"},
+			},
+		)
+		ts := newTunnelServerWithClient(testTunnelPort, testStreamPort, testCloudCoreIP, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+		ts.reconcileNodeAddress(context.Background(), &corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+			Status: corev1.NodeStatus{
+				Addresses: []corev1.NodeAddress{
+					{Type: corev1.NodeInternalIP, Address: "10.0.2.15"},
+				},
+			},
+		})
+	})
 }
