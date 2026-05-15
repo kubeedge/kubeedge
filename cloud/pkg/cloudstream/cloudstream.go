@@ -17,11 +17,14 @@ limitations under the License.
 package cloudstream
 
 import (
+	"context"
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
+	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"k8s.io/klog/v2"
 )
 
 type cloudStream struct {
@@ -40,6 +43,14 @@ func newCloudStream(enable bool, tunnelPort int) *cloudStream {
 
 func Register(controller *v1alpha1.CloudStream, commonConfig *v1alpha1.CommonConfig) {
 	config.InitConfigure(controller)
+	cloudCoreIP := ""
+	if len(hubconfig.Config.AdvertiseAddress) > 0 {
+		cloudCoreIP = hubconfig.Config.AdvertiseAddress[0]
+	}
+	if cloudCoreIP != "" {
+		config.Config.DisableIptablesManager = true
+		klog.Infof("CloudCore IP %s detected, disabling iptableManager", cloudCoreIP)
+	}
 	core.Register(newCloudStream(controller.Enable, commonConfig.TunnelPort))
 }
 
@@ -59,7 +70,7 @@ func (s *cloudStream) Start() {
 
 		// start new tunnel server
 		go ts.Start()
-
+		go ts.startNodeAddressReconciler(context.Background())
 		server := newStreamServer(ts)
 		// start stream server to accept kube-apiserver connection
 		go server.Start()

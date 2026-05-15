@@ -29,15 +29,20 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"github.com/gorilla/websocket"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/tools/cache"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	streamconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
+	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/stream"
 )
 
@@ -54,6 +59,8 @@ type TunnelServer struct {
 	sessions      map[string]*Session
 	nodeNameIP    sync.Map
 	tunnelPort    int
+	streamPort    int
+	cloudCoreIP   string
 	kubeClient    v1.CoreV1Interface
 	retrySleep    time.Duration
 	updateTimeout time.Duration
@@ -61,20 +68,26 @@ type TunnelServer struct {
 
 func newTunnelServer(tunnelPort int) *TunnelServer {
 	var kubeClient v1.CoreV1Interface
-	// Safely get the kube client, handling the nil case for tests
 	k8sClient := client.GetKubeClient()
 	if k8sClient != nil {
 		kubeClient = k8sClient.CoreV1()
 	}
 
-	return newTunnelServerWithClient(tunnelPort, kubeClient, DefaultRetrySleepTime, DefaultNodeStatusUpdateTimeout)
+	cloudCoreIP := ""
+	if len(hubconfig.Config.AdvertiseAddress) > 0 {
+		cloudCoreIP = hubconfig.Config.AdvertiseAddress[0]
+	}
+
+	return newTunnelServerWithClient(tunnelPort, int(streamconfig.Config.StreamPort), cloudCoreIP, kubeClient, DefaultRetrySleepTime, DefaultNodeStatusUpdateTimeout)
 }
 
-func newTunnelServerWithClient(tunnelPort int, kubeClient v1.CoreV1Interface, retrySleep, updateTimeout time.Duration) *TunnelServer {
+func newTunnelServerWithClient(tunnelPort int, streamPort int, cloudCoreIP string, kubeClient v1.CoreV1Interface, retrySleep, updateTimeout time.Duration) *TunnelServer {
 	return &TunnelServer{
 		container:     restful.NewContainer(),
 		sessions:      make(map[string]*Session),
 		tunnelPort:    tunnelPort,
+		streamPort:    streamPort,
+		cloudCoreIP:   cloudCoreIP,
 		kubeClient:    kubeClient,
 		retrySleep:    retrySleep,
 		updateTimeout: updateTimeout,
@@ -146,6 +159,11 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 	}
 
 	err = s.updateNodeKubeletEndpoint(hostNameOverride)
+	if s.cloudCoreIP != "" {
+		if err := s.ensureNodeService(context.Background(), hostNameOverride, s.cloudCoreIP, s.streamPort); err != nil {
+			klog.Warningf("Failed to ensure node service for %s: %v", hostNameOverride, err)
+		}
+	}
 	if err != nil {
 		msg := stream.NewMessage(0, stream.MessageTypeCloseConnect, []byte(err.Error()))
 		if err := session.tunnel.WriteMessage(msg); err == nil {
@@ -155,10 +173,19 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 		}
 		return
 	}
+
+	if s.cloudCoreIP != "" {
+		if err := s.updateNodeCloudCoreAddress(hostNameOverride, s.cloudCoreIP); err != nil {
+			klog.Warningf("Failed to update node %s CloudCore address, falling back to iptables: %v", hostNameOverride, err)
+		}
+	}
 	s.addSession(hostNameOverride, session)
 	s.addSession(internalIP, session)
 	s.addNodeIP(hostNameOverride, internalIP)
 	session.Serve()
+	if s.cloudCoreIP != "" {
+		s.cleanupNodeService(context.Background(), hostNameOverride)
+	}
 }
 
 func (s *TunnelServer) Start() {
@@ -218,15 +245,17 @@ func (s *TunnelServer) updateNodeKubeletEndpoint(nodeName string) error {
 		klog.V(4).Info("Skip updating node kubelet endpoint in test mode")
 		return fmt.Errorf("kubeclient is nil, cannot update node kubelet endpoint")
 	}
-	if err := wait.PollImmediate(s.retrySleep, s.updateTimeout, func() (bool, error) {
-		getNode, err := s.kubeClient.Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
+	ctx, cancel := context.WithTimeout(context.Background(), s.updateTimeout)
+	defer cancel()
+	if err := wait.PollUntilContextTimeout(ctx, s.retrySleep, s.updateTimeout, true, func(ctx context.Context) (bool, error) {
+		getNode, err := s.kubeClient.Nodes().Get(ctx, nodeName, metav1.GetOptions{})
 		if err != nil {
 			klog.Errorf("Failed while getting a Node to retry updating node KubeletEndpoint Port, node: %s, error: %v", nodeName, err)
 			return false, nil
 		}
 
-		getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(s.tunnelPort)
-		_, err = s.kubeClient.Nodes().UpdateStatus(context.Background(), getNode, metav1.UpdateOptions{})
+		getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(s.streamPort)
+		_, err = s.kubeClient.Nodes().UpdateStatus(ctx, getNode, metav1.UpdateOptions{})
 		if err != nil {
 			klog.Errorf("Failed to update node KubeletEndpoint Port, node: %s, tunnelPort: %d, err: %v", nodeName, s.tunnelPort, err)
 			return false, nil
@@ -238,4 +267,210 @@ func (s *TunnelServer) updateNodeKubeletEndpoint(nodeName string) error {
 	}
 	klog.V(4).Infof("Update node KubeletEndpoint Port successfully, node: %s, tunnelPort: %d", nodeName, s.tunnelPort)
 	return nil
+}
+
+func (s *TunnelServer) updateNodeCloudCoreAddress(nodeName, cloudCoreIP string) error {
+	if s.kubeClient == nil {
+		return fmt.Errorf("kubeclient is nil, cannot update node address")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), s.updateTimeout)
+	defer cancel()
+	if err := wait.PollUntilContextTimeout(ctx, s.retrySleep, s.updateTimeout, true, func(ctx context.Context) (bool, error) {
+		node, err := s.kubeClient.Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+		if err != nil {
+			klog.Errorf("Failed to get node %s for address update, err: %v", nodeName, err)
+			return false, nil
+		}
+
+		for i, addr := range node.Status.Addresses {
+			if addr.Type == corev1.NodeInternalIP {
+				node.Status.Addresses[i].Address = cloudCoreIP
+				_, err = s.kubeClient.Nodes().UpdateStatus(ctx, node, metav1.UpdateOptions{})
+				if err != nil {
+					klog.Errorf("Failed to update node %s address to CloudCore IP %s, err: %v", nodeName, cloudCoreIP, err)
+					return false, nil
+				}
+				klog.V(4).Infof("Updated node %s InternalIP to CloudCore IP %s", nodeName, cloudCoreIP)
+				return true, nil
+			}
+		}
+		klog.Warningf("Node %s has no InternalIP address to update", nodeName)
+		return true, nil
+	}); err != nil {
+		return fmt.Errorf("failed to update node %s address to CloudCore IP: %w", nodeName, err)
+	}
+	return nil
+}
+
+func (s *TunnelServer) ensureNodeService(ctx context.Context, nodeName, cloudCoreIP string, streamPort int) error {
+	if s.kubeClient == nil {
+		return fmt.Errorf("kubeclient is nil, cannot ensure node service")
+	}
+
+	namespace := constants.SystemNamespace
+	serviceName := fmt.Sprintf("edge-node-%s", nodeName)
+
+	svc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      serviceName,
+			Namespace: namespace,
+			Labels: map[string]string{
+				"kubeedge.io/node-name": nodeName,
+				"kubeedge.io/managed":   "true",
+			},
+		},
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{
+				{
+					Port:     int32(streamPort),
+					Protocol: corev1.ProtocolTCP,
+				},
+			},
+		},
+	}
+
+	existing, err := s.kubeClient.Services(namespace).Get(ctx, serviceName, metav1.GetOptions{})
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			return fmt.Errorf("failed to get service %s: %w", serviceName, err)
+		}
+		created, err := s.kubeClient.Services(namespace).Create(ctx, svc, metav1.CreateOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to create service %s: %w", serviceName, err)
+		}
+		klog.V(4).Infof("Created service %s with ClusterIP %s for node %s", serviceName, created.Spec.ClusterIP, nodeName)
+		return s.ensureNodeEndpoints(ctx, nodeName, cloudCoreIP, streamPort, created.Spec.ClusterIP, namespace)
+	}
+
+	return s.ensureNodeEndpoints(ctx, nodeName, cloudCoreIP, streamPort, existing.Spec.ClusterIP, namespace)
+}
+
+func (s *TunnelServer) ensureNodeEndpoints(ctx context.Context, nodeName, cloudCoreIP string, streamPort int, clusterIP, namespace string) error {
+	serviceName := fmt.Sprintf("edge-node-%s", nodeName)
+
+	endpoints := &corev1.Endpoints{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      serviceName,
+			Namespace: namespace,
+		},
+		Subsets: []corev1.EndpointSubset{
+			{
+				Addresses: []corev1.EndpointAddress{
+					{IP: cloudCoreIP},
+				},
+				Ports: []corev1.EndpointPort{
+					{
+						Port:     int32(streamPort),
+						Protocol: corev1.ProtocolTCP,
+					},
+				},
+			},
+		},
+	}
+
+	_, err := s.kubeClient.Endpoints(namespace).Get(ctx, serviceName, metav1.GetOptions{})
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			return fmt.Errorf("failed to get endpoints %s: %w", serviceName, err)
+		}
+		_, err = s.kubeClient.Endpoints(namespace).Create(ctx, endpoints, metav1.CreateOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to create endpoints %s: %w", serviceName, err)
+		}
+	} else {
+		_, err = s.kubeClient.Endpoints(namespace).Update(ctx, endpoints, metav1.UpdateOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to update endpoints %s: %w", serviceName, err)
+		}
+	}
+
+	klog.V(4).Infof("Ensured endpoints for service %s pointing to CloudCore %s:%d", serviceName, cloudCoreIP, streamPort)
+	return s.updateNodeAddressToClusterIP(ctx, nodeName, clusterIP)
+}
+
+func (s *TunnelServer) updateNodeAddressToClusterIP(ctx context.Context, nodeName, clusterIP string) error {
+	return wait.PollUntilContextTimeout(ctx, s.retrySleep, s.updateTimeout, true, func(ctx context.Context) (bool, error) {
+		node, err := s.kubeClient.Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+		if err != nil {
+			klog.Errorf("Failed to get node %s: %v", nodeName, err)
+			return false, nil
+		}
+		for i, addr := range node.Status.Addresses {
+			if addr.Type == corev1.NodeInternalIP {
+				if addr.Address == clusterIP {
+					return true, nil
+				}
+				node.Status.Addresses[i].Address = clusterIP
+				_, err = s.kubeClient.Nodes().UpdateStatus(ctx, node, metav1.UpdateOptions{})
+				if err != nil {
+					klog.Errorf("Failed to update node %s InternalIP to ClusterIP %s: %v", nodeName, clusterIP, err)
+					return false, nil
+				}
+				klog.V(4).Infof("Updated node %s InternalIP to Service ClusterIP %s", nodeName, clusterIP)
+				return true, nil
+			}
+		}
+		return true, nil
+	})
+}
+
+func (s *TunnelServer) cleanupNodeService(ctx context.Context, nodeName string) {
+	if s.kubeClient == nil {
+		return
+	}
+	namespace := constants.SystemNamespace
+	serviceName := fmt.Sprintf("edge-node-%s", nodeName)
+	if err := s.kubeClient.Services(namespace).Delete(ctx, serviceName, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		klog.Errorf("Failed to delete service %s: %v", serviceName, err)
+	}
+	if err := s.kubeClient.Endpoints(namespace).Delete(ctx, serviceName, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		klog.Errorf("Failed to delete endpoints %s: %v", serviceName, err)
+	}
+	klog.V(4).Infof("Cleaned up service and endpoints for node %s", nodeName)
+}
+
+func (s *TunnelServer) startNodeAddressReconciler(ctx context.Context) {
+	nodeInformer := informers.GetInformersManager().GetKubeInformerFactory().Core().V1().Nodes()
+	if _, err := nodeInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			node, ok := newObj.(*corev1.Node)
+			if !ok {
+				return
+			}
+			s.reconcileNodeAddress(ctx, node)
+		},
+	}); err != nil {
+		klog.Errorf("Failed to add event handler for node informer: %v", err)
+		return
+	}
+}
+
+func (s *TunnelServer) reconcileNodeAddress(ctx context.Context, node *corev1.Node) {
+	if s.kubeClient == nil || s.cloudCoreIP == "" {
+		return
+	}
+
+	namespace := constants.SystemNamespace
+	serviceName := fmt.Sprintf("edge-node-%s", node.Name)
+
+	svc, err := s.kubeClient.Services(namespace).Get(ctx, serviceName, metav1.GetOptions{})
+	if err != nil {
+		return
+	}
+
+	clusterIP := svc.Spec.ClusterIP
+	if clusterIP == "" || clusterIP == "None" {
+		return
+	}
+
+	for _, addr := range node.Status.Addresses {
+		if addr.Type == corev1.NodeInternalIP && addr.Address == clusterIP {
+			return
+		}
+	}
+
+	klog.V(4).Infof("Node %s InternalIP drifted from ClusterIP %s, reconciling", node.Name, clusterIP)
+	if err := s.updateNodeAddressToClusterIP(ctx, node.Name, clusterIP); err != nil {
+		klog.Errorf("Failed to reconcile node %s address to ClusterIP %s: %v", node.Name, clusterIP, err)
+	}
 }
