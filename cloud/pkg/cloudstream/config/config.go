@@ -31,9 +31,10 @@ var once sync.Once
 
 type Configure struct {
 	v1alpha1.CloudStream
-	Ca   []byte
-	Cert []byte
-	Key  []byte
+	Ca                     []byte
+	Cert                   []byte
+	Key                    []byte
+	DisableIptablesManager bool
 }
 
 func InitConfigure(stream *v1alpha1.CloudStream) {
