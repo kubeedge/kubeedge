@@ -166,6 +166,11 @@ func (h *NodeUpgradeJobReconcileHandler) CheckTimeout(ctx context.Context, jobNa
 	if err != nil {
 		return err
 	}
+	if job == nil {
+		logger.V(3).Info("the node job is not found")
+		ReleaseTimeoutJob[operationsv1alpha2.NodeUpgradeJob](ctx, jobName, h.GetResource())
+		return nil
+	}
 	if job.Status.Phase != operationsv1alpha2.JobPhaseInProgress {
 		logger.V(3).Info("job is not in InProgress phase, no need to check timeout")
 		return nil

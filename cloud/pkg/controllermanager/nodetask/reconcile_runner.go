@@ -135,6 +135,11 @@ func RunReconcile[T NodeJobType](
 			if err != nil {
 				return err
 			}
+			if job == nil {
+				logger.V(2).Info("the node job is not found")
+				ReleaseTimeoutJob[T](ctx, req.Name, handler.GetResource())
+				return nil
+			}
 			changed := handler.CalculateStatus(ctx, job)
 			if changed {
 				return handler.UpdateJobStatus(ctx, job)
