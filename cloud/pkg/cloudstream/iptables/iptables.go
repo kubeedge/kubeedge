@@ -219,7 +219,7 @@ func (im *Manager) reconcile() {
 		}
 	}
 
-	klog.Infof(
+	klog.V(2).Infof(
 		"iptables reconcile completed: added=%d deleted=%d duration=%s",
 		len(addedIPPort),
 		len(deletedIPPort),
