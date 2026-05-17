@@ -4,6 +4,10 @@ This method will guide you to deploy the edge part into a k8s cluster,
 so you need to login to the k8s master node (or where else if you can
 operate the cluster with `kubectl`).
 
+### Networking note (CNI on edge nodes)
+
+Pod networking on edge nodes is not automatically provided by the cloud-side CNI. If your edge workloads require container networking, install and configure a CNI plugin on each edge node (binaries + config). `hostNetwork` pods do not require CNI. KubeEdge does not install CNI on edge nodes by default.
+
 The manifests and scripts in `github.com/kubeedge/kubeedge/build/edge/kubernetes`
 will be used, so place these files to somewhere you can kubectl with.
 
