@@ -22,8 +22,10 @@ import (
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -34,16 +36,18 @@ import (
 )
 
 type NodeUpgradeJobReconcileHandler struct {
-	cli client.Client
-	che cache.Cache
+	cli      client.Client
+	che      cache.Cache
+	recorder record.EventRecorder
 }
 
 var _ ReconcileHandler[operationsv1alpha2.NodeUpgradeJob] = (*NodeUpgradeJobReconcileHandler)(nil)
 
-func NewNodeUpgradeJobReconcileHandler(cli client.Client, che cache.Cache) *NodeUpgradeJobReconcileHandler {
+func NewNodeUpgradeJobReconcileHandler(cli client.Client, che cache.Cache, recorder record.EventRecorder) *NodeUpgradeJobReconcileHandler {
 	return &NodeUpgradeJobReconcileHandler{
-		cli: cli,
-		che: che,
+		cli:      cli,
+		che:      che,
+		recorder: recorder,
 	}
 }
 
@@ -94,6 +98,9 @@ func (h *NodeUpgradeJobReconcileHandler) InitNodesStatus(ctx context.Context, jo
 			metav1.ConditionTrue,
 			nodeUpgradeJobReasonNodeVerifyFailed,
 			err.Error())
+		if h.recorder != nil {
+			h.recorder.Event(job, "Warning", nodeUpgradeJobReasonNodeVerifyFailed, err.Error())
+		}
 		return
 	}
 	job.Status.Phase = operationsv1alpha2.JobPhaseInit
@@ -102,6 +109,9 @@ func (h *NodeUpgradeJobReconcileHandler) InitNodesStatus(ctx context.Context, jo
 		metav1.ConditionTrue,
 		nodeUpgradeJobReasonInitialized,
 		"Node upgrade job selected target nodes and initialized node task status.")
+	if h.recorder != nil {
+		h.recorder.Event(job, "Normal", nodeUpgradeJobReasonInitialized, "Node upgrade job selected target nodes and initialized node task status.")
+	}
 	nodeStatus := make([]operationsv1alpha2.NodeUpgradeJobNodeTaskStatus, 0, len(verifyResult))
 	for _, it := range verifyResult {
 		var phase operationsv1alpha2.NodeTaskPhase
@@ -128,7 +138,7 @@ func (NodeUpgradeJobReconcileHandler) IsDeleted(job *operationsv1alpha2.NodeUpgr
 	return job.DeletionTimestamp != nil && !job.DeletionTimestamp.IsZero()
 }
 
-func (NodeUpgradeJobReconcileHandler) CalculateStatus(ctx context.Context, job *operationsv1alpha2.NodeUpgradeJob) bool {
+func (h *NodeUpgradeJobReconcileHandler) CalculateStatus(ctx context.Context, job *operationsv1alpha2.NodeUpgradeJob) bool {
 	var processingCount, failedCount int64
 	for _, it := range job.Status.NodeStatus {
 		if it.Phase == operationsv1alpha2.NodeTaskPhaseFailure ||
@@ -151,6 +161,20 @@ func (NodeUpgradeJobReconcileHandler) CalculateStatus(ctx context.Context, job *
 	}
 	var changed bool
 	if job.Status.Phase != phase {
+		if h.recorder != nil {
+			switch phase {
+			case operationsv1alpha2.JobPhaseInProgress:
+				h.recorder.Event(job, "Normal", nodeUpgradeJobReasonInProgress, "Node upgrade job is now in progress.")
+			case operationsv1alpha2.JobPhaseCompleted:
+				if failedCount > 0 {
+					h.recorder.Event(job, "Normal", nodeUpgradeJobReasonPartiallySucceeded, "Node upgrade job completed with failed nodes within the failure tolerance.")
+				} else {
+					h.recorder.Event(job, "Normal", nodeUpgradeJobReasonCompleted, "Node upgrade job has successfully completed.")
+				}
+			case operationsv1alpha2.JobPhaseFailure:
+				h.recorder.Event(job, "Warning", nodeUpgradeJobReasonFailed, reason)
+			}
+		}
 		job.Status.Phase = phase
 		changed = true
 	}
@@ -228,11 +252,21 @@ func (h *NodeUpgradeJobReconcileHandler) CheckTimeout(ctx context.Context, jobNa
 	}
 
 	if changed {
+		isAlreadyTimedOut := false
+		if cond := meta.FindStatusCondition(job.Status.Conditions, operationsv1alpha2.NodeUpgradeJobConditionTimedOut); cond != nil {
+			if cond.Status == metav1.ConditionTrue {
+				isAlreadyTimedOut = true
+			}
+		}
+
 		setNodeUpgradeJobCondition(job,
 			operationsv1alpha2.NodeUpgradeJobConditionTimedOut,
 			metav1.ConditionTrue,
 			nodeUpgradeJobReasonTimedOut,
 			NodeTaskReasonTimeout)
+		if !isAlreadyTimedOut && h.recorder != nil {
+			h.recorder.Event(job, "Warning", nodeUpgradeJobReasonTimedOut, "Node upgrade job has timed out.")
+		}
 		if err := h.UpdateJobStatus(ctx, job); err != nil {
 			return err
 		}
