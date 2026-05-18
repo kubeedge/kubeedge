@@ -290,6 +290,9 @@ func (conn *QuicConnection) WriteMessageSync(msg *model.Message) (*model.Message
 
 	// receive response
 	response, err := conn.syncKeeper.WaitResponse(msg, conn.writeDeadline)
+	if err != nil {
+		return nil, err
+	}
 	return &response, nil
 }
 
