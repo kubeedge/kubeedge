@@ -36,6 +36,10 @@ import (
 	mockcon "github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn/testing"
 )
 
+const (
+	testNodeName = "edge-node"
+)
+
 func TestNoAckRequired(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -115,23 +119,24 @@ func TestGetNodeID(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "normal message",
+			name:    "pod update message",
 			message: beehivemodel.NewMessage("").SetResourceOperation("node/edge-node/default/pod/test-pod", "update").SetRoute("edgecontroller", "resource"),
-			want:    "edge-node",
+			want:    testNodeName,
 			wantErr: false,
 		},
 		{
-			name:    "normal message",
+			name:    "configmap update message",
 			message: beehivemodel.NewMessage("").SetResourceOperation("node/edge-node/default/configmap/kube-root-ca.crt", "update").SetRoute("edgecontroller", "resource"),
-			want:    "edge-node",
+			want:    testNodeName,
 			wantErr: false,
 		},
 		{
-			name:    "normal message",
+			name:    "membership detail message",
 			message: beehivemodel.NewMessage("").SetResourceOperation("node/edge-node/membership/detail", "update").SetRoute("devicecontroller", "resource"),
-			want:    "edge-node",
+			want:    testNodeName,
 			wantErr: false,
 		},
+
 		{
 			name:    "bad message",
 			message: beehivemodel.NewMessage("").SetResourceOperation("edge-node/membership/detail", "update").SetRoute("edgecontroller", "resource"),
@@ -498,7 +503,7 @@ func TestGetNodeMessagePool_NotFound(t *testing.T) {
 	}
 }
 
-func TestDeleteNodeMessagePool_NotFound(t *testing.T) {
+func TestDeleteNodeMessagePool_NotFound(_ *testing.T) {
 	client := &fake.Clientset{}
 	manager := session.NewSessionManager(10)
 
