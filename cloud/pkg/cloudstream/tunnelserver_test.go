@@ -40,6 +40,7 @@ import (
 const (
 	testNodeName   = "test-node"
 	testTunnelPort = 10350
+	testSessionKey = "test-session"
 )
 
 func setupTest(_ *testing.T) (*TunnelServer, *fake.Clientset) {
@@ -67,7 +68,7 @@ func TestSessionManagement(t *testing.T) {
 	t.Run("AddAndGetSession", func(t *testing.T) {
 		ts := newTunnelServer(testTunnelPort)
 		session := &Session{
-			sessionID: "test-session",
+			sessionID: testSessionKey,
 		}
 
 		ts.addSession("test-key", session)
@@ -98,8 +99,8 @@ func TestSessionManagement(t *testing.T) {
 	t.Run("SessionConcurrency", func(t *testing.T) {
 		ts, _ := setupTest(t)
 
-		session1 := &Session{sessionID: "session1"}
-		session2 := &Session{sessionID: "session2"}
+		session1 := &Session{sessionID: testSessionKey + "1"}
+		session2 := &Session{sessionID: testSessionKey + "2"}
 
 		ts.addSession("key1", session1)
 		ts.addSession("key2", session2)
