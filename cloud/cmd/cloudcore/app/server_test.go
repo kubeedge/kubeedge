@@ -86,3 +86,27 @@ func TestNegotiateTunnelPort(t *testing.T) {
 		})
 	}
 }
+
+func TestNewCloudCoreCommand(t *testing.T) {
+	cmd := NewCloudCoreCommand()
+
+	if cmd == nil {
+		t.Fatal("NewCloudCoreCommand() returned nil")
+	}
+
+	if cmd.Use != "cloudcore" {
+		t.Errorf("expected Use = 'cloudcore', got '%s'", cmd.Use)
+	}
+
+	if cmd.Long == "" {
+		t.Error("expected Long description to be set, got empty string")
+	}
+
+	if cmd.Run == nil {
+		t.Error("expected Run func to be set, got nil")
+	}
+
+	if cmd.Flags() == nil {
+		t.Error("expected Flags to be set, got nil")
+	}
+}
