@@ -170,6 +170,37 @@ func TestImageOverrider_ApplyOverrides(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "Error when buildPatches fails due to invalid predicate path",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Pod",
+					"spec": map[string]interface{}{
+						"containers": []interface{}{
+							map[string]interface{}{
+								"name":  "test-container",
+								"image": "nginx:1.14.2",
+							},
+						},
+					},
+				},
+			},
+			overriderInfo: OverriderInfo{
+				Overriders: &appsv1alpha1.Overriders{
+					ImageOverriders: []appsv1alpha1.ImageOverrider{
+						{
+							Component: appsv1alpha1.Tag,
+							Operator:  appsv1alpha1.OverriderOpReplace,
+							Value:     "latest",
+							Predicate: &appsv1alpha1.ImagePredicate{
+								Path: "/spec/nonexistent/path",
+							},
+						},
+					},
+				},
+			},
+			expectError: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -479,6 +510,168 @@ func TestBuildPatchesWithEmptyPredicate(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "Build patches for StatefulSet",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "StatefulSet",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name":  "container1",
+										"image": "nginx:1.14.2",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Tag,
+				Operator:  appsv1alpha1.OverriderOpReplace,
+				Value:     "latest",
+			},
+			expectedPatches: []overrideOption{
+				{
+					Op:    "replace",
+					Path:  "/spec/template/spec/containers/0/image",
+					Value: "nginx:latest",
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "Build patches for Job",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Job",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name":  "container1",
+										"image": "nginx:1.14.2",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Tag,
+				Operator:  appsv1alpha1.OverriderOpReplace,
+				Value:     "latest",
+			},
+			expectedPatches: []overrideOption{
+				{
+					Op:    "replace",
+					Path:  "/spec/template/spec/containers/0/image",
+					Value: "nginx:latest",
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "Error converting Pod",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Pod",
+					"spec": "not-a-map",
+				},
+			},
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Tag,
+				Operator:  appsv1alpha1.OverriderOpReplace,
+				Value:     "latest",
+			},
+			expectedPatches: nil,
+			expectError:     true,
+		},
+		{
+			name: "Error converting ReplicaSet",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "ReplicaSet",
+					"spec": "not-a-map",
+				},
+			},
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Tag,
+				Operator:  appsv1alpha1.OverriderOpReplace,
+				Value:     "latest",
+			},
+			expectedPatches: nil,
+			expectError:     true,
+		},
+		{
+			name: "Error converting Deployment",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Deployment",
+					"spec": "not-a-map",
+				},
+			},
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Tag,
+				Operator:  appsv1alpha1.OverriderOpReplace,
+				Value:     "latest",
+			},
+			expectedPatches: nil,
+			expectError:     true,
+		},
+		{
+			name: "Error converting DaemonSet",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "DaemonSet",
+					"spec": "not-a-map",
+				},
+			},
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Tag,
+				Operator:  appsv1alpha1.OverriderOpReplace,
+				Value:     "latest",
+			},
+			expectedPatches: nil,
+			expectError:     true,
+		},
+		{
+			name: "Error converting StatefulSet",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "StatefulSet",
+					"spec": "not-a-map",
+				},
+			},
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Tag,
+				Operator:  appsv1alpha1.OverriderOpReplace,
+				Value:     "latest",
+			},
+			expectedPatches: nil,
+			expectError:     true,
+		},
+		{
+			name: "Error converting Job",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Job",
+					"spec": "not-a-map",
+				},
+			},
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Tag,
+				Operator:  appsv1alpha1.OverriderOpReplace,
+				Value:     "latest",
+			},
+			expectedPatches: nil,
+			expectError:     true,
+		},
+		{
 			name: "Unsupported kind",
 			rawObj: &unstructured.Unstructured{
 				Object: map[string]interface{}{
@@ -627,6 +820,25 @@ func TestExtractPatchesBy(t *testing.T) {
 				},
 			},
 			expectError: false,
+		},
+		{
+			name: "Error: invalid image format in container",
+			podSpec: corev1.PodSpec{
+				Containers: []corev1.Container{
+					{
+						Name:  "container1",
+						Image: "invalid:image:format",
+					},
+				},
+			},
+			prefixPath: "/spec",
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Tag,
+				Operator:  appsv1alpha1.OverriderOpReplace,
+				Value:     "latest",
+			},
+			expectedPatches: nil,
+			expectError:     true,
 		},
 	}
 
@@ -791,6 +1003,30 @@ func TestBuildPatchesWithPredicate(t *testing.T) {
 							map[string]interface{}{
 								"name":  "container1",
 								"image": 12345, // Invalid type for image
+							},
+						},
+					},
+				},
+			},
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Tag,
+				Operator:  appsv1alpha1.OverriderOpReplace,
+				Value:     "latest",
+				Predicate: &appsv1alpha1.ImagePredicate{
+					Path: "/spec/containers/0/image",
+				},
+			},
+			expectedPatches: nil,
+			expectError:     true,
+		},
+		{
+			name: "Error: image value is unparseable",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"spec": map[string]interface{}{
+						"containers": []interface{}{
+							map[string]interface{}{
+								"image": "invalid:image:format",
 							},
 						},
 					},
@@ -993,6 +1229,18 @@ func TestAcquireOverrideOption(t *testing.T) {
 			expectedOption: overrideOption{},
 			expectError:    true,
 		},
+		{
+			name:      "Error: overrideImage fails (unparseable image)",
+			imagePath: "/spec/containers/0/image",
+			curImage:  "invalid:image:format",
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Tag,
+				Operator:  appsv1alpha1.OverriderOpReplace,
+				Value:     "latest",
+			},
+			expectedOption: overrideOption{},
+			expectError:    true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1039,6 +1287,59 @@ func TestOverrideImage(t *testing.T) {
 				Value:     "test-registry.com",
 			},
 			expectedImage: "test-registry.com/library/nginx:1.14.2",
+			expectError:   false,
+		},
+		{
+			name:     "Add to registry",
+			curImage: "docker.io/library/nginx:1.14.2",
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Registry,
+				Operator:  appsv1alpha1.OverriderOpAdd,
+				Value:     ".mirror",
+			},
+			expectedImage: "docker.io.mirror/library/nginx:1.14.2",
+			expectError:   false,
+		},
+		{
+			name:     "Remove registry",
+			curImage: "docker.io/library/nginx:1.14.2",
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Registry,
+				Operator:  appsv1alpha1.OverriderOpRemove,
+			},
+			expectedImage: "library/nginx:1.14.2",
+			expectError:   false,
+		},
+		{
+			name:     "Remove repository",
+			curImage: "nginx:1.14.2",
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Repository,
+				Operator:  appsv1alpha1.OverriderOpRemove,
+			},
+			expectedImage: ":1.14.2",
+			expectError:   false,
+		},
+		{
+			name:     "Replace repository",
+			curImage: "nginx:1.14.2",
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Repository,
+				Operator:  appsv1alpha1.OverriderOpReplace,
+				Value:     "my-nginx",
+			},
+			expectedImage: "my-nginx:1.14.2",
+			expectError:   false,
+		},
+		{
+			name:     "Add to tag",
+			curImage: "nginx:1.14",
+			imageOverrider: &appsv1alpha1.ImageOverrider{
+				Component: appsv1alpha1.Tag,
+				Operator:  appsv1alpha1.OverriderOpAdd,
+				Value:     ".2",
+			},
+			expectedImage: "nginx:1.14.2",
 			expectError:   false,
 		},
 		{
