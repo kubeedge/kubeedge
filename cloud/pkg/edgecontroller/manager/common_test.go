@@ -25,6 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/tools/cache"
 )
 
 var (
@@ -213,9 +214,11 @@ func TestCommonResourceEventHandler_OnDelete(t *testing.T) {
 		obj interface{}
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name      string
+		fields    fields
+		args      args
+		wantEvent bool
+		wantObj   interface{}
 	}{
 		{
 			"TestCommonResourceEventHandler_OnDelete(): Case 1: Delete Pod",
@@ -225,6 +228,36 @@ func TestCommonResourceEventHandler_OnDelete(t *testing.T) {
 			args{
 				TestOldPodObject,
 			},
+			true,
+			TestOldPodObject,
+		},
+		{
+			"TestCommonResourceEventHandler_OnDelete(): Case 2: Delete tombstone Pod",
+			fields{
+				events: make(chan watch.Event, 1),
+			},
+			args{
+				cache.DeletedFinalStateUnknown{
+					Key: "default/TestPod",
+					Obj: TestOldPodObject,
+				},
+			},
+			true,
+			TestOldPodObject,
+		},
+		{
+			"TestCommonResourceEventHandler_OnDelete(): Case 3: Delete invalid tombstone",
+			fields{
+				events: make(chan watch.Event, 1),
+			},
+			args{
+				cache.DeletedFinalStateUnknown{
+					Key: "default/TestPod",
+					Obj: "Hello KubeEdge",
+				},
+			},
+			false,
+			nil,
 		},
 	}
 	for _, tt := range tests {
@@ -233,9 +266,23 @@ func TestCommonResourceEventHandler_OnDelete(t *testing.T) {
 				events: tt.fields.events,
 			}
 			c.OnDelete(tt.args.obj)
-			obj := <-c.events
-			if !reflect.DeepEqual(watch.Deleted, obj.Type) || !reflect.DeepEqual(obj.Object, tt.args.obj) {
-				t.Errorf("TestCommonResourceEventHandler_Delete() failed. got: %v/%v, want %v/%v", obj.Type, obj.Object, watch.Deleted, tt.args.obj)
+			if !tt.wantEvent {
+				select {
+				case obj := <-c.events:
+					t.Errorf("TestCommonResourceEventHandler_OnDelete() got unexpected event: %v/%v", obj.Type, obj.Object)
+				default:
+				}
+				return
+			}
+			var obj watch.Event
+			select {
+			case obj = <-c.events:
+			case <-time.After(time.Second):
+				t.Errorf("TestCommonResourceEventHandler_OnDelete() timed out waiting for event")
+				return
+			}
+			if !reflect.DeepEqual(watch.Deleted, obj.Type) || !reflect.DeepEqual(obj.Object, tt.wantObj) {
+				t.Errorf("TestCommonResourceEventHandler_OnDelete() failed. got: %v/%v, want %v/%v", obj.Type, obj.Object, watch.Deleted, tt.wantObj)
 			}
 		})
 	}
