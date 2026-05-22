@@ -244,6 +244,42 @@ func TestIsEdgeNode(t *testing.T) {
 	}
 }
 
+// TestIsDeletedEdgeNode is function to test IsDeletedEdgeNode
+func TestIsDeletedEdgeNode(t *testing.T) {
+	locationCache := LocationCache{}
+	nodeName := nodes[0]
+	locationCache.UpdateEdgeNode(nodeName)
+	locationCache.DeleteNode(nodeName)
+
+	tests := []struct {
+		name     string
+		lc       *LocationCache
+		nodeName string
+		want     bool
+	}{
+		{
+			name:     "TestIsDeletedEdgeNode() Case: Node was deleted from edge node cache",
+			lc:       &locationCache,
+			nodeName: nodeName,
+			want:     true,
+		},
+		{
+			name:     "TestIsDeletedEdgeNode() Case: Node was not an edge node",
+			lc:       &locationCache,
+			nodeName: "notExistNode",
+			want:     false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := test.lc.IsDeletedEdgeNode(test.nodeName); !reflect.DeepEqual(got, test.want) {
+				t.Errorf("Manager.TestIsDeletedEdgeNode() case failed: got = %v, want = %v", got, test.want)
+			}
+		})
+	}
+}
+
 // TestUpdateEdgeNode is function to test UpdateEdgeNode
 func TestUpdateEdgeNode(t *testing.T) {
 	locationCache := LocationCache{}
