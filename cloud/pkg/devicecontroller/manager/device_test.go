@@ -159,6 +159,30 @@ func TestDeviceManagerWithRealEvents(t *testing.T) {
 	assert.True(t, received)
 }
 
+func TestDeviceManagerDeleteHandlesTombstone(t *testing.T) {
+	mockInformer := newMockInformer(false)
+	dm, err := NewDeviceManager(mockInformer)
+	assert.NoError(t, err)
+	assert.NotNil(t, dm)
+
+	testDevice := &v1beta1.Device{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-device",
+			Namespace: "default",
+		},
+	}
+
+	mockInformer.handler.OnDelete(cache.DeletedFinalStateUnknown{Obj: testDevice})
+
+	select {
+	case event := <-dm.Events():
+		assert.Equal(t, watch.Deleted, event.Type)
+		assert.Equal(t, testDevice, event.Object)
+	default:
+		t.Fatal("expected delete event")
+	}
+}
+
 func TestDeviceManagerDeviceMap(t *testing.T) {
 	dm := &DeviceManager{
 		Device: sync.Map{},
