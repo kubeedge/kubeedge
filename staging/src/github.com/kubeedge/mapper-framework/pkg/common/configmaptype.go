@@ -118,6 +118,7 @@ type DBConfig struct {
 	RedisClientConfig     json.RawMessage `json:"redisClientConfig"`
 	TDEngineClientConfig  json.RawMessage `json:"TDEngineClientConfig"`
 	MySQLClientConfig     json.RawMessage `json:"mysqlClientConfig"`
+	KWDBClientConfig      json.RawMessage `json:"KWDBClientConfig"`
 }
 
 // Metadata is the metadata for data.
