@@ -27,6 +27,12 @@ import (
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/blang/semver"
 	"github.com/stretchr/testify/assert"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage"
+	"helm.sh/helm/v3/pkg/storage/driver"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -921,3 +927,60 @@ func (m *MockOSTypeInstaller) KillKubeEdgeBinary(name string) error {
 	}
 	return nil
 }
+
+func TestRunHelmInstall_CleanupOnFailure(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	cu := &KubeCloudHelmInstTool{
+		Common: util.Common{
+			OSTypeInstaller: &MockOSTypeInstaller{},
+			ToolVersion:     createMockToolVersion(),
+			KubeConfig:      "/path/to/kubeconfig",
+		},
+		Namespace: constants.SystemNamespace,
+	}
+
+	// Mock Configuration.Init to bypass K8s setup and set up in-memory storage
+	patches.ApplyMethod(reflect.TypeOf(&action.Configuration{}), "Init",
+		func(cfg *action.Configuration, _ genericclioptions.RESTClientGetter, _, _ string, _ func(string, ...interface{})) error {
+			cfg.Releases = storage.Init(driver.NewMemory())
+			return nil
+		})
+
+	// Mock action.NewInstall
+	patches.ApplyFunc(action.NewInstall, func(_ *action.Configuration) *action.Install {
+		return &action.Install{}
+	})
+
+	// Mock action.Install and its Run method to return failure with a partial release
+	patches.ApplyMethod(reflect.TypeOf(&action.Install{}), "Run", func(_ *action.Install, _ *chart.Chart, _ map[string]interface{}) (*release.Release, error) {
+		return &release.Release{
+			Name: "cloudcore",
+		}, fmt.Errorf("mock helm install error")
+	})
+
+	// Mock action.NewUninstall
+	patches.ApplyFunc(action.NewUninstall, func(_ *action.Configuration) *action.Uninstall {
+		return &action.Uninstall{}
+	})
+
+	// Mock action.Uninstall and assert that it is triggered on failure
+	var uninstallCalled bool
+	patches.ApplyMethod(reflect.TypeOf(&action.Uninstall{}), "Run", func(_ *action.Uninstall, name string) (*release.UninstallReleaseResponse, error) {
+		if name == "cloudcore" {
+			uninstallCalled = true
+		}
+		return &release.UninstallReleaseResponse{}, nil
+	})
+
+	renderer := &Renderer{
+		componentName: "cloudcore",
+	}
+
+	_, err := cu.runHelmInstall(renderer)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "mock helm install error")
+	assert.True(t, uninstallCalled, "Expected action.Uninstall to be called on failure")
+}
+
