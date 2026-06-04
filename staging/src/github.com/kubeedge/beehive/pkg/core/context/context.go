@@ -1,6 +1,7 @@
 package context
 
 import (
+	gocontext "context"
 	"time"
 
 	"github.com/kubeedge/beehive/pkg/common"
@@ -19,6 +20,9 @@ type MessageContext interface {
 	// async mode
 	Send(module string, message model.Message)
 	Receive(module string) (model.Message, error)
+	// ReceiveWithContext receives a message like Receive, but returns immediately
+	// with ctx.Err() when ctx is cancelled instead of blocking forever.
+	ReceiveWithContext(ctx gocontext.Context, module string) (model.Message, error)
 	// sync mode
 	SendSync(module string, message model.Message, timeout time.Duration) (model.Message, error)
 	SendResp(message model.Message)
