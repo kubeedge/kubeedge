@@ -1,0 +1,138 @@
+## NVIDIA GPU Device Plugin — DaemonSet
+## Exposes NVIDIA GPUs as schedulable resource: nvidia.com/gpu
+## Compatible with: Any NVIDIA GPU (GTX, RTX, Quadro) on Linux
+## Requires: nvidia-driver-550+, nvidia-container-toolkit installed on host
+##
+## Pre-requisite check:
+##   nvidia-smi
+##   docker run --gpus all nvidia/cuda:12.0-base nvidia-smi
+##
+## Deploy: kubectl apply -f nvidia-device-plugin.yaml
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nvidia-device-plugin-daemonset
+  namespace: kube-system
+  labels:
+    app: nvidia-device-plugin
+spec:
+  selector:
+    matchLabels:
+      app: nvidia-device-plugin
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: nvidia-device-plugin
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ""
+    spec:
+      tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+      - key: "node-role.kubernetes.io/edge"
+        operator: "Exists"
+        effect: "NoSchedule"
+      nodeSelector:
+        accelerator: nvidia-gpu    # label set by node-labels.sh
+      priorityClassName: system-node-critical
+      runtimeClassName: nvidia     # requires nvidia-container-runtime
+      containers:
+      - image: nvcr.io/nvidia/k8s-device-plugin:v0.15.0
+        name: nvidia-device-plugin-ctr
+        env:
+        - name: FAIL_ON_INIT_ERROR
+          value: "false"
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: all
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: compute,utility
+        - name: MIG_STRATEGY
+          value: none              # set to 'mixed' for MIG-capable cards
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "100Mi"
+          limits:
+            cpu: "200m"
+            memory: "200Mi"
+        volumeMounts:
+        - name: device-plugin
+          mountPath: /var/lib/kubelet/device-plugins
+      volumes:
+      - name: device-plugin
+        hostPath:
+          path: /var/lib/kubelet/device-plugins
+---
+## DCGM Exporter — GPU metrics for Prometheus
+## Exposes: DCGM_FI_DEV_GPU_UTIL, DCGM_FI_DEV_MEM_COPY_UTIL, DCGM_FI_DEV_POWER_USAGE
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: dcgm-exporter
+  namespace: monitoring
+  labels:
+    app: dcgm-exporter
+spec:
+  selector:
+    matchLabels:
+      app: dcgm-exporter
+  template:
+    metadata:
+      labels:
+        app: dcgm-exporter
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port:   "9400"
+        prometheus.io/path:   "/metrics"
+    spec:
+      nodeSelector:
+        accelerator: nvidia-gpu
+      tolerations:
+      - key: "node-role.kubernetes.io/edge"
+        operator: "Exists"
+        effect: "NoSchedule"
+      runtimeClassName: nvidia
+      containers:
+      - name: dcgm-exporter
+        image: nvcr.io/nvidia/k8s/dcgm-exporter:3.3.5-3.4.0-ubuntu22.04
+        env:
+        - name: DCGM_EXPORTER_LISTEN
+          value: ":9400"
+        - name: DCGM_EXPORTER_KUBERNETES
+          value: "true"
+        - name: DCGM_EXPORTER_COLLECTORS
+          value: "/etc/dcgm-exporter/dcp-metrics-included.csv"
+        ports:
+        - name: metrics
+          containerPort: 9400
+          protocol: TCP
+        securityContext:
+          runAsNonRoot: false
+          runAsUser: 0
+          capabilities:
+            add: ["SYS_ADMIN"]
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+        volumeMounts:
+        - name: pod-gpu-resources
+          mountPath: /var/lib/kubelet/pod-resources
+          readOnly: true
+      volumes:
+      - name: pod-gpu-resources
+        hostPath:
+          path: /var/lib/kubelet/pod-resources

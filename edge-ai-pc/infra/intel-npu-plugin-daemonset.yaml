@@ -1,0 +1,131 @@
+## Intel NPU Device Plugin — DaemonSet
+## Exposes Intel NPU as schedulable resource: gpu.intel.com/i915
+## Compatible with: Intel Core Ultra (Meteor Lake, Lunar Lake, Arrow Lake)
+## Requires: linux-npu-driver >= 1.5 installed on host
+##
+## Deploy: kubectl apply -f intel-npu-plugin-daemonset.yaml
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kube-system
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: intel-npu-plugin
+  namespace: kube-system
+  labels:
+    app: intel-npu-plugin
+    component: device-plugin
+    tier: edge-ai
+spec:
+  selector:
+    matchLabels:
+      app: intel-npu-plugin
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: intel-npu-plugin
+        component: device-plugin
+      annotations:
+        description: "Exposes Intel NPU (/dev/accel/*) as K8s schedulable resource"
+    spec:
+      # Only schedule on nodes labeled as having an Intel NPU
+      nodeSelector:
+        feature.node.kubernetes.io/npu: "intel"
+      tolerations:
+      - key: "node-role.kubernetes.io/edge"
+        operator: "Exists"
+        effect: "NoSchedule"
+      # Required: run before other pods on the node
+      priorityClassName: system-node-critical
+      hostNetwork: false
+      hostPID: false
+      serviceAccountName: intel-npu-plugin-sa
+      initContainers:
+      # Verify NPU device exists before starting plugin
+      - name: npu-check
+        image: busybox:1.36
+        command: ["sh", "-c", "ls /dev/accel/ || (echo 'No NPU accel device found. Install linux-npu-driver.' && exit 1)"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: devfs
+          mountPath: /dev
+      containers:
+      - name: intel-npu-plugin
+        image: intel/intel-npu-plugin:v0.30.0
+        imagePullPolicy: IfNotPresent
+        command: ["/usr/local/bin/intel_npu_device_plugin"]
+        args:
+        - -shared-dev-num=1     # number of pods that can share one NPU
+        - -v=4                  # verbosity level (4 = debug)
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "50Mi"
+          limits:
+            cpu: "200m"
+            memory: "100Mi"
+        securityContext:
+          privileged: true       # required to access /dev/accel/*
+          allowPrivilegeEscalation: true
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - name: devfs
+          mountPath: /dev
+        - name: sysfs
+          mountPath: /sys
+        - name: kubelet-sock
+          mountPath: /var/lib/kubelet/device-plugins
+        livenessProbe:
+          exec:
+            command: ["ls", "/var/lib/kubelet/device-plugins/npu.sock"]
+          initialDelaySeconds: 15
+          periodSeconds: 30
+      volumes:
+      - name: devfs
+        hostPath:
+          path: /dev
+          type: Directory
+      - name: sysfs
+        hostPath:
+          path: /sys
+          type: Directory
+      - name: kubelet-sock
+        hostPath:
+          path: /var/lib/kubelet/device-plugins
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: intel-npu-plugin-sa
+  namespace: kube-system
+---
+## Node Feature Discovery (NFD) label rule for Intel NPU auto-detection
+## Requires: nfd-worker running on the node
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nfd-npu-rule
+  namespace: kube-system
+data:
+  npu-rule.yaml: |
+    - name: "intel-npu"
+      labels:
+        feature.node.kubernetes.io/npu: "intel"
+      matchFeatures:
+        - feature: pci.device
+          matchExpressions:
+            vendor: {op: In, value: ["8086"]}
+            class:  {op: In, value: ["0d00", "0d40"]}  # Intel VPU/NPU PCI class

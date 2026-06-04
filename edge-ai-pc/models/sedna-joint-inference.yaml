@@ -1,0 +1,133 @@
+## Sedna JointInference — Edge+Cloud Split Inference
+## Use case: Run a lightweight YOLOv8n on edge NPU; when confidence < threshold,
+##           escalate full frame to cloud for YOLOv8x re-inference.
+##
+## Architecture:
+##   [Camera/Input] → [Edge: YOLOv8n on NPU] →(low confidence)→ [Cloud: YOLOv8x]
+##                                            →(high confidence)→ [Result]
+##
+## Pre-requisites:
+##   1. Sedna installed: https://github.com/kubeedge/sedna
+##      kubectl apply -f https://raw.githubusercontent.com/kubeedge/sedna/main/build/crds/sedna.io_jointinferenceservices.yaml
+##   2. ModelRegistry populated with both models
+##   3. Sedna GM (Global Manager) running in cloud
+##
+## Deploy: kubectl apply -f sedna-joint-inference.yaml -n sedna
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sedna
+---
+## Model Registry — Edge model (YOLOv8n INT8 OpenVINO)
+apiVersion: sedna.io/v1alpha1
+kind: Model
+metadata:
+  name: yolov8n-edge
+  namespace: sedna
+spec:
+  url: "oci://registry.example.com/models/yolov8n:openvino-int8"
+  format: "openvino"
+---
+## Model Registry — Cloud model (YOLOv8x FP32)
+apiVersion: sedna.io/v1alpha1
+kind: Model
+metadata:
+  name: yolov8x-cloud
+  namespace: sedna
+spec:
+  url: "oci://registry.example.com/models/yolov8x:pytorch-fp32"
+  format: "pytorch"
+---
+## JointInference Service
+apiVersion: sedna.io/v1alpha1
+kind: JointInferenceService
+metadata:
+  name: vision-joint-inference
+  namespace: sedna
+  labels:
+    app: joint-vision
+    edge-node: ai-pc-node-01
+spec:
+  # ─── Edge Worker (runs on AI PC NPU) ────────────────────────────────
+  edgeWorker:
+    model:
+      name: yolov8n-edge
+    nodeName: ai-pc-node-01      # ← pinned to AI PC
+    # Hard Example Mining: escalate to cloud when confidence < threshold
+    hardExampleMining:
+      name: CrossEntropyFilter
+      parameters:
+      - key: threshold
+        value: "0.85"            # escalate if max-class-conf < 0.85
+    template:
+      spec:
+        tolerations:
+        - key: "node-role.kubernetes.io/edge"
+          operator: "Exists"
+          effect: "NoSchedule"
+        containers:
+        - name: worker
+          image: sedna-example-joint-inference-pedestrian-worker:v0.6.0
+          imagePullPolicy: IfNotPresent
+          args:
+          - --input_shape=1,3,640,640
+          - --num_classes=80
+          - --confidence_threshold=0.85
+          resources:
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+              gpu.intel.com/i915: "1"    # Intel NPU
+          env:
+          - name: WORKER_NAME
+            value: "yolov8n-edge-worker"
+          - name: SEDNA_LOG_LEVEL
+            value: "debug"
+          - name: MODEL_NAME
+            value: "yolov8n-edge"
+          - name: DEVICE
+            value: "NPU"
+
+  # ─── Cloud Worker (runs on cloud GPU node) ───────────────────────────
+  cloudWorker:
+    model:
+      name: yolov8x-cloud
+    nodeName: cloud-gpu-node      # ← your cloud control-plane GPU node
+    template:
+      spec:
+        containers:
+        - name: worker
+          image: sedna-example-joint-inference-pedestrian-worker:v0.6.0
+          imagePullPolicy: IfNotPresent
+          args:
+          - --input_shape=1,3,1280,1280
+          - --num_classes=80
+          resources:
+            limits:
+              cpu: "4"
+              memory: "8Gi"
+              nvidia.com/gpu: "1"
+          env:
+          - name: WORKER_NAME
+            value: "yolov8x-cloud-worker"
+          - name: MODEL_NAME
+            value: "yolov8x-cloud"
+          - name: DEVICE
+            value: "cuda"
+---
+## Service: expose joint inference endpoint (REST)
+apiVersion: v1
+kind: Service
+metadata:
+  name: joint-inference-svc
+  namespace: sedna
+spec:
+  type: ClusterIP
+  selector:
+    sedna.io/joint-inference-service: vision-joint-inference
+    sedna.io/worker-type: edge
+  ports:
+  - name: rest
+    port: 5000
+    targetPort: 5000

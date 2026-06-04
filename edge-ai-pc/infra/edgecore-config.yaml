@@ -1,0 +1,105 @@
+## KubeEdge EdgeCore Configuration
+## Target: AI PC edge node (Intel Core Ultra / AMD Ryzen AI / NVIDIA GPU)
+## KubeEdge version: v1.17.0+
+##
+## Apply: copy to /etc/kubeedge/config/edgecore.yaml on the edge node
+## Reload: systemctl restart edgecore
+
+apiVersion: edgecore.config.kubeedge.io/v1alpha2
+kind: EdgeCore
+
+# ─── Database ────────────────────────────────────────────────────────────────
+database:
+  dataSource: /var/lib/kubeedge/edgecore.db
+  driverName: sqlite3
+
+# ─── Modules ─────────────────────────────────────────────────────────────────
+modules:
+
+  # EdgeHub: tunnel to CloudCore
+  edgeHub:
+    enable: true
+    heartbeat: 15          # seconds
+    projectID: e632aba927ea4ac2b575ec1603d56f10
+    quic:
+      enable: false
+    websocket:
+      enable: true
+      server: <CLOUD_IP>:10000   # ← replace with your CloudCore IP/domain
+      handshakeTimeout: 30
+      readDeadline: 15
+      writeDeadline: 15
+    tlsCaFile:   /etc/kubeedge/ca/rootCA.crt
+    tlsCertFile: /etc/kubeedge/certs/server.crt
+    tlsPrivateKeyFile: /etc/kubeedge/certs/server.key
+    token: ""              # populated by `keadm join --token`
+
+  # EdgeStream: kubectl exec/logs support
+  edgeStream:
+    enable: true
+    handshakeTimeout: 30
+    readDeadline: 15
+    server: <CLOUD_IP>:10004   # ← replace
+    writeDeadline: 15
+    tlsTunnelCAFile:   /etc/kubeedge/ca/rootCA.crt
+    tlsTunnelCertFile: /etc/kubeedge/certs/server.crt
+    tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/server.key
+
+  # MetaManager: local pod-spec store enables OFFLINE operation
+  metaManager:
+    enable: true
+    metaServer:
+      enable: true                    # ← critical for offline inference
+      server: 127.0.0.1:10550
+      tlsCaFile:   /etc/kubeedge/ca/rootCA.crt
+      tlsCertFile: /etc/kubeedge/certs/server.crt
+      tlsPrivateKeyFile: /etc/kubeedge/certs/server.key
+    contextSendGroup: hub
+    contextSendModule: websocket
+    edgeSite: true                    # ← allows local scheduling decisions
+
+  # EdgeD: CRI shim (delegates to containerd)
+  edged:
+    enable: true
+    cniBinDir: /opt/cni/bin
+    cniCacheDirs: /var/lib/cni/cache
+    cniConfDir: /etc/cni/net.d
+    cgroupDriver: systemd             # match your containerd cgroupDriver
+    cgroupsPerQOS: true
+    clusterDNS: "169.254.96.16"       # EdgeDNS default
+    clusterDomain: cluster.local
+    devicePluginEnabled: true         # ← enables NPU/GPU device plugins
+    gpuPluginEnabled: false           # managed by k8s device plugin, not edged
+    hostnameOverride: ai-pc-node-01   # ← set to your edge hostname
+    imageGCHighThreshold: 80
+    imageGCLowThreshold: 40
+    maxContainerCount: -1
+    maxPerPodContainerCount: 1
+    nodeStatusUpdateFrequency: 10
+    podSandboxImage: "kubeedge/pause:3.6"
+    registerNode: true
+    registerNodeNamespace: default
+    remoteImageEndpoint: unix:///run/containerd/containerd.sock
+    remoteRuntimeEndpoint: unix:///run/containerd/containerd.sock
+    runtimeType: remote
+    volumeStatsAggPeriod: 60000000000  # 60s in nanoseconds
+
+  # EventBus: MQTT for device data (optional for AI PC telemetry)
+  eventBus:
+    enable: false
+    mqttMode: 2                        # 0=internal, 1=both, 2=external
+    mqttQOS: 0
+    mqttRetain: false
+    mqttServerExternal: tcp://127.0.0.1:1883
+    mqttServerInternal: tcp://127.0.0.1:1884
+
+  # ServiceBus: HTTP proxy for edge services
+  serviceBus:
+    enable: true
+    port: 9060
+    server: 127.0.0.1
+    timeout: 60
+
+  # EdgeTunnel: inter-pod cross-node networking (replaces EdgeMesh)
+  edgeTunnel:
+    enable: false   # enable if you need pod-to-pod across edge nodes
