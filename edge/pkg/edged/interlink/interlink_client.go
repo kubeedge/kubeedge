@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -116,7 +117,7 @@ type Client struct {
 // NewClient creates a new InterLink API client.
 func NewClient(serverURL string, timeout time.Duration) *Client {
 	return &Client{
-		serverURL: serverURL,
+		serverURL: strings.TrimSuffix(serverURL, "/"),
 		httpClient: &http.Client{
 			Timeout: timeout,
 		},
@@ -196,7 +197,7 @@ func (c *Client) Status(pods []*v1.Pod) ([]PodStatusResponse, error) {
 
 	klog.V(4).Infof("InterLink: querying status for %d pod(s)", len(pods))
 
-	httpReq, err := http.NewRequest(http.MethodGet, c.serverURL+statusPath, bytes.NewReader(body))
+	httpReq, err := http.NewRequest(http.MethodPost, c.serverURL+statusPath, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("InterLink: failed to build status request: %w", err)
 	}
@@ -237,7 +238,7 @@ func (c *Client) GetLogs(podNamespace, podName, containerName string, opts v1.Po
 
 	klog.V(4).Infof("InterLink: fetching logs for %s/%s/%s", podNamespace, podName, containerName)
 
-	httpReq, err := http.NewRequest(http.MethodGet, c.serverURL+getLogsPath, bytes.NewReader(body))
+	httpReq, err := http.NewRequest(http.MethodPost, c.serverURL+getLogsPath, bytes.NewReader(body))
 	if err != nil {
 		return "", fmt.Errorf("InterLink: failed to build logs request: %w", err)
 	}

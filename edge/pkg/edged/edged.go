@@ -714,8 +714,11 @@ func (e *edged) handlePodViaInterLink(op string, pod *v1.Pod) error {
 		}
 
 		// Start status polling for this pod
-		ctx, cancel := context.WithCancel(e.context)
+		ctx, cancel := context.WithCancel(beehiveContext.GetContext())
 		e.interlinkMu.Lock()
+		if oldCancel, exists := e.interlinkPods[podKey]; exists {
+			oldCancel()
+		}
 		e.interlinkPods[podKey] = cancel
 		e.interlinkMu.Unlock()
 
@@ -749,6 +752,8 @@ func (e *edged) pollInterLinkStatus(ctx context.Context, pod *v1.Pod) {
 
 	klog.V(2).InfoS("InterLink: starting status poll loop", "pod", podKey, "interval", e.interlinkPollInterval)
 
+	emptyCount := 0
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -762,9 +767,17 @@ func (e *edged) pollInterLinkStatus(ctx context.Context, pod *v1.Pod) {
 			}
 
 			if len(statuses) == 0 {
-				klog.V(4).InfoS("InterLink: no status returned yet", "pod", podKey)
+				emptyCount++
+				klog.V(4).InfoS("InterLink: no status returned yet", "pod", podKey, "emptyCount", emptyCount)
+				if emptyCount >= 5 {
+					klog.InfoS("InterLink: max empty status responses reached, stopping polling", "pod", podKey)
+					e.stopInterLinkPolling(podKey)
+					return
+				}
 				continue
 			}
+
+			emptyCount = 0 // reset counter
 
 			podStatus := statuses[0]
 			patch := interlink.NewPodStatusPatch(podStatus)
