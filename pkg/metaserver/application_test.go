@@ -528,10 +528,11 @@ func TestCancel(t *testing.T) {
 func TestReset(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	app := Application{
-		ctx:      ctx,
-		cancel:   cancel,
-		Reason:   "some reason",
-		RespBody: []byte(`{"some":"data"}`),
+		ctx:       ctx,
+		cancel:    cancel,
+		Reason:    "some reason",
+		RespBody:  []byte(`{"some":"data"}`),
+		countLock: &sync.Mutex{}, // <-- ADD THIS EXACT LINE
 	}
 
 	app.Reset()

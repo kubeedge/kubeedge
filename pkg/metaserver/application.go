@@ -175,6 +175,9 @@ func (a *Application) Wait() {
 }
 
 func (a *Application) Reset() {
+	a.countLock.Lock()
+	defer a.countLock.Unlock()
+
 	if a.ctx != nil && a.cancel != nil {
 		a.cancel()
 	}
