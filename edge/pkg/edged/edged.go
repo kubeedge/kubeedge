@@ -31,6 +31,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"sync"
 	"time"
 
 	"github.com/container-storage-interface/spec/lib/go/csi"
@@ -58,6 +59,7 @@ import (
 	commonmsg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	edgedconfig "github.com/kubeedge/kubeedge/edge/pkg/edged/config"
+	"github.com/kubeedge/kubeedge/edge/pkg/edged/interlink"
 	kubebridge "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
 	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
@@ -93,6 +95,13 @@ type edged struct {
 	nodeName       string
 	namespace      string
 	heldPodUpdates map[string][]kubelettypes.PodUpdate
+
+	// InterLink integration fields
+	interlinkClient     *interlink.Client                // HTTP client for InterLink API
+	interlinkEnabled    bool                             // whether InterLink integration is active
+	interlinkPollInterval time.Duration                  // status polling interval
+	interlinkPods       map[string]context.CancelFunc    // tracked offloaded pods (key: namespace/name)
+	interlinkMu         sync.Mutex                       // protects interlinkPods map
 }
 
 var _ core.Module = (*edged)(nil)
@@ -275,6 +284,23 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 		nodeName:       nodeName,
 		namespace:      namespace,
 		heldPodUpdates: make(map[string][]kubelettypes.PodUpdate),
+		interlinkPods:  make(map[string]context.CancelFunc),
+	}
+
+	// Initialize InterLink client if configured
+	if ilCfg := edgedconfig.Config.InterLink; ilCfg != nil && ilCfg.Enable {
+		if ilCfg.ServerURL == "" {
+			klog.Warning("InterLink is enabled but serverURL is empty, disabling InterLink integration")
+		} else {
+			pollInterval := 10 * time.Second
+			if ilCfg.StatusPollInterval.Duration > 0 {
+				pollInterval = ilCfg.StatusPollInterval.Duration
+			}
+			ed.interlinkClient = interlink.NewClient(ilCfg.ServerURL, 30*time.Second)
+			ed.interlinkEnabled = true
+			ed.interlinkPollInterval = pollInterval
+			klog.Infof("InterLink integration enabled: serverURL=%s, pollInterval=%s", ilCfg.ServerURL, pollInterval)
+		}
 	}
 
 	return ed, nil
@@ -402,6 +428,12 @@ func (e *edged) handlePod(op string, content []byte, updatesChan chan<- interfac
 	pods = append(pods, &pod)
 
 	if filterPodByNodeName(&pod, e.nodeName) {
+		// InterLink offloading: route annotated pods to the InterLink API
+		// instead of the local container runtime (CRI).
+		if e.interlinkEnabled && interlink.IsInterLinkPod(&pod) {
+			return e.handlePodViaInterLink(op, &pod)
+		}
+
 		var podOp kubelettypes.PodOperation
 		switch op {
 		case model.InsertOperation:
@@ -664,4 +696,124 @@ func kubeletHealthCheck(port int32, kubeletReadyChan chan struct{}) {
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
+}
+
+// handlePodViaInterLink routes pod lifecycle operations to the InterLink API
+// server instead of the local container runtime. This enables offloading pods
+// to remote HPC/HTC backends (e.g., SLURM clusters) while maintaining
+// KubeEdge's offline autonomy and status reporting.
+func (e *edged) handlePodViaInterLink(op string, pod *v1.Pod) error {
+	podKey := pod.Namespace + "/" + pod.Name
+
+	switch op {
+	case model.InsertOperation:
+		klog.InfoS("InterLink: creating pod on remote backend", "pod", podKey)
+		if err := e.interlinkClient.Create(pod); err != nil {
+			klog.ErrorS(err, "InterLink: failed to create pod", "pod", podKey)
+			return fmt.Errorf("InterLink: failed to create pod %s: %w", podKey, err)
+		}
+
+		// Start status polling for this pod
+		ctx, cancel := context.WithCancel(e.context)
+		e.interlinkMu.Lock()
+		e.interlinkPods[podKey] = cancel
+		e.interlinkMu.Unlock()
+
+		go e.pollInterLinkStatus(ctx, pod)
+		klog.InfoS("InterLink: pod created and status polling started", "pod", podKey)
+
+	case model.UpdateOperation:
+		klog.V(4).InfoS("InterLink: update received for offloaded pod (no-op, status polling active)", "pod", podKey)
+
+	case model.DeleteOperation:
+		klog.InfoS("InterLink: deleting pod from remote backend", "pod", podKey)
+		if err := e.interlinkClient.Delete(pod); err != nil {
+			klog.ErrorS(err, "InterLink: failed to delete pod", "pod", podKey)
+			// Don't return error — still stop polling even if remote delete fails
+		}
+		e.stopInterLinkPolling(podKey)
+		klog.InfoS("InterLink: pod deleted and polling stopped", "pod", podKey)
+	}
+
+	return nil
+}
+
+// pollInterLinkStatus periodically queries the InterLink API for the status of
+// an offloaded pod and reports the status back through KubeEdge's MetaManager
+// → CloudHub pipeline. This ensures the cloud-side API server has accurate
+// status for pods running on remote HPC/HTC backends.
+func (e *edged) pollInterLinkStatus(ctx context.Context, pod *v1.Pod) {
+	podKey := pod.Namespace + "/" + pod.Name
+	ticker := time.NewTicker(e.interlinkPollInterval)
+	defer ticker.Stop()
+
+	klog.V(2).InfoS("InterLink: starting status poll loop", "pod", podKey, "interval", e.interlinkPollInterval)
+
+	for {
+		select {
+		case <-ctx.Done():
+			klog.V(2).InfoS("InterLink: status polling stopped", "pod", podKey)
+			return
+		case <-ticker.C:
+			statuses, err := e.interlinkClient.Status([]*v1.Pod{pod})
+			if err != nil {
+				klog.ErrorS(err, "InterLink: failed to poll status", "pod", podKey)
+				continue
+			}
+
+			if len(statuses) == 0 {
+				klog.V(4).InfoS("InterLink: no status returned yet", "pod", podKey)
+				continue
+			}
+
+			podStatus := statuses[0]
+			patch := interlink.NewPodStatusPatch(podStatus)
+
+			if err := e.reportInterLinkStatus(pod, patch); err != nil {
+				klog.ErrorS(err, "InterLink: failed to report status", "pod", podKey)
+				continue
+			}
+
+			klog.V(4).InfoS("InterLink: reported pod status", "pod", podKey, "phase", patch.Status.Phase)
+
+			// Stop polling if the pod has reached a terminal state
+			if patch.Status.Phase == v1.PodSucceeded || patch.Status.Phase == v1.PodFailed {
+				klog.InfoS("InterLink: pod reached terminal state, stopping polling",
+					"pod", podKey, "phase", patch.Status.Phase)
+				e.stopInterLinkPolling(podKey)
+				return
+			}
+		}
+	}
+}
+
+// stopInterLinkPolling cancels the status polling goroutine for an offloaded pod
+// and removes it from the tracking map.
+func (e *edged) stopInterLinkPolling(podKey string) {
+	e.interlinkMu.Lock()
+	defer e.interlinkMu.Unlock()
+
+	if cancel, ok := e.interlinkPods[podKey]; ok {
+		cancel()
+		delete(e.interlinkPods, podKey)
+		klog.V(2).InfoS("InterLink: cancelled polling for pod", "pod", podKey)
+	}
+}
+
+// reportInterLinkStatus sends a pod status patch through KubeEdge's messaging
+// pipeline (EdgeD → MetaManager → CloudHub → API server) to update the cloud
+// with the current state of an InterLink-managed pod.
+func (e *edged) reportInterLinkStatus(pod *v1.Pod, patch interlink.PodStatusPatch) error {
+	patchBytes, err := json.Marshal(patch)
+	if err != nil {
+		return fmt.Errorf("failed to marshal status patch: %w", err)
+	}
+
+	resource := fmt.Sprintf("%s/%s/%s", pod.Namespace, model.ResourceTypePodPatch, pod.Name)
+	msg := model.NewMessage("").
+		BuildRouter(e.Name(), modules.MetaGroup, resource, model.PatchOperation).
+		FillBody(string(patchBytes))
+
+	beehiveContext.Send(modules.MetaManagerModuleName, *msg)
+	return nil
 }
