@@ -29,7 +29,6 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	edgeconfig "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	fsmv1alpha1 "github.com/kubeedge/api/apis/fsm/v1alpha1"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
@@ -38,7 +37,6 @@ import (
 
 // Deprecated: New node jobs no longer use the event field.
 // For compatibility with historical versions, It will be removed in v1.23.
-
 const (
 	// TaskTypeUpgrade used to select controller in the cloud
 	TaskTypeUpgrade = "upgrade"
@@ -71,7 +69,7 @@ func (r *TaskEventReporter) Report(err error) error {
 	return ReportTaskResult(r.Config, TaskTypeUpgrade, r.JobName, event)
 }
 
-func ReportTaskResult(config *v1alpha2.EdgeCoreConfig, taskType, taskID string, event fsm.Event) error {
+func ReportTaskResult(config *edgeconfig.EdgeCoreConfig, taskType, taskID string, event fsm.Event) error {
 	resp := &commontypes.NodeTaskResponse{
 		NodeName: config.Modules.Edged.HostnameOverride,
 		Event:    event.Type,
@@ -79,8 +77,9 @@ func ReportTaskResult(config *v1alpha2.EdgeCoreConfig, taskType, taskID string, 
 		Time:     time.Now().UTC().Format(time.RFC3339),
 		Reason:   event.Msg,
 	}
+
 	edgeHub := config.Modules.EdgeHub
-	var caCrt []byte
+
 	caCertPath := edgeHub.TLSCAFile
 	caCrt, err := os.ReadFile(caCertPath)
 	if err != nil {
@@ -92,14 +91,13 @@ func ReportTaskResult(config *v1alpha2.EdgeCoreConfig, taskType, taskID string, 
 
 	certFile := edgeHub.TLSCertFile
 	keyFile := edgeHub.TLSPrivateKeyFile
-	cliCrt, err := tls.LoadX509KeyPair(certFile, keyFile)
+	cliCrt, _ := tls.LoadX509KeyPair(certFile, keyFile)
 
 	transport := &http.Transport{
 		DialContext: (&net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
 		}).DialContext,
-		// use TLS configuration
 		TLSClientConfig: &tls.Config{
 			RootCAs:            rootCAs,
 			InsecureSkipVerify: false,
@@ -113,14 +111,16 @@ func ReportTaskResult(config *v1alpha2.EdgeCoreConfig, taskType, taskID string, 
 	if err != nil {
 		return fmt.Errorf("marshal failed: %v", err)
 	}
-	url := edgeHub.HTTPServer + fmt.Sprintf("/task/%s/name/%s/node/%s/status", taskType, taskID, config.Modules.Edged.HostnameOverride)
-	result, err := client.Post(url, "application/json", bytes.NewReader(respData))
 
+	url := edgeHub.HTTPServer + fmt.Sprintf("/task/%s/name/%s/node/%s/status",
+		taskType, taskID, config.Modules.Edged.HostnameOverride)
+
+	result, err := client.Post(url, "application/json", bytes.NewReader(respData))
 	if err != nil {
 		return fmt.Errorf("post http request failed: %v", err)
 	}
 	klog.Error("report result ", result)
-	defer result.Body.Close()
+	defer func() { _ = result.Body.Close() }()
 
 	return nil
 }
