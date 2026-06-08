@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 	"io"
 	"net"
 	"net/http"
@@ -16,6 +17,8 @@ import (
 type EdgedExecConnection struct {
 	ReadChan chan *Message `json:"-"`
 	Stop     chan struct{} `json:"-"`
+	mu       sync.Mutex   `json:"-"`
+	closed   bool         `json:"-"`
 	MessID   uint64
 	URL      url.URL     `json:"url"`
 	Header   http.Header `json:"header"`
@@ -39,11 +42,24 @@ func (e *EdgedExecConnection) String() string {
 }
 
 func (e *EdgedExecConnection) CacheTunnelMessage(msg *Message) {
-	e.ReadChan <- msg
+	e.mu.Lock()
+	closed := e.closed
+	e.mu.Unlock()
+	if !closed {
+		select {
+		case e.ReadChan <- msg:
+		default:
+		}
+	}
 }
 
 func (e *EdgedExecConnection) CloseReadChannel() {
-	close(e.ReadChan)
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if !e.closed {
+		e.closed = true
+		close(e.ReadChan)
+	}
 }
 
 func (e *EdgedExecConnection) CleanChannel() {

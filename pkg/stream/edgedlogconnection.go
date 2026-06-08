@@ -17,6 +17,7 @@ limitations under the License.
 package stream
 
 import (
+	"sync"
 	"bufio"
 	"encoding/json"
 	"errors"
@@ -31,6 +32,8 @@ import (
 type EdgedLogsConnection struct {
 	ReadChan chan *Message `json:"-"`
 	Stop     chan struct{} `json:"-"`
+	mu       sync.Mutex   `json:"-"`
+	closed   bool         `json:"-"`
 	MessID   uint64        // message id
 	URL      url.URL       `json:"url"`
 	Header   http.Header   `json:"header"`
@@ -41,11 +44,24 @@ func (l *EdgedLogsConnection) GetMessageID() uint64 {
 }
 
 func (l *EdgedLogsConnection) CacheTunnelMessage(msg *Message) {
-	l.ReadChan <- msg
+	l.mu.Lock()
+	closed := l.closed
+	l.mu.Unlock()
+	if !closed {
+		select {
+		case l.ReadChan <- msg:
+		default:
+		}
+	}
 }
 
 func (l *EdgedLogsConnection) CloseReadChannel() {
-	close(l.ReadChan)
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if !l.closed {
+		l.closed = true
+		close(l.ReadChan)
+	}
 }
 
 func (l *EdgedLogsConnection) CleanChannel() {

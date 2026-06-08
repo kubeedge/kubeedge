@@ -17,6 +17,7 @@ limitations under the License.
 package stream
 
 import (
+	"sync"
 	"encoding/json"
 	"errors"
 	"io"
@@ -332,4 +333,31 @@ func TestWrite2CloudStream(t *testing.T) {
 			t.Error("Did not receive stop signal on write error")
 		}
 	})
+}
+
+func TestCacheTunnelMessageAfterClose(t *testing.T) {
+	edgedAttachConn := &EdgedAttachConnection{
+		ReadChan: make(chan *Message, 1),
+	}
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		edgedAttachConn.CloseReadChannel()
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		msg := &Message{
+			ConnectID:   100,
+			MessageType: MessageTypeData,
+			Data:        []byte("late message"),
+		}
+		edgedAttachConn.CacheTunnelMessage(msg)
+	}()
+
+	wg.Wait()
 }
