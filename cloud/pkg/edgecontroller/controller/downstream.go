@@ -60,7 +60,7 @@ func (dc *DownstreamController) syncPod() {
 			pod, ok := e.Object.(*v1.Pod)
 			if !ok {
 				klog.Warningf("object type: %T unsupported", e.Object)
-				continue
+			continue
 			}
 			if !dc.lc.IsEdgeNode(pod.Spec.NodeName) {
 				continue
@@ -79,6 +79,7 @@ func (dc *DownstreamController) syncPod() {
 				dc.lc.AddOrUpdatePod(*pod)
 			case watch.Deleted:
 				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation)
+				dc.removePodFromLocalCache(*pod)
 			case watch.Modified:
 				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
 				dc.lc.AddOrUpdatePod(*pod)
@@ -334,6 +335,62 @@ func (dc *DownstreamController) syncRuleEndpoint() {
 			} else {
 				klog.V(4).Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 			}
+		}
+	}
+}
+
+// removePodFromLocalCache removes pod references from the LocationCache if no other pods require them.
+func (dc *DownstreamController) removePodFromLocalCache(pod v1.Pod) {
+	configMaps, secrets := dc.lc.PodConfigMapsAndSecrets(pod)
+
+	allPods, err := dc.podLister.Pods(pod.Namespace).List(labels.Everything())
+	if err != nil {
+		klog.Errorf("Failed to list pods in namespace %s: %v", pod.Namespace, err)
+		return
+	}
+
+	var otherPodsOnNode []*v1.Pod
+	for _, p := range allPods {
+		if p.Name != pod.Name && p.Spec.NodeName == pod.Spec.NodeName {
+			otherPodsOnNode = append(otherPodsOnNode, p)
+		}
+	}
+
+	for _, cm := range configMaps {
+		needed := false
+		for _, p := range otherPodsOnNode {
+			cms, _ := dc.lc.PodConfigMapsAndSecrets(*p)
+			for _, c := range cms {
+				if c == cm {
+					needed = true
+					break
+				}
+			}
+			if needed {
+				break
+			}
+		}
+		if !needed {
+			dc.lc.RemoveNodeFromConfigMap(pod.Namespace, cm, pod.Spec.NodeName)
+		}
+	}
+
+	for _, secret := range secrets {
+		needed := false
+		for _, p := range otherPodsOnNode {
+			_, secs := dc.lc.PodConfigMapsAndSecrets(*p)
+			for _, s := range secs {
+				if s == secret {
+					needed = true
+					break
+				}
+			}
+			if needed {
+				break
+			}
+		}
+		if !needed {
+			dc.lc.RemoveNodeFromSecret(pod.Namespace, secret, pod.Spec.NodeName)
 		}
 	}
 }

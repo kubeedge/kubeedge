@@ -17,6 +17,7 @@ limitations under the License.
 package manager
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -310,5 +311,49 @@ func TestDeleteNode(t *testing.T) {
 				t.Errorf("Manager.TestDeleteNode() case failed: exist = %v, want = %v.", exist, test.want)
 			}
 		})
+	}
+}
+
+func TestRemoveNodeFromConfigMapAndSecret(t *testing.T) {
+	lc := &LocationCache{}
+	namespace := "default"
+	cmName := "test-cm"
+	secretName := "test-secret"
+	node1 := "node-1"
+	node2 := "node-2"
+
+	lc.configMapNode.Store(fmt.Sprintf("%s/%s", namespace, cmName), []string{node1, node2})
+	lc.secretNode.Store(fmt.Sprintf("%s/%s", namespace, secretName), []string{node1, node2})
+
+	lc.RemoveNodeFromConfigMap(namespace, cmName, node1)
+	cmsNodesVal, ok := lc.configMapNode.Load(fmt.Sprintf("%s/%s", namespace, cmName))
+	if !ok {
+		t.Fatalf("Expected ConfigMap key to still exist")
+	}
+	cmsNodes := cmsNodesVal.([]string)
+	if len(cmsNodes) != 1 || cmsNodes[0] != node2 {
+		t.Errorf("Expected remaining node list to be [%s], got %v", node2, cmsNodes)
+	}
+
+	lc.RemoveNodeFromConfigMap(namespace, cmName, node2)
+	_, ok = lc.configMapNode.Load(fmt.Sprintf("%s/%s", namespace, cmName))
+	if ok {
+		t.Errorf("Expected ConfigMap key to be deleted when no nodes are left")
+	}
+
+	lc.RemoveNodeFromSecret(namespace, secretName, node1)
+	secretNodesVal, ok := lc.secretNode.Load(fmt.Sprintf("%s/%s", namespace, secretName))
+	if !ok {
+		t.Fatalf("Expected Secret key to still exist")
+	}
+	secNodes := secretNodesVal.([]string)
+	if len(secNodes) != 1 || secNodes[0] != node2 {
+		t.Errorf("Expected remaining node list to be [%s], got %v", node2, secNodes)
+	}
+
+	lc.RemoveNodeFromSecret(namespace, secretName, node2)
+	_, ok = lc.secretNode.Load(fmt.Sprintf("%s/%s", namespace, secretName))
+	if ok {
+		t.Errorf("Expected Secret key to be deleted when no nodes are left")
 	}
 }

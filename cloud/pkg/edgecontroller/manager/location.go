@@ -156,3 +156,59 @@ func (lc *LocationCache) DeleteSecret(namespace, name string) {
 func (lc *LocationCache) DeleteNode(nodeName string) {
 	lc.EdgeNodes.Delete(nodeName)
 }
+
+// RemoveNodeFromConfigMap removes a node from the ConfigMap synchronization list
+func (lc *LocationCache) RemoveNodeFromConfigMap(
+	namespace,
+	name,
+	node string, 
+){
+	configMapKey := fmt.Sprintf("%s/%s", namespace, name)
+	value, ok := lc.configMapNode.Load(configMapKey)
+	if !ok{
+		return
+	}
+
+	nodes, _ := value.([]string)
+	var newNodes []string
+
+	for _, n := range nodes {
+		if n!=node {
+			newNodes = append(newNodes, n)
+		}
+	}
+
+	if len(newNodes) == 0 {
+		lc.configMapNode.Delete(configMapKey)
+	} else {
+		lc.configMapNode.Store(configMapKey, newNodes)
+	}
+}
+
+// RemoveNodeFromSecret removes a node from the secret sync list
+func (lc *LocationCache) RemoveNodeFromSecret(
+	namespace,
+	name,
+	node string,
+){
+	secretKey := fmt.Sprintf("%s/%s", namespace, name)
+	value, ok := lc.secretNode.Load(secretKey)
+	if !ok{
+		return
+	}
+
+	nodes, _ := value.([]string)
+	var newNodes []string
+
+	for _, n := range nodes {
+		if n != node {
+			newNodes = append(newNodes, n)
+		}
+	}
+
+	if len(newNodes) == 0 {
+		lc.secretNode.Delete(secretKey)
+	} else {
+		lc.secretNode.Store(secretKey, newNodes)
+	}
+}
