@@ -60,7 +60,7 @@ func (dc *DownstreamController) syncPod() {
 			pod, ok := e.Object.(*v1.Pod)
 			if !ok {
 				klog.Warningf("object type: %T unsupported", e.Object)
-			continue
+				continue
 			}
 			if !dc.lc.IsEdgeNode(pod.Spec.NodeName) {
 				continue
@@ -356,40 +356,27 @@ func (dc *DownstreamController) removePodFromLocalCache(pod v1.Pod) {
 		}
 	}
 
-	for _, cm := range configMaps {
-		needed := false
-		for _, p := range otherPodsOnNode {
-			cms, _ := dc.lc.PodConfigMapsAndSecrets(*p)
-			for _, c := range cms {
-				if c == cm {
-					needed = true
-					break
-				}
-			}
-			if needed {
-				break
-			}
+	activeConfigMaps := make(map[string]struct{})
+	activeSecrets := make(map[string]struct{})
+
+	for _, p := range otherPodsOnNode {
+		otherConfig, otherSecret := dc.lc.PodConfigMapsAndSecrets(*p)
+		for _, c := range otherConfig {
+			activeConfigMaps[c] = struct{}{}
 		}
-		if !needed {
+		for _, s := range otherSecret {
+			activeSecrets[s] = struct{}{}
+		}
+	}
+
+	for _, cm := range configMaps {
+		if _, needed := activeConfigMaps[cm]; !needed {
 			dc.lc.RemoveNodeFromConfigMap(pod.Namespace, cm, pod.Spec.NodeName)
 		}
 	}
 
 	for _, secret := range secrets {
-		needed := false
-		for _, p := range otherPodsOnNode {
-			_, secs := dc.lc.PodConfigMapsAndSecrets(*p)
-			for _, s := range secs {
-				if s == secret {
-					needed = true
-					break
-				}
-			}
-			if needed {
-				break
-			}
-		}
-		if !needed {
+		if _, needed := activeSecrets[secret]; !needed {
 			dc.lc.RemoveNodeFromSecret(pod.Namespace, secret, pod.Spec.NodeName)
 		}
 	}
