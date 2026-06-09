@@ -40,26 +40,27 @@ type Flow struct {
 
 // Find returns the found action by name.
 func (sf *Flow) Find(name string) *Action {
-	if sf.First.Name == name {
-		return sf.First
+	// Guard against nil receiver
+	if sf == nil {
+		return nil
 	}
+	
 	return doFind(name, sf.First)
 }
 
-// Using recursion to find a action by name.
+// doFind recursively searches for an action by name across both
+// NextSuccessful and NextFailure branches.
 func doFind(name string, act *Action) *Action {
+	if act == nil {
+		return nil
+	}
 	if act.Name == name {
 		return act
 	}
-	if act.NextSuccessful != nil {
-		if next := doFind(name, act.NextSuccessful); next != nil {
-			return next
-		}
+	if next := doFind(name, act.NextSuccessful); next != nil {
+		return next
 	}
-	if act.NextFailure != nil {
-		return doFind(name, act.NextFailure)
-	}
-	return nil
+	return doFind(name, act.NextFailure)
 }
 
 var (
