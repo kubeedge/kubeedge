@@ -15,6 +15,8 @@ type LocationCache struct {
 	configMapNode sync.Map
 	// secretNode is a map, key is namespace/secretName, value is nodeName
 	secretNode sync.Map
+	// mu protects configMapNode and secretNode updates
+	mu sync.Mutex
 }
 
 // PodConfigMapsAndSecrets return configmaps and secrets used by pod
@@ -77,6 +79,8 @@ func (lc *LocationCache) newNodes(oldNodes []string, node string) []string {
 
 // AddOrUpdatePod add pod to node, pod to configmap, configmap to pod, pod to secret, secret to pod relation
 func (lc *LocationCache) AddOrUpdatePod(pod v1.Pod) {
+	lc.mu.Lock()
+	defer lc.mu.Unlock()
 	configMaps, secrets := lc.PodConfigMapsAndSecrets(pod)
 	for _, c := range configMaps {
 		configMapKey := fmt.Sprintf("%s/%s", pod.Namespace, c)
@@ -144,11 +148,15 @@ func (lc *LocationCache) UpdateEdgeNode(nodeName string) {
 
 // DeleteConfigMap from cache
 func (lc *LocationCache) DeleteConfigMap(namespace, name string) {
+	lc.mu.Lock()
+	defer lc.mu.Unlock()
 	lc.configMapNode.Delete(fmt.Sprintf("%s/%s", namespace, name))
 }
 
 // DeleteSecret from cache
 func (lc *LocationCache) DeleteSecret(namespace, name string) {
+	lc.mu.Lock()
+	defer lc.mu.Unlock()
 	lc.secretNode.Delete(fmt.Sprintf("%s/%s", namespace, name))
 }
 
@@ -161,11 +169,13 @@ func (lc *LocationCache) DeleteNode(nodeName string) {
 func (lc *LocationCache) RemoveNodeFromConfigMap(
 	namespace,
 	name,
-	node string, 
-){
+	node string,
+) {
+	lc.mu.Lock()
+	defer lc.mu.Unlock()
 	configMapKey := fmt.Sprintf("%s/%s", namespace, name)
 	value, ok := lc.configMapNode.Load(configMapKey)
-	if !ok{
+	if !ok {
 		return
 	}
 
@@ -173,7 +183,7 @@ func (lc *LocationCache) RemoveNodeFromConfigMap(
 	var newNodes []string
 
 	for _, n := range nodes {
-		if n!=node {
+		if n != node {
 			newNodes = append(newNodes, n)
 		}
 	}
@@ -190,10 +200,12 @@ func (lc *LocationCache) RemoveNodeFromSecret(
 	namespace,
 	name,
 	node string,
-){
+) {
+	lc.mu.Lock()
+	defer lc.mu.Unlock()
 	secretKey := fmt.Sprintf("%s/%s", namespace, name)
 	value, ok := lc.secretNode.Load(secretKey)
-	if !ok{
+	if !ok {
 		return
 	}
 

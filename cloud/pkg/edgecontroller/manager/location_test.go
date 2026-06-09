@@ -322,15 +322,38 @@ func TestRemoveNodeFromConfigMapAndSecret(t *testing.T) {
 	node1 := "node-1"
 	node2 := "node-2"
 
+	lc.RemoveNodeFromConfigMap(namespace, "non-existent-cm", node1)
+	lc.RemoveNodeFromSecret(namespace, "non-existent-secret", node1)
+
 	lc.configMapNode.Store(fmt.Sprintf("%s/%s", namespace, cmName), []string{node1, node2})
 	lc.secretNode.Store(fmt.Sprintf("%s/%s", namespace, secretName), []string{node1, node2})
 
-	lc.RemoveNodeFromConfigMap(namespace, cmName, node1)
+	lc.RemoveNodeFromConfigMap(namespace, cmName, "non-existent-node")
 	cmsNodesVal, ok := lc.configMapNode.Load(fmt.Sprintf("%s/%s", namespace, cmName))
 	if !ok {
 		t.Fatalf("Expected ConfigMap key to still exist")
 	}
 	cmsNodes := cmsNodesVal.([]string)
+	if len(cmsNodes) != 2 {
+		t.Errorf("Expected node list length to remain 2, got %d", len(cmsNodes))
+	}
+
+	lc.RemoveNodeFromSecret(namespace, secretName, "non-existent-node")
+	secretNodesVal, ok := lc.secretNode.Load(fmt.Sprintf("%s/%s", namespace, secretName))
+	if !ok {
+		t.Fatalf("Expected Secret key to still exist")
+	}
+	secNodes := secretNodesVal.([]string)
+	if len(secNodes) != 2 {
+		t.Errorf("Expected node list length to remain 2, got %d", len(secNodes))
+	}
+
+	lc.RemoveNodeFromConfigMap(namespace, cmName, node1)
+	cmsNodesVal, ok = lc.configMapNode.Load(fmt.Sprintf("%s/%s", namespace, cmName))
+	if !ok {
+		t.Fatalf("Expected ConfigMap key to still exist")
+	}
+	cmsNodes = cmsNodesVal.([]string)
 	if len(cmsNodes) != 1 || cmsNodes[0] != node2 {
 		t.Errorf("Expected remaining node list to be [%s], got %v", node2, cmsNodes)
 	}
@@ -342,11 +365,11 @@ func TestRemoveNodeFromConfigMapAndSecret(t *testing.T) {
 	}
 
 	lc.RemoveNodeFromSecret(namespace, secretName, node1)
-	secretNodesVal, ok := lc.secretNode.Load(fmt.Sprintf("%s/%s", namespace, secretName))
+	secretNodesVal, ok = lc.secretNode.Load(fmt.Sprintf("%s/%s", namespace, secretName))
 	if !ok {
 		t.Fatalf("Expected Secret key to still exist")
 	}
-	secNodes := secretNodesVal.([]string)
+	secNodes = secretNodesVal.([]string)
 	if len(secNodes) != 1 || secNodes[0] != node2 {
 		t.Errorf("Expected remaining node list to be [%s], got %v", node2, secNodes)
 	}
