@@ -14,6 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package containers provides container runtime utilities for KubeEdge,
+// including interfaces and implementations for managing container lifecycles
+// via CRI-compatible runtimes.
 package containers
 
 import (
@@ -36,12 +39,14 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/image"
 )
 
+// ContainerRuntime defines the interface for interacting with a CRI-compatible container runtime.
 type ContainerRuntime interface {
 	CopyResources(ctx context.Context, image string, files map[string]string) error
 
 	image.Runtime
 }
 
+// ContainerRuntimeImpl is the concrete implementation of ContainerRuntime.
 type ContainerRuntimeImpl struct {
 	cgroupDriver string
 	ctrsvc       internalapi.RuntimeService
@@ -49,6 +54,7 @@ type ContainerRuntimeImpl struct {
 	*image.RuntimeImpl
 }
 
+// NewContainerRuntime creates a new ContainerRuntimeImpl connected to the given endpoint.
 func NewContainerRuntime(endpoint, cgroupDriver string) (ContainerRuntime, error) {
 	const timeout = 10 * time.Second
 	imgrt, err := image.NewImageRuntime(endpoint, timeout)
