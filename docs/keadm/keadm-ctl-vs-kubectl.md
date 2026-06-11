@@ -1,4 +1,4 @@
-# keadm ctl and kubectl
+# keadm ctl vs kubectl
 
 This document explains the difference between `keadm ctl` and `kubectl`, and
 helps users choose the right command-line tool for common KubeEdge operations.
@@ -32,11 +32,13 @@ API server.
 
 Common examples:
 
-    kubectl get nodes
-    kubectl get pods -A -o wide
-    kubectl describe node <edge-node-name>
-    kubectl describe pod <pod-name> -n <namespace>
-    kubectl logs <pod-name> -n <namespace>
+```bash
+kubectl get nodes
+kubectl get pods -A -o wide
+kubectl describe node <edge-node-name>
+kubectl describe pod <pod-name> -n <namespace>
+kubectl logs <pod-name> -n <namespace>
+```
 
 Typical scenarios:
 
@@ -52,12 +54,14 @@ KubeEdge-specific commands.
 
 Common examples:
 
-    keadm ctl get pod -n <namespace>
-    keadm ctl get pod -A -o wide
-    keadm ctl describe pod <pod-name> -n <namespace>
-    keadm ctl logs <pod-name> -n <namespace>
-    keadm ctl exec <pod-name> -n <namespace> -- <command>
-    keadm ctl restart pod <pod-name> -n <namespace>
+```bash
+keadm ctl get pod -n <namespace>
+keadm ctl get pod -A -o wide
+keadm ctl describe pod <pod-name> -n <namespace>
+keadm ctl logs <pod-name> -n <namespace>
+keadm ctl exec <pod-name> -n <namespace> -- <command>
+keadm ctl restart pod <pod-name> -n <namespace>
+```
 
 Typical scenarios:
 
@@ -73,12 +77,14 @@ control-plane view, then use `keadm ctl` if more edge-side information is needed
 
 Example workflow:
 
-    kubectl get nodes
-    kubectl get pods -A -o wide
-    kubectl describe pod <pod-name> -n <namespace>
+```bash
+kubectl get nodes
+kubectl get pods -A -o wide
+kubectl describe pod <pod-name> -n <namespace>
 
-    keadm ctl get pod -n <namespace>
-    keadm ctl logs <pod-name> -n <namespace>
+keadm ctl get pod -n <namespace>
+keadm ctl logs <pod-name> -n <namespace>
+```
 
 If `kubectl` shows that the edge node or Pod is not in the expected state, first
 check Kubernetes scheduling, events, and resource definitions. If the Kubernetes
@@ -90,6 +96,7 @@ use `keadm ctl` to continue edge-side diagnosis.
 - `keadm ctl` is not a general replacement for `kubectl`.
 - `kubectl` depends on the Kubernetes API server view.
 - `keadm ctl` focuses on KubeEdge-specific edge-side operations.
-- Some `keadm ctl` commands may depend on KubeEdge components and edge-side
-  connectivity status.
+- Some `keadm ctl` commands interact with local edge components such as EdgeCore
+  and MetaServer, so they can be useful for edge-side diagnosis even when
+  cloud-edge connectivity is interrupted.
 - For standard Kubernetes resource management, prefer `kubectl`.
