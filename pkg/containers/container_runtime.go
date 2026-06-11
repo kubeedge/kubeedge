@@ -98,8 +98,12 @@ func (runtime *ContainerRuntimeImpl) CopyResources(
 		return err
 	}
 	defer func() {
+		if err := runtime.ctrsvc.StopPodSandbox(ctx, sandbox); err != nil {
+			klog.V(3).ErrorS(err, "Stop pod sandbox failed", "sandboxID", sandbox)
+		}
+
 		if err := runtime.ctrsvc.RemovePodSandbox(ctx, sandbox); err != nil {
-			klog.V(3).ErrorS(err, "Remove pod sandbox failed", "containerID", sandbox)
+			klog.V(3).ErrorS(err, "Remove pod sandbox failed", "sandboxID", sandbox)
 		}
 	}()
 
@@ -137,6 +141,10 @@ func (runtime *ContainerRuntimeImpl) CopyResources(
 		return fmt.Errorf("create container failed: %v", err)
 	}
 	defer func() {
+		if stopErr := runtime.ctrsvc.StopContainer(ctx, containerID, 0); stopErr != nil {
+			klog.V(3).ErrorS(stopErr, "Stop container failed", "containerID", containerID)
+		}
+
 		if err := runtime.ctrsvc.RemoveContainer(ctx, containerID); err != nil {
 			klog.V(3).ErrorS(err, "Remove container failed", "containerID", containerID)
 		}
@@ -161,10 +169,10 @@ func copyResourcesCmd(files map[string]string) string {
 	first := true
 	for containerPath, hostPath := range files {
 		if first {
-			copyCmd = copyCmd + fmt.Sprintf("cp %s %s", containerPath, filepath.Join("/tmp", hostPath))
+			copyCmd = copyCmd + fmt.Sprintf("cp %q %q", containerPath, filepath.Join("/tmp", hostPath))
 			first = false
 		} else {
-			copyCmd = copyCmd + fmt.Sprintf(" && cp %s %s", containerPath, filepath.Join("/tmp", hostPath))
+			copyCmd = copyCmd + fmt.Sprintf(" && cp %q %q", containerPath, filepath.Join("/tmp", hostPath))
 		}
 	}
 	return copyCmd
