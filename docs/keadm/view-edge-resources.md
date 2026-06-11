@@ -1,4 +1,4 @@
-# Viewing edge-side resources with keadm ctl
+# Viewing edge-side resources with `keadm ctl`
 
 This document explains how to view edge-side workload status with `keadm ctl`
 and how to combine it with `kubectl` during KubeEdge troubleshooting.
@@ -40,7 +40,7 @@ If the Kubernetes control-plane view already shows an obvious problem, such as
 a pod pending or an edge node being `NotReady`, start troubleshooting from that
 information first.
 
-## Use keadm ctl for edge-side workload inspection
+## Use `keadm ctl` for edge-side workload inspection
 
 After checking the Kubernetes control-plane view, use `keadm ctl` when you need
 more edge-side information.
