@@ -57,8 +57,8 @@ func NewSubDiagnose(object Diagnose) *cobra.Command {
 	cmd := &cobra.Command{
 		Short: object.Desc,
 		Use:   object.Use,
-		Run: func(cmd *cobra.Command, args []string) {
-			object.ExecuteDiagnose(object.Use, do, args)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return object.ExecuteDiagnose(object.Use, do, args)
 		},
 	}
 	switch object.Use {
@@ -88,31 +88,32 @@ func NewDiagnoseOptions() *common.DiagnoseOptions {
 	return do
 }
 
-func (da Diagnose) ExecuteDiagnose(use string, ops *common.DiagnoseOptions, args []string) {
+func (da Diagnose) ExecuteDiagnose(use string, ops *common.DiagnoseOptions, args []string) error {
 	var err error
 	switch use {
 	case common.ArgDiagnoseNode:
 		err = DiagnoseNode(ops)
 	case common.ArgDiagnosePod:
 		if len(args) == 0 {
-			fmt.Println("error: You must specify a pod name")
-			return
-		}
-		// diagnose Pod, first diagnose node
-		err = DiagnoseNode(ops)
-		if err == nil {
-			err = DiagnosePod(ops, args[0])
+			err = fmt.Errorf("you must specify a pod name")
+		} else {
+			// diagnose Pod, first diagnose node
+			err = DiagnoseNode(ops)
+			if err == nil {
+				err = DiagnosePod(ops, args[0])
+			}
 		}
 	case common.ArgDiagnoseInstall:
 		err = DiagnoseInstall(ops.CheckOptions)
 	}
 
 	if err != nil {
-		fmt.Println(err.Error())
 		util.PrintFail(use, common.StrDiagnose)
-	} else {
-		util.PrintSucceed(use, common.StrDiagnose)
+		return err
 	}
+
+	util.PrintSucceed(use, common.StrDiagnose)
+	return nil
 }
 
 func DiagnoseNode(ops *common.DiagnoseOptions) error {
