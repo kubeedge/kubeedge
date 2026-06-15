@@ -25,6 +25,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"runtime" 
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -103,7 +104,7 @@ func NewApplication(ctx context.Context, key string, verb ApplicationVerb, noden
 // Identifier returns the unique SHA256-based ID of the application.
 func (a *Application) Identifier() string {
 	// Already computed? Return fast.
-	if atomic.LoadUint32(&a.idState) == 1 {
+	if atomic.LoadUint32(&a.idState) == 2 {
 		return a.ID
 	}
 
@@ -119,7 +120,11 @@ func (a *Application) Identifier() string {
 	}
 
 	// Mark done.
-	atomic.StoreUint32(&a.idState, 1)
+	atomic.StoreUint32(&a.idState, 2)
+	// Another goroutine is computing — wait for it
+	for atomic.LoadUint32(&a.idState) != 2 {
+    		runtime.Gosched()
+	}
 	return a.ID
 }
 
