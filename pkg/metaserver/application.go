@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -64,7 +65,7 @@ type Application struct {
 	// count the number of current citations
 	count     uint64
 	countLock *sync.Mutex
-	idOnce    sync.Once
+	idState   uint32
 	// Timestamp record the last closing time of application, only make sense when count == 0
 	Timestamp time.Time
 }
@@ -101,10 +102,13 @@ func NewApplication(ctx context.Context, key string, verb ApplicationVerb, noden
 
 // Identifier returns the unique SHA256-based ID of the application.
 func (a *Application) Identifier() string {
-	a.idOnce.Do(func() {
-		if a.ID != "" {
-			return
-		}
+	// Already computed? Return fast.
+	if atomic.LoadUint32(&a.idState) == 1 {
+		return a.ID
+	}
+
+	// Predefined ID exists? Use it.
+	if a.ID == "" {
 		b := []byte(a.Nodename)
 		b = append(b, []byte(a.Key)...)
 		b = append(b, []byte(a.Verb)...)
@@ -112,7 +116,10 @@ func (a *Application) Identifier() string {
 		b = append(b, a.ReqBody...)
 		b = append(b, []byte(a.Subresource)...)
 		a.ID = fmt.Sprintf("%x", sha256.Sum256(b))
-	})
+	}
+
+	// Mark done.
+	atomic.StoreUint32(&a.idState, 1)
 	return a.ID
 }
 

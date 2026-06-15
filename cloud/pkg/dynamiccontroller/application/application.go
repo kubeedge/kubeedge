@@ -275,14 +275,14 @@ func (c *Center) ProcessWatchSync(msg model.Message) error {
 		c.HandlerCenter.DeleteListener(listener)
 	}
 
-	failedWatchApp := make(map[string]metaserver.Application)
+	failedWatchApp := make(map[string]*metaserver.Application)
 
 	// add listener for new added watch app
 	for _, watchApp := range addedWatchApp {
 		if config.Config.EnableAuthorization && nodeID != watchApp.Nodename {
 			return fmt.Errorf("node name %q is not allowed", watchApp.Nodename)
 		}
-		err := c.processWatchApp(&watchApp)
+		err := c.processWatchApp(watchApp)
 		if err != nil {
 			watchApp.Status = metaserver.Rejected
 			apiErr, ok := err.(apierrors.APIStatus)
@@ -308,11 +308,11 @@ func (c *Center) ProcessWatchSync(msg model.Message) error {
 	return nil
 }
 
-func (c *Center) getWatchDiff(allWatchAppInEdge map[string]metaserver.Application,
-	nodeID string) ([]metaserver.Application, []*SelectorListener) {
+func (c *Center) getWatchDiff(allWatchAppInEdge map[string]*metaserver.Application,
+	nodeID string) ([]*metaserver.Application, []*SelectorListener) {
 	listenerInCloud := c.HandlerCenter.GetListenersForNode(nodeID)
 
-	addedWatchApp := make([]metaserver.Application, 0)
+	addedWatchApp := make([]*metaserver.Application, 0)
 	for ID, app := range allWatchAppInEdge {
 		if _, exist := listenerInCloud[ID]; !exist {
 			addedWatchApp = append(addedWatchApp, app)
