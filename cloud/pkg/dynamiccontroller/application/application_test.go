@@ -387,9 +387,9 @@ func TestGetWatchDiff(t *testing.T) {
 		},
 	}
 
-	allWatchAppInEdge := map[string]metaserver.Application{
-		"listener1": {ID: "listener1", Nodename: "node1"},
-		"listener3": {ID: "listener3", Nodename: "node1"},
+	allWatchAppInEdge := map[string]*metaserver.Application{
+		"listener1": &metaserver.Application{ID: "listener1", Nodename: "node1"},
+		"listener3": &metaserver.Application{ID: "listener3", Nodename: "node1"},
 	}
 
 	added, removed := center.getWatchDiff(allWatchAppInEdge, "node1")
@@ -400,7 +400,7 @@ func TestGetWatchDiff(t *testing.T) {
 	assert.Len(t, removed, 1)
 	assert.Equal(t, "listener2", removed[0].id)
 
-	added, removed = center.getWatchDiff(map[string]metaserver.Application{}, "node1")
+	added, removed = center.getWatchDiff(map[string]*metaserver.Application{}, "node1")
 	assert.Empty(t, added)
 	assert.Len(t, removed, 2)
 
