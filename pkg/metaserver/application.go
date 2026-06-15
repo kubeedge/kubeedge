@@ -276,14 +276,13 @@ func MsgToApplication(msg model.Message) (*Application, error) {
 }
 
 // MsgToApplications extract applications in message's Content
-func MsgToApplications(msg model.Message) (map[string]Application, error) {
+func MsgToApplications(msg model.Message) (map[string]*Application, error) {
 	contentData, err := msg.GetContentData()
 	if err != nil {
 		return nil, err
 	}
 
-	applications := make(map[string]Application)
-
+	applications := make(map[string]*Application)
 	err = json.Unmarshal(contentData, &applications)
 	if err != nil {
 		return nil, err

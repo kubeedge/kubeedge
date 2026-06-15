@@ -426,7 +426,7 @@ func TestMsgToApplication(t *testing.T) {
 func TestMsgToApplications(t *testing.T) {
 	cases := []struct {
 		msg       model.Message
-		stdResult map[string]Application
+		stdResult map[string]*Application
 		hasError  bool
 	}{
 		{
@@ -434,7 +434,7 @@ func TestMsgToApplications(t *testing.T) {
 				Content: []byte(`{"app1":{"Key":"group/version/resource/namespaces/name1","Verb":"GET","Nodename":"test-node1"},
 				"app2":{"Key":"group/version/resource/namespaces/name2","Verb":"POST","Nodename":"test-node2"}}`),
 			},
-			stdResult: map[string]Application{
+			stdResult: map[string]*Application{
 				"app1": {
 					Key:      "group/version/resource/namespaces/name1",
 					Verb:     "GET",
@@ -446,6 +446,7 @@ func TestMsgToApplications(t *testing.T) {
 					Nodename: "test-node2",
 				},
 			},
+
 			hasError: false,
 		},
 		{
