@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package metaserver provides meta server functionality.
 package metaserver
 
 import (
@@ -22,7 +23,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
+	"runtime" 
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -63,10 +66,12 @@ type Application struct {
 	// count the number of current citations
 	count     uint64
 	countLock *sync.Mutex
+	idState   uint32
 	// Timestamp record the last closing time of application, only make sense when count == 0
 	Timestamp time.Time
 }
 
+// NewApplication creates and returns a new Application instance.
 func NewApplication(ctx context.Context, key string, verb ApplicationVerb, nodename, subresource string, option interface{}, reqBody interface{}) (*Application, error) {
 	var v1 metav1.ListOptions
 	if internal, ok := option.(metainternalversion.ListOptions); ok {
@@ -96,17 +101,30 @@ func NewApplication(ctx context.Context, key string, verb ApplicationVerb, noden
 	return app, nil
 }
 
+// Identifier returns the unique SHA256-based ID of the application.
 func (a *Application) Identifier() string {
-	if a.ID != "" {
+	// Already computed? Return fast.
+	if atomic.LoadUint32(&a.idState) == 2 {
 		return a.ID
 	}
-	b := []byte(a.Nodename)
-	b = append(b, []byte(a.Key)...)
-	b = append(b, []byte(a.Verb)...)
-	b = append(b, a.Option...)
-	b = append(b, a.ReqBody...)
-	b = append(b, []byte(a.Subresource)...)
-	a.ID = fmt.Sprintf("%x", sha256.Sum256(b))
+
+	// Predefined ID exists? Use it.
+	if a.ID == "" {
+		b := []byte(a.Nodename)
+		b = append(b, []byte(a.Key)...)
+		b = append(b, []byte(a.Verb)...)
+		b = append(b, a.Option...)
+		b = append(b, a.ReqBody...)
+		b = append(b, []byte(a.Subresource)...)
+		a.ID = fmt.Sprintf("%x", sha256.Sum256(b))
+	}
+
+	// Mark done.
+	atomic.StoreUint32(&a.idState, 2)
+	// Another goroutine is computing — wait for it
+	for atomic.LoadUint32(&a.idState) != 2 {
+    		runtime.Gosched()
+	}
 	return a.ID
 }
 
@@ -114,10 +132,12 @@ func (a *Application) String() string {
 	return fmt.Sprintf("(NodeName=%v;Key=%v;Verb=%v;Status=%v;Reason=%v)", a.Nodename, a.Key, a.Verb, a.Status, a.Reason)
 }
 
+// ReqContent returns the raw request body bytes.
 func (a *Application) ReqContent() interface{} {
 	return a.ReqBody
 }
 
+// RespContent returns the raw response body bytes.
 func (a *Application) RespContent() interface{} {
 	return a.RespBody
 }
@@ -131,6 +151,7 @@ func (a *Application) OptionTo(i interface{}) error {
 	return nil
 }
 
+// ReqBodyTo unmarshals the request body into the given interface.
 func (a *Application) ReqBodyTo(i interface{}) error {
 	err := json.Unmarshal(a.ReqBody, i)
 	if err != nil {
@@ -139,6 +160,7 @@ func (a *Application) ReqBodyTo(i interface{}) error {
 	return nil
 }
 
+// RespBodyTo unmarshals the response body into the given interface.
 func (a *Application) RespBodyTo(i interface{}) error {
 	err := json.Unmarshal(a.RespBody, i)
 	if err != nil {
@@ -147,22 +169,26 @@ func (a *Application) RespBodyTo(i interface{}) error {
 	return nil
 }
 
+// GVR returns the GroupVersionResource parsed from the application key.
 func (a *Application) GVR() schema.GroupVersionResource {
 	gvr, _, _ := ParseKey(a.Key)
 	return gvr
 }
 
+// Namespace returns the namespace parsed from the application key.
 func (a *Application) Namespace() string {
 	_, ns, _ := ParseKey(a.Key)
 	return ns
 }
 
+// Cancel cancels the application context.
 func (a *Application) Cancel() {
 	if a.cancel != nil {
 		a.cancel()
 	}
 }
 
+// GetStatus returns the current status of the application.
 func (a *Application) GetStatus() ApplicationStatus {
 	return a.Status
 }
@@ -174,6 +200,7 @@ func (a *Application) Wait() {
 	}
 }
 
+// Reset resets the application context and clears response data.
 func (a *Application) Reset() {
 	if a.ctx != nil && a.cancel != nil {
 		a.cancel()
@@ -183,6 +210,7 @@ func (a *Application) Reset() {
 	a.RespBody = []byte{}
 }
 
+// Add increments the application reference count.
 func (a *Application) Add() {
 	a.countLock.Lock()
 	a.count++
@@ -211,6 +239,7 @@ func (a *Application) Close() {
 	}
 }
 
+// LastCloseTime returns the timestamp of the last close when count is zero.
 func (a *Application) LastCloseTime() time.Time {
 	a.countLock.Lock()
 	defer a.countLock.Unlock()
@@ -220,6 +249,7 @@ func (a *Application) LastCloseTime() time.Time {
 	return time.Time{}
 }
 
+// ToBytes converts an interface to a byte slice via JSON marshaling.
 func ToBytes(i interface{}) (bytes []byte) {
 	if i == nil {
 		return
@@ -236,7 +266,7 @@ func ToBytes(i interface{}) (bytes []byte) {
 	return
 }
 
-// extract application in message's Content
+// MsgToApplication extracts an Application from a message's Content.
 func MsgToApplication(msg model.Message) (*Application, error) {
 	var app = new(Application)
 	contentData, err := msg.GetContentData()
@@ -258,14 +288,13 @@ func MsgToApplication(msg model.Message) (*Application, error) {
 }
 
 // MsgToApplications extract applications in message's Content
-func MsgToApplications(msg model.Message) (map[string]Application, error) {
+func MsgToApplications(msg model.Message) (map[string]*Application, error) {
 	contentData, err := msg.GetContentData()
 	if err != nil {
 		return nil, err
 	}
 
-	applications := make(map[string]Application)
-
+	applications := make(map[string]*Application)
 	err = json.Unmarshal(contentData, &applications)
 	if err != nil {
 		return nil, err

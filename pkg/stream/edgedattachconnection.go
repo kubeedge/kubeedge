@@ -77,7 +77,10 @@ func (ah *EdgedAttachConnection) receiveFromCloudStream(con net.Conn, stop chan 
 		switch message.MessageType {
 		case MessageTypeRemoveConnect:
 			klog.V(6).Infof("%s receive remove client id %v", ah.String(), message.ConnectID)
-			stop <- struct{}{}
+			select {
+			case stop <- struct{}{}:
+			default:
+			}
 		case MessageTypeData:
 			_, err := con.Write(message.Data)
 			klog.V(6).Infof("%s receive attach %v data ", ah.String(), message.Data)
@@ -91,7 +94,10 @@ func (ah *EdgedAttachConnection) receiveFromCloudStream(con net.Conn, stop chan 
 
 func (ah *EdgedAttachConnection) write2CloudStream(tunnel SafeWriteTunneler, con net.Conn, stop chan struct{}) {
 	defer func() {
-		stop <- struct{}{}
+		select {
+		case stop <- struct{}{}:
+		default:
+		}
 	}()
 
 	var data [256]byte
