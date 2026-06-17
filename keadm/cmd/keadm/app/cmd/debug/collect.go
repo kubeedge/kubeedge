@@ -37,11 +37,8 @@ func NewCollect() *cobra.Command {
 		Short:   "Obtain all the data of the current node",
 		Long:    edgecollectLongDescription,
 		Example: edgecollectExample,
-		Run: func(cmd *cobra.Command, args []string) {
-			err := ExecuteCollect(collectOptions)
-			if err != nil {
-				fmt.Println(err)
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return ExecuteCollect(collectOptions)
 		},
 	}
 	cmd.AddCommand()

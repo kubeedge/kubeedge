@@ -17,13 +17,16 @@ limitations under the License.
 package debug
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
 func TestNewCheck(t *testing.T) {
@@ -228,4 +231,43 @@ func TestNewCheckOptions(t *testing.T) {
 
 	assert.Equal("www.github.com", co.Domain)
 	assert.Equal(1, co.Timeout)
+}
+
+func TestExecuteCheckReturnsError(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(CheckDNS, func(domain string) error {
+		assert.Equal(t, "bad.example", domain)
+		return errors.New("dns failed")
+	})
+	patches.ApplyFunc(util.PrintFail, func(cmd, s string) {
+		assert.Equal(t, common.ArgCheckDNS, cmd)
+		assert.Equal(t, common.StrCheck, s)
+	})
+
+	checkObj := CheckObject{Use: common.ArgCheckDNS}
+	err := checkObj.ExecuteCheck(common.ArgCheckDNS, &common.CheckOptions{Domain: "bad.example"})
+
+	assert.Error(t, err)
+	assert.Equal(t, "dns failed", err.Error())
+}
+
+func TestExecuteCheckReturnsNilOnSuccess(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(CheckDNS, func(domain string) error {
+		assert.Equal(t, "ok.example", domain)
+		return nil
+	})
+	patches.ApplyFunc(util.PrintSucceed, func(cmd, s string) {
+		assert.Equal(t, common.ArgCheckDNS, cmd)
+		assert.Equal(t, common.StrCheck, s)
+	})
+
+	checkObj := CheckObject{Use: common.ArgCheckDNS}
+	err := checkObj.ExecuteCheck(common.ArgCheckDNS, &common.CheckOptions{Domain: "ok.example"})
+
+	assert.NoError(t, err)
 }

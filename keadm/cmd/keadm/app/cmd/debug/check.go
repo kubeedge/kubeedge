@@ -75,8 +75,8 @@ func NewSubEdgeCheck(object CheckObject) *cobra.Command {
 	cmd := &cobra.Command{
 		Short: object.Desc,
 		Use:   object.Use,
-		Run: func(cmd *cobra.Command, args []string) {
-			object.ExecuteCheck(object.Use, co)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return object.ExecuteCheck(object.Use, co)
 		},
 	}
 	switch object.Use {
@@ -109,7 +109,7 @@ func NewCheckOptions() *common.CheckOptions {
 }
 
 // ExecuteCheck starts to check data
-func (co *CheckObject) ExecuteCheck(use string, ob *common.CheckOptions) {
+func (co *CheckObject) ExecuteCheck(use string, ob *common.CheckOptions) error {
 	err := fmt.Errorf("")
 
 	if ob.Config == "" {
@@ -136,11 +136,12 @@ func (co *CheckObject) ExecuteCheck(use string, ob *common.CheckOptions) {
 	}
 
 	if err != nil {
-		fmt.Println(err)
 		util.PrintFail(use, common.StrCheck)
-	} else {
-		util.PrintSucceed(use, common.StrCheck)
+		return err
 	}
+
+	util.PrintSucceed(use, common.StrCheck)
+	return nil
 }
 
 func CheckAll(ob *common.CheckOptions) error {

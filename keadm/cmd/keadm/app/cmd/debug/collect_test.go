@@ -71,6 +71,26 @@ func setupCopyFilePatch(shouldSucceed bool) *gomonkey.Patches {
 	})
 }
 
+func TestNewCollectExecuteReturnsError(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(ExecuteCollect, func(collectOptions *common.CollectOptions) error {
+		assert.Equal(t, "/tmp/bad-edgecore.yaml", collectOptions.Config)
+		return errors.New("collect failed")
+	})
+
+	cmd := NewCollect()
+	var stderr bytes.Buffer
+	cmd.SetErr(&stderr)
+	assert.NoError(t, cmd.Flags().Set(common.EdgecoreConfig, "/tmp/bad-edgecore.yaml"))
+
+	err := cmd.Execute()
+	assert.Error(t, err)
+	assert.Equal(t, "collect failed", err.Error())
+	assert.Contains(t, stderr.String(), "collect failed")
+}
+
 func TestPrintDetail(t *testing.T) {
 	assert := assert.New(t)
 	oldStdout := os.Stdout

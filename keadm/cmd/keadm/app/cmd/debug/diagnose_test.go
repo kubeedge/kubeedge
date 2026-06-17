@@ -171,7 +171,8 @@ func TestExecuteDiagnose(t *testing.T) {
 		})
 
 		var da Diagnose
-		da.ExecuteDiagnose(common.ArgDiagnoseNode, opts, nil)
+		err := da.ExecuteDiagnose(common.ArgDiagnoseNode, opts, nil)
+		assert.NoError(t, err)
 		assert.True(t, mustCallPrintSuccessed)
 	})
 
@@ -195,7 +196,8 @@ func TestExecuteDiagnose(t *testing.T) {
 		})
 
 		var da Diagnose
-		da.ExecuteDiagnose(common.ArgDiagnosePod, opts, []string{"test-pod"})
+		err := da.ExecuteDiagnose(common.ArgDiagnosePod, opts, []string{"test-pod"})
+		assert.NoError(t, err)
 		assert.True(t, mustCallPrintSuccessed)
 		assert.True(t, mustCallDiagnosePod)
 	})
@@ -220,12 +222,14 @@ func TestExecuteDiagnose(t *testing.T) {
 		})
 
 		var da Diagnose
-		da.ExecuteDiagnose(common.ArgDiagnosePod, opts, []string{"test-pod"})
+		err := da.ExecuteDiagnose(common.ArgDiagnosePod, opts, []string{"test-pod"})
+		assert.Error(t, err)
+		assert.Equal(t, "test error", err.Error())
 		assert.True(t, mustCallPrintFail)
 		assert.False(t, mustCallDiagnosePod)
 	})
 
-	t.Run("using the diagnose node", func(t *testing.T) {
+	t.Run("using the diagnose install", func(t *testing.T) {
 		var mustCallPrintSuccessed bool
 
 		patches := gomonkey.NewPatches()
@@ -241,8 +245,28 @@ func TestExecuteDiagnose(t *testing.T) {
 		})
 
 		var da Diagnose
-		da.ExecuteDiagnose(common.ArgDiagnoseInstall, opts, nil)
+		err := da.ExecuteDiagnose(common.ArgDiagnoseInstall, opts, nil)
+		assert.NoError(t, err)
 		assert.True(t, mustCallPrintSuccessed)
+	})
+
+	t.Run("using the diagnose pod without pod name", func(t *testing.T) {
+		var mustCallPrintFail bool
+
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyFunc(util.PrintFail, func(cmd, s string) {
+			mustCallPrintFail = true
+			assert.Equal(t, common.ArgDiagnosePod, cmd)
+			assert.Equal(t, common.StrDiagnose, s)
+		})
+
+		var da Diagnose
+		err := da.ExecuteDiagnose(common.ArgDiagnosePod, opts, nil)
+		assert.Error(t, err)
+		assert.Equal(t, "you must specify a pod name", err.Error())
+		assert.True(t, mustCallPrintFail)
 	})
 }
 
