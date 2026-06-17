@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
 
+	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	"github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -26,14 +27,21 @@ import (
 func (sctl *SyncController) reconcileObjectSync(sync *v1alpha1.ObjectSync) {
 	var object metav1.Object
 
-	gv, err := schema.ParseGroupVersion(sync.Spec.ObjectAPIVersion)
+	apiVersion := sync.Spec.ObjectAPIVersion
+	kind := sync.Spec.ObjectKind
+	if apiVersion == "" {
+		apiVersion = policyv1alpha1.SchemeGroupVersion.String()
+		kind = "ServiceAccountAccess"
+	}
+
+	gv, err := schema.ParseGroupVersion(apiVersion)
 	if err != nil {
 		return
 	}
-	resource := util.UnsafeKindToResource(sync.Spec.ObjectKind)
+	resource := util.UnsafeKindToResource(kind)
 	gvr := gv.WithResource(resource)
 	nodeName := getNodeName(sync.Name)
-	resourceType := strings.ToLower(sync.Spec.ObjectKind)
+	resourceType := strings.ToLower(kind)
 
 	lister, err := sctl.informerManager.GetLister(gvr)
 	if err != nil {
