@@ -124,7 +124,8 @@ func (s *TunnelSession) ServeConnection(m *stream.Message) {
 			klog.Errorf("Serve Attach connection error %s", m.String())
 		}
 	default:
-		panic(fmt.Sprintf("Wrong message type %v", m.MessageType))
+		klog.Warningf("Unsupported tunnel message type %d for connectID %d", m.MessageType, m.ConnectID)
+		return
 	}
 
 	s.DeleteLocalConnection(m.ConnectID)
@@ -144,6 +145,24 @@ func (s *TunnelSession) WriteToLocalConnection(m *stream.Message) {
 	if con, ok := s.GetLocalConnection(m.ConnectID); ok {
 		con.CacheTunnelMessage(m)
 	}
+}
+
+func (s *TunnelSession) routeMessage(mess *stream.Message) error {
+	switch mess.MessageType {
+	case stream.MessageTypeCloseConnect:
+		return fmt.Errorf("close tunnel stream connection, error:%s", string(mess.Data))
+	case stream.MessageTypeLogsConnect,
+		stream.MessageTypeExecConnect,
+		stream.MessageTypeMetricConnect,
+		stream.MessageTypeAttachConnect:
+		go s.ServeConnection(mess)
+	case stream.MessageTypeData, stream.MessageTypeRemoveConnect:
+		s.WriteToLocalConnection(mess)
+	default:
+		klog.Warningf("Unsupported tunnel message type %d for connectID %d", mess.MessageType, mess.ConnectID)
+	}
+
+	return nil
 }
 
 func (s *TunnelSession) startPing(ctx context.Context) {
@@ -187,14 +206,9 @@ func (s *TunnelSession) Serve() error {
 			return err
 		}
 
-		if mess.MessageType == stream.MessageTypeCloseConnect {
-			return fmt.Errorf("close tunnel stream connection, error:%s", string(mess.Data))
+		if err := s.routeMessage(mess); err != nil {
+			return err
 		}
-
-		if (mess.MessageType < stream.MessageTypeData) || (mess.MessageType >= stream.MessageTypeAttachConnect) {
-			go s.ServeConnection(mess)
-		}
-		s.WriteToLocalConnection(mess)
 	}
 }
 

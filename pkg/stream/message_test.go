@@ -167,6 +167,17 @@ func TestReadMessageFromTunnel_MaxDataLength(t *testing.T) {
 	assert.Len(readMsg.Data, constants.MaxRespBodyLength)
 }
 
+func TestReadMessageFromTunnel_UnsupportedMessageType(t *testing.T) {
+	assert := assert.New(t)
+
+	msg := NewMessage(1, MessageType(99), []byte("test data"))
+
+	readMsg, err := ReadMessageFromTunnel(bytes.NewReader(msg.Bytes()))
+	assert.NoError(err)
+	assert.NotNil(readMsg)
+	assert.Equal(MessageType(99), readMsg.MessageType)
+}
+
 // errorReader helper implements io.Reader returning specified error
 type errorReader struct{ err error }
 
