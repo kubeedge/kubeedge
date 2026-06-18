@@ -84,11 +84,11 @@ func TestNewApplication(t *testing.T) {
 
 func TestIdentifier(t *testing.T) {
 	cases := []struct {
-		app       Application
+		app       *Application
 		stdResult string
 	}{
 		{
-			app: Application{
+			app: &Application{
 				Nodename:    "test-node-one",
 				Key:         "group/version/resource/namespaces/name",
 				Verb:        "GET",
@@ -99,7 +99,7 @@ func TestIdentifier(t *testing.T) {
 			stdResult: fmt.Sprintf("%x", sha256.Sum256([]byte("test-node-onegroup/version/resource/namespaces/nameGETpod"))),
 		},
 		{
-			app: Application{
+			app: &Application{
 				Nodename:    "test-node-two",
 				Key:         "group/version/resource/namespaces/name",
 				Verb:        "POST",
@@ -110,7 +110,7 @@ func TestIdentifier(t *testing.T) {
 			stdResult: fmt.Sprintf("%x", sha256.Sum256([]byte("test-node-twogroup/version/resource/namespaces/namePOST{\"foo\":\"bar\"}{\"baz\":\"qux\"}pod"))),
 		},
 		{
-			app: Application{
+			app: &Application{
 				ID:          "predefined-id",
 				Nodename:    "test-node-three",
 				Key:         "group/version/resource/namespaces/name",
@@ -134,11 +134,11 @@ func TestIdentifier(t *testing.T) {
 
 func TestString(t *testing.T) {
 	cases := []struct {
-		app       Application
+		app       *Application
 		stdResult string
 	}{
 		{
-			app: Application{
+			app: &Application{
 				Nodename: "test-node-one",
 				Key:      "group/version/resource/namespaces/name",
 				Verb:     "GET",
@@ -148,7 +148,7 @@ func TestString(t *testing.T) {
 			stdResult: "(NodeName=test-node-one;Key=group/version/resource/namespaces/name;Verb=GET;Status=completed;Reason=test reason one)",
 		},
 		{
-			app: Application{
+			app: &Application{
 				Nodename: "test-node-two",
 				Key:      "group/version/resource/namespaces/name",
 				Verb:     "POST",
@@ -169,22 +169,22 @@ func TestString(t *testing.T) {
 
 func TestReqContent(t *testing.T) {
 	cases := []struct {
-		app       Application
+		app       *Application
 		stdResult []byte
 	}{
 		{
-			app:       Application{ReqBody: []byte(`{"test":"data"}`)},
+			app:       &Application{ReqBody: []byte(`{"test":"data"}`)},
 			stdResult: []byte(`{"test":"data"}`),
 		},
 		{
-			app: Application{
+			app: &Application{
 				Nodename: "test-node",
 				Key:      "group/version/resource/namespaces/name",
 			},
 			stdResult: nil,
 		},
 		{
-			app:       Application{ReqBody: nil},
+			app:       &Application{ReqBody: nil},
 			stdResult: nil,
 		},
 	}
@@ -196,22 +196,22 @@ func TestReqContent(t *testing.T) {
 
 func TestRespContent(t *testing.T) {
 	cases := []struct {
-		app       Application
+		app       *Application
 		stdResult []byte
 	}{
 		{
-			app:       Application{RespBody: []byte(`{"test":"data"}`)},
+			app:       &Application{RespBody: []byte(`{"test":"data"}`)},
 			stdResult: []byte(`{"test":"data"}`),
 		},
 		{
-			app: Application{
+			app: &Application{
 				Nodename: "test-node",
 				Key:      "group/version/resource/namespaces/name",
 			},
 			stdResult: nil,
 		},
 		{
-			app:       Application{RespBody: nil},
+			app:       &Application{RespBody: nil},
 			stdResult: nil,
 		},
 	}
@@ -223,15 +223,15 @@ func TestRespContent(t *testing.T) {
 
 func TestOptionTo(t *testing.T) {
 	cases := []struct {
-		app       Application
+		app       *Application
 		stdResult map[string]string
 	}{
 		{
-			app:       Application{Option: []byte(`{"field-one":"value-one"}`)},
+			app:       &Application{Option: []byte(`{"field-one":"value-one"}`)},
 			stdResult: map[string]string{"field-one": "value-one"},
 		},
 		{
-			app:       Application{Option: []byte(`{"field-two":"value-two"}`)},
+			app:       &Application{Option: []byte(`{"field-two":"value-two"}`)},
 			stdResult: map[string]string{"field-two": "value-two"},
 		},
 	}
@@ -252,11 +252,11 @@ func TestOptionTo(t *testing.T) {
 
 func TestReqBodyTo(t *testing.T) {
 	cases := []struct {
-		app       Application
+		app       *Application
 		stdResult map[string]string
 	}{
 		{
-			app:       Application{ReqBody: []byte(`{"test-key":"test-value"}`)},
+			app:       &Application{ReqBody: []byte(`{"test-key":"test-value"}`)},
 			stdResult: map[string]string{"test-key": "test-value"},
 		},
 	}
@@ -276,11 +276,11 @@ func TestReqBodyTo(t *testing.T) {
 
 func TestRespBodyTo(t *testing.T) {
 	cases := []struct {
-		app      Application
+		app      *Application
 		expected map[string]string
 	}{
 		{
-			app:      Application{RespBody: []byte(`{"test-key":"test-value"}`)},
+			app:      &Application{RespBody: []byte(`{"test-key":"test-value"}`)},
 			expected: map[string]string{"test-key": "test-value"},
 		},
 	}
@@ -301,11 +301,11 @@ func TestRespBodyTo(t *testing.T) {
 
 func TestGVR(t *testing.T) {
 	cases := []struct {
-		app       Application
+		app       *Application
 		stdResult schema.GroupVersionResource
 	}{
 		{
-			app: Application{
+			app: &Application{
 				Key: "/group/version/resource/namespaces/ns",
 			},
 			stdResult: schema.GroupVersionResource{
@@ -315,7 +315,7 @@ func TestGVR(t *testing.T) {
 			},
 		},
 		{
-			app: Application{
+			app: &Application{
 				Key: "/group-two/v2/resource/namespaces/ns-two",
 			},
 			stdResult: schema.GroupVersionResource{
@@ -336,17 +336,17 @@ func TestGVR(t *testing.T) {
 
 func TestNamespace(t *testing.T) {
 	cases := []struct {
-		app       Application
+		app       *Application
 		stdResult string
 	}{
 		{
-			app: Application{
+			app: &Application{
 				Key: "/group/version/resource/test-namespace-one/",
 			},
 			stdResult: "test-namespace-one",
 		},
 		{
-			app: Application{
+			app: &Application{
 				Key: "/group-two/v2/resource/test-namespace-two/",
 			},
 			stdResult: "test-namespace-two",
@@ -363,15 +363,15 @@ func TestNamespace(t *testing.T) {
 
 func TestGetStatus(t *testing.T) {
 	cases := []struct {
-		app       Application
+		app       *Application
 		stdResult ApplicationStatus
 	}{
 		{
-			app:       Application{Status: PreApplying},
+			app:       &Application{Status: PreApplying},
 			stdResult: PreApplying,
 		},
 		{
-			app:       Application{Status: Completed},
+			app:       &Application{Status: Completed},
 			stdResult: Completed,
 		},
 	}
@@ -636,4 +636,29 @@ func TestWait(t *testing.T) {
 	}
 	// Should not block or panic when context is nil
 	app.Wait()
+}
+
+func TestIdentifierConcurrent(t *testing.T) {
+	app := &Application{
+		Nodename:    "node1",
+		Key:         "group/version/resource/namespaces/name",
+		Verb:        "GET",
+		Subresource: "pod",
+	}
+
+	var wg sync.WaitGroup
+	ids := make([]string, 10)
+
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			ids[idx] = app.Identifier()
+		}(i)
+	}
+	wg.Wait()
+
+	for _, id := range ids {
+		assert.Equal(t, ids[0], id)
+	}
 }
