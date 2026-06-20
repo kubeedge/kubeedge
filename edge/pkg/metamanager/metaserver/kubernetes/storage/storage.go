@@ -200,6 +200,9 @@ func (r *REST) List(ctx context.Context, options *metainternalversion.ListOption
 
 	// If we list object from cloud failed, try to list the object from the local metaManager
 	if err != nil {
+		if _, ok := apirequest.RequestInfoFrom(ctx); !ok {
+			return nil, fmt.Errorf("no request info in context, cannot list from local storage")
+		}
 		list, err = r.Store.List(ctx, options)
 		if err != nil {
 			return nil, err
@@ -213,6 +216,9 @@ func (r *REST) List(ctx context.Context, options *metainternalversion.ListOption
 
 func (r *REST) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
 	info, _ := apirequest.RequestInfoFrom(ctx)
+	if info == nil {
+		info = &apirequest.RequestInfo{}
+	}
 
 	// First try watch from remote cloud
 	_, err := func() (runtime.Object, error) {
@@ -239,6 +245,9 @@ func (r *REST) Watch(ctx context.Context, options *metainternalversion.ListOptio
 		klog.Errorf("[metaserver/reststorage] failed to get a approved application for watch(%v) from cloud application center, %v", info.Path, err)
 	}
 
+	if _, ok := apirequest.RequestInfoFrom(ctx); !ok {
+		return nil, fmt.Errorf("no request info in context, cannot watch from local storage")
+	}
 	return r.Store.Watch(ctx, options)
 }
 
