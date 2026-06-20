@@ -138,8 +138,8 @@ func (s *store) GuaranteedUpdate(context.Context, string, runtime.Object, bool, 
 	panic("Do not call this function")
 }
 
-func (s *store) Count(string) (int64, error) {
-	panic("implement me")
+func (s *store) Count(key string) (int64, error) {
+	return 0, fmt.Errorf("Count is not supported by the edge SQLite store")
 }
 
 func (s *store) RequestWatchProgress(context.Context) error {
