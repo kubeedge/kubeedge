@@ -34,7 +34,20 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
-var edgePodLogsShortDescription = `Get pod logs in edge node`
+var edgePodLogsShortDescription = `Get pod logs on an edge node`
+
+var edgePodLogsLongDescription = `Get pod logs on an edge node.
+
+This command is intended to be run on the edge node where EdgeCore is running. It queries the local MetaServer API to retrieve the logs of a pod.
+Please ensure that the MetaServer module is enabled in your edgecore.yaml configuration.
+
+If you want to view pod logs from the cloud side, you should use 'kubectl logs' instead.`
+
+var edgePodLogsExample = `  # Get logs from a pod on the edge node
+  keadm ctl logs <pod-name> -n <namespace>
+
+  # Stream logs from a pod
+  keadm ctl logs -f <pod-name> -n <namespace>`
 
 // PodLogsOptions defines the options for getting logs of edge pod
 type PodLogsOptions struct {
@@ -61,9 +74,10 @@ type PodLogsOptions struct {
 func NewEdgePodLogs() *cobra.Command {
 	logsOpts := NewLogsPodOpts()
 	cmd := &cobra.Command{
-		Use:   "logs",
-		Short: edgePodLogsShortDescription,
-		Long:  edgePodLogsShortDescription,
+		Use:     "logs",
+		Short:   edgePodLogsShortDescription,
+		Long:    edgePodLogsLongDescription,
+		Example: edgePodLogsExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return fmt.Errorf("no pod specified for logs")
