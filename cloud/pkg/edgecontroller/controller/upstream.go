@@ -676,8 +676,12 @@ func (uc *UpstreamController) updateNodeStatus() {
 							gpuStatus = append(gpuStatus, types.NvidiaGPUStatus{ID: er.Name, Healthy: true})
 						}
 						if len(gpuStatus) > 0 {
-							data, _ := json.Marshal(gpuStatus)
-							getNode.Annotations[constants.NvidiaGPUStatusAnnotationKey] = string(data)
+							data, err := json.Marshal(gpuStatus)
+							if err != nil {
+								klog.Warningf("message: %s, marshal GPU status failed: %v", msg.GetID(), err)
+							} else {
+								getNode.Annotations[constants.NvidiaGPUStatusAnnotationKey] = string(data)
+							}
 						}
 					}
 					data, err := json.Marshal(v)
