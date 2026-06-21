@@ -858,6 +858,82 @@ func TestUpdateNodeStatus(t *testing.T) {
 	time.Sleep(1000 * time.Millisecond)
 }
 
+func TestUpdateNodeStatusWithGPUAnnotation(t *testing.T) {
+	setupTest(t)
+
+	nodeName := "test-gpu-node"
+	nodeID := "node-gpu-id"
+
+	node := &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: nodeName,
+		},
+	}
+
+	_, err := UC.kubeClient.CoreV1().Nodes().Create(context.Background(), node, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create test node: %v", err)
+	}
+
+	nodeStatusReq := &edgeapi.NodeStatusRequest{
+		Status: corev1.NodeStatus{},
+		ExtendResources: map[corev1.ResourceName][]edgeapi.ExtendResource{
+			"nvidia.com/gpu": {
+				{Name: "GPU-aaa111"},
+				{Name: "GPU-bbb222"},
+			},
+		},
+	}
+
+	nodeStatusData, err := json.Marshal(nodeStatusReq)
+	if err != nil {
+		t.Fatalf("Failed to marshal node status request: %v", err)
+	}
+
+	resource := fmt.Sprintf("node/%s/%s/%s/%s", nodeID, "default", model.ResourceTypeNodeStatus, nodeName)
+
+	msg := model.Message{
+		Header: model.MessageHeader{ID: "test-update-gpu-node-status"},
+		Router: model.MessageRoute{
+			Resource:  resource,
+			Operation: model.UpdateOperation,
+		},
+		Content: string(nodeStatusData),
+	}
+
+	UC.nodeStatusChan <- msg
+	time.Sleep(1000 * time.Millisecond)
+
+	updatedNode, err := UC.kubeClient.CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
+	if err != nil {
+		t.Fatalf("Failed to get updated node: %v", err)
+	}
+
+	annotation, ok := updatedNode.Annotations["huawei.com/gpu-status"]
+	if !ok {
+		t.Fatalf("Expected annotation %q to be set, but it was missing", "huawei.com/gpu-status")
+	}
+	if annotation == "" {
+		t.Fatalf("Expected annotation %q to be non-empty JSON, got empty string", "huawei.com/gpu-status")
+	}
+
+	var gpuStatuses []struct {
+		ID      string `json:"id"`
+		Healthy bool   `json:"healthy"`
+	}
+	if err := json.Unmarshal([]byte(annotation), &gpuStatuses); err != nil {
+		t.Fatalf("annotation %q is not valid JSON: %v", "huawei.com/gpu-status", err)
+	}
+	if len(gpuStatuses) != 2 {
+		t.Errorf("Expected 2 GPU entries in annotation, got %d", len(gpuStatuses))
+	}
+	for _, gs := range gpuStatuses {
+		if !gs.Healthy {
+			t.Errorf("Expected GPU %q to be marked Healthy=true, got false", gs.ID)
+		}
+	}
+}
+
 func TestProcessCSR(t *testing.T) {
 	setupTest(t)
 
