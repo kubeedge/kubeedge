@@ -209,10 +209,7 @@ func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 	}
 
 	defer func() {
-		if err != nil {
-			session.DeleteAPIServerConnection(metricsConnection)
-			klog.Infof("Delete %s from %s", metricsConnection.String(), session.String())
-		}
+		session.DeleteAPIServerConnection(metricsConnection)
 	}()
 
 	if err = metricsConnection.Serve(); err != nil {
