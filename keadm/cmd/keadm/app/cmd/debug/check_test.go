@@ -17,12 +17,17 @@ limitations under the License.
 package debug
 
 import (
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/kubeedge/api/apis/common/constants"
+	cfgv1alpha2 "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 )
 
@@ -122,6 +127,14 @@ func TestNewCheck(t *testing.T) {
 			assert.Equal("c", flag.Shorthand)
 			expectedUsage := fmt.Sprintf("Specify configuration file, default is %s", constants.EdgecoreConfigPath)
 			assert.Equal(expectedUsage, flag.Usage)
+
+		case common.ArgCheckRuntime:
+			flag := flags.Lookup("config")
+			assert.NotNil(flag)
+			assert.Equal("", flag.DefValue)
+			assert.Equal("c", flag.Shorthand)
+			expectedUsage := fmt.Sprintf("Specify configuration file, default is %s", constants.EdgecoreConfigPath)
+			assert.Equal(expectedUsage, flag.Usage)
 		}
 	}
 }
@@ -192,6 +205,18 @@ func TestNewSubEdgeCheck(t *testing.T) {
 				"config":           fmt.Sprintf("Specify configuration file, default is %s", constants.EdgecoreConfigPath),
 			},
 		},
+		{
+			use: "runtime",
+			expectedDefValue: map[string]string{
+				"config": "",
+			},
+			expectedShorthand: map[string]string{
+				"config": "c",
+			},
+			expectedUsage: map[string]string{
+				"config": fmt.Sprintf("Specify configuration file, default is %s", constants.EdgecoreConfigPath),
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -228,4 +253,111 @@ func TestNewCheckOptions(t *testing.T) {
 
 	assert.Equal("www.github.com", co.Domain)
 	assert.Equal(1, co.Timeout)
+}
+
+type fakeContainerRuntime struct {
+	connectErr error
+	runningErr error
+}
+
+func (f *fakeContainerRuntime) Connect() error {
+	return f.connectErr
+}
+
+func (f *fakeContainerRuntime) IsRunning() error {
+	return f.runningErr
+}
+
+func writeEdgeCoreConfig(t *testing.T, data string) string {
+	t.Helper()
+	configPath := filepath.Join(t.TempDir(), "edgecore.yaml")
+	require.NoError(t, os.WriteFile(configPath, []byte(data), 0644))
+	return configPath
+}
+
+func TestGetRuntimeEndpoint(t *testing.T) {
+	customEndpoint := "unix:///tmp/kubeedge-test-containerd.sock"
+	configPath := filepath.Join(t.TempDir(), "edgecore.yaml")
+	cfg := cfgv1alpha2.NewDefaultEdgeCoreConfig()
+	cfg.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint = customEndpoint
+	require.NoError(t, cfg.WriteTo(configPath))
+
+	tests := []struct {
+		name         string
+		config       string
+		wantEndpoint string
+		wantErr      string
+	}{
+		{
+			name:         "empty config uses default endpoint",
+			config:       "",
+			wantEndpoint: constants.DefaultRemoteRuntimeEndpoint,
+		},
+		{
+			name:         "uses endpoint from edgecore config",
+			config:       configPath,
+			wantEndpoint: customEndpoint,
+		},
+		{
+			name:    "missing custom config returns error",
+			config:  filepath.Join(t.TempDir(), "missing-edgecore.yaml"),
+			wantErr: "does not exist",
+		},
+		{
+			name:    "invalid config returns parse error",
+			config:  writeEdgeCoreConfig(t, "modules: [\n"),
+			wantErr: "parse Edgecore config failed",
+		},
+		{
+			name:         "nil modules use default endpoint",
+			config:       writeEdgeCoreConfig(t, "modules: null\n"),
+			wantEndpoint: constants.DefaultRemoteRuntimeEndpoint,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			endpoint, err := getRuntimeEndpoint(tt.config)
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantEndpoint, endpoint)
+		})
+	}
+}
+
+func TestCheckRuntimeEndpoint(t *testing.T) {
+	tests := []struct {
+		name    string
+		runtime *fakeContainerRuntime
+		wantErr string
+	}{
+		{
+			name:    "runtime is ready",
+			runtime: &fakeContainerRuntime{},
+		},
+		{
+			name:    "returns connect error",
+			runtime: &fakeContainerRuntime{connectErr: errors.New("connect failed")},
+			wantErr: "could not connect to the container runtime",
+		},
+		{
+			name:    "returns runtime status error",
+			runtime: &fakeContainerRuntime{runningErr: errors.New("runtime is not ready")},
+			wantErr: "runtime is not ready",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := checkRuntimeEndpoint(constants.DefaultRemoteRuntimeEndpoint, tt.runtime)
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
 }
