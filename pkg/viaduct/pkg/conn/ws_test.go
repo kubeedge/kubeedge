@@ -35,15 +35,18 @@ var upgrader = websocket.Upgrader{
 
 // wsTestPair creates an in-process WebSocket client/server pair using httptest.
 // It returns the server-side and client-side *websocket.Conn.
+// A buffered channel is used to pass the server connection from the HTTP handler
+// goroutine to the caller, eliminating the data race and the need for time.Sleep.
 func wsTestPair(t *testing.T) (server, client *websocket.Conn) {
 	t.Helper()
+	serverChan := make(chan *websocket.Conn, 1)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			t.Errorf("upgrade failed: %v", err)
 			return
 		}
-		server = c
+		serverChan <- c
 	}))
 	t.Cleanup(srv.Close)
 
@@ -54,9 +57,13 @@ func wsTestPair(t *testing.T) (server, client *websocket.Conn) {
 	}
 	t.Cleanup(func() { c.Close() })
 
-	// Give the server handler time to assign server conn
-	time.Sleep(50 * time.Millisecond)
-	return server, c
+	select {
+	case s := <-serverChan:
+		return s, c
+	case <-time.After(2 * time.Second):
+		t.Fatal("timeout waiting for server WebSocket connection")
+		return nil, nil
+	}
 }
 
 // TestHandleRawDataDoesNotPanic is a regression test for the bug where
@@ -91,9 +98,6 @@ func TestHandleRawDataDoesNotPanic(t *testing.T) {
 		// The test passes if this does not panic.
 		wsConn.handleRawData()
 	}()
-
-	// Give the goroutine time to enter io.Copy before we send data.
-	time.Sleep(50 * time.Millisecond)
 
 	// Send a binary frame from the client side; the server's WSLane.Read
 	// will receive it and io.Copy forwards it to consumer.
