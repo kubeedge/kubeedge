@@ -74,7 +74,7 @@ type PodLogsOptions struct {
 func NewEdgePodLogs() *cobra.Command {
 	logsOpts := NewLogsPodOpts()
 	cmd := &cobra.Command{
-		Use:     "logs",
+		Use:     "logs <pod-name>",
 		Short:   edgePodLogsShortDescription,
 		Long:    edgePodLogsLongDescription,
 		Example: edgePodLogsExample,

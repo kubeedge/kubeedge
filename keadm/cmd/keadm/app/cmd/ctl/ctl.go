@@ -32,7 +32,7 @@ import (
 var ctlShortDescription = `Commands operating on the data plane at edge`
 var ctlLongDescription = `Commands operating on the data plane at the edge.
 
-The 'keadm ctl' commands are designed to be executed directly on edge nodes where EdgeCore is installed and running. They interact with the local MetaServer API to perform operations such as retrieving logs, executing commands, and querying resource statuses locally, even when disconnected from the cloud.
+The 'keadm ctl' commands are designed to be executed directly on edge nodes where EdgeCore is installed and running. They interact with the local MetaServer API to perform operations such as retrieving logs, executing commands, and querying resource statuses locally. This allows some operations to be performed even when the edge node is disconnected from the cloud.
 
 Note:
 - Ensure the MetaServer module is enabled in your edgecore.yaml configuration.

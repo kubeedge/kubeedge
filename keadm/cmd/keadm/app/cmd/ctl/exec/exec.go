@@ -70,7 +70,7 @@ var edgePodExecExample = `  # Execute a command in a pod on the edge node
 func NewEdgePodExec() *cobra.Command {
 	execOpts := NewEdgePodExecOpts()
 	cmd := &cobra.Command{
-		Use:     "exec",
+		Use:     "exec <pod-name> -- <command> [args...]",
 		Short:   edgePodExecShortDescription,
 		Long:    edgePodExecLongDescription,
 		Example: edgePodExecExample,
