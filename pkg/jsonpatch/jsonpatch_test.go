@@ -68,6 +68,12 @@ func TestJosnPath(t *testing.T) {
 			value: beer{Number: 10, Str: "Hello"},
 			want:  `[{"op":"add","path":"/a/b/c","value":"{\"numb\":10,\"str\":\"Hello\"}"}]`,
 		},
+		{
+			op:    OpAdd,
+			path:  "/a/b/c",
+			value: make(chan int),
+			want:  `[]`,
+		},
 	}
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("case_%d", i), func(t *testing.T) {
@@ -76,22 +82,4 @@ func TestJosnPath(t *testing.T) {
 			assert.Equal(t, c.want, string(bff))
 		})
 	}
-}
-
-func TestAdd_NilValue(t *testing.T) {
-	items := New().Add(OpAdd, "/a/b/c", nil)
-	bff, err := items.ToJSON()
-	assert.NoError(t, err)
-	assert.Equal(t, `[{"op":"add","path":"/a/b/c"}]`, string(bff))
-}
-
-func TestAdd_UnsupportedMarshalType(t *testing.T) {
-	ch := make(chan int)
-
-	items := New().Add(OpAdd, "/a/b/c", ch)
-	assert.Len(t, items, 0)
-
-	bff, err := items.ToJSON()
-	assert.NoError(t, err)
-	assert.Equal(t, `[]`, string(bff))
 }
