@@ -37,10 +37,13 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	messagelayer "github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 )
 
@@ -858,6 +861,11 @@ func TestUpdateNodeStatus(t *testing.T) {
 	time.Sleep(1000 * time.Millisecond)
 }
 
+// TestUpdateNodeStatusWithGPUAnnotation is a happy-path regression test that verifies
+// the NvidiaGPUStatusAnnotationKey annotation is correctly written to the Node when
+// updateNodeStatus processes a NodeStatusRequest carrying nvidia.com/gpu ExtendResources.
+// It does not exercise the marshal-error branch (json.Marshal on []types.NvidiaGPUStatus
+// cannot realistically fail with the current schema).
 func TestUpdateNodeStatusWithGPUAnnotation(t *testing.T) {
 	setupTest(t)
 
@@ -902,27 +910,30 @@ func TestUpdateNodeStatusWithGPUAnnotation(t *testing.T) {
 	}
 
 	UC.nodeStatusChan <- msg
-	time.Sleep(1000 * time.Millisecond)
 
-	updatedNode, err := UC.kubeClient.CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
-	if err != nil {
-		t.Fatalf("Failed to get updated node: %v", err)
-	}
-
-	annotation, ok := updatedNode.Annotations["huawei.com/gpu-status"]
-	if !ok {
-		t.Fatalf("Expected annotation %q to be set, but it was missing", "huawei.com/gpu-status")
-	}
-	if annotation == "" {
-		t.Fatalf("Expected annotation %q to be non-empty JSON, got empty string", "huawei.com/gpu-status")
-	}
+	// Poll until the annotation appears rather than using a fixed sleep,
+	// so the test is faster when the update is quick and reliable when it is slow.
+	var annotation string
+	require.Eventually(t, func() bool {
+		updatedNode, err := UC.kubeClient.CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
+		if err != nil {
+			return false
+		}
+		val, ok := updatedNode.Annotations[constants.NvidiaGPUStatusAnnotationKey]
+		if !ok || val == "" {
+			return false
+		}
+		annotation = val
+		return true
+	}, 3*time.Second, 50*time.Millisecond,
+		"annotation %q was not set on Node within timeout", constants.NvidiaGPUStatusAnnotationKey)
 
 	var gpuStatuses []struct {
 		ID      string `json:"id"`
 		Healthy bool   `json:"healthy"`
 	}
 	if err := json.Unmarshal([]byte(annotation), &gpuStatuses); err != nil {
-		t.Fatalf("annotation %q is not valid JSON: %v", "huawei.com/gpu-status", err)
+		t.Fatalf("annotation %q is not valid JSON: %v", constants.NvidiaGPUStatusAnnotationKey, err)
 	}
 	if len(gpuStatuses) != 2 {
 		t.Errorf("Expected 2 GPU entries in annotation, got %d", len(gpuStatuses))
