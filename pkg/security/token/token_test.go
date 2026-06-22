@@ -18,6 +18,7 @@ package token
 import (
 	"encoding/pem"
 	"testing"
+	"time"
 )
 
 const (
@@ -78,7 +79,7 @@ func TestToken(t *testing.T) {
 
 	t.Run("test Create", func(t *testing.T) {
 		var err error
-		token, err = Create(caDer, cakeyDer, 1)
+		token, err = Create(caDer, cakeyDer, time.Hour)
 		if err != nil {
 			t.Fatal(err)
 		}
