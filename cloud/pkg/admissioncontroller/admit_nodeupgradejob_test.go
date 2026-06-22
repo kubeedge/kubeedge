@@ -368,7 +368,7 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 			},
 		},
 		{
-			name: "Concurrency specified",
+			name: "TimeoutSeconds specified",
 			spec: v1alpha1.NodeUpgradeJobSpec{
 				Version:        "v1.0.0",
 				NodeNames:      []string{"node1"},
@@ -383,7 +383,7 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 			},
 		},
 		{
-			name: "TimeoutSeconds specified",
+			name: "Concurrency specified",
 			spec: v1alpha1.NodeUpgradeJobSpec{
 				Version:     "v1.0.0",
 				NodeNames:   []string{"node1"},
