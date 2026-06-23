@@ -22,12 +22,7 @@ const (
 )
 
 type CAHandlerType string
-
-// HandlerType identifies the certificate handler implementation.
-type HandlerType string
-
-// Deprecated: use HandlerType.
-type HanndlerType = HandlerType
+type HanndlerType string
 
 func GetCAHandler(t CAHandlerType) CAHandler {
 	switch t {
@@ -37,7 +32,7 @@ func GetCAHandler(t CAHandlerType) CAHandler {
 	return nil
 }
 
-func GetHandler(t HandlerType) Handler {
+func GetHandler(t HanndlerType) Handler {
 	switch t {
 	case HandlerTypeX509:
 		return &x509CertsHandler{}
