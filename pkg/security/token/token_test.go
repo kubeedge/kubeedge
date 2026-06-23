@@ -17,8 +17,11 @@ package token
 
 import (
 	"encoding/pem"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 const (
@@ -85,6 +88,36 @@ func TestToken(t *testing.T) {
 		}
 		if len(token) == 0 {
 			t.Fatal("failed to get token")
+		}
+	})
+
+	t.Run("test Create ExpiresAt", func(t *testing.T) {
+		interval := time.Hour
+		startTime := time.Now()
+		tok, err := Create(caDer, cakeyDer, interval)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// strip caHash prefix to get raw JWT
+		parts := strings.SplitN(tok, ".", 2)
+		if len(parts) != 2 {
+			t.Fatal("unexpected token format")
+		}
+		rawJWT := parts[1]
+
+		claims := &jwt.RegisteredClaims{}
+		_, err = jwt.ParseWithClaims(rawJWT, claims, func(*jwt.Token) (interface{}, error) {
+			return cakeyDer, nil
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		wantExpiry := startTime.Add(2 * interval)
+		got := claims.ExpiresAt.Time
+		diff := got.Sub(wantExpiry)
+		if diff < -2*time.Second || diff > 2*time.Second {
+			t.Fatalf("ExpiresAt = %v, want ~%v (diff %v)", got, wantExpiry, diff)
 		}
 	})
 
