@@ -3,6 +3,7 @@ package policycontroller
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -38,17 +39,30 @@ func init() {
 }
 
 func NewAccessRoleControllerManager(ctx context.Context, kubeCfg *rest.Config) (manager.Manager, error) {
+	const nothingCheckName = "nothing"
 	controllerManager, err := controllerruntime.NewManager(kubeCfg, controllerruntime.Options{
 		Scheme: accessScheme,
 		Metrics: controllerruntimemetrics.Options{
 			SecureServing: false,
 			BindAddress:   "0",
 		}, // disable metrics
-		// TODO: leader election
-		// TODO: /healthz
+		LeaderElection:          true,
+		LeaderElectionID:        "policy-controller.kubeedge.io",
+		HealthProbeBindAddress:  ":9002",
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create controller manager: %w", err)
+	}
+
+	if err := controllerManager.AddHealthzCheck(nothingCheckName, func(_ *http.Request) error {
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("failed to add healthz check: %w", err)
+	}
+	if err := controllerManager.AddReadyzCheck(nothingCheckName, func(_ *http.Request) error {
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("failed to add readyz check: %w", err)
 	}
 
 	if err := setupControllers(ctx, controllerManager); err != nil {
