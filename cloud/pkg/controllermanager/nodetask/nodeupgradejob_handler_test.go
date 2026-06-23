@@ -363,6 +363,12 @@ func TestNodeUpgradeJobUpdateJobStatus(t *testing.T) {
 func TestNodeUpgradeJobCheckTimeout(t *testing.T) {
 	ctx := context.TODO()
 
+	t.Run("job not found", func(t *testing.T) {
+		handler := NewNodeUpgradeJobReconcileHandler(fakeNodeUpgradeJobClient(), nil)
+		err := handler.CheckTimeout(ctx, "test-job")
+		require.NoError(t, err)
+	})
+
 	t.Run("job is not in progress", func(t *testing.T) {
 		var updateJobStatusCalled bool
 		patches := gomonkey.NewPatches()
