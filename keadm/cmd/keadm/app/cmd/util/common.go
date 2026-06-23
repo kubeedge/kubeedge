@@ -124,6 +124,30 @@ func GetPackageManager() string {
 	}
 }
 
+// unsupportedOSType implements OSTypeInstaller for unsupported operating systems.
+// All methods return errors instead of panicking or causing segfaults.
+type unsupportedOSType struct{}
+
+func (u *unsupportedOSType) InstallMQTT() error {
+	return fmt.Errorf("unsupported operating system")
+}
+func (u *unsupportedOSType) IsK8SComponentInstalled(string, string) error {
+	return fmt.Errorf("unsupported operating system")
+}
+func (u *unsupportedOSType) SetKubeEdgeVersion(version semver.Version) {}
+func (u *unsupportedOSType) InstallKubeEdge(types.InstallOptions) error {
+	return fmt.Errorf("unsupported operating system")
+}
+func (u *unsupportedOSType) RunEdgeCore() error {
+	return fmt.Errorf("unsupported operating system")
+}
+func (u *unsupportedOSType) KillKubeEdgeBinary(string) error {
+	return fmt.Errorf("unsupported operating system")
+}
+func (u *unsupportedOSType) IsKubeEdgeProcessRunning(string) (bool, error) {
+	return false, fmt.Errorf("unsupported operating system")
+}
+
 // GetOSInterface helps in returning OS specific object which implements OSTypeInstaller interface.
 func GetOSInterface() types.OSTypeInstaller {
 	switch GetPackageManager() {
@@ -135,7 +159,7 @@ func GetOSInterface() types.OSTypeInstaller {
 		return &PacmanOS{}
 	default:
 		fmt.Println("Failed to detect supported package manager command(apt, yum, pacman), exit")
-		panic("Failed to detect supported package manager command(apt, yum, pacman), exit")
+		return &unsupportedOSType{}
 	}
 }
 
@@ -474,7 +498,6 @@ func isK8SComponentInstalled(kubeConfig, master string) error {
 		return fmt.Errorf("failed to init discovery client, err: %v", err)
 	}
 
-	discoveryClient.RESTClient().Post()
 	serverVersion, err := discoveryClient.ServerVersion()
 	if err != nil {
 		return fmt.Errorf("failed to get the version of K8s master, please check whether K8s was successfully installed, err: %v", err)
