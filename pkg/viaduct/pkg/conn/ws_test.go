@@ -59,6 +59,9 @@ func wsTestPair(t *testing.T) (server, client *websocket.Conn) {
 
 	select {
 	case s := <-serverChan:
+		t.Cleanup(func() {
+			_ = s.Close()
+		})
 		return s, c
 	case <-time.After(2 * time.Second):
 		t.Fatal("timeout waiting for server WebSocket connection")
@@ -114,7 +117,7 @@ func TestHandleRawDataDoesNotPanic(t *testing.T) {
 		t.Fatal("handleRawData did not return within timeout")
 	}
 
-	if consumer.Len() == 0 {
-		t.Error("consumer received no data; expected the payload to be forwarded")
+	if !bytes.Equal(consumer.Bytes(), payload) {
+		t.Errorf("unexpected payload: got %q, want %q", consumer.Bytes(), payload)
 	}
 }
