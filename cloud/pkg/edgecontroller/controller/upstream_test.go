@@ -37,10 +37,13 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	messagelayer "github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 )
 
@@ -856,6 +859,90 @@ func TestUpdateNodeStatus(t *testing.T) {
 
 	UC.nodeStatusChan <- msg
 	time.Sleep(1000 * time.Millisecond)
+}
+
+// TestUpdateNodeStatusWithGPUAnnotation is a happy-path regression test that verifies
+// the NvidiaGPUStatusAnnotationKey annotation is correctly written to the Node when
+// updateNodeStatus processes a NodeStatusRequest carrying nvidia.com/gpu ExtendResources.
+// It does not exercise the marshal-error branch (json.Marshal on []types.NvidiaGPUStatus
+// cannot realistically fail with the current schema).
+func TestUpdateNodeStatusWithGPUAnnotation(t *testing.T) {
+	setupTest(t)
+
+	nodeName := "test-gpu-node"
+	nodeID := "node-gpu-id"
+
+	node := &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: nodeName,
+		},
+	}
+
+	_, err := UC.kubeClient.CoreV1().Nodes().Create(context.Background(), node, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create test node: %v", err)
+	}
+
+	nodeStatusReq := &edgeapi.NodeStatusRequest{
+		Status: corev1.NodeStatus{},
+		ExtendResources: map[corev1.ResourceName][]edgeapi.ExtendResource{
+			"nvidia.com/gpu": {
+				{Name: "GPU-aaa111"},
+				{Name: "GPU-bbb222"},
+			},
+		},
+	}
+
+	nodeStatusData, err := json.Marshal(nodeStatusReq)
+	if err != nil {
+		t.Fatalf("Failed to marshal node status request: %v", err)
+	}
+
+	resource := fmt.Sprintf("node/%s/%s/%s/%s", nodeID, "default", model.ResourceTypeNodeStatus, nodeName)
+
+	msg := model.Message{
+		Header: model.MessageHeader{ID: "test-update-gpu-node-status"},
+		Router: model.MessageRoute{
+			Resource:  resource,
+			Operation: model.UpdateOperation,
+		},
+		Content: string(nodeStatusData),
+	}
+
+	UC.nodeStatusChan <- msg
+
+	// Poll until the annotation appears rather than using a fixed sleep,
+	// so the test is faster when the update is quick and reliable when it is slow.
+	var annotation string
+	require.Eventually(t, func() bool {
+		updatedNode, err := UC.kubeClient.CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
+		if err != nil {
+			return false
+		}
+		val, ok := updatedNode.Annotations[constants.NvidiaGPUStatusAnnotationKey]
+		if !ok || val == "" {
+			return false
+		}
+		annotation = val
+		return true
+	}, 3*time.Second, 50*time.Millisecond,
+		"annotation %q was not set on Node within timeout", constants.NvidiaGPUStatusAnnotationKey)
+
+	var gpuStatuses []struct {
+		ID      string `json:"id"`
+		Healthy bool   `json:"healthy"`
+	}
+	if err := json.Unmarshal([]byte(annotation), &gpuStatuses); err != nil {
+		t.Fatalf("annotation %q is not valid JSON: %v", constants.NvidiaGPUStatusAnnotationKey, err)
+	}
+	if len(gpuStatuses) != 2 {
+		t.Errorf("Expected 2 GPU entries in annotation, got %d", len(gpuStatuses))
+	}
+	for _, gs := range gpuStatuses {
+		if !gs.Healthy {
+			t.Errorf("Expected GPU %q to be marked Healthy=true, got false", gs.ID)
+		}
+	}
 }
 
 func TestProcessCSR(t *testing.T) {
