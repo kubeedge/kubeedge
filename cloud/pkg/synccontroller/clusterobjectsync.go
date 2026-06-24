@@ -126,6 +126,10 @@ func sendClusterObjectSyncEvent(nodeName string, sync *v1alpha1.ClusterObjectSyn
 		// trigger the update event
 		klog.V(4).Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event", objectResourceVersion, resourceType, sync.Status.ObjectResourceVersion)
 		msg := buildEdgeControllerMessageFunc(nodeName, models.NullNamespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)
+		if msg == nil {
+			klog.Warningf("failed to build update message for %s %s, skip sending update event", resourceType, sync.Spec.ObjectName)
+			return
+		}
 		sendToEdge(commonconst.DefaultContextSendModuleName, *msg)
 	}
 }
