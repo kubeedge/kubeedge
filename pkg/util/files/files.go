@@ -26,6 +26,8 @@ import (
 	"k8s.io/klog/v2"
 )
 
+var osStat = os.Stat
+
 // FileCopy copy file from src to dst
 func FileCopy(src, dst string) error {
 	sourceFileStat, err := os.Stat(src)
@@ -80,12 +82,12 @@ func GetSubDirs(dir string, sorted bool) ([]string, error) {
 	}
 
 	sort.SliceStable(subdirs, func(i, j int) bool {
-		infoI, err := os.Stat(filepath.Join(dir, subdirs[i]))
+		infoI, err := osStat(filepath.Join(dir, subdirs[i]))
 		if err != nil {
 			klog.Errorf("failed to get file info of %s, err: %v", subdirs[i], err)
 			return false
 		}
-		infoJ, err := os.Stat(filepath.Join(dir, subdirs[j]))
+		infoJ, err := osStat(filepath.Join(dir, subdirs[j]))
 		if err != nil {
 			klog.Errorf("failed to get file info of %s, err: %v", subdirs[j], err)
 			return true
