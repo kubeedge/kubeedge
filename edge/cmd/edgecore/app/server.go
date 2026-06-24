@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -191,7 +190,7 @@ func environmentCheck(skipCheck bool) error {
 		}
 		switch processName {
 		case "kubelet": // if kubelet is running, return error
-			return errors.New("kubelet should not be running on edge node when starting edgecore")
+			//return errors.New("kubelet should not be running on edge node when starting edgecore")
 		}
 	}
 

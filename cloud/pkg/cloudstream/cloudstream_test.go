@@ -23,6 +23,7 @@ import (
 
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core"
+	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 )
@@ -39,31 +40,61 @@ func TestNewCloudStream(t *testing.T) {
 }
 
 func TestRegister(t *testing.T) {
-	assert := assert.New(t)
+	t.Run("WithoutAdvertiseAddress", func(t *testing.T) {
+		hubconfig.Config.AdvertiseAddress = []string{}
 
-	controller := &v1alpha1.CloudStream{
-		Enable:                  true,
-		TLSTunnelCAFile:         "/path/to/ca/file",
-		TLSTunnelCertFile:       "/path/to/cert/file",
-		TLSTunnelPrivateKeyFile: "/path/to/key/file",
-	}
-	commonConfig := &v1alpha1.CommonConfig{
-		TunnelPort: 8000,
-	}
-	config.InitConfigure(controller)
+		controller := &v1alpha1.CloudStream{
+			Enable:                  true,
+			TLSTunnelCAFile:         "/path/to/ca/file",
+			TLSTunnelCertFile:       "/path/to/cert/file",
+			TLSTunnelPrivateKeyFile: "/path/to/key/file",
+		}
+		commonConfig := &v1alpha1.CommonConfig{
+			TunnelPort: 8000,
+		}
+		config.InitConfigure(controller)
 
-	Register(controller, commonConfig)
+		Register(controller, commonConfig)
 
-	Coremodules := core.GetModules()
-	mod, exists := Coremodules[modules.CloudStreamModuleName]
-	assert.True(exists)
-	assert.NotNil(mod)
-	assert.IsType(&cloudStream{}, mod.GetModule())
+		coreModules := core.GetModules()
+		mod, exists := coreModules[modules.CloudStreamModuleName]
+		assert.True(t, exists)
+		assert.NotNil(t, mod)
 
-	cs, ok := mod.GetModule().(*cloudStream)
-	assert.True(ok)
-	assert.Equal(cs.enable, controller.Enable)
-	assert.Equal(cs.tunnelPort, commonConfig.TunnelPort)
+		cs, ok := mod.GetModule().(*cloudStream)
+		assert.True(t, ok)
+		assert.Equal(t, controller.Enable, cs.enable)
+		assert.Equal(t, commonConfig.TunnelPort, cs.tunnelPort)
+		assert.False(t, config.Config.DisableIptablesManager)
+	})
+
+	t.Run("WithAdvertiseAddress", func(t *testing.T) {
+		hubconfig.Config.AdvertiseAddress = []string{"10.0.0.1"}
+
+		controller := &v1alpha1.CloudStream{
+			Enable:                  true,
+			TLSTunnelCAFile:         "/path/to/ca/file",
+			TLSTunnelCertFile:       "/path/to/cert/file",
+			TLSTunnelPrivateKeyFile: "/path/to/key/file",
+		}
+		commonConfig := &v1alpha1.CommonConfig{
+			TunnelPort: 9000,
+		}
+		config.InitConfigure(controller)
+
+		Register(controller, commonConfig)
+
+		coreModules := core.GetModules()
+		mod, exists := coreModules[modules.CloudStreamModuleName]
+		assert.True(t, exists)
+		assert.NotNil(t, mod)
+
+		cs, ok := mod.GetModule().(*cloudStream)
+		assert.True(t, ok)
+		assert.Equal(t, controller.Enable, cs.enable)
+		assert.Equal(t, commonConfig.TunnelPort, cs.tunnelPort)
+		assert.True(t, config.Config.DisableIptablesManager)
+	})
 }
 
 func TestName(t *testing.T) {
