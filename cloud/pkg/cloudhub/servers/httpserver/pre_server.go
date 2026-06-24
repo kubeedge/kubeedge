@@ -192,7 +192,7 @@ func GenerateAndRefreshToken(ctx context.Context) error {
 
 func createNewToken(ctx context.Context) error {
 	caHashToken, err := token.Create(hubconfig.Config.Ca, hubconfig.Config.CaKey,
-		hubconfig.Config.CloudHub.TokenRefreshDuration)
+		time.Hour*hubconfig.Config.CloudHub.TokenRefreshDuration)
 	if err != nil {
 		return fmt.Errorf("failed to generate the token for edgecore register, err: %v", err)
 	}
