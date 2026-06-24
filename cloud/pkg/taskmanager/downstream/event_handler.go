@@ -79,10 +79,19 @@ func (h *NodeJobEventHandler) OnUpdate(_oldObj, newObj any) {
 // OnDelete gets the watched node job deletion event, and uses InterruptExecutor
 // method to interrupt the downstream executor.
 func (h *NodeJobEventHandler) OnDelete(obj any) {
+	obj = unwrapDeletedEventObj(obj)
 	downstreamHandler, err := MustGetHandlerWithObj(obj)
 	if err != nil {
 		h.logger.Error(err, "failed to get downstream handler")
 		return
 	}
 	downstreamHandler.InterruptExecutor(obj)
+}
+
+func unwrapDeletedEventObj(obj any) any {
+	tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
+	if !ok {
+		return obj
+	}
+	return tombstone.Obj
 }
