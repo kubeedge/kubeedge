@@ -35,6 +35,8 @@ import (
 const (
 	// maxRetries is the number of times trying to update TUNNEL-PORT configmap before dropped out of the queue.
 	maxRetries = 5
+
+	defaultSyncInterval = 10 * time.Second
 )
 
 type Manager struct {
@@ -44,6 +46,7 @@ type Manager struct {
 	cmListerSynced        cache.InformerSynced
 	preTunnelPortRecord   *TunnelPortRecord
 	streamPort            int
+	syncInterval          time.Duration
 	enqueuePod            func(pod *v1.Pod)
 	queuePod              workqueue.RateLimitingInterface
 	syncHandler           func(ctx context.Context, pod *v1.Pod) error
@@ -75,7 +78,11 @@ var (
 	kubeClient *kubernetes.Clientset
 )
 
-func NewIptablesManager(config *cloudcoreConfig.KubeAPIConfig, streamPort int) *Manager {
+func NewIptablesManager(config *cloudcoreConfig.KubeAPIConfig, streamPort int, syncInterval time.Duration) *Manager {
+	if syncInterval <= 0 {
+		syncInterval = defaultSyncInterval
+	}
+
 	protocol := utiliptables.ProtocolIPv4
 	exec := utilexec.New()
 	iptInterface := utiliptables.New(exec, protocol)
@@ -86,8 +93,9 @@ func NewIptablesManager(config *cloudcoreConfig.KubeAPIConfig, streamPort int) *
 			IPTunnelPort: make(map[string]int),
 			Port:         make(map[int]bool),
 		},
-		streamPort: streamPort,
-		queuePod:   workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "pod"),
+		streamPort:   streamPort,
+		syncInterval: syncInterval,
+		queuePod:     workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "pod"),
 	}
 
 	if kubeClient == nil {
@@ -132,14 +140,17 @@ func (im *Manager) processNextWorkItem(ctx context.Context) bool {
 		return false
 	}
 	defer im.queuePod.Done(key)
+
 	err := im.syncHandler(ctx, key.(*v1.Pod))
-	//If there is an error in updating the configmap, it will be retried.
+	// If there is an error in updating the configmap, it will be retried.
 	im.handleErr(err, key)
 
 	return true
 }
 
 func (im *Manager) Run(ctx context.Context) {
+	klog.Infof("starting iptables manager, streamPort=%d, syncInterval=%s", im.streamPort, im.syncInterval)
+
 	im.sharedInformerFactory.Start(ctx.Done())
 
 	if !cache.WaitForCacheSync(ctx.Done(), im.cmListerSynced) {
@@ -155,12 +166,16 @@ func (im *Manager) Run(ctx context.Context) {
 	go im.listenCloudCore(ctx)
 	// Take out the deleted pod from the queue and update the configmap
 	go wait.UntilWithContext(ctx, im.worker, time.Second)
-	go wait.Until(im.reconcile, 10*time.Second, ctx.Done())
+	go wait.Until(im.reconcile, im.syncInterval, ctx.Done())
 }
 
 func (im *Manager) reconcile() {
+	start := time.Now()
+	klog.V(2).Info("starting iptables reconcile")
+
 	// Create and link the tunnel port chains to OUTPUT and PREROUTING chain.
 	for _, jump := range iptablesJumpChains {
+		klog.V(4).Infof("ensuring iptables chain exists: table=%v chain=%s", jump.table, jump.dstChain)
 		if _, err := im.iptables.EnsureChain(jump.table, jump.dstChain); err != nil {
 			klog.ErrorS(err, "Failed to ensure chain exists", "table", jump.table, "chain", jump.dstChain)
 			return
@@ -169,6 +184,7 @@ func (im *Manager) reconcile() {
 			"-m", "comment", "--comment", jump.comment,
 			"-j", string(jump.dstChain),
 		)
+		klog.V(4).Infof("ensuring iptables jump rule: table=%v srcChain=%s dstChain=%s", jump.table, jump.srcChain, jump.dstChain)
 		if _, err := im.iptables.EnsureRule(utiliptables.Append, jump.table, jump.srcChain, args...); err != nil {
 			klog.ErrorS(err, "Failed to ensure chain jumps", "table", jump.table, "srcChain", jump.srcChain, "dstChain", jump.dstChain)
 			return
@@ -185,6 +201,7 @@ func (im *Manager) reconcile() {
 		ipport := strings.Split(ipports, ":")
 		ip, port := ipport[0], ipport[1]
 		args := []string{"-p", "tcp", "-j", "DNAT", "--dport", port, "--to", ip + ":" + strconv.Itoa(im.streamPort)}
+		klog.V(4).Infof("ensuring iptables DNAT rule for added endpoint: %s -> %s:%d", ipports, ip, im.streamPort)
 		if _, err := im.iptables.EnsureRule(utiliptables.Append, utiliptables.TableNAT, tunnelPortChain, args...); err != nil {
 			klog.ErrorS(err, "Failed to ensure rules", "table", utiliptables.TableNAT, "chain", tunnelPortChain)
 			return
@@ -195,11 +212,19 @@ func (im *Manager) reconcile() {
 		ipport := strings.Split(ipports, ":")
 		ip, port := ipport[0], ipport[1]
 		args := []string{"-p", "tcp", "-j", "DNAT", "--dport", port, "--to", ip + ":" + strconv.Itoa(im.streamPort)}
+		klog.V(4).Infof("deleting iptables DNAT rule for removed endpoint: %s -> %s:%d", ipports, ip, im.streamPort)
 		if err := im.iptables.DeleteRule(utiliptables.TableNAT, tunnelPortChain, args...); err != nil {
 			klog.ErrorS(err, "Failed to delete rules", "table", utiliptables.TableNAT, "chain", tunnelPortChain)
 			return
 		}
 	}
+
+	klog.V(2).Infof(
+		"iptables reconcile completed: added=%d deleted=%d duration=%s",
+		len(addedIPPort),
+		len(deletedIPPort),
+		time.Since(start).String(),
+	)
 }
 
 func (im *Manager) getAddedAndDeletedCloudCoreIPPort() ([]string, []string, error) {
@@ -257,12 +282,12 @@ func (im *Manager) handleErr(err error, key interface{}) {
 	deletePod := key.(*v1.Pod)
 	ns, name, podIP := deletePod.Namespace, deletePod.Name, deletePod.Status.PodIP
 	if im.queuePod.NumRequeues(key) < maxRetries {
-		//The maximum number of retries has not been reached, re-enter the queue.
+		// The maximum number of retries has not been reached, re-enter the queue.
 		klog.Warningf("Error update tunnel-port configmap after deleted pod %s, podIP %s, err:%v", name, podIP, err)
 		im.queuePod.AddRateLimited(key)
 		return
 	}
-	//Maximum number of retries reached, update aborted
+	// Maximum number of retries reached, update aborted
 	klog.Error("dropping pod out of the queue", "pod", klog.KRef(ns, name), "err", err)
 	im.queuePod.Forget(key)
 }

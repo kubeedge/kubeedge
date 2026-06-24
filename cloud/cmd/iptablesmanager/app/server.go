@@ -57,8 +57,7 @@ func NewIptablesManagerCommand() *cobra.Command {
 				Burst:       constants.DefaultKubeBurst,
 				KubeConfig:  opts.KubeConfig,
 			}
-			go iptables.NewIptablesManager(kubeAPIConfig, opts.ForwardPort).Run(ctx)
-
+		go iptables.NewIptablesManager(kubeAPIConfig, opts.ForwardPort, opts.SyncInterval).Run(ctx)
 			c := make(chan os.Signal, 1)
 			signal.Notify(c, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM,
 				syscall.SIGQUIT, syscall.SIGILL, syscall.SIGTRAP, syscall.SIGABRT)
