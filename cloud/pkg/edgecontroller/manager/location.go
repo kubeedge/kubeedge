@@ -11,6 +11,8 @@ import (
 type LocationCache struct {
 	// EdgeNodes is a set, key is nodeName
 	EdgeNodes sync.Map
+	// deletedEdgeNodes is a set, key is nodeName
+	deletedEdgeNodes sync.Map
 	// configMapNode is a map, key is namespace/configMapName, value is nodeName
 	configMapNode sync.Map
 	// secretNode is a map, key is namespace/secretName, value is nodeName
@@ -137,9 +139,16 @@ func (lc *LocationCache) IsEdgeNode(nodeName string) bool {
 	return ok
 }
 
+// IsDeletedEdgeNode checks whether node was removed from edge node cache
+func (lc *LocationCache) IsDeletedEdgeNode(nodeName string) bool {
+	_, ok := lc.deletedEdgeNodes.Load(nodeName)
+	return ok
+}
+
 // UpdateEdgeNode is to maintain edge nodes name upto-date by querying kubernetes client
 func (lc *LocationCache) UpdateEdgeNode(nodeName string) {
 	lc.EdgeNodes.Store(nodeName, struct{}{})
+	lc.deletedEdgeNodes.Delete(nodeName)
 }
 
 // DeleteConfigMap from cache
@@ -154,5 +163,8 @@ func (lc *LocationCache) DeleteSecret(namespace, name string) {
 
 // DeleteNode from cache
 func (lc *LocationCache) DeleteNode(nodeName string) {
+	if lc.IsEdgeNode(nodeName) {
+		lc.deletedEdgeNodes.Store(nodeName, struct{}{})
+	}
 	lc.EdgeNodes.Delete(nodeName)
 }
