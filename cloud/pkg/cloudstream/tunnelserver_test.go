@@ -40,6 +40,7 @@ import (
 const (
 	testNodeName   = "test-node"
 	testTunnelPort = 10350
+	testSessionKey = "test-session"
 )
 
 func setupTest(_ *testing.T) (*TunnelServer, *fake.Clientset) {
@@ -67,7 +68,7 @@ func TestSessionManagement(t *testing.T) {
 	t.Run("AddAndGetSession", func(t *testing.T) {
 		ts := newTunnelServer(testTunnelPort)
 		session := &Session{
-			sessionID: "test-session",
+			sessionID: testSessionKey,
 		}
 
 		ts.addSession("test-key", session)
@@ -98,8 +99,8 @@ func TestSessionManagement(t *testing.T) {
 	t.Run("SessionConcurrency", func(t *testing.T) {
 		ts, _ := setupTest(t)
 
-		session1 := &Session{sessionID: "session1"}
-		session2 := &Session{sessionID: "session2"}
+		session1 := &Session{sessionID: testSessionKey + "1"}
+		session2 := &Session{sessionID: testSessionKey + "2"}
 
 		ts.addSession("key1", session1)
 		ts.addSession("key2", session2)
@@ -368,4 +369,61 @@ func TestTLSSetup(t *testing.T) {
 			assert.NotNil(t, ts.container, "Container should be initialized")
 		})
 	}
+}
+
+func TestUpdateNodeCloudCoreAddress(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset(
+			&corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+				Status: corev1.NodeStatus{
+					Addresses: []corev1.NodeAddress{
+						{Type: corev1.NodeInternalIP, Address: "192.168.1.1"},
+					},
+				},
+			},
+		)
+		ts := newTunnelServerWithClient(testTunnelPort, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		err := ts.updateNodeCloudCoreAddress(testNodeName, "10.0.0.1")
+		assert.NoError(t, err)
+
+		node, err := fakeClient.CoreV1().Nodes().Get(context.Background(), testNodeName, metav1.GetOptions{})
+		assert.NoError(t, err)
+		for _, addr := range node.Status.Addresses {
+			if addr.Type == corev1.NodeInternalIP {
+				assert.Equal(t, "10.0.0.1", addr.Address)
+			}
+		}
+	})
+
+	t.Run("NilKubeClient", func(t *testing.T) {
+		ts := newTunnelServerWithClient(testTunnelPort, nil, time.Millisecond*10, time.Millisecond*100)
+		err := ts.updateNodeCloudCoreAddress(testNodeName, "10.0.0.1")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "kubeclient is nil")
+	})
+
+	t.Run("NodeNotFound", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset()
+		ts := newTunnelServerWithClient(testTunnelPort, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*100)
+		err := ts.updateNodeCloudCoreAddress("non-existent-node", "10.0.0.1")
+		assert.Error(t, err)
+	})
+
+	t.Run("NoInternalIP", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset(
+			&corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+				Status: corev1.NodeStatus{
+					Addresses: []corev1.NodeAddress{
+						{Type: corev1.NodeExternalIP, Address: "1.2.3.4"},
+					},
+				},
+			},
+		)
+		ts := newTunnelServerWithClient(testTunnelPort, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+		err := ts.updateNodeCloudCoreAddress(testNodeName, "10.0.0.1")
+		assert.NoError(t, err)
+	})
 }
