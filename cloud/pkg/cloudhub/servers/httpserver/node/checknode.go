@@ -59,7 +59,7 @@ func CheckNode(request *restful.Request, response *restful.Response) {
 	}
 
 	// node exists return success
-	err = response.WriteErrorString(http.StatusOK, "Node founded")
+	err = response.WriteErrorString(http.StatusOK, "Node found")
 	if err != nil {
 		klog.Errorf("failed to send the task resp to edge , err: %v", err)
 	}
