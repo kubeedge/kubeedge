@@ -3,6 +3,7 @@ package manager
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
@@ -53,6 +54,9 @@ func (c *CommonResourceEventHandler) OnUpdate(oldObj, newObj interface{}) {
 
 // OnDelete handle Delete event
 func (c *CommonResourceEventHandler) OnDelete(obj interface{}) {
+	if tombstone, ok := obj.(cache.DeletedFinalStateUnknown); ok {
+		obj = tombstone.Obj
+	}
 	if c.eventFilter != nil && !c.eventFilter.Delete(obj) {
 		return
 	}
