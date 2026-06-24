@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -24,6 +25,11 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
+
+// ErrCountUnsupported is returned by Count to signal that the operation is
+// not implemented by this SQLite-backed store. Callers can test for it with
+// errors.Is.
+var ErrCountUnsupported = errors.New("Count is not supported by the edge SQLite store")
 
 /*
 This file is designed to encapsulate the Imitator as Store.Interface,
@@ -138,8 +144,8 @@ func (s *store) GuaranteedUpdate(context.Context, string, runtime.Object, bool, 
 	panic("Do not call this function")
 }
 
-func (s *store) Count(string) (int64, error) {
-	panic("implement me")
+func (s *store) Count(_ string) (int64, error) {
+	return 0, ErrCountUnsupported
 }
 
 func (s *store) RequestWatchProgress(context.Context) error {
