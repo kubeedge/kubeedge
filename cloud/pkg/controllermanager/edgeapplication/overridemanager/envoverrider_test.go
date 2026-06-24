@@ -90,24 +90,28 @@ func TestReplaceEnv(t *testing.T) {
 				{Name: "VAR4", Value: "value4"},
 			},
 		},
+		{
+			name: "Preserve order - replace and append",
+			curEnv: []corev1.EnvVar{
+				{Name: "VAR1", Value: "value1"},
+				{Name: "VAR2", Value: "value2"},
+			},
+			replaceValues: []corev1.EnvVar{
+				{Name: "VAR1", Value: "new-value1"},
+				{Name: "VAR3", Value: "value3"},
+			},
+			expected: []corev1.EnvVar{
+				{Name: "VAR1", Value: "new-value1"},
+				{Name: "VAR2", Value: "value2"},
+				{Name: "VAR3", Value: "value3"},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := replaceEnv(tt.curEnv, tt.replaceValues)
-
-			assert.Equal(t, len(tt.expected), len(result), "Expected same number of env vars")
-
-			resultMap := make(map[string]string)
-			for _, env := range result {
-				resultMap[env.Name] = env.Value
-			}
-
-			for _, expected := range tt.expected {
-				val, exists := resultMap[expected.Name]
-				assert.True(t, exists, "Expected env var %s not found", expected.Name)
-				assert.Equal(t, expected.Value, val, "Value mismatch for env var %s", expected.Name)
-			}
+			assert.Equal(t, tt.expected, result)
 		})
 	}
 }
@@ -277,24 +281,7 @@ func TestOverrideEnv(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-
-				if tt.envOverrider.Operator == v1alpha1.OverriderOpReplace {
-					assert.Equal(t, len(tt.expected), len(result))
-
-					expectedMap := make(map[string]string)
-					for _, env := range tt.expected {
-						expectedMap[env.Name] = env.Value
-					}
-
-					resultMap := make(map[string]string)
-					for _, env := range result {
-						resultMap[env.Name] = env.Value
-					}
-
-					assert.Equal(t, expectedMap, resultMap)
-				} else {
-					assert.Equal(t, tt.expected, result)
-				}
+				assert.Equal(t, tt.expected, result)
 			}
 		})
 	}
@@ -318,6 +305,20 @@ func TestConvertToEnvVar(t *testing.T) {
 				Value: "simple-value",
 			},
 			expectError: false,
+		},
+		{
+			name: "With invalid valueFrom",
+			input: map[string]interface{}{
+				"name": "VAR1",
+				"valueFrom": map[string]interface{}{
+					"fieldRef": map[string]interface{}{
+						"fieldPath":  123,
+						"apiVersion": "v1",
+					},
+				},
+			},
+			expected:    nil,
+			expectError: true,
 		},
 		{
 			name: "With field ref",
@@ -393,6 +394,47 @@ func TestConvertToEnvVarSource(t *testing.T) {
 				},
 			},
 			expectError: false,
+		},
+		{
+			name: "Invalid fieldRef type",
+			input: map[string]interface{}{
+				"fieldRef": map[string]interface{}{
+					"fieldPath":  123,
+					"apiVersion": "v1",
+				},
+			},
+			expected:    corev1.EnvVarSource{},
+			expectError: true,
+		},
+		{
+			name: "Invalid resourceFieldRef type",
+			input: map[string]interface{}{
+				"resourceFieldRef": map[string]interface{}{
+					"resource": 123,
+				},
+			},
+			expected:    corev1.EnvVarSource{},
+			expectError: true,
+		},
+		{
+			name: "Invalid configMapKeyRef type",
+			input: map[string]interface{}{
+				"configMapKeyRef": map[string]interface{}{
+					"name": 123,
+				},
+			},
+			expected:    corev1.EnvVarSource{},
+			expectError: true,
+		},
+		{
+			name: "Invalid secretKeyRef type",
+			input: map[string]interface{}{
+				"secretKeyRef": map[string]interface{}{
+					"name": 123,
+				},
+			},
+			expected:    corev1.EnvVarSource{},
+			expectError: true,
 		},
 		{
 			name: "Resource field ref",
@@ -507,6 +549,17 @@ func TestProcessFieldRef(t *testing.T) {
 				APIVersion: "v1",
 			},
 			expectError: false,
+		},
+		{
+			name: "Invalid fieldPath type",
+			input: map[string]interface{}{
+				"fieldRef": map[string]interface{}{
+					"fieldPath":  123,
+					"apiVersion": "v1",
+				},
+			},
+			expected:    nil,
+			expectError: true,
 		},
 		{
 			name: "Missing fieldPath",
@@ -695,6 +748,28 @@ func TestBuildEnvPatchesWithPath(t *testing.T) {
 			},
 			expectedPatches: []overrideOption{},
 			expectError:     false,
+		},
+		{
+			name:               "Invalid env value type",
+			specContainersPath: "spec/containers",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"spec": map[string]interface{}{
+						"containers": []interface{}{
+							map[string]interface{}{
+								"name": "target-container",
+								"env":  "invalid",
+							},
+						},
+					},
+				},
+			},
+			envOverrider: &v1alpha1.EnvOverrider{
+				ContainerName: "target-container",
+				Operator:      v1alpha1.OverriderOpAdd,
+				Value:         []corev1.EnvVar{{Name: "NEW_VAR", Value: "new-value"}},
+			},
+			expectError: true,
 		},
 	}
 
@@ -896,6 +971,7 @@ func TestAcquireReplaceEnvOverrideOption(t *testing.T) {
 		})
 	}
 }
+
 func TestEnvOverrider_ApplyOverrides(t *testing.T) {
 	assert := assert.New(t)
 
@@ -963,6 +1039,37 @@ func TestEnvOverrider_ApplyOverrides(t *testing.T) {
 				},
 			},
 			expectError: false,
+		},
+		{
+			name: "Apply env override with invalid container env",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Pod",
+					"spec": map[string]interface{}{
+						"containers": []interface{}{
+							map[string]interface{}{
+								"name": "test-container",
+								"env":  "invalid-env",
+							},
+						},
+					},
+				},
+			},
+			overriderInfo: OverriderInfo{
+				TargetNodeGroup: "test-node-group",
+				Overriders: &v1alpha1.Overriders{
+					EnvOverriders: []v1alpha1.EnvOverrider{
+						{
+							ContainerName: "test-container",
+							Operator:      v1alpha1.OverriderOpAdd,
+							Value: []corev1.EnvVar{
+								{Name: "NEW_NAME", Value: "new-value"},
+							},
+						},
+					},
+				},
+			},
+			expectError: true,
 		},
 		{
 			name: "Apply env override to Deployment",
@@ -1145,6 +1252,102 @@ func TestBuildEnvPatches(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "Build patches for ReplicaSet",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "ReplicaSet",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name": "test-container",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			envOverrider: &v1alpha1.EnvOverrider{
+				ContainerName: "test-container",
+				Operator:      v1alpha1.OverriderOpAdd,
+				Value:         []corev1.EnvVar{{Name: "NEW_NAME", Value: "new-value"}},
+			},
+			expectedResult: []overrideOption{
+				{
+					Op:    "add",
+					Path:  "/spec/template/spec/containers/0/env",
+					Value: []corev1.EnvVar{{Name: "NEW_NAME", Value: "new-value"}},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "Build patches for DaemonSet",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "DaemonSet",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name": "test-container",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			envOverrider: &v1alpha1.EnvOverrider{
+				ContainerName: "test-container",
+				Operator:      v1alpha1.OverriderOpAdd,
+				Value:         []corev1.EnvVar{{Name: "NEW_NAME", Value: "new-value"}},
+			},
+			expectedResult: []overrideOption{
+				{
+					Op:    "add",
+					Path:  "/spec/template/spec/containers/0/env",
+					Value: []corev1.EnvVar{{Name: "NEW_NAME", Value: "new-value"}},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "Build patches for Job",
+			rawObj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind": "Job",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"name": "test-container",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			envOverrider: &v1alpha1.EnvOverrider{
+				ContainerName: "test-container",
+				Operator:      v1alpha1.OverriderOpAdd,
+				Value:         []corev1.EnvVar{{Name: "NEW_NAME", Value: "new-value"}},
+			},
+			expectedResult: []overrideOption{
+				{
+					Op:    "add",
+					Path:  "/spec/template/spec/containers/0/env",
+					Value: []corev1.EnvVar{{Name: "NEW_NAME", Value: "new-value"}},
+				},
+			},
+			expectError: false,
+		},
+		{
 			name: "Build patches for Deployment",
 			rawObj: &unstructured.Unstructured{
 				Object: map[string]interface{}{
@@ -1258,6 +1461,254 @@ func TestBuildEnvPatches(t *testing.T) {
 			} else {
 				assert.NoError(err)
 				assert.Equal(tc.expectedResult, result)
+			}
+		})
+	}
+}
+
+func TestProcessResourceFieldRef(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    *corev1.ResourceFieldSelector
+		expectError bool
+	}{
+		{
+			name: "Valid resource field ref",
+			input: map[string]interface{}{
+				"resourceFieldRef": map[string]interface{}{
+					"resource":      "limits.cpu",
+					"containerName": "test-container",
+					"divisor":       "1m",
+				},
+			},
+			expected: &corev1.ResourceFieldSelector{
+				Resource:      "limits.cpu",
+				ContainerName: "test-container",
+				Divisor:       resource.MustParse("1m"),
+			},
+			expectError: false,
+		},
+		{
+			name: "Invalid resource type",
+			input: map[string]interface{}{
+				"resourceFieldRef": map[string]interface{}{
+					"resource": 123,
+				},
+			},
+			expected:    nil,
+			expectError: true,
+		},
+		{
+			name: "Missing resource field",
+			input: map[string]interface{}{
+				"resourceFieldRef": map[string]interface{}{
+					"containerName": "test-container",
+					"divisor":       "1m",
+				},
+			},
+			expected:    nil,
+			expectError: false,
+		},
+		{
+			name: "Missing containerName field",
+			input: map[string]interface{}{
+				"resourceFieldRef": map[string]interface{}{
+					"resource": "limits.cpu",
+					"divisor":  "1m",
+				},
+			},
+			expected: &corev1.ResourceFieldSelector{
+				Resource:      "limits.cpu",
+				ContainerName: "",
+				Divisor:       resource.MustParse("1m"),
+			},
+			expectError: false,
+		},
+		{
+			name: "Missing divisor field",
+			input: map[string]interface{}{
+				"resourceFieldRef": map[string]interface{}{
+					"resource":      "limits.cpu",
+					"containerName": "test-container",
+				},
+			},
+			expected: &corev1.ResourceFieldSelector{
+				Resource:      "limits.cpu",
+				ContainerName: "test-container",
+				Divisor:       resource.MustParse("1"),
+			},
+			expectError: false,
+		},
+		{
+			name:        "No resourceFieldRef key",
+			input:       map[string]interface{}{},
+			expected:    nil,
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := processResourceFieldRef(tt.input)
+
+			if tt.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				if tt.expected == nil {
+					assert.Nil(t, result)
+				} else {
+					assert.Equal(t, tt.expected.Resource, result.Resource)
+					assert.Equal(t, tt.expected.ContainerName, result.ContainerName)
+					assert.Equal(t, tt.expected.Divisor.String(), result.Divisor.String())
+				}
+			}
+		})
+	}
+}
+
+func TestProcessConfigMapKeyRef(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    *corev1.ConfigMapKeySelector
+		expectError bool
+	}{
+		{
+			name: "Valid configmap key ref",
+			input: map[string]interface{}{
+				"configMapKeyRef": map[string]interface{}{
+					"name": "my-configmap",
+					"key":  "my-key",
+				},
+			},
+			expected: &corev1.ConfigMapKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{Name: "my-configmap"},
+				Key:                  "my-key",
+			},
+			expectError: false,
+		},
+		{
+			name: "Invalid name type",
+			input: map[string]interface{}{
+				"configMapKeyRef": map[string]interface{}{
+					"name": 123,
+				},
+			},
+			expected:    nil,
+			expectError: true,
+		},
+		{
+			name: "Missing name field",
+			input: map[string]interface{}{
+				"configMapKeyRef": map[string]interface{}{
+					"key": "my-key",
+				},
+			},
+			expected:    nil,
+			expectError: false,
+		},
+		{
+			name: "Missing key field",
+			input: map[string]interface{}{
+				"configMapKeyRef": map[string]interface{}{
+					"name": "my-configmap",
+				},
+			},
+			expected:    nil,
+			expectError: false,
+		},
+		{
+			name:        "No configMapKeyRef key",
+			input:       map[string]interface{}{},
+			expected:    nil,
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := processConfigMapKeyRef(tt.input)
+
+			if tt.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestProcessSecretKeyRef(t *testing.T) {
+	tests := []struct {
+		name        string
+		input       map[string]interface{}
+		expected    *corev1.SecretKeySelector
+		expectError bool
+	}{
+		{
+			name: "Valid secret key ref",
+			input: map[string]interface{}{
+				"secretKeyRef": map[string]interface{}{
+					"name": "my-secret",
+					"key":  "my-key",
+				},
+			},
+			expected: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{Name: "my-secret"},
+				Key:                  "my-key",
+			},
+			expectError: false,
+		},
+		{
+			name: "Invalid name type",
+			input: map[string]interface{}{
+				"secretKeyRef": map[string]interface{}{
+					"name": 123,
+				},
+			},
+			expected:    nil,
+			expectError: true,
+		},
+		{
+			name: "Missing name field",
+			input: map[string]interface{}{
+				"secretKeyRef": map[string]interface{}{
+					"key": "my-key",
+				},
+			},
+			expected:    nil,
+			expectError: false,
+		},
+		{
+			name: "Missing key field",
+			input: map[string]interface{}{
+				"secretKeyRef": map[string]interface{}{
+					"name": "my-secret",
+				},
+			},
+			expected:    nil,
+			expectError: false,
+		},
+		{
+			name:        "No secretKeyRef key",
+			input:       map[string]interface{}{},
+			expected:    nil,
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := processSecretKeyRef(tt.input)
+
+			if tt.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected, result)
 			}
 		})
 	}
