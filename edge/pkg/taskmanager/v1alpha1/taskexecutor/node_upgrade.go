@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -191,16 +192,25 @@ func upgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 
 func keadmUpgrade(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) error {
 	klog.Infof("Begin to run upgrade command")
-	upgradeCmd := fmt.Sprintf("keadm upgrade edge --upgradeID %s --historyID %s --fromVersion %s --toVersion %s --config %s --image %s > /tmp/keadm.log 2>&1",
-		upgradeReq.UpgradeID, upgradeReq.HistoryID, version.Get(), upgradeReq.Version, opts.ConfigFile, upgradeReq.Image)
-
-	// run upgrade cmd to upgrade edge node
-	// use nohup command to start a child progress
-	command := fmt.Sprintf("nohup %s &", upgradeCmd)
-	cmd := exec.Command("bash", "-c", command)
-	s, err := cmd.CombinedOutput()
+	args := []string{
+		"upgrade", "edge",
+		"--upgradeID", upgradeReq.UpgradeID,
+		"--historyID", upgradeReq.HistoryID,
+		"--fromVersion", version.Get().String(),
+		"--toVersion", upgradeReq.Version,
+		"--config", opts.ConfigFile,
+		"--image", upgradeReq.Image,
+	}
+	cmd := exec.Command("keadm", args...)
+	logFile, err := os.OpenFile("/tmp/keadm.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return fmt.Errorf("run upgrade command %s failed: %v, %s", command, err, s)
+		return fmt.Errorf("failed to open keadm log file: %v", err)
+	}
+	defer logFile.Close()
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("run upgrade command failed: %v", err)
 	}
 	klog.Infof("!!! Finish upgrade from Version %s to %s ...", version.Get(), upgradeReq.Version)
 	return nil

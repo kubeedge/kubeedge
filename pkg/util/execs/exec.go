@@ -16,6 +16,14 @@ type Command struct {
 	ExitCode int
 }
 
+// NewCommandDirect creates a Command that executes the given binary directly
+// without wrapping in a shell.
+func NewCommandDirect(name string, args ...string) *Command {
+	return &Command{
+		Cmd: exec.Command(name, args...),
+	}
+}
+
 // Exec run command and exit formatted error, callers can print err directly
 // Any running error or non-zero exitcode is consider as error
 func (cmd *Command) Exec() error {

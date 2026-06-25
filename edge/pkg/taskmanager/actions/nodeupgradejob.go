@@ -20,9 +20,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -241,15 +241,26 @@ func (h *nodeUpgradeJobActionHandler) upgrade(
 		resp.interrupt = true // No upgrade yet, no need to roll back.
 		return resp
 	}
-	var cmdline strings.Builder
-	cmdline.WriteString("keadm upgrade edge --force --toVersion " + spec.Version)
+	args := []string{"upgrade", "edge", "--force", "--toVersion", spec.Version}
 	if spec.Image != "" {
-		cmdline.WriteString(" --image " + spec.Image)
+		args = append(args, "--image", spec.Image)
 	}
-	cmdline.WriteString(" >> /tmp/keadm.log 2>&1")
-	cmd := execs.NewCommand(cmdline.String())
-	h.logger.V(2).Info("run upgrade cmd", "cmd", cmdline.String())
-	resp.err = cmd.Exec()
+	cmd := execs.NewCommandDirect("keadm", args...)
+	h.logger.V(2).Info("run upgrade cmd", "cmd", cmd.GetCommand())
+	// Write output to log file to avoid SIGPIPE when edgecore is killed during upgrade.
+	logFile, err := os.OpenFile("/tmp/keadm.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		resp.err = fmt.Errorf("failed to open keadm log file: %v", err)
+		return resp
+	}
+	defer logFile.Close()
+	cmd.Cmd.Stdout = logFile
+	cmd.Cmd.Stderr = logFile
+	if err := cmd.Cmd.Start(); err != nil {
+		resp.err = fmt.Errorf("failed to start upgrade command: %v", err)
+		return resp
+	}
+	resp.err = cmd.Cmd.Wait()
 	return resp
 }
 

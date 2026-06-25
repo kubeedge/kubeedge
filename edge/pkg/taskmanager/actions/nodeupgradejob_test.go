@@ -19,6 +19,8 @@ package actions
 import (
 	"context"
 	"errors"
+	"os"
+	"os/exec"
 	"reflect"
 	"testing"
 
@@ -275,9 +277,17 @@ func TestNodeUpgradeJobUpgrade(t *testing.T) {
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
-		patches.ApplyMethod(reflect.TypeOf((*execs.Command)(nil)), "Exec",
-			func(cmd *execs.Command) error {
-				assert.Equal(t, "bash -c keadm upgrade edge --force --toVersion 1.21.0 >> /tmp/keadm.log 2>&1", cmd.GetCommand())
+		patches.ApplyFunc(os.OpenFile, func(name string, flag int, perm os.FileMode) (*os.File, error) {
+			assert.Equal(t, "/tmp/keadm.log", name)
+			return os.NewFile(uintptr(0), name), nil
+		})
+		patches.ApplyMethod(reflect.TypeOf((*exec.Cmd)(nil)), "Start",
+			func(cmd *exec.Cmd) error {
+				assert.Equal(t, []string{"keadm", "upgrade", "edge", "--force", "--toVersion", "1.21.0"}, cmd.Args)
+				return nil
+			})
+		patches.ApplyMethod(reflect.TypeOf((*exec.Cmd)(nil)), "Wait",
+			func(cmd *exec.Cmd) error {
 				return nil
 			})
 
@@ -292,9 +302,16 @@ func TestNodeUpgradeJobUpgrade(t *testing.T) {
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
-		patches.ApplyMethod(reflect.TypeOf((*execs.Command)(nil)), "Exec",
-			func(cmd *execs.Command) error {
-				assert.Equal(t, "bash -c keadm upgrade edge --force --toVersion 1.21.0 --image custom.com/kubeedge/installation-package >> /tmp/keadm.log 2>&1", cmd.GetCommand())
+		patches.ApplyFunc(os.OpenFile, func(name string, flag int, perm os.FileMode) (*os.File, error) {
+			return os.NewFile(uintptr(0), name), nil
+		})
+		patches.ApplyMethod(reflect.TypeOf((*exec.Cmd)(nil)), "Start",
+			func(cmd *exec.Cmd) error {
+				assert.Equal(t, []string{"keadm", "upgrade", "edge", "--force", "--toVersion", "1.21.0", "--image", "custom.com/kubeedge/installation-package"}, cmd.Args)
+				return nil
+			})
+		patches.ApplyMethod(reflect.TypeOf((*exec.Cmd)(nil)), "Wait",
+			func(cmd *exec.Cmd) error {
 				return nil
 			})
 

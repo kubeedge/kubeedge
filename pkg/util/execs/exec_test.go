@@ -165,6 +165,23 @@ func TestGetCommand(t *testing.T) {
 	}
 }
 
+func TestNewCommandDirect(t *testing.T) {
+	cmd := NewCommandDirect("echo", "hello", "world")
+	got := cmd.GetCommand()
+	want := "echo hello world"
+	if got != want {
+		t.Errorf("GetCommand() = %q, want %q", got, want)
+	}
+
+	err := cmd.Exec()
+	if err != nil {
+		t.Errorf("expected success, got %v", err)
+	}
+	if string(cmd.StdOut) != "hello world\n" {
+		t.Errorf("unexpected output: %q", string(cmd.StdOut))
+	}
+}
+
 // TestExec_ExitError_StderrNonEmpty covers the *exec.ExitError branch where
 // StdErr is non-empty and is used as the error message (not StdOut).
 func TestExec_ExitError_StderrNonEmpty(t *testing.T) {
