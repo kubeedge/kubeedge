@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -93,8 +92,8 @@ func NewIptablesManager(config *cloudcoreConfig.KubeAPIConfig, streamPort int) *
 	if kubeClient == nil {
 		kubeConfig, err := clientcmd.BuildConfigFromFlags(config.Master, config.KubeConfig)
 		if err != nil {
-			klog.Errorf("Failed to build config, err: %v", err)
-			os.Exit(1)
+			klog.Errorf("iptables unavailable, cloudcore will run without iptables-based tunnel port forwarding: %v", err)
+			return nil
 		}
 		kubeConfig.QPS = float32(config.QPS)
 		kubeConfig.Burst = int(config.Burst)

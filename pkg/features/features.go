@@ -37,6 +37,14 @@ const (
 	// DisableNodeTaskV1alpha2 disables the node task v1alpha2 feature, uses v1alpha1.
 	// TODO: After v1.23, this switch will be removed and only v1alpha2+ will be supported.
 	DisableNodeTaskV1alpha2 featuregate.Feature = "disableNodeTaskV1alpha2"
+
+	// EdgeTunnelIP enables the EdgeTunnelIP node address type on edge nodes.
+	// When enabled, CloudCore appends an EdgeTunnelIP address (set to the CloudCore advertise IP)
+	// to each edge node's status. Configuring kube-apiserver with
+	// --kubelet-preferred-address-types=EdgeTunnelIP,... routes API server → kubelet traffic
+	// through CloudStream without any iptables DNAT rules.
+	// alpha: v1.20
+	EdgeTunnelIP featuregate.Feature = "EdgeTunnelIP"
 )
 
 // defaultFeatureGates consists of all known Kubeedge-specific feature keys.
@@ -46,4 +54,5 @@ var defaultFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	RequireAuthorization:    {Default: false, PreRelease: featuregate.Alpha},
 	ModuleRestart:           {Default: false, PreRelease: featuregate.Alpha},
 	DisableNodeTaskV1alpha2: {Default: false, PreRelease: featuregate.Alpha},
+	EdgeTunnelIP:            {Default: false, PreRelease: featuregate.Alpha},
 }

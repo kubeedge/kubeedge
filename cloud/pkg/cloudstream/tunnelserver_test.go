@@ -34,22 +34,25 @@ import (
 
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	streamconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
+	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/stream"
 )
 
 const (
-	testNodeName   = "test-node"
-	testTunnelPort = 10350
+	testNodeName              = "test-node"
+	testTunnelPort            = 10350
+	testEdgeTunnelCloudCoreIP = "10.0.0.1"
 )
 
 func setupTest(_ *testing.T) (*TunnelServer, *fake.Clientset) {
 	fakeClient := fake.NewSimpleClientset()
-	ts := newTunnelServerWithClient(testTunnelPort, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*100)
+	ts := newTunnelServerWithClient(testTunnelPort, testEdgeTunnelCloudCoreIP, 0, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*100)
 	return ts, fakeClient
 }
 
 func TestInstallDefaultHandler(t *testing.T) {
-	ts := newTunnelServer(testTunnelPort)
+	ts := newTunnelServer(testTunnelPort, testEdgeTunnelCloudCoreIP, 0)
 	ts.installDefaultHandler()
 
 	foundHandler := false
@@ -65,7 +68,7 @@ func TestInstallDefaultHandler(t *testing.T) {
 
 func TestSessionManagement(t *testing.T) {
 	t.Run("AddAndGetSession", func(t *testing.T) {
-		ts := newTunnelServer(testTunnelPort)
+		ts := newTunnelServer(testTunnelPort, testEdgeTunnelCloudCoreIP, 0)
 		session := &Session{
 			sessionID: "test-session",
 		}
@@ -82,7 +85,7 @@ func TestSessionManagement(t *testing.T) {
 	})
 
 	t.Run("AddAndGetNodeIP", func(t *testing.T) {
-		ts := newTunnelServer(testTunnelPort)
+		ts := newTunnelServer(testTunnelPort, testEdgeTunnelCloudCoreIP, 0)
 
 		ts.addNodeIP("test-node", "192.168.1.1")
 
@@ -128,7 +131,7 @@ func TestUpdateNodeKubeletEndpoint(t *testing.T) {
 		)
 
 		tunnelPort := testTunnelPort
-		ts := newTunnelServerWithClient(tunnelPort, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+		ts := newTunnelServerWithClient(tunnelPort, testEdgeTunnelCloudCoreIP, 0, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
 
 		err := ts.updateNodeKubeletEndpoint(testNodeName)
 		assert.NoError(t, err)
@@ -138,7 +141,7 @@ func TestUpdateNodeKubeletEndpoint(t *testing.T) {
 		assert.Equal(t, int32(tunnelPort), node.Status.DaemonEndpoints.KubeletEndpoint.Port)
 	})
 	t.Run("NilKubeClient", func(t *testing.T) {
-		ts := newTunnelServerWithClient(testTunnelPort, nil, time.Millisecond*10, time.Millisecond*100)
+		ts := newTunnelServerWithClient(testTunnelPort, testEdgeTunnelCloudCoreIP, 0, nil, time.Millisecond*10, time.Millisecond*100)
 
 		err := ts.updateNodeKubeletEndpoint(testNodeName)
 
@@ -150,7 +153,7 @@ func TestUpdateNodeKubeletEndpoint(t *testing.T) {
 		fakeClient := fake.NewSimpleClientset()
 
 		tunnelPort := testTunnelPort
-		ts := newTunnelServerWithClient(tunnelPort, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*100)
+		ts := newTunnelServerWithClient(tunnelPort, testEdgeTunnelCloudCoreIP, 0, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*100)
 
 		err := ts.updateNodeKubeletEndpoint("non-existent-node")
 		assert.Error(t, err)
@@ -167,7 +170,7 @@ func TestUpdateNodeKubeletEndpoint(t *testing.T) {
 		}
 
 		tunnelPort := testTunnelPort
-		ts := newTunnelServerWithClient(tunnelPort, customClient, time.Millisecond*10, time.Millisecond*100)
+		ts := newTunnelServerWithClient(tunnelPort, testEdgeTunnelCloudCoreIP, 0, customClient, time.Millisecond*10, time.Millisecond*100)
 
 		err := ts.updateNodeKubeletEndpoint(nodeName)
 		assert.Error(t, err, "updateNodeKubeletEndpoint should return an error when update fails")
@@ -272,7 +275,7 @@ func TestConnect(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			fakeClient := tc.setupClient()
-			ts := newTunnelServerWithClient(testTunnelPort, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*100)
+			ts := newTunnelServerWithClient(testTunnelPort, "", 0, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*100)
 
 			req := httptest.NewRequest("GET", "/v1/kubeedge/connect", nil)
 			tc.setupRequest(req)
@@ -368,4 +371,290 @@ func TestTLSSetup(t *testing.T) {
 			assert.NotNil(t, ts.container, "Container should be initialized")
 		})
 	}
+}
+
+func TestUpdateNodeEdgeTunnelIP(t *testing.T) {
+	t.Run("NilKubeClient", func(t *testing.T) {
+		ts := newTunnelServerWithClient(testTunnelPort, testEdgeTunnelCloudCoreIP, 10003, nil, time.Millisecond*10, time.Millisecond*100)
+		err := ts.updateNodeEdgeTunnelIP(testNodeName)
+		assert.NoError(t, err)
+	})
+
+	t.Run("EmptyCloudCoreIP", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset()
+		ts := newTunnelServerWithClient(testTunnelPort, "", 10003, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*100)
+		err := ts.updateNodeEdgeTunnelIP(testNodeName)
+		assert.NoError(t, err)
+	})
+
+	t.Run("SuccessWithAnnotation", func(t *testing.T) {
+		annotationIP := "192.168.1.100"
+		fakeClient := fake.NewSimpleClientset(&corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        testNodeName,
+				Annotations: map[string]string{constants.EdgeMappingCloudKey: annotationIP},
+			},
+		})
+		ts := newTunnelServerWithClient(testTunnelPort, testEdgeTunnelCloudCoreIP, 10003, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		err := ts.updateNodeEdgeTunnelIP(testNodeName)
+		assert.NoError(t, err)
+
+		node, err := fakeClient.CoreV1().Nodes().Get(context.Background(), testNodeName, metav1.GetOptions{})
+		assert.NoError(t, err)
+
+		found := false
+		for _, addr := range node.Status.Addresses {
+			if addr.Type == constants.NodeEdgeTunnelIP {
+				assert.Equal(t, annotationIP, addr.Address, "EdgeTunnelIP should be annotation IP")
+				found = true
+			}
+		}
+		assert.True(t, found, "EdgeTunnelIP should be set")
+	})
+
+	t.Run("SuccessWithFallback", func(t *testing.T) {
+		cloudCoreIP := testEdgeTunnelCloudCoreIP
+		fakeClient := fake.NewSimpleClientset(&corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+		})
+		ts := newTunnelServerWithClient(testTunnelPort, cloudCoreIP, 10003, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		err := ts.updateNodeEdgeTunnelIP(testNodeName)
+		assert.NoError(t, err)
+
+		node, err := fakeClient.CoreV1().Nodes().Get(context.Background(), testNodeName, metav1.GetOptions{})
+		assert.NoError(t, err)
+
+		found := false
+		for _, addr := range node.Status.Addresses {
+			if addr.Type == constants.NodeEdgeTunnelIP {
+				assert.Equal(t, cloudCoreIP, addr.Address, "EdgeTunnelIP should fall back to cloudCoreIP")
+				found = true
+			}
+		}
+		assert.True(t, found, "EdgeTunnelIP should be set using cloudCoreIP fallback")
+	})
+
+	t.Run("AlreadyCorrect", func(t *testing.T) {
+		cloudCoreIP := testEdgeTunnelCloudCoreIP
+		fakeClient := fake.NewSimpleClientset(&corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+			Status: corev1.NodeStatus{
+				Addresses: []corev1.NodeAddress{
+					{Type: constants.NodeEdgeTunnelIP, Address: cloudCoreIP},
+				},
+			},
+		})
+		ts := newTunnelServerWithClient(testTunnelPort, cloudCoreIP, 10003, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		err := ts.updateNodeEdgeTunnelIP(testNodeName)
+		assert.NoError(t, err)
+	})
+
+	t.Run("NodeNotFound", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset()
+		ts := newTunnelServerWithClient(testTunnelPort, testEdgeTunnelCloudCoreIP, 10003, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*50)
+
+		err := ts.updateNodeEdgeTunnelIP("non-existent-node")
+		assert.Error(t, err)
+	})
+
+	t.Run("ReplacesExistingEdgeTunnelIP", func(t *testing.T) {
+		cloudCoreIP := "10.0.0.2"
+		fakeClient := fake.NewSimpleClientset(&corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+			Status: corev1.NodeStatus{
+				Addresses: []corev1.NodeAddress{
+					{Type: corev1.NodeInternalIP, Address: "192.168.1.5"},
+					{Type: constants.NodeEdgeTunnelIP, Address: testEdgeTunnelCloudCoreIP},
+				},
+			},
+		})
+		ts := newTunnelServerWithClient(testTunnelPort, cloudCoreIP, 10003, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		err := ts.updateNodeEdgeTunnelIP(testNodeName)
+		assert.NoError(t, err)
+
+		node, err := fakeClient.CoreV1().Nodes().Get(context.Background(), testNodeName, metav1.GetOptions{})
+		assert.NoError(t, err)
+
+		var edgeTunnelIPs []string
+		for _, addr := range node.Status.Addresses {
+			if addr.Type == constants.NodeEdgeTunnelIP {
+				edgeTunnelIPs = append(edgeTunnelIPs, addr.Address)
+			}
+		}
+		assert.Equal(t, 1, len(edgeTunnelIPs), "should have exactly one EdgeTunnelIP after update")
+		assert.Equal(t, cloudCoreIP, edgeTunnelIPs[0], "old EdgeTunnelIP must be replaced")
+	})
+}
+
+func TestRemoveNodeEdgeTunnelIP(t *testing.T) {
+	t.Run("NilKubeClient", func(t *testing.T) {
+		ts := newTunnelServerWithClient(testTunnelPort, testEdgeTunnelCloudCoreIP, 10003, nil, time.Millisecond*10, time.Millisecond*100)
+		ts.removeNodeEdgeTunnelIP(testNodeName) // must not panic
+	})
+
+	t.Run("RemovesEdgeTunnelIPOnly", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset(&corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+			Status: corev1.NodeStatus{
+				Addresses: []corev1.NodeAddress{
+					{Type: corev1.NodeInternalIP, Address: "192.168.1.5"},
+					{Type: corev1.NodeHostName, Address: testNodeName},
+					{Type: constants.NodeEdgeTunnelIP, Address: testEdgeTunnelCloudCoreIP},
+				},
+			},
+		})
+		ts := newTunnelServerWithClient(testTunnelPort, testEdgeTunnelCloudCoreIP, 10003, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		ts.removeNodeEdgeTunnelIP(testNodeName)
+
+		node, err := fakeClient.CoreV1().Nodes().Get(context.Background(), testNodeName, metav1.GetOptions{})
+		assert.NoError(t, err)
+		for _, addr := range node.Status.Addresses {
+			assert.NotEqual(t, constants.NodeEdgeTunnelIP, addr.Type, "EdgeTunnelIP must be removed")
+		}
+		assert.Equal(t, 2, len(node.Status.Addresses), "InternalIP and Hostname must remain")
+	})
+
+	t.Run("NoEdgeTunnelIPPresent", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset(&corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+			Status: corev1.NodeStatus{
+				Addresses: []corev1.NodeAddress{
+					{Type: corev1.NodeInternalIP, Address: "192.168.1.5"},
+				},
+			},
+		})
+		ts := newTunnelServerWithClient(testTunnelPort, testEdgeTunnelCloudCoreIP, 10003, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		ts.removeNodeEdgeTunnelIP(testNodeName)
+
+		node, err := fakeClient.CoreV1().Nodes().Get(context.Background(), testNodeName, metav1.GetOptions{})
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(node.Status.Addresses), "address list must be unchanged")
+	})
+
+	t.Run("NodeNotFound", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset()
+		ts := newTunnelServerWithClient(testTunnelPort, testEdgeTunnelCloudCoreIP, 10003, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+		ts.removeNodeEdgeTunnelIP("non-existent-node") // not-found is success; must not panic
+	})
+}
+
+func TestEdgeTunnelIPPreservation(t *testing.T) {
+	// Simulates the upstream.go heartbeat pattern:
+	// node has EdgeTunnelIP set, edgecore heartbeat overwrites status
+	// with only InternalIP+Hostname, preservation logic re-appends EdgeTunnelIP.
+	cloudCoreIP := testEdgeTunnelCloudCoreIP
+	realEdgeIP := "192.168.1.5"
+
+	originalAddresses := []corev1.NodeAddress{
+		{Type: corev1.NodeInternalIP, Address: realEdgeIP},
+		{Type: corev1.NodeHostName, Address: testNodeName},
+		{Type: constants.NodeEdgeTunnelIP, Address: cloudCoreIP},
+	}
+
+	// Step 1: collect EdgeTunnelIP before overwrite (as upstream.go does)
+	var edgeTunnelAddrs []corev1.NodeAddress
+	for _, addr := range originalAddresses {
+		if addr.Type == constants.NodeEdgeTunnelIP {
+			edgeTunnelAddrs = append(edgeTunnelAddrs, addr)
+		}
+	}
+
+	// Step 2: edgecore heartbeat overwrites status — only InternalIP and Hostname
+	heartbeatAddresses := []corev1.NodeAddress{
+		{Type: corev1.NodeInternalIP, Address: realEdgeIP},
+		{Type: corev1.NodeHostName, Address: testNodeName},
+	}
+
+	// Step 3: preservation logic re-appends EdgeTunnelIP (as upstream.go does)
+	result := heartbeatAddresses
+	if len(edgeTunnelAddrs) > 0 {
+		result = append(result, edgeTunnelAddrs...)
+	}
+
+	var foundEdgeTunnel bool
+	var internalIP string
+	for _, addr := range result {
+		switch addr.Type {
+		case constants.NodeEdgeTunnelIP:
+			assert.Equal(t, cloudCoreIP, addr.Address, "preserved EdgeTunnelIP must equal cloudCoreIP")
+			foundEdgeTunnel = true
+		case corev1.NodeInternalIP:
+			internalIP = addr.Address
+		}
+	}
+	assert.True(t, foundEdgeTunnel, "EdgeTunnelIP must survive the heartbeat overwrite")
+	assert.Equal(t, realEdgeIP, internalIP, "InternalIP must remain the real edge IP after overwrite")
+}
+
+func TestFeatureGateDisabled(t *testing.T) {
+	// When feature gate is off, connect() only calls updateNodeKubeletEndpoint
+	// (with tunnelPort), never updateNodeEdgeTunnelIP, so no EdgeTunnelIP appears.
+	cloudCoreIP := testEdgeTunnelCloudCoreIP
+	fakeClient := fake.NewSimpleClientset(&corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+		Status: corev1.NodeStatus{
+			Addresses: []corev1.NodeAddress{
+				{Type: corev1.NodeInternalIP, Address: "192.168.1.5"},
+			},
+		},
+	})
+	ts := newTunnelServerWithClient(testTunnelPort, cloudCoreIP, 10003, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+	// Feature gate is disabled (default false) — only updateNodeKubeletEndpoint is called
+	err := ts.updateNodeKubeletEndpoint(testNodeName)
+	assert.NoError(t, err)
+
+	node, err := fakeClient.CoreV1().Nodes().Get(context.Background(), testNodeName, metav1.GetOptions{})
+	assert.NoError(t, err)
+
+	for _, addr := range node.Status.Addresses {
+		assert.NotEqual(t, constants.NodeEdgeTunnelIP, addr.Type, "no EdgeTunnelIP when feature gate is off")
+	}
+	assert.Equal(t, int32(testTunnelPort), node.Status.DaemonEndpoints.KubeletEndpoint.Port,
+		"port must be tunnelPort when EdgeTunnelIP feature gate is disabled")
+}
+
+func TestUpdateNodeKubeletEndpoint_EdgeTunnelIPEnabled(t *testing.T) {
+	streamPort := 10003
+
+	t.Run("EdgeTunnelIPEnabled_UsesStreamPort", func(t *testing.T) {
+		if err := features.DefaultMutableFeatureGate.Set("EdgeTunnelIP=true"); err != nil {
+			t.Fatalf("failed to enable EdgeTunnelIP feature gate: %v", err)
+		}
+		defer func() { _ = features.DefaultMutableFeatureGate.Set("EdgeTunnelIP=false") }()
+
+		fakeClient := fake.NewSimpleClientset(&corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+		})
+		ts := newTunnelServerWithClient(testTunnelPort, testEdgeTunnelCloudCoreIP, streamPort, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		err := ts.updateNodeKubeletEndpoint(testNodeName)
+		assert.NoError(t, err)
+
+		node, err := fakeClient.CoreV1().Nodes().Get(context.Background(), testNodeName, metav1.GetOptions{})
+		assert.NoError(t, err)
+		assert.Equal(t, int32(streamPort), node.Status.DaemonEndpoints.KubeletEndpoint.Port,
+			"when EdgeTunnelIP is enabled, port must be streamPort (10003)")
+	})
+
+	t.Run("EdgeTunnelIPDisabled_UsesTunnelPort", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset(&corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+		})
+		ts := newTunnelServerWithClient(testTunnelPort, testEdgeTunnelCloudCoreIP, streamPort, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*300)
+
+		err := ts.updateNodeKubeletEndpoint(testNodeName)
+		assert.NoError(t, err)
+
+		node, err := fakeClient.CoreV1().Nodes().Get(context.Background(), testNodeName, metav1.GetOptions{})
+		assert.NoError(t, err)
+		assert.Equal(t, int32(testTunnelPort), node.Status.DaemonEndpoints.KubeletEndpoint.Port,
+			"when EdgeTunnelIP is disabled, port must be tunnelPort")
+	})
 }

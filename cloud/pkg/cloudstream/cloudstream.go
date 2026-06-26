@@ -20,6 +20,7 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
+	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 )
@@ -55,7 +56,12 @@ func (s *cloudStream) Start() {
 	// TODO: Will improve in the future
 	ok := <-cloudhub.DoneTLSTunnelCerts
 	if ok {
-		ts := newTunnelServer(s.tunnelPort)
+		cloudCoreIP := ""
+		if len(hubconfig.Config.AdvertiseAddress) > 0 {
+			cloudCoreIP = hubconfig.Config.AdvertiseAddress[0]
+		}
+		streamPort := int(config.Config.StreamPort)
+		ts := newTunnelServer(s.tunnelPort, cloudCoreIP, streamPort)
 
 		// start new tunnel server
 		go ts.Start()
