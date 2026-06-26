@@ -64,10 +64,9 @@ func TestInitRegistersAllFeatures(t *testing.T) {
 		DisableNodeTaskV1alpha2,
 	}
 	for _, f := range features {
-		if !DefaultMutableFeatureGate.Enabled(f) && DefaultMutableFeatureGate.Enabled(f) {
-			t.Errorf("feature %v not accessible via gate", f)
+		if DefaultMutableFeatureGate.Enabled(f) {
+			t.Errorf("feature %v should be disabled by default", f)
 		}
-		// Just accessing via Enabled confirms it is registered (panics if not)
 		_ = DefaultFeatureGate.Enabled(f)
 	}
 }
