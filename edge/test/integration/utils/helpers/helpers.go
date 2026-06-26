@@ -247,20 +247,29 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 		return false
 	}
 
-	req, err := http.NewRequest(httpMethod, testMgrEndPoint, bytes.NewBuffer(respbytes))
-	if err != nil {
-		// handle error
-		common.Fatalf("Frame HTTP request failed: %v", err)
-		return false
-	}
-
 	client := &http.Client{}
-	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	t := time.Now()
-	resp, err := client.Do(req)
 
+	const maxAttempts = 3
+	var req *http.Request
+	var resp *http.Response
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		if attempt > 0 {
+			time.Sleep(100 * time.Millisecond)
+		}
+		var reqErr error
+		req, reqErr = http.NewRequest(httpMethod, testMgrEndPoint, bytes.NewBuffer(respbytes))
+		if reqErr != nil {
+			common.Fatalf("Frame HTTP request failed: %v", reqErr)
+			return false
+		}
+		req.Header.Set("Content-Type", "application/json; charset=utf-8")
+		resp, err = client.Do(req)
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
-		// handle error
 		common.Fatalf("HTTP request is failed :%v", err)
 		return false
 	}

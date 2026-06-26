@@ -41,7 +41,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	apimachineryType "k8s.io/apimachinery/pkg/types"
 	patchtypes "k8s.io/apimachinery/pkg/types"
 	k8sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -1027,7 +1026,7 @@ func (uc *UpstreamController) patchNode() {
 				continue
 			}
 
-			node, err := uc.kubeClient.CoreV1().Nodes().Patch(utilcontext.FromMessage(context.TODO(), msg), name, apimachineryType.StrategicMergePatchType, patchBytes, metaV1.PatchOptions{}, "status")
+			node, err := uc.kubeClient.CoreV1().Nodes().Patch(utilcontext.FromMessage(context.TODO(), msg), name, patchtypes.StrategicMergePatchType, patchBytes, metaV1.PatchOptions{}, "status")
 			if err != nil {
 				klog.Errorf("message: %s process failure, patch node failed with error: %v, namespace: %s, name: %s", msg.GetID(), err, namespace, name)
 			}
@@ -1153,7 +1152,7 @@ func (uc *UpstreamController) updateNode() {
 					klog.Warningf("marshal node data failed with err: %s", err)
 					continue
 				}
-				node, err := uc.kubeClient.CoreV1().Nodes().Patch(utilcontext.FromMessage(context.Background(), msg), getNode.Name, apimachineryType.StrategicMergePatchType, byteNode, metaV1.PatchOptions{})
+				node, err := uc.kubeClient.CoreV1().Nodes().Patch(utilcontext.FromMessage(context.Background(), msg), getNode.Name, patchtypes.StrategicMergePatchType, byteNode, metaV1.PatchOptions{})
 				if err != nil {
 					klog.Warningf("message: %s process failure, update node failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getNode.Namespace, getNode.Name)
 					continue
@@ -1215,7 +1214,7 @@ func (uc *UpstreamController) patchPod() {
 				continue
 			}
 
-			updatedPod, err := uc.kubeClient.CoreV1().Pods(namespace).Patch(utilcontext.FromMessage(context.TODO(), msg), name, apimachineryType.StrategicMergePatchType, patchBytes, metaV1.PatchOptions{}, "status")
+			updatedPod, err := uc.kubeClient.CoreV1().Pods(namespace).Patch(utilcontext.FromMessage(context.TODO(), msg), name, patchtypes.StrategicMergePatchType, patchBytes, metaV1.PatchOptions{}, "status")
 			if err != nil {
 				klog.Errorf("message: %s process failure, patch pod failed with error: %v, namespace: %s, name: %s", msg.GetID(), err, namespace, name)
 			}
