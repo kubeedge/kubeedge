@@ -293,3 +293,11 @@ func TestParseKey(t *testing.T) {
 		})
 	}
 }
+
+func TestKeyRootFuncNopanic(t *testing.T) {
+	// empty context has no request info, must return "" not panic
+	result := KeyRootFunc(context.TODO())
+	if result != "" {
+		t.Errorf("expected empty string, got %v", result)
+	}
+}
