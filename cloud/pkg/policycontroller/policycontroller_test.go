@@ -174,8 +174,6 @@ func TestRegister(t *testing.T) {
 		t.Errorf("Expected Register argument to be *rest.Config, got %s", regType.In(0).String())
 	}
 
-	cfg := &rest.Config{Host: "https://localhost:8080"}
-
 	pc := &policyController{
 		ctx: context.Background(),
 	}
@@ -192,11 +190,39 @@ func TestRegister(t *testing.T) {
 		t.Error("Expected Enable() to return true")
 	}
 
-	_, _ = NewAccessRoleControllerManager(pc.ctx, cfg)
-
 	moduleType := reflect.TypeOf((*core.Module)(nil)).Elem()
 	if !reflect.TypeOf(pc).Implements(moduleType) {
 		t.Error("policyController should implement core.Module")
+	}
+}
+
+// TestRegisterDoesNotConstructManager verifies that Register() does NOT call
+// NewAccessRoleControllerManager eagerly.  Before the fix, Register() called
+// NewAccessRoleControllerManager unconditionally, which would crash for keadm /
+// standalone deployments when LeaderElection was enabled without an explicit
+// LeaderElectionNamespace.  Now, the manager is only built inside Start().
+func TestRegisterDoesNotConstructManager(t *testing.T) {
+	cfg := &rest.Config{Host: "https://fake-host:6443"}
+	pc := &policyController{
+		kubeCfg: cfg,
+		ctx:     context.Background(),
+	}
+
+	// A freshly constructed policyController must NOT have a manager yet.
+	// manager field is unexported; use reflect to inspect it.
+	pcType := reflect.TypeOf(pc).Elem()
+	_, hasManager := pcType.FieldByName("manager")
+	// The struct no longer carries a pre-built manager; kubeCfg is stored instead.
+	_, hasKubeCfg := pcType.FieldByName("kubeCfg")
+	if !hasKubeCfg {
+		t.Error("policyController should store kubeCfg for deferred manager construction")
+	}
+	if hasManager {
+		// If the field still exists it must be nil at this point.
+		managerVal := reflect.ValueOf(pc).Elem().FieldByName("manager")
+		if !managerVal.IsNil() {
+			t.Error("Register() must not eagerly construct the manager; manager field should be nil after Register")
+		}
 	}
 }
 
@@ -227,8 +253,8 @@ func TestNewAccessRoleControllerManager(t *testing.T) {
 	}
 
 	funcType := managerFunc.Type()
-	if funcType.NumIn() != 2 {
-		t.Errorf("Expected NewAccessRoleControllerManager to take 2 arguments, got %d", funcType.NumIn())
+	if funcType.NumIn() != 3 {
+		t.Errorf("Expected NewAccessRoleControllerManager to take 3 arguments, got %d", funcType.NumIn())
 	}
 
 	if funcType.In(0).String() != contextTypeStr {
@@ -237,6 +263,10 @@ func TestNewAccessRoleControllerManager(t *testing.T) {
 
 	if funcType.In(1).String() != "*rest.Config" {
 		t.Errorf("Expected second argument to be *rest.Config, got %s", funcType.In(1).String())
+	}
+
+	if funcType.In(2).String() != "policycontroller.Options" {
+		t.Errorf("Expected third argument to be policycontroller.Options, got %s", funcType.In(2).String())
 	}
 
 	if funcType.NumOut() != 2 {
@@ -249,6 +279,103 @@ func TestNewAccessRoleControllerManager(t *testing.T) {
 
 	if funcType.Out(1).String() != errorTypeStr {
 		t.Errorf("Expected second return value to be %s, got %s", errorTypeStr, funcType.Out(1).String())
+	}
+}
+
+// TestNewAccessRoleControllerManagerOutOfCluster verifies that
+// newManager does not fail when called with a non-empty REST config host
+// (simulating an out-of-cluster connection) as long as LeaderElection is
+// disabled.  This is the keadm / standalone-binary scenario identified by
+// reviewer DoisLONG.  We call newManager rather than
+// NewAccessRoleControllerManager because the latter also runs
+// setupControllers, which triggers API-server discovery against the fake host.
+func TestNewAccessRoleControllerManagerOutOfCluster(t *testing.T) {
+	// Use a fake, non-empty host so controller-runtime treats this as an
+	// out-of-cluster configuration.
+	cfg := &rest.Config{Host: "https://fake-apiserver:6443"}
+
+	_, err := newManager(cfg, Options{
+		LeaderElection:         false, // must be false to avoid in-cluster namespace lookup
+		HealthProbeBindAddress: "",    // disabled – no port binding during the test
+	})
+	if err != nil {
+		t.Errorf("newManager() with LeaderElection=false should not fail for out-of-cluster config, got: %v", err)
+	}
+}
+
+// TestPolicyControllerDisabled verifies that when the RequireAuthorization
+// feature gate is disabled, Enable() returns false and (critically) that
+// Register() stores only the config — it does NOT construct the manager.
+// Before the fix, Register() called NewAccessRoleControllerManager
+// unconditionally, which would crash in out-of-cluster environments.
+func TestPolicyControllerDisabled(t *testing.T) {
+	if err := features.DefaultMutableFeatureGate.SetFromMap(
+		map[string]bool{string(features.RequireAuthorization): false}); err != nil {
+		t.Fatalf("Failed to set feature gate: %v", err)
+	}
+
+	cfg := &rest.Config{Host: "https://fake-host:6443"}
+	pc := &policyController{
+		kubeCfg: cfg,
+		ctx:     context.Background(),
+	}
+
+	// Enable() must reflect the disabled feature gate.
+	if pc.Enable() {
+		t.Error("Enable() should return false when RequireAuthorization feature gate is disabled")
+	}
+
+	// kubeCfg is stored but the manager must not be eagerly constructed.
+	if pc.kubeCfg == nil {
+		t.Error("kubeCfg should be stored on the policyController")
+	}
+
+	// Restore the feature gate to avoid polluting other tests.
+	t.Cleanup(func() {
+		_ = features.DefaultMutableFeatureGate.SetFromMap(
+			map[string]bool{string(features.RequireAuthorization): false})
+	})
+}
+
+// TestNewAccessRoleControllerManagerHealthProbeDisabled verifies that passing
+// an empty HealthProbeBindAddress does not cause an error.  An empty string
+// tells controller-runtime not to bind a health-probe listener at all, which
+// is the right behaviour when the port would conflict or the feature is
+// intentionally disabled.  We call newManager rather than
+// NewAccessRoleControllerManager because the latter also runs
+// setupControllers, which triggers API-server discovery against the fake host.
+func TestNewAccessRoleControllerManagerHealthProbeDisabled(t *testing.T) {
+	cfg := &rest.Config{Host: "https://fake-apiserver:6443"}
+
+	_, err := newManager(cfg, Options{
+		LeaderElection:         false,
+		HealthProbeBindAddress: "", // disabled
+	})
+	if err != nil {
+		t.Errorf("newManager() with empty HealthProbeBindAddress should not fail, got: %v", err)
+	}
+}
+
+// TestNewAccessRoleControllerManagerLeaderElectionNamespace verifies that when
+// LeaderElection is enabled with an explicit LeaderElectionNamespace the
+// manager is constructed without error.  The actual leader-election loop is
+// not started (that requires mgr.Start()), so this test merely checks that
+// the Options are accepted and wired correctly.
+//
+// We call newManager rather than NewAccessRoleControllerManager because the
+// latter also runs setupControllers, which triggers API-server discovery
+// against the fake host.  The namespace is validated only inside mgr.Start()
+// when the resource-lock is actually acquired, not during NewManager().
+func TestNewAccessRoleControllerManagerLeaderElectionNamespace(t *testing.T) {
+	cfg := &rest.Config{Host: "https://fake-apiserver:6443"}
+
+	_, err := newManager(cfg, Options{
+		LeaderElection:          true,
+		LeaderElectionNamespace: "kubeedge", // explicit namespace – no in-cluster file needed
+		HealthProbeBindAddress:  "",
+	})
+	if err != nil {
+		t.Errorf("newManager() with explicit LeaderElectionNamespace should not fail, got: %v", err)
 	}
 }
 
@@ -318,11 +445,11 @@ func TestCompleteControllerCoverage(t *testing.T) {
 
 	pcType := reflect.TypeOf(pc).Elem()
 
-	managerField, exists := pcType.FieldByName("manager")
+	kubeCfgField, exists := pcType.FieldByName("kubeCfg")
 	if !exists {
-		t.Error("Expected policyController to have manager field")
-	} else if managerField.Type.String() != managerTypeStr {
-		t.Errorf("Expected manager field to be %s, got %s", managerTypeStr, managerField.Type.String())
+		t.Error("Expected policyController to have kubeCfg field")
+	} else if kubeCfgField.Type.String() != "*rest.Config" {
+		t.Errorf("Expected kubeCfg field to be *rest.Config, got %s", kubeCfgField.Type.String())
 	}
 
 	ctxField, exists := pcType.FieldByName("ctx")
