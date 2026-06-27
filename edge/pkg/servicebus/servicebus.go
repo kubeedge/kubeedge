@@ -2,10 +2,13 @@ package servicebus
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -18,6 +21,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 	commonType "github.com/kubeedge/kubeedge/common/types"
+	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
@@ -232,11 +236,38 @@ func server(stopChan <-chan struct{}) {
 	}
 
 	h := buildBasicHandler(timeout)
-	// TODO we should add tls for servicebus http server later
 	s := http.Server{
 		Addr:    fmt.Sprintf("%s:%d", servicebusConfig.Config.Server, servicebusConfig.Config.Port),
 		Handler: h,
 	}
+
+	// Reuse the EdgeCore certificate/key pair that CertManager already manages.
+	// Reading directly from the EdgeHub config avoids duplicating cert path config.
+	eh := options.GetEdgeCoreConfig().Modules.EdgeHub
+	certFile := eh.TLSCertFile
+	keyFile := eh.TLSPrivateKeyFile
+	if certFile != "" && keyFile != "" {
+		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+		if err != nil {
+			klog.Fatalf("[servicebus] failed to load TLS key pair: %v", err)
+		}
+		tlsCfg := &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			MinVersion:   tls.VersionTLS12,
+		}
+		if caFile := eh.TLSCAFile; caFile != "" {
+			caCert, err := os.ReadFile(caFile)
+			if err != nil {
+				klog.Warningf("[servicebus] failed to read CA file %s, skipping client CA: %v", caFile, err)
+			} else {
+				caPool := x509.NewCertPool()
+				caPool.AppendCertsFromPEM(caCert)
+				tlsCfg.ClientCAs = caPool
+			}
+		}
+		s.TLSConfig = tlsCfg
+	}
+
 	go func() {
 		<-stopChan
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -247,8 +278,14 @@ func server(stopChan <-chan struct{}) {
 		atomic.StoreInt32(&inited, 0)
 	}()
 
-	klog.Infof("[servicebus]start to listen and server at %v", s.Addr)
-	utilruntime.HandleError(s.ListenAndServe())
+	if s.TLSConfig != nil {
+		klog.Infof("[servicebus] starting HTTPS server at %v", s.Addr)
+		// cert and key are already loaded into TLSConfig; pass empty strings.
+		utilruntime.HandleError(s.ListenAndServeTLS("", ""))
+	} else {
+		klog.Infof("[servicebus] starting HTTP server at %v (no TLS configured)", s.Addr)
+		utilruntime.HandleError(s.ListenAndServe())
+	}
 }
 
 func buildBasicHandler(timeout time.Duration) http.Handler {
