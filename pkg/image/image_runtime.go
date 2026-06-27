@@ -87,6 +87,9 @@ func (runtime *RuntimeImpl) GetImageDigest(ctx context.Context, image string) (s
 		if tag == image {
 			repoDigest := resp.Image.RepoDigests[i]
 			digestIndex := strings.LastIndex(repoDigest, "@sha256:")
+			if digestIndex == -1 {
+				return "", fmt.Errorf("invalid digest format for image %s: %s", image, repoDigest)
+			}
 			return repoDigest[digestIndex+1:], nil
 		}
 	}
