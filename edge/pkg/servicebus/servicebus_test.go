@@ -63,6 +63,9 @@ func TestMarshalResult(t *testing.T) {
 			if roundtrip.Msg != tt.input.Msg {
 				t.Errorf("Msg mismatch: got %q, want %q", roundtrip.Msg, tt.input.Msg)
 			}
+			if roundtrip.Body != tt.input.Body {
+				t.Errorf("Body mismatch: got %q, want %q", roundtrip.Body, tt.input.Body)
+			}
 		})
 	}
 }
