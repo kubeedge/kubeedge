@@ -108,6 +108,9 @@ func buildAuth() *metaServerAuth {
 	// Create a custom authenticator that ignores errors for discovery paths
 	// so they can fall back to the anonymous authenticator instead of failing immediately.
 	discoverySafeAuthenticator := authenticator.RequestFunc(func(req *http.Request) (*authenticator.Response, bool, error) {
+		if req == nil || req.URL == nil {
+			return nil, false, nil
+		}
 		resp, ok, err := bearerTokenAuthenticator.AuthenticateRequest(req)
 		if err != nil && passthrough.IsPassThroughPath(req.URL.Path, strings.ToLower(req.Method)) {
 			return nil, false, nil
