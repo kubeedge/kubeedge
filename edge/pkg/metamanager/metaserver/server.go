@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -104,10 +105,20 @@ func buildAuth() *metaServerAuth {
 		auth.NewValidator(client.NewGetterFromClient(kubeclientbridge.NewSimpleClientset(client.New()))))
 	bearerTokenAuthenticator := bearertoken.New(tokenAuthenticator)
 
+	// Create a custom authenticator that ignores errors for discovery paths
+	// so they can fall back to the anonymous authenticator instead of failing immediately.
+	discoverySafeAuthenticator := authenticator.RequestFunc(func(req *http.Request) (*authenticator.Response, bool, error) {
+		resp, ok, err := bearerTokenAuthenticator.AuthenticateRequest(req)
+		if err != nil && passthrough.IsPassThroughPath(req.URL.Path, strings.ToLower(req.Method)) {
+			return nil, false, nil
+		}
+		return resp, ok, err
+	})
+
 	// Use union authenticator with anonymous fallback for discovery paths
 	// This follows Kubernetes API Server's standard approach for anonymous access
 	anonymousAuthenticator := anonymous.NewAuthenticator(nil)
-	newAuthenticator := authnunion.NewFailOnError(bearerTokenAuthenticator, anonymousAuthenticator)
+	newAuthenticator := authnunion.NewFailOnError(discoverySafeAuthenticator, anonymousAuthenticator)
 
 	// Use union authorizer with discovery paths allowed first, then RBAC
 	discoveryAuthorizer := &AlwaysAllowDiscoveryAuthorizer{}
