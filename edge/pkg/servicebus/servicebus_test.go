@@ -35,8 +35,6 @@ import (
 
 // TestNewServicebus tests the constructor for servicebus.
 func TestNewServicebus(t *testing.T) {
-	assert := assert.New(t)
-
 	tests := []struct {
 		name    string
 		enable  bool
@@ -69,6 +67,7 @@ func TestNewServicebus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
 			sb := newServicebus(tt.enable, tt.server, tt.port, tt.timeout)
 			assert.NotNil(sb, "newServicebus() should not return nil")
 			assert.Equal(tt.enable, sb.enable, "servicebus.enable = %v, want %v", sb.enable, tt.enable)
@@ -81,8 +80,6 @@ func TestNewServicebus(t *testing.T) {
 }
 
 func TestName(t *testing.T) {
-	assert := assert.New(t)
-
 	tests := []struct {
 		name string
 		want string
@@ -94,6 +91,7 @@ func TestName(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
 			sb := &servicebus{}
 			assert.Equal(tt.want, sb.Name(), "servicebus.Name() = %v, want %v", sb.Name(), tt.want)
 		})
@@ -102,8 +100,6 @@ func TestName(t *testing.T) {
 
 // TestGroup tests the Group() method of servicebus.
 func TestGroup(t *testing.T) {
-	assert := assert.New(t)
-
 	tests := []struct {
 		name string
 		want string
@@ -115,6 +111,7 @@ func TestGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
 			sb := &servicebus{}
 			assert.Equal(tt.want, sb.Group(), "servicebus.Group() = %v, want %v", sb.Group(), tt.want)
 		})
@@ -150,7 +147,11 @@ func TestEnable(t *testing.T) {
 
 // TestRestartPolicy tests the RestartPolicy() method with feature gate toggling.
 func TestRestartPolicy(t *testing.T) {
-	assert := assert.New(t)
+	originalState := features.DefaultFeatureGate.Enabled(features.ModuleRestart)
+	t.Cleanup(func() {
+		_ = features.DefaultMutableFeatureGate.SetFromMap(
+			map[string]bool{string(features.ModuleRestart): originalState})
+	})
 
 	tests := []struct {
 		name           string
@@ -171,6 +172,7 @@ func TestRestartPolicy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
 			err := features.DefaultMutableFeatureGate.SetFromMap(
 				map[string]bool{string(features.ModuleRestart): tt.featureEnabled})
 			assert.NoError(err, "Failed to set feature gate")
@@ -190,15 +192,10 @@ func TestRestartPolicy(t *testing.T) {
 				"IntervalTimeGrowthRate = %v, want 2.0", got.IntervalTimeGrowthRate)
 		})
 	}
-
-	_ = features.DefaultMutableFeatureGate.SetFromMap(
-		map[string]bool{string(features.ModuleRestart): false})
 }
 
 // TestBuildErrorResponse tests the buildErrorResponse helper with various status codes and messages.
 func TestBuildErrorResponse(t *testing.T) {
-	assert := assert.New(t)
-
 	tests := []struct {
 		name       string
 		parentID   string
@@ -239,6 +236,7 @@ func TestBuildErrorResponse(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
 			msg, err := buildErrorResponse(tt.parentID, tt.content, tt.statusCode)
 			assert.NoError(err, "buildErrorResponse() returned unexpected error")
 
@@ -266,8 +264,6 @@ func TestBuildErrorResponse(t *testing.T) {
 
 // TestMarshalResult tests the marshalResult helper for JSON serialization.
 func TestMarshalResult(t *testing.T) {
-	assert := assert.New(t)
-
 	tests := []struct {
 		name string
 		resp *serverResponse
@@ -304,6 +300,7 @@ func TestMarshalResult(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			assert := assert.New(t)
 			result := marshalResult(tt.resp)
 			assert.NotNil(result, "marshalResult should not return nil")
 
