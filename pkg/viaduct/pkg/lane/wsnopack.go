@@ -31,10 +31,10 @@ func (l *WSLaneWithoutPack) Read(p []byte) (int, error) {
 		if !errors.Is(err, io.EOF) {
 			klog.Errorf("read message error(%+v)", err)
 		}
-		return len(msgData), err
+		return 0, err
 	}
-	p = append(p[:0], msgData...)
-	return len(msgData), err
+	n := copy(p, msgData)
+	return n, nil
 }
 
 func (l *WSLaneWithoutPack) ReadMessage(msg *model.Message) error {
