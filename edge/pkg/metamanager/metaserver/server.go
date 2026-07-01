@@ -84,6 +84,21 @@ func (a *AlwaysAllowDiscoveryAuthorizer) Authorize(ctx context.Context, attrs au
 	return authorizer.DecisionNoOpinion, "", nil
 }
 
+// NewDiscoverySafeAuthenticator creates a custom authenticator that ignores errors for discovery paths
+// so they can fall back to the anonymous authenticator instead of failing immediately.
+func NewDiscoverySafeAuthenticator(delegate authenticator.Request) authenticator.Request {
+	return authenticator.RequestFunc(func(req *http.Request) (*authenticator.Response, bool, error) {
+		if req == nil || req.URL == nil {
+			return nil, false, nil
+		}
+		resp, ok, err := delegate.AuthenticateRequest(req)
+		if err != nil && passthrough.IsPassThroughPath(req.URL.Path, strings.ToLower(req.Method)) {
+			return nil, false, nil
+		}
+		return resp, ok, err
+	})
+}
+
 func buildAuth() *metaServerAuth {
 	newAuthorizer := rbac.New(
 		&client.RoleGetter{},
@@ -105,18 +120,7 @@ func buildAuth() *metaServerAuth {
 		auth.NewValidator(client.NewGetterFromClient(kubeclientbridge.NewSimpleClientset(client.New()))))
 	bearerTokenAuthenticator := bearertoken.New(tokenAuthenticator)
 
-	// Create a custom authenticator that ignores errors for discovery paths
-	// so they can fall back to the anonymous authenticator instead of failing immediately.
-	discoverySafeAuthenticator := authenticator.RequestFunc(func(req *http.Request) (*authenticator.Response, bool, error) {
-		if req == nil || req.URL == nil {
-			return nil, false, nil
-		}
-		resp, ok, err := bearerTokenAuthenticator.AuthenticateRequest(req)
-		if err != nil && passthrough.IsPassThroughPath(req.URL.Path, strings.ToLower(req.Method)) {
-			return nil, false, nil
-		}
-		return resp, ok, err
-	})
+	discoverySafeAuthenticator := NewDiscoverySafeAuthenticator(bearerTokenAuthenticator)
 
 	// Use union authenticator with anonymous fallback for discovery paths
 	// This follows Kubernetes API Server's standard approach for anonymous access
