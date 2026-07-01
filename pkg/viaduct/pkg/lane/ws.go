@@ -17,6 +17,7 @@ type WSLane struct {
 	writeDeadline time.Time
 	readDeadline  time.Time
 	conn          *websocket.Conn
+	buf           []byte // Buffer to store unread message data
 }
 
 func NewWSLane(van interface{}) *WSLane {
@@ -28,14 +29,19 @@ func NewWSLane(van interface{}) *WSLane {
 }
 
 func (l *WSLane) Read(p []byte) (int, error) {
-	_, msgData, err := l.conn.ReadMessage()
-	if err != nil {
-		if !errors.Is(err, io.EOF) {
-			klog.Errorf("read message error(%+v)", err)
+	if len(l.buf) == 0 {
+		_, msgData, err := l.conn.ReadMessage()
+		if err != nil {
+			if !errors.Is(err, io.EOF) {
+				klog.Errorf("read message error(%+v)", err)
+			}
+			return 0, err
 		}
-		return 0, err
+		l.buf = msgData
 	}
-	n := copy(p, msgData)
+
+	n := copy(p, l.buf)
+	l.buf = l.buf[n:]
 	return n, nil
 }
 
