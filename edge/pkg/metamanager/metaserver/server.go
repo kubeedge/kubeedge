@@ -84,9 +84,9 @@ func (a *AlwaysAllowDiscoveryAuthorizer) Authorize(ctx context.Context, attrs au
 	return authorizer.DecisionNoOpinion, "", nil
 }
 
-// NewDiscoverySafeAuthenticator creates a custom authenticator that ignores errors for discovery paths
+// newDiscoverySafeAuthenticator creates a custom authenticator that ignores errors for discovery paths
 // so they can fall back to the anonymous authenticator instead of failing immediately.
-func NewDiscoverySafeAuthenticator(delegate authenticator.Request) authenticator.Request {
+func newDiscoverySafeAuthenticator(delegate authenticator.Request) authenticator.Request {
 	return authenticator.RequestFunc(func(req *http.Request) (*authenticator.Response, bool, error) {
 		if req == nil || req.URL == nil {
 			return nil, false, nil
@@ -120,7 +120,7 @@ func buildAuth() *metaServerAuth {
 		auth.NewValidator(client.NewGetterFromClient(kubeclientbridge.NewSimpleClientset(client.New()))))
 	bearerTokenAuthenticator := bearertoken.New(tokenAuthenticator)
 
-	discoverySafeAuthenticator := NewDiscoverySafeAuthenticator(bearerTokenAuthenticator)
+	discoverySafeAuthenticator := newDiscoverySafeAuthenticator(bearerTokenAuthenticator)
 
 	// Use union authenticator with anonymous fallback for discovery paths
 	// This follows Kubernetes API Server's standard approach for anonymous access
