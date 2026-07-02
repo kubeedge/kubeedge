@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
@@ -358,6 +359,105 @@ func TestEnqueueAckMessage(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			executeTest(t, test)
 		})
+	}
+}
+
+func TestEnqueueAckMessageInitializesExistingObjectSyncAfterCreateRace(t *testing.T) {
+	client := fake.NewSimpleClientset()
+	nmp := common.InitNodeMessagePool(tf.TestNodeID)
+	manager := session.NewSessionManager(10)
+	manager.AddSession(session.NewNodeSession(tf.TestNodeID, tf.TestProjectID, nil, tf.KeepaliveInterval, nmp, client))
+
+	msg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "3"), "update")
+	existingObjectSync := tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, ""), "Pod")
+	existingObjectSync.Status.ObjectResourceVersion = ""
+	if _, err := client.ReliablesyncsV1alpha1().ObjectSyncs(tf.TestNamespace).Create(
+		t.Context(), existingObjectSync, metav1.CreateOptions{}); err != nil {
+		t.Fatalf("failed to seed objectSync: %v", err)
+	}
+
+	objectSyncLister := synclisters.NewObjectSyncLister(cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{}))
+	clusterObjectSyncLister := synclisters.NewClusterObjectSyncLister(cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{}))
+	dispatcher := &messageDispatcher{
+		reliableClient:          client,
+		SessionManager:          manager,
+		objectSyncLister:        objectSyncLister,
+		clusterObjectSyncLister: clusterObjectSyncLister,
+	}
+	dispatcher.AddNodeMessagePool(tf.TestNodeID, nmp)
+
+	dispatcher.enqueueAckMessage(tf.TestNodeID, msg)
+
+	if _, exists, _ := nmp.AckMessageStore.Get(msg); !exists {
+		t.Fatalf("expected message to be enqueued after objectSync create race")
+	}
+	got, err := client.ReliablesyncsV1alpha1().ObjectSyncs(tf.TestNamespace).Get(
+		t.Context(), existingObjectSync.Name, metav1.GetOptions{})
+	if err != nil {
+		t.Fatalf("failed to get objectSync: %v", err)
+	}
+	if got.Status.ObjectResourceVersion != "0" {
+		t.Fatalf("expected existing objectSync status to be initialized to 0, got %q", got.Status.ObjectResourceVersion)
+	}
+}
+
+func TestEnqueueAckMessageInitializesExistingClusterObjectSyncAfterCreateRace(t *testing.T) {
+	client := fake.NewSimpleClientset()
+	nmp := common.InitNodeMessagePool(tf.TestNodeID)
+	manager := session.NewSessionManager(10)
+	manager.AddSession(session.NewNodeSession(tf.TestNodeID, tf.TestProjectID, nil, tf.KeepaliveInterval, nmp, client))
+
+	msg := tf.NewNodeMessage(tf.NewTestNodeResource(tf.TestNodeID, tf.TestNodeUID, "3"), "update")
+	existingClusterObjectSync := tf.NewClusterObjectSync(tf.NewTestNodeResource(tf.TestNodeID, tf.TestNodeUID, ""), "Node")
+	existingClusterObjectSync.Status.ObjectResourceVersion = ""
+	if _, err := client.ReliablesyncsV1alpha1().ClusterObjectSyncs().Create(
+		t.Context(), existingClusterObjectSync, metav1.CreateOptions{}); err != nil {
+		t.Fatalf("failed to seed clusterObjectSync: %v", err)
+	}
+
+	objectSyncLister := synclisters.NewObjectSyncLister(cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{}))
+	clusterObjectSyncLister := synclisters.NewClusterObjectSyncLister(cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{}))
+	dispatcher := &messageDispatcher{
+		reliableClient:          client,
+		SessionManager:          manager,
+		objectSyncLister:        objectSyncLister,
+		clusterObjectSyncLister: clusterObjectSyncLister,
+	}
+	dispatcher.AddNodeMessagePool(tf.TestNodeID, nmp)
+
+	dispatcher.enqueueAckMessage(tf.TestNodeID, msg)
+
+	if _, exists, _ := nmp.AckMessageStore.Get(msg); !exists {
+		t.Fatalf("expected message to be enqueued after clusterObjectSync create race")
+	}
+	got, err := client.ReliablesyncsV1alpha1().ClusterObjectSyncs().Get(
+		t.Context(), existingClusterObjectSync.Name, metav1.GetOptions{})
+	if err != nil {
+		t.Fatalf("failed to get clusterObjectSync: %v", err)
+	}
+	if got.Status.ObjectResourceVersion != "0" {
+		t.Fatalf("expected existing clusterObjectSync status to be initialized to 0, got %q", got.Status.ObjectResourceVersion)
+	}
+}
+
+func TestEnqueueAckMessageSkipsWhenNodeHasNoLocalSession(t *testing.T) {
+	client := fake.NewSimpleClientset()
+	manager := session.NewSessionManager(10)
+
+	msg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "3"), "update")
+	objectSyncLister := synclisters.NewObjectSyncLister(cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{}))
+	clusterObjectSyncLister := synclisters.NewClusterObjectSyncLister(cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{}))
+	dispatcher := &messageDispatcher{
+		reliableClient:          client,
+		SessionManager:          manager,
+		objectSyncLister:        objectSyncLister,
+		clusterObjectSyncLister: clusterObjectSyncLister,
+	}
+
+	dispatcher.enqueueAckMessage(tf.TestNodeID, msg)
+
+	if _, exists := dispatcher.NodeMessagePools.Load(tf.TestNodeID); exists {
+		t.Fatalf("expected dispatcher not to create a local message pool without a node session")
 	}
 }
 

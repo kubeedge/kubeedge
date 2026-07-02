@@ -26,6 +26,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
@@ -406,60 +407,7 @@ func (ns *NodeSession) saveNamespaceResourceSuccess(msg *beehivemodel.Message) {
 		return
 	}
 
-	objectSync, err := ns.reliableClient.
-		ReliablesyncsV1alpha1().
-		ObjectSyncs(resourceNamespace).
-		Get(context.Background(), objectSyncName, metav1.GetOptions{})
-
-	switch {
-	case err == nil:
-
-	case apierrors.IsNotFound(err):
-		// create objectSync if not found
-		objectSync = &v1alpha1.ObjectSync{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      objectSyncName,
-				Namespace: resourceNamespace,
-			},
-			Spec: v1alpha1.ObjectSyncSpec{
-				ObjectAPIVersion: util.GetMessageAPIVersion(msg),
-				ObjectKind:       util.GetMessageResourceType(msg),
-				ObjectName:       resourceName,
-			},
-		}
-
-		if objectSync.Spec.ObjectKind == "" {
-			klog.ErrorS(nil, "failed to init objectSync, ObjectKind is empty",
-				"objectSyncName", objectSyncName,
-				"resourceType", resourceType,
-				"resourceNamespace", resourceNamespace,
-				"resourceName", resourceName,
-				"message", msg.GetContent())
-			return
-		}
-
-		objectSync, err = ns.reliableClient.
-			ReliablesyncsV1alpha1().
-			ObjectSyncs(resourceNamespace).
-			Create(context.Background(), objectSync, metav1.CreateOptions{})
-		if err != nil {
-			klog.Errorf("Failed to create objectSync: %s, err: %v", objectSyncName, err)
-			return
-		}
-
-	default:
-		// request objectSync from KubeAPIServer err
-		klog.Errorf("Failed to get objectSync: %s, err: %v", objectSyncName, err)
-		return
-	}
-
-	objectSync.Status.ObjectResourceVersion = msg.GetResourceVersion()
-	_, err = ns.reliableClient.
-		ReliablesyncsV1alpha1().
-		ObjectSyncs(resourceNamespace).
-		UpdateStatus(context.Background(), objectSync, metav1.UpdateOptions{})
-
-	if err != nil {
+	if err := ns.saveObjectSyncSuccessPoint(resourceNamespace, objectSyncName, resourceName, resourceType, msg); err != nil {
 		klog.ErrorS(err, "failed to update objectSync",
 			"objectSyncName", objectSyncName,
 			"resourceType", resourceType,
@@ -467,6 +415,64 @@ func (ns *NodeSession) saveNamespaceResourceSuccess(msg *beehivemodel.Message) {
 			"resourceName", resourceName)
 		return
 	}
+}
+
+func (ns *NodeSession) saveObjectSyncSuccessPoint(resourceNamespace, objectSyncName, resourceName, resourceType string, msg *beehivemodel.Message) error {
+	if msg.GetResourceVersion() == "" {
+		return fmt.Errorf("message resourceVersion is empty")
+	}
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		objectSync, err := ns.reliableClient.
+			ReliablesyncsV1alpha1().
+			ObjectSyncs(resourceNamespace).
+			Get(context.Background(), objectSyncName, metav1.GetOptions{})
+		switch {
+		case err == nil:
+		case apierrors.IsNotFound(err):
+			objectSync = &v1alpha1.ObjectSync{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      objectSyncName,
+					Namespace: resourceNamespace,
+				},
+				Spec: v1alpha1.ObjectSyncSpec{
+					ObjectAPIVersion: util.GetMessageAPIVersion(msg),
+					ObjectKind:       util.GetMessageResourceType(msg),
+					ObjectName:       resourceName,
+				},
+			}
+			if objectSync.Spec.ObjectKind == "" {
+				return fmt.Errorf("failed to init objectSync %s, ObjectKind is empty for resourceType %s", objectSyncName, resourceType)
+			}
+			objectSync, err = ns.reliableClient.
+				ReliablesyncsV1alpha1().
+				ObjectSyncs(resourceNamespace).
+				Create(context.Background(), objectSync, metav1.CreateOptions{})
+			if apierrors.IsAlreadyExists(err) {
+				objectSync, err = ns.reliableClient.
+					ReliablesyncsV1alpha1().
+					ObjectSyncs(resourceNamespace).
+					Get(context.Background(), objectSyncName, metav1.GetOptions{})
+			}
+			if err != nil {
+				return err
+			}
+		default:
+			return err
+		}
+
+		currentResourceVersion := objectSync.Status.ObjectResourceVersion
+		if currentResourceVersion != "" && synccontroller.CompareResourceVersion(msg.GetResourceVersion(), currentResourceVersion) <= 0 {
+			return nil
+		}
+
+		objectSync = objectSync.DeepCopy()
+		objectSync.Status.ObjectResourceVersion = msg.GetResourceVersion()
+		_, err = ns.reliableClient.
+			ReliablesyncsV1alpha1().
+			ObjectSyncs(resourceNamespace).
+			UpdateStatus(context.Background(), objectSync, metav1.UpdateOptions{})
+		return err
+	})
 }
 
 func (ns *NodeSession) saveNonNamespaceResourceSuccess(msg *beehivemodel.Message) {
@@ -487,61 +493,66 @@ func (ns *NodeSession) saveNonNamespaceResourceSuccess(msg *beehivemodel.Message
 		return
 	}
 
-	clusterObjectSync, err := ns.reliableClient.
-		ReliablesyncsV1alpha1().ClusterObjectSyncs().
-		Get(context.Background(), clusterObjectSyncName, metav1.GetOptions{})
-
-	switch {
-	case err == nil:
-
-	case apierrors.IsNotFound(err):
-		// create clusterObjectSync if not found
-		clusterObjectSync = &v1alpha1.ClusterObjectSync{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: clusterObjectSyncName,
-			},
-			Spec: v1alpha1.ObjectSyncSpec{
-				ObjectAPIVersion: util.GetMessageAPIVersion(msg),
-				ObjectKind:       util.GetMessageResourceType(msg),
-				ObjectName:       resourceName,
-			},
-		}
-
-		if clusterObjectSync.Spec.ObjectKind == "" {
-			klog.ErrorS(nil, "failed to init objectSync, ObjectKind is empty",
-				"objectSyncName", clusterObjectSyncName,
-				"resourceType", resourceType,
-				"resourceName", resourceName,
-				"message", msg.GetContent())
-			return
-		}
-
-		clusterObjectSync, err = ns.reliableClient.
-			ReliablesyncsV1alpha1().ClusterObjectSyncs().
-			Create(context.Background(), clusterObjectSync, metav1.CreateOptions{})
-		if err != nil {
-			klog.Errorf("Failed to create clusterObjectSync: %s, err: %v", clusterObjectSyncName, err)
-			return
-		}
-
-	default:
-		// request clusterObjectSync from KubeAPIServer err
-		klog.Errorf("Failed to get clusterObjectSync: %s, err: %v", clusterObjectSyncName, err)
-		return
-	}
-
-	clusterObjectSync.Status.ObjectResourceVersion = msg.GetResourceVersion()
-	_, err = ns.reliableClient.
-		ReliablesyncsV1alpha1().ClusterObjectSyncs().
-		UpdateStatus(context.Background(), clusterObjectSync, metav1.UpdateOptions{})
-
-	if err != nil {
+	if err := ns.saveClusterObjectSyncSuccessPoint(clusterObjectSyncName, resourceName, resourceType, msg); err != nil {
 		klog.ErrorS(err, "failed to update clusterObjectSync",
 			"objectSyncName", clusterObjectSyncName,
 			"resourceType", resourceType,
 			"resourceName", resourceName)
 		return
 	}
+}
+
+func (ns *NodeSession) saveClusterObjectSyncSuccessPoint(clusterObjectSyncName, resourceName, resourceType string, msg *beehivemodel.Message) error {
+	if msg.GetResourceVersion() == "" {
+		return fmt.Errorf("message resourceVersion is empty")
+	}
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		clusterObjectSync, err := ns.reliableClient.
+			ReliablesyncsV1alpha1().ClusterObjectSyncs().
+			Get(context.Background(), clusterObjectSyncName, metav1.GetOptions{})
+		switch {
+		case err == nil:
+		case apierrors.IsNotFound(err):
+			clusterObjectSync = &v1alpha1.ClusterObjectSync{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: clusterObjectSyncName,
+				},
+				Spec: v1alpha1.ObjectSyncSpec{
+					ObjectAPIVersion: util.GetMessageAPIVersion(msg),
+					ObjectKind:       util.GetMessageResourceType(msg),
+					ObjectName:       resourceName,
+				},
+			}
+			if clusterObjectSync.Spec.ObjectKind == "" {
+				return fmt.Errorf("failed to init clusterObjectSync %s, ObjectKind is empty for resourceType %s", clusterObjectSyncName, resourceType)
+			}
+			clusterObjectSync, err = ns.reliableClient.
+				ReliablesyncsV1alpha1().ClusterObjectSyncs().
+				Create(context.Background(), clusterObjectSync, metav1.CreateOptions{})
+			if apierrors.IsAlreadyExists(err) {
+				clusterObjectSync, err = ns.reliableClient.
+					ReliablesyncsV1alpha1().ClusterObjectSyncs().
+					Get(context.Background(), clusterObjectSyncName, metav1.GetOptions{})
+			}
+			if err != nil {
+				return err
+			}
+		default:
+			return err
+		}
+
+		currentResourceVersion := clusterObjectSync.Status.ObjectResourceVersion
+		if currentResourceVersion != "" && synccontroller.CompareResourceVersion(msg.GetResourceVersion(), currentResourceVersion) <= 0 {
+			return nil
+		}
+
+		clusterObjectSync = clusterObjectSync.DeepCopy()
+		clusterObjectSync.Status.ObjectResourceVersion = msg.GetResourceVersion()
+		_, err = ns.reliableClient.
+			ReliablesyncsV1alpha1().ClusterObjectSyncs().
+			UpdateStatus(context.Background(), clusterObjectSync, metav1.UpdateOptions{})
+		return err
+	})
 }
 
 func (ns *NodeSession) deleteSuccessPoint(resourceNamespace, objectSyncName string, msg *beehivemodel.Message) {
