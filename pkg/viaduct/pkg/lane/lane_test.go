@@ -17,6 +17,10 @@ limitations under the License.
 package lane
 
 import (
+	"bytes"
+	"context"
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -24,6 +28,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/lucas-clemente/quic-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -31,38 +36,58 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
 )
 
+// ---------------------------------------------------------------------------
+// Test helpers
+// ---------------------------------------------------------------------------
+
 // wsUpgrader is a permissive upgrader used by the in-process test HTTP server.
 var wsUpgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
-// newTestWSPair spins up an httptest server and returns a pair of *websocket.Conn:
-// the server-side conn and the client-side conn.  Both are closed when t finishes.
+// newTestWSPair spins up an httptest server and returns a pair of
+// *websocket.Conn: the server-side conn and the client-side conn.
+// Both are closed when t finishes.
+//
+// The handler returns immediately after handing off the upgraded connection
+// via a channel; the hijacked WebSocket remains valid after ServeHTTP returns.
+// This avoids the goroutine leak caused by blocking on <-r.Context().Done()
+// after the WebSocket connection has already been closed by the test.
+// A separate error channel ensures an upgrade failure surfaces immediately
+// rather than leaving the test waiting on a channel that is never closed.
 func newTestWSPair(t *testing.T) (serverConn, clientConn *websocket.Conn) {
 	t.Helper()
 
-	var sConn *websocket.Conn
-	ready := make(chan struct{})
+	connCh := make(chan *websocket.Conn, 1) // buffered: handler must not block
+	errCh := make(chan error, 1)
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := wsUpgrader.Upgrade(w, r, nil)
 		if err != nil {
-			t.Errorf("failed to upgrade connection: %v", err)
+			errCh <- err
 			return
 		}
-		sConn = c
-		close(ready)
-		// Keep the handler alive until the connection is closed by the test.
-		<-r.Context().Done()
+		// Hand off the connection and return immediately.
+		// The hijacked WebSocket is still valid after ServeHTTP returns.
+		connCh <- c
 	}))
-
 	t.Cleanup(srv.Close)
 
 	url := "ws" + strings.TrimPrefix(srv.URL, "http")
 	cConn, _, err := websocket.DefaultDialer.Dial(url, nil)
-	require.NoError(t, err)
+	require.NoError(t, err, "WebSocket client dial failed")
 
-	<-ready // wait until server has upgraded
+	// Wait for either a successful server-side upgrade or an error.
+	var sConn *websocket.Conn
+	select {
+	case sConn = <-connCh:
+	case upgradeErr := <-errCh:
+		cConn.Close()
+		t.Fatalf("server-side WebSocket upgrade failed: %v", upgradeErr)
+	case <-time.After(5 * time.Second):
+		cConn.Close()
+		t.Fatal("timed out waiting for server-side WebSocket upgrade")
+	}
 
 	t.Cleanup(func() {
 		if cConn != nil {
@@ -75,6 +100,25 @@ func newTestWSPair(t *testing.T) (serverConn, clientConn *websocket.Conn) {
 
 	return sConn, cConn
 }
+
+// ---------------------------------------------------------------------------
+// fakeQuicStream — minimal quic.Stream implementation for constructor tests.
+// A real QUIC network is not required; we only need to pass the type check
+// inside NewQuicLane / NewLane.
+// ---------------------------------------------------------------------------
+
+type fakeQuicStream struct{}
+
+func (fakeQuicStream) StreamID() quic.StreamID           { return 0 }
+func (fakeQuicStream) Read(_ []byte) (int, error)        { return 0, io.EOF }
+func (fakeQuicStream) Write(p []byte) (int, error)       { return len(p), nil }
+func (fakeQuicStream) Close() error                      { return nil }
+func (fakeQuicStream) CancelWrite(_ quic.ErrorCode) error { return nil }
+func (fakeQuicStream) CancelRead(_ quic.ErrorCode) error  { return nil }
+func (fakeQuicStream) Context() context.Context           { return context.Background() }
+func (fakeQuicStream) SetReadDeadline(_ time.Time) error  { return nil }
+func (fakeQuicStream) SetWriteDeadline(_ time.Time) error { return nil }
+func (fakeQuicStream) SetDeadline(_ time.Time) error      { return nil }
 
 // ---------------------------------------------------------------------------
 // TestNewLane
@@ -90,6 +134,17 @@ func TestNewLane_WebSocket(t *testing.T) {
 	assert.NotNil(t, l)
 	_, ok := l.(*WSLaneWithoutPack)
 	assert.True(t, ok, "expected *WSLaneWithoutPack for ProtocolTypeWS")
+}
+
+// TestNewLane_Quic verifies that NewLane returns a *QuicLane for the QUIC
+// protocol constant.  A minimal fakeQuicStream is used so that no real QUIC
+// network is required — the constructor only performs a type assertion.
+func TestNewLane_Quic(t *testing.T) {
+	l := NewLane(api.ProtocolTypeQuic, fakeQuicStream{})
+
+	assert.NotNil(t, l)
+	_, ok := l.(*QuicLane)
+	assert.True(t, ok, "expected *QuicLane for ProtocolTypeQuic")
 }
 
 // TestNewLane_UnknownProtocol verifies that NewLane returns nil and does not
@@ -148,8 +203,8 @@ func TestNewWSLane_BadType(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 // TestWSLaneWithoutPack_RoundTrip writes a model.Message through the client
-// lane and reads it back through the server lane, verifying the payload is
-// preserved end-to-end.
+// lane and reads it back through the server lane, verifying that all header,
+// routing, and content fields are preserved end-to-end.
 func TestWSLaneWithoutPack_RoundTrip(t *testing.T) {
 	serverConn, clientConn := newTestWSPair(t)
 
@@ -161,6 +216,7 @@ func TestWSLaneWithoutPack_RoundTrip(t *testing.T) {
 			ID:        "test-id-123",
 			ParentID:  "parent-456",
 			Timestamp: time.Now().UnixNano() / 1e6,
+			Sync:      true,
 		},
 		Router: model.MessageRoute{
 			Source:    "edge",
@@ -168,6 +224,7 @@ func TestWSLaneWithoutPack_RoundTrip(t *testing.T) {
 			Resource:  "node/status",
 			Operation: "update",
 		},
+		Content: "hello-wsnopack-content",
 	}
 
 	// Write from client, read on server.
@@ -179,8 +236,14 @@ func TestWSLaneWithoutPack_RoundTrip(t *testing.T) {
 	assert.Equal(t, want.GetID(), got.GetID())
 	assert.Equal(t, want.GetParentID(), got.GetParentID())
 	assert.Equal(t, want.GetSource(), got.GetSource())
+	assert.Equal(t, want.GetGroup(), got.GetGroup())
 	assert.Equal(t, want.GetOperation(), got.GetOperation())
 	assert.Equal(t, want.GetResource(), got.GetResource())
+	assert.Equal(t, want.Header.Sync, got.Header.Sync, "Sync flag must be preserved")
+	// Content is marshalled as JSON; compare the serialised form.
+	wantContent, _ := want.GetContentData()
+	gotContent, _ := got.GetContentData()
+	assert.True(t, bytes.Equal(wantContent, gotContent), "Content mismatch: want %q, got %q", wantContent, gotContent)
 }
 
 // ---------------------------------------------------------------------------
@@ -188,8 +251,8 @@ func TestWSLaneWithoutPack_RoundTrip(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 // TestWSLane_RoundTrip writes a model.Message through WSLane (packer+protobuf)
-// from the client and reads it back on the server, verifying the payload is
-// preserved end-to-end.
+// from the client and reads it back on the server, verifying that all header,
+// routing, and content fields are preserved end-to-end.
 func TestWSLane_RoundTrip(t *testing.T) {
 	serverConn, clientConn := newTestWSPair(t)
 
@@ -201,6 +264,7 @@ func TestWSLane_RoundTrip(t *testing.T) {
 			ID:        "ws-lane-id",
 			ParentID:  "ws-parent",
 			Timestamp: time.Now().UnixNano() / 1e6,
+			Sync:      true,
 		},
 		Router: model.MessageRoute{
 			Source:    "cloud",
@@ -208,6 +272,7 @@ func TestWSLane_RoundTrip(t *testing.T) {
 			Resource:  "device/twin",
 			Operation: "patch",
 		},
+		Content: "hello-wslane-content",
 	}
 
 	require.NoError(t, clientLane.WriteMessage(want))
@@ -218,85 +283,136 @@ func TestWSLane_RoundTrip(t *testing.T) {
 	assert.Equal(t, want.GetID(), got.GetID())
 	assert.Equal(t, want.GetParentID(), got.GetParentID())
 	assert.Equal(t, want.GetSource(), got.GetSource())
+	assert.Equal(t, want.GetGroup(), got.GetGroup())
 	assert.Equal(t, want.GetOperation(), got.GetOperation())
 	assert.Equal(t, want.GetResource(), got.GetResource())
+	assert.Equal(t, want.Header.Sync, got.Header.Sync, "Sync flag must be preserved")
+	wantContent, _ := want.GetContentData()
+	gotContent, _ := got.GetContentData()
+	assert.True(t, bytes.Equal(wantContent, gotContent), "Content mismatch: want %q, got %q", wantContent, gotContent)
 }
 
 // ---------------------------------------------------------------------------
-// SetReadDeadline / SetWriteDeadline – propagation to the underlying conn
+// SetReadDeadline / SetWriteDeadline – behavioral verification
 // ---------------------------------------------------------------------------
 
-// TestWSLaneWithoutPack_SetReadDeadline verifies that SetReadDeadline stores the
-// deadline on the lane and propagates it to the underlying websocket.Conn
-// without returning an error.
-func TestWSLaneWithoutPack_SetReadDeadline(t *testing.T) {
+// TestWSLaneWithoutPack_ReadDeadlineExpired verifies that setting an already-
+// expired read deadline causes the next ReadMessage call to return a timeout
+// error promptly.  This proves the deadline was actually applied to the
+// underlying *websocket.Conn and not merely stored in a struct field.
+func TestWSLaneWithoutPack_ReadDeadlineExpired(t *testing.T) {
 	_, clientConn := newTestWSPair(t)
 
 	l := NewWSLaneWithoutPack(clientConn)
-	deadline := time.Now().Add(5 * time.Second)
+	// Set a deadline in the past — the connection should time out immediately.
+	require.NoError(t, l.SetReadDeadline(time.Now().Add(-time.Second)))
 
-	err := l.SetReadDeadline(deadline)
+	msg := &model.Message{}
+	err := l.ReadMessage(msg)
+	require.Error(t, err, "ReadMessage must fail after an expired read deadline")
 
-	assert.NoError(t, err)
-	assert.Equal(t, deadline, l.readDeadline)
+	var netErr interface{ Timeout() bool }
+	if errors.As(err, &netErr) {
+		assert.True(t, netErr.Timeout(), "error must be a timeout, got: %v", err)
+	}
+	// gorilla/websocket may wrap the deadline error; accept any non-nil error.
 }
 
-// TestWSLaneWithoutPack_SetWriteDeadline verifies that SetWriteDeadline stores
-// the deadline on the lane and propagates it to the underlying websocket.Conn
-// without returning an error.
-func TestWSLaneWithoutPack_SetWriteDeadline(t *testing.T) {
+// TestWSLane_ReadDeadlineExpired verifies the same behavior for the packed
+// WSLane variant.
+func TestWSLane_ReadDeadlineExpired(t *testing.T) {
+	_, clientConn := newTestWSPair(t)
+
+	l := NewWSLane(clientConn)
+	require.NoError(t, l.SetReadDeadline(time.Now().Add(-time.Second)))
+
+	msg := &model.Message{}
+	err := l.ReadMessage(msg)
+	require.Error(t, err, "ReadMessage must fail after an expired read deadline")
+}
+
+// TestWSLaneWithoutPack_WriteDeadlineExpired verifies that setting an already-
+// expired write deadline causes the next WriteMessage call to return a timeout
+// error, proving the deadline was propagated to the underlying connection.
+func TestWSLaneWithoutPack_WriteDeadlineExpired(t *testing.T) {
 	_, clientConn := newTestWSPair(t)
 
 	l := NewWSLaneWithoutPack(clientConn)
-	deadline := time.Now().Add(10 * time.Second)
+	require.NoError(t, l.SetWriteDeadline(time.Now().Add(-time.Second)))
 
-	err := l.SetWriteDeadline(deadline)
-
-	assert.NoError(t, err)
-	assert.Equal(t, deadline, l.writeDeadline)
+	msg := &model.Message{Header: model.MessageHeader{ID: "deadline-test"}}
+	err := l.WriteMessage(msg)
+	require.Error(t, err, "WriteMessage must fail after an expired write deadline")
 }
-
-// TestWSLane_SetReadDeadline verifies that WSLane.SetReadDeadline propagates
-// the deadline to the underlying websocket.Conn without returning an error.
-func TestWSLane_SetReadDeadline(t *testing.T) {
-	_, clientConn := newTestWSPair(t)
-
-	l := NewWSLane(clientConn)
-	deadline := time.Now().Add(5 * time.Second)
-
-	err := l.SetReadDeadline(deadline)
-
-	assert.NoError(t, err)
-	assert.Equal(t, deadline, l.readDeadline)
-}
-
-// TestWSLane_SetWriteDeadline verifies that WSLane.SetWriteDeadline propagates
-// the deadline to the underlying websocket.Conn without returning an error.
-func TestWSLane_SetWriteDeadline(t *testing.T) {
-	_, clientConn := newTestWSPair(t)
-
-	l := NewWSLane(clientConn)
-	deadline := time.Now().Add(10 * time.Second)
-
-	err := l.SetWriteDeadline(deadline)
-
-	assert.NoError(t, err)
-	assert.Equal(t, deadline, l.writeDeadline)
-}
-
-// ---------------------------------------------------------------------------
-// SetReadDeadline with zero time – reset deadline
-// ---------------------------------------------------------------------------
 
 // TestWSLaneWithoutPack_SetReadDeadline_Zero verifies that setting a zero
-// time.Time clears the read deadline on the underlying connection.
+// time.Time clears the read deadline on the underlying connection without error.
 func TestWSLaneWithoutPack_SetReadDeadline_Zero(t *testing.T) {
 	_, clientConn := newTestWSPair(t)
 
 	l := NewWSLaneWithoutPack(clientConn)
 
 	err := l.SetReadDeadline(time.Time{})
-
 	assert.NoError(t, err)
 	assert.Equal(t, time.Time{}, l.readDeadline)
+}
+
+// ---------------------------------------------------------------------------
+// Error-path coverage
+// ---------------------------------------------------------------------------
+
+// TestWSLaneWithoutPack_ReadAfterClose verifies that ReadMessage returns an
+// error when the underlying WebSocket connection has been closed by the peer.
+func TestWSLaneWithoutPack_ReadAfterClose(t *testing.T) {
+	serverConn, clientConn := newTestWSPair(t)
+
+	serverLane := NewWSLaneWithoutPack(serverConn)
+
+	// Close the client side — the server should see an error on its next read.
+	require.NoError(t, clientConn.Close())
+
+	// Give the close frame time to arrive.
+	time.Sleep(20 * time.Millisecond)
+
+	msg := &model.Message{}
+	err := serverLane.ReadMessage(msg)
+	assert.Error(t, err, "ReadMessage must return an error after peer closes the connection")
+}
+
+// TestWSLaneWithoutPack_WriteAfterClose verifies that WriteMessage returns an
+// error when the underlying WebSocket connection has been closed.
+func TestWSLaneWithoutPack_WriteAfterClose(t *testing.T) {
+	_, clientConn := newTestWSPair(t)
+
+	l := NewWSLaneWithoutPack(clientConn)
+
+	// Close the connection before writing.
+	require.NoError(t, clientConn.Close())
+
+	msg := &model.Message{Header: model.MessageHeader{ID: "closed-conn"}}
+	err := l.WriteMessage(msg)
+	assert.Error(t, err, "WriteMessage must return an error after the connection is closed")
+}
+
+// TestWSLane_ReadMalformedData verifies that WSLane.ReadMessage returns an
+// error when the peer sends a binary frame that fails the packer's length-
+// header protocol.  We set a short read deadline to bound the test duration
+// in case the packer blocks waiting for further frames.
+func TestWSLane_ReadMalformedData(t *testing.T) {
+	serverConn, clientConn := newTestWSPair(t)
+
+	serverLane := NewWSLane(serverConn)
+
+	// Apply a short read deadline so the test cannot block indefinitely if
+	// the packer happens to expect more data after the short frame.
+	require.NoError(t, serverLane.SetReadDeadline(time.Now().Add(200*time.Millisecond)))
+
+	// Send a binary frame with fewer bytes than the packer's 4-byte length
+	// header.  The packer will return an error (short read or timeout).
+	malformed := []byte{0x00, 0x00} // only 2 bytes – packer expects 4-byte header
+	require.NoError(t, clientConn.WriteMessage(websocket.BinaryMessage, malformed))
+
+	msg := &model.Message{}
+	err := serverLane.ReadMessage(msg)
+	assert.Error(t, err, "ReadMessage must return an error for malformed/short packed data")
 }
