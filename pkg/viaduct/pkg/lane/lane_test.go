@@ -235,6 +235,7 @@ func TestWSLaneWithoutPack_RoundTrip(t *testing.T) {
 
 	assert.Equal(t, want.GetID(), got.GetID())
 	assert.Equal(t, want.GetParentID(), got.GetParentID())
+	assert.Equal(t, want.Header.Timestamp, got.Header.Timestamp, "Timestamp must be preserved")
 	assert.Equal(t, want.GetSource(), got.GetSource())
 	assert.Equal(t, want.GetGroup(), got.GetGroup())
 	assert.Equal(t, want.GetOperation(), got.GetOperation())
@@ -282,6 +283,7 @@ func TestWSLane_RoundTrip(t *testing.T) {
 
 	assert.Equal(t, want.GetID(), got.GetID())
 	assert.Equal(t, want.GetParentID(), got.GetParentID())
+	assert.Equal(t, want.Header.Timestamp, got.Header.Timestamp, "Timestamp must be preserved")
 	assert.Equal(t, want.GetSource(), got.GetSource())
 	assert.Equal(t, want.GetGroup(), got.GetGroup())
 	assert.Equal(t, want.GetOperation(), got.GetOperation())
@@ -298,8 +300,9 @@ func TestWSLane_RoundTrip(t *testing.T) {
 
 // TestWSLaneWithoutPack_ReadDeadlineExpired verifies that setting an already-
 // expired read deadline causes the next ReadMessage call to return a timeout
-// error promptly.  This proves the deadline was actually applied to the
-// underlying *websocket.Conn and not merely stored in a struct field.
+// error promptly.  ReadMessage is executed in a goroutine so that if deadline
+// propagation regresses the test fails within ~1 s rather than blocking until
+// the package-level go test timeout.
 func TestWSLaneWithoutPack_ReadDeadlineExpired(t *testing.T) {
 	_, clientConn := newTestWSPair(t)
 
@@ -307,28 +310,46 @@ func TestWSLaneWithoutPack_ReadDeadlineExpired(t *testing.T) {
 	// Set a deadline in the past — the connection should time out immediately.
 	require.NoError(t, l.SetReadDeadline(time.Now().Add(-time.Second)))
 
-	msg := &model.Message{}
-	err := l.ReadMessage(msg)
-	require.Error(t, err, "ReadMessage must fail after an expired read deadline")
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- l.ReadMessage(&model.Message{})
+	}()
 
-	var netErr interface{ Timeout() bool }
-	if errors.As(err, &netErr) {
-		assert.True(t, netErr.Timeout(), "error must be a timeout, got: %v", err)
+	select {
+	case err := <-errCh:
+		require.Error(t, err, "ReadMessage must fail after an expired read deadline")
+		var netErr interface{ Timeout() bool }
+		require.True(t, errors.As(err, &netErr) && netErr.Timeout(),
+			"error must satisfy Timeout()==true, got: %v", err)
+	case <-time.After(time.Second):
+		clientConn.Close()
+		t.Fatal("ReadMessage did not return within 1 s after expired read deadline; deadline propagation may be broken")
 	}
-	// gorilla/websocket may wrap the deadline error; accept any non-nil error.
 }
 
-// TestWSLane_ReadDeadlineExpired verifies the same behavior for the packed
-// WSLane variant.
+// TestWSLane_ReadDeadlineExpired verifies the same bounded behavior for the
+// packed WSLane variant.
 func TestWSLane_ReadDeadlineExpired(t *testing.T) {
 	_, clientConn := newTestWSPair(t)
 
 	l := NewWSLane(clientConn)
 	require.NoError(t, l.SetReadDeadline(time.Now().Add(-time.Second)))
 
-	msg := &model.Message{}
-	err := l.ReadMessage(msg)
-	require.Error(t, err, "ReadMessage must fail after an expired read deadline")
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- l.ReadMessage(&model.Message{})
+	}()
+
+	select {
+	case err := <-errCh:
+		require.Error(t, err, "ReadMessage must fail after an expired read deadline")
+		var netErr interface{ Timeout() bool }
+		require.True(t, errors.As(err, &netErr) && netErr.Timeout(),
+			"error must satisfy Timeout()==true, got: %v", err)
+	case <-time.After(time.Second):
+		clientConn.Close()
+		t.Fatal("ReadMessage did not return within 1 s after expired read deadline; deadline propagation may be broken")
+	}
 }
 
 // TestWSLaneWithoutPack_WriteDeadlineExpired verifies that setting an already-
