@@ -39,6 +39,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 var (
@@ -272,6 +273,7 @@ const (
 	TestPodUID                    = "c7399134-f4fb-43e6-8088-c273bfffe7af"
 	TestDiffPodUID                = "c7399134-f4fb-43e6-8088-c273bfffe999"
 	TestConfigMapUID              = "22b0074a-8c07-4fc2-adad-1589f7f6f8b1"
+	TestNodeUID                   = "407c69f3-5790-4fa5-9f7b-5e2d5dfe1674"
 	KeepaliveInterval             = 2 * time.Second
 	NormalSendKeepaliveInterval   = 1 * time.Second
 	AbnormalSendKeepaliveInterval = 3 * time.Second
@@ -329,6 +331,22 @@ func NewObjectSync(object v12.Object, kind string) *v1alpha1.ObjectSync {
 	}
 }
 
+func NewClusterObjectSync(object v12.Object, kind string) *v1alpha1.ClusterObjectSync {
+	return &v1alpha1.ClusterObjectSync{
+		ObjectMeta: v12.ObjectMeta{
+			Name: fmt.Sprintf("%s.%s", TestNodeID, object.GetUID()),
+		},
+		Spec: v1alpha1.ObjectSyncSpec{
+			ObjectAPIVersion: "v1",
+			ObjectKind:       kind,
+			ObjectName:       object.GetName(),
+		},
+		Status: v1alpha1.ObjectSyncStatus{
+			ObjectResourceVersion: object.GetResourceVersion(),
+		},
+	}
+}
+
 func NewPodMessage(pod *v1.Pod, operation string) *beehivemodel.Message {
 	resource, err := messagelayer.BuildResource(pod.Spec.NodeName, pod.Namespace, "pod", pod.Name)
 	if err != nil {
@@ -340,6 +358,36 @@ func NewPodMessage(pod *v1.Pod, operation string) *beehivemodel.Message {
 		FillBody(pod)
 
 	return message.BuildRouter("edgecontroller", "resource", resource, operation)
+}
+
+func NewTestNodeResource(name, UID, resourceVersion string) *v1.Node {
+	return &v1.Node{
+		TypeMeta: v12.TypeMeta{
+			Kind:       "Node",
+			APIVersion: "v1",
+		},
+		ObjectMeta: v12.ObjectMeta{
+			Name:            name,
+			ResourceVersion: resourceVersion,
+			UID:             types.UID(UID),
+			Labels: map[string]string{
+				"version": resourceVersion,
+			},
+		},
+	}
+}
+
+func NewNodeMessage(node *v1.Node, operation string) *beehivemodel.Message {
+	resource, err := messagelayer.BuildResource(node.Name, models.NullNamespace, beehivemodel.ResourceTypeNode, node.Name)
+	if err != nil {
+		klog.Warningf("built message resource failed with error: %s", err)
+		return nil
+	}
+	message := beehivemodel.NewMessage("").
+		SetResourceVersion(node.ResourceVersion).
+		FillBody(node)
+
+	return message.BuildRouter(modules.EdgeControllerModuleName, "resource", resource, operation)
 }
 
 func NewTestConfigMapResource(name, UID, resourceVersion string) *v1.ConfigMap {
