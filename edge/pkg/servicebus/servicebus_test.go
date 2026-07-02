@@ -375,23 +375,33 @@ func TestBuildBasicHandler_InvalidResponseContent(t *testing.T) {
 func TestBuildBasicHandler_SuccessPath(t *testing.T) {
 	cloudResponse := `{"result":"ok","count":42}`
 
-	handler := buildBasicHandlerWithDeps(5*time.Second, basicHandlerDeps{
-		getURLByKey: func(key string) (*models.TargetUrls, error) {
-			return &models.TargetUrls{URL: key}, nil
-		},
-		sendSync: func(module string, msg beehiveModel.Message, timeout time.Duration) (beehiveModel.Message, error) {
-			assert.Equal(t, modules.EdgeHubModuleName, module)
-			respMsg := beehiveModel.NewMessage("").FillBody([]byte(cloudResponse))
-			return *respMsg, nil
-		},
-	})
-
 	reqBody, err := json.Marshal(serverRequest{
 		Method:    "GET",
 		TargetURL: "http://example.com/api",
 		Payload:   nil,
 	})
 	require.NoError(t, err)
+
+	handler := buildBasicHandlerWithDeps(5*time.Second, basicHandlerDeps{
+		getURLByKey: func(key string) (*models.TargetUrls, error) {
+			return &models.TargetUrls{URL: key}, nil
+		},
+		sendSync: func(module string, msg beehiveModel.Message, timeout time.Duration) (beehiveModel.Message, error) {
+			assert.Equal(t, modules.EdgeHubModuleName, module)
+			assert.Equal(t, modules.ServiceBusModuleName, msg.GetSource())
+			assert.Equal(t, modules.UserGroup, msg.GetGroup())
+			assert.Equal(t, "http://example.com/api", msg.GetResource())
+			assert.Equal(t, beehiveModel.UploadOperation, msg.GetOperation())
+			assert.Equal(t, 5*time.Second, timeout)
+
+			content, err := msg.GetContentData()
+			require.NoError(t, err, "failed to extract message content")
+			assert.Equal(t, string(reqBody), string(content))
+
+			respMsg := beehiveModel.NewMessage("").FillBody([]byte(cloudResponse))
+			return *respMsg, nil
+		},
+	})
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(string(reqBody)))
 	w := httptest.NewRecorder()
