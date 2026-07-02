@@ -121,13 +121,18 @@ func TestJWTTokenAuthenticatorWrongIssuer(t *testing.T) {
 	}
 }
 
-// TestJWTTokenAuthenticatorIssuerFilterIsAppliedBeforeParsing verifies that
-// AuthenticateToken returns (nil, false, nil) — without attempting any
-// cryptographic or database operations — when the token's issuer is absent
-// from the configured allowlist.  This exercises the fast-path short-circuit
-// in hasCorrectIssuer and ensures the wrong-issuer branch never reaches
-// parseSigned or client.CheckTokenExist.
-func TestJWTTokenAuthenticatorIssuerFilterIsAppliedBeforeParsing(t *testing.T) {
+// TestJWTTokenAuthenticatorMalformedTokenStructuralFastPath verifies that
+// AuthenticateToken returns (nil, false, nil) for a token whose structure is
+// not a valid three-segment JWT (header.payload.signature).  The token
+// "not.a.real.jwt.token" splits into five segments; hasCorrectIssuer rejects
+// it immediately at the len(parts) != 3 guard — before any base64 decoding,
+// issuer comparison, jose parsing, or database access.
+//
+// Note: this test exercises the malformed-structure fast path in
+// hasCorrectIssuer, not the issuer-allowlist filter.  The wrong-issuer case
+// (a structurally valid three-part token whose issuer is not in the allowed
+// set) is covered by TestJWTTokenAuthenticatorWrongIssuer.
+func TestJWTTokenAuthenticatorMalformedTokenStructuralFastPath(t *testing.T) {
 	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
 	auth := JWTTokenAuthenticator[privateClaims](
 		indexer,
@@ -137,14 +142,15 @@ func TestJWTTokenAuthenticatorIssuerFilterIsAppliedBeforeParsing(t *testing.T) {
 		nil,
 	)
 
-	// Completely malformed token — if the issuer filter does not fire first this
-	// would propagate into jose parsing or GORM and panic.
+	// "not.a.real.jwt.token" has five dot-separated segments, so
+	// hasCorrectIssuer returns false at the len(parts) != 3 check before
+	// reaching any issuer comparison, jose parsing, or GORM access.
 	resp, ok, err := auth.AuthenticateToken(context.Background(), "not.a.real.jwt.token")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if ok {
-		t.Error("expected ok=false for token with unrecognised issuer")
+		t.Error("expected ok=false for token with wrong number of parts")
 	}
 	if resp != nil {
 		t.Errorf("expected nil response, got %+v", resp)
@@ -152,7 +158,9 @@ func TestJWTTokenAuthenticatorIssuerFilterIsAppliedBeforeParsing(t *testing.T) {
 }
 
 // TestJWTTokenAuthenticatorMultipleIssuers ensures that any of the configured
-// issuers is accepted.
+// issuers is accepted by the hasCorrectIssuer helper.  This test calls
+// hasCorrectIssuer directly and does not exercise the full AuthenticateToken
+// path.
 func TestJWTTokenAuthenticatorMultipleIssuers(t *testing.T) {
 	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
 	auth := JWTTokenAuthenticator[privateClaims](
@@ -176,7 +184,9 @@ func TestJWTTokenAuthenticatorMultipleIssuers(t *testing.T) {
 }
 
 // TestJWTTokenAuthenticatorEmptyIssuers verifies that when no issuers are
-// configured, no token passes the issuer check.
+// configured, no token passes the hasCorrectIssuer check.  This test calls
+// hasCorrectIssuer directly and does not exercise the full AuthenticateToken
+// path.
 func TestJWTTokenAuthenticatorEmptyIssuers(t *testing.T) {
 	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
 	auth := JWTTokenAuthenticator[privateClaims](
