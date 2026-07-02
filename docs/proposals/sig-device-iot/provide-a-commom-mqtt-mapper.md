@@ -18,11 +18,11 @@ In the current hardware device market, the MQTT (Message Queuing Telemetry Trans
 
 Firstly, different device manufacturers may implement customizations and extensions to the MQTT protocol, leading to interoperability issues between devices. Secondly, the diversity of serialization formats presents another challenge when handling device data. JSON, YAML, and XML are common serialization methods, each with its unique advantages and application scenarios.
 
-Therefore, developing a universal MQTT can help developers simplify the device integration process, improve system flexibility and reliability.
+Therefore, developing a universal MQTT mapper can help developers simplify the device integration process and improve system flexibility and reliability.
 
 ### Goals
 
-For developers or end users of a common MQTT mapper solutions, the goals of a common MQTT mapper are:
+For developers or end users of a common MQTT mapper solution, the goals of a common MQTT mapper are:
 
 - Add a new Mapper for the MQTT protocol to the kubeedge/mappers-go project using the latest mapper-framework.
 
@@ -64,7 +64,7 @@ The architectures and related concepts are shown in the below figure. In the fig
 
 1. Generate Mapper files through the Mapper-Framework framework
 
-   1)Download kubeedge-master.zip from the official website, take the mapper-framewokr under the staging folder in it, and transfer it to the VM master node.
+   1)Download kubeedge-master.zip from the official website, take the mapper-framework under the staging folder in it, and transfer it to the VM master node.
 
    2)Execute a command:
 

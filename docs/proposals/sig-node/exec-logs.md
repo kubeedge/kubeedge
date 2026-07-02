@@ -32,7 +32,7 @@ For `kubectl exec` commands, kube-apiserver will establish a long connection wit
 
 The native kubernetes cluster is set up in data center, so kube-apiserver can directly access kubelet.
 
-However, in edge computing scenarios, edge nodes are mostly in private network environments, and kube-apiserver cannot directly access edge nodes, so the native `kubectl exec`, `kubectl logs` and `kubectl attach` commands can not work.
+However, in edge computing scenarios, edge nodes are mostly in private network environments, and kube-apiserver cannot directly access edge nodes, so the native `kubectl exec`, `kubectl logs` and `kubectl attach` commands cannot work.
 
 Therefore, we need to establish a data tunnel to forward data requests between the cloud and the node.
 
@@ -83,7 +83,7 @@ In the edge computing scenarios, kube-apiserver cannot directly access the node 
 	For the tunnel channel, we have two options:
 
 	+ 1-1 We can use (cloudhub <-> edgehub) tunnel, but now cloudhub and edgehub are mainly used to transfer kubernetes resource data (pod, node, configmap, service ...), which is not very suitable for `exec, attach and logs` streaming data transmission.
-	+ 1-2 Re-establish a websocket tunnel between cloudcore and edgecore and supports TLS authentication.
+	+ 1-2 Re-establish a websocket tunnel between cloudcore and edgecore that supports TLS authentication.
 		
 	This proposal chooses the second solution. The new tunnel is specifically responsible for the forwarding of streaming data, which can be used as `/metric` data transmission tunnel without affecting the logic of cloudhub and edgehub. 
 
@@ -102,7 +102,7 @@ For the data transmission in the tunnel proxy, there are several considerations:
 - In order to distinguish the data of `logs, exec, attach, /metric` connection types, we need to add type definition to distinguish these data.
 - Distinguish which connection the data belongs to. We need to use a session-like definition.
 - cloudcore tunnel needs to support SPDY and websocket protocols.
-- Supports TLS authentication.
+- Support TLS authentication.
 
 The message structure is as follows (working in process ...)：
 
@@ -117,7 +117,7 @@ type TunnelMsg struct {
 
 2. Redirect requests made by kube-apiserver to the cloud tunnel service 
 
-We will not modify the code of kube-apiserver, so the connection request address initiated by kube-apiserver is {edgenodeip}:10250, and the 10250 port is getted by (`node.Status.DaemonEndpoints.KubeletEndpoint.Port`), so we need DNAT.
+We will not modify the code of kube-apiserver, so the connection request address initiated by kube-apiserver is {edgenodeip}:10250, and the 10250 port is obtained from (`node.Status.DaemonEndpoints.KubeletEndpoint.Port`), so we need DNAT.
 
 ```
  kubectl get node {nodename} -o=jsonpath="{.status.daemonEndpoints.kubeletEndpoint['Port']}"
