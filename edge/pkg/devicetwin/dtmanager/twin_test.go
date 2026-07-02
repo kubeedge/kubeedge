@@ -1570,6 +1570,12 @@ func TestDealMsgTwinMissingMetadata(t *testing.T) {
 			name:     "TestDealMsgTwinMissingMetadata(): Case 2: nil synced twin is skipped",
 			msgTwins: map[string]*dttype.MsgTwin{key1: nil},
 		},
+		{
+			name: "TestDealMsgTwinMissingMetadata(): Case 3: uncached synced twin without metadata is skipped",
+			msgTwins: map[string]*dttype.MsgTwin{
+				"key2": {Expected: &dttype.TwinValue{Value: &str}},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
