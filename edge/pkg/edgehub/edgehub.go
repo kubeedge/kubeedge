@@ -192,7 +192,12 @@ func (eh *EdgeHub) Start() {
 		if err != nil {
 			sleep := backoff.Step()
 			klog.Errorf("connection failed: %v, will reconnect after %s", err, sleep.String())
-			time.Sleep(sleep)
+			select {
+			case <-beehiveContext.Done():
+				klog.Warning("EdgeHub stop")
+				return
+			case <-time.After(sleep):
+			}
 			continue
 		}
 		// Drain any stale transport-error signal queued by the previous
@@ -213,6 +218,11 @@ func (eh *EdgeHub) Start() {
 		// stop authinfo manager/websocket connection
 		rotated := false
 		select {
+		case <-beehiveContext.Done():
+			// Module shutdown: mirror the loop-top handling. The process
+			// teardown closes the connection.
+			klog.Warning("EdgeHub stop")
+			return
 		case <-eh.reconnectChan:
 		case <-eh.rotateChan:
 			// The certificate was rotated (possibly while the connect above
@@ -239,7 +249,12 @@ func (eh *EdgeHub) Start() {
 		} else {
 			klog.Warningf("connection is broken, will reconnect after %s", sleep.String())
 		}
-		time.Sleep(sleep)
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("EdgeHub stop")
+			return
+		case <-time.After(sleep):
+		}
 
 		// reconnectChan is buffered(1) and triggerReconnect is non-blocking,
 		// so at most one queued signal can remain. A single non-blocking
