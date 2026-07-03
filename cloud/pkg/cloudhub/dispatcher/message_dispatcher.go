@@ -302,17 +302,25 @@ func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *be
 	}
 
 	clusterObjectSyncName := synccontroller.BuildObjectSyncName(nodeID, resourceUID)
+	desiredSpec := objectSyncSpecFromMessage(msg, resourceName)
 	clusterObjectSync, err := md.clusterObjectSyncLister.Get(clusterObjectSyncName)
 
 	switch {
 	case err == nil && clusterObjectSync.Status.ObjectResourceVersion != "":
+		clusterObjectSync, err = md.ensureClusterObjectSyncInitialized(clusterObjectSync.Name, desiredSpec)
+		if err != nil {
+			klog.ErrorS(err, "Failed to initialize clusterObjectSync",
+				"clusterObjectSyncName", clusterObjectSyncName,
+				"resourceName", resourceName)
+			return false
+		}
 		if synccontroller.CompareResourceVersion(msg.GetResourceVersion(), clusterObjectSync.Status.ObjectResourceVersion) > 0 {
 			return true
 		}
 	case err == nil:
-		clusterObjectSync, err = md.ensureClusterObjectSyncStatusInitialized(clusterObjectSync.Name)
+		clusterObjectSync, err = md.ensureClusterObjectSyncInitialized(clusterObjectSync.Name, desiredSpec)
 		if err != nil {
-			klog.ErrorS(err, "Failed to initialize clusterObjectSync status",
+			klog.ErrorS(err, "Failed to initialize clusterObjectSync",
 				"clusterObjectSyncName", clusterObjectSyncName,
 				"resourceName", resourceName)
 			return false
@@ -326,11 +334,7 @@ func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *be
 			ObjectMeta: metav1.ObjectMeta{
 				Name: clusterObjectSyncName,
 			},
-			Spec: v1alpha1.ObjectSyncSpec{
-				ObjectAPIVersion: util.GetMessageAPIVersion(msg),
-				ObjectKind:       util.GetMessageResourceType(msg),
-				ObjectName:       resourceName,
-			},
+			Spec: desiredSpec,
 		}
 
 		clusterObjectSync, err = md.reliableClient.
@@ -350,7 +354,7 @@ func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *be
 			return false
 		}
 
-		clusterObjectSync, err = md.ensureClusterObjectSyncStatusInitialized(clusterObjectSync.Name)
+		clusterObjectSync, err = md.ensureClusterObjectSyncInitialized(clusterObjectSync.Name, desiredSpec)
 		if err != nil {
 			klog.ErrorS(err, "Failed to update clusterObjectSync",
 				"clusterObjectSyncName", clusterObjectSyncName,
@@ -377,17 +381,26 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 	}
 
 	objectSyncName := synccontroller.BuildObjectSyncName(nodeID, resourceUID)
+	desiredSpec := objectSyncSpecFromMessage(msg, resourceName)
 	objectSync, err := md.objectSyncLister.ObjectSyncs(resourceNamespace).Get(objectSyncName)
 
 	switch {
 	case err == nil && objectSync.Status.ObjectResourceVersion != "":
+		objectSync, err = md.ensureObjectSyncInitialized(resourceNamespace, objectSync.Name, desiredSpec)
+		if err != nil {
+			klog.ErrorS(err, "Failed to initialize objectSync",
+				"objectSyncName", objectSyncName,
+				"resourceNamespace", resourceNamespace,
+				"resourceName", resourceName)
+			return false
+		}
 		if synccontroller.CompareResourceVersion(msg.GetResourceVersion(), objectSync.Status.ObjectResourceVersion) > 0 {
 			return true
 		}
 	case err == nil:
-		objectSync, err = md.ensureObjectSyncStatusInitialized(resourceNamespace, objectSync.Name)
+		objectSync, err = md.ensureObjectSyncInitialized(resourceNamespace, objectSync.Name, desiredSpec)
 		if err != nil {
-			klog.ErrorS(err, "Failed to initialize objectSync status",
+			klog.ErrorS(err, "Failed to initialize objectSync",
 				"objectSyncName", objectSyncName,
 				"resourceNamespace", resourceNamespace,
 				"resourceName", resourceName)
@@ -403,11 +416,7 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 				Name:      objectSyncName,
 				Namespace: resourceNamespace,
 			},
-			Spec: v1alpha1.ObjectSyncSpec{
-				ObjectAPIVersion: util.GetMessageAPIVersion(msg),
-				ObjectKind:       util.GetMessageResourceType(msg),
-				ObjectName:       resourceName,
-			},
+			Spec: desiredSpec,
 		}
 
 		objectSync, err = md.reliableClient.
@@ -428,7 +437,7 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 			return false
 		}
 
-		objectSync, err = md.ensureObjectSyncStatusInitialized(resourceNamespace, objectSync.Name)
+		objectSync, err = md.ensureObjectSyncInitialized(resourceNamespace, objectSync.Name, desiredSpec)
 		if err != nil {
 			klog.ErrorS(err, "Failed to update objectSync",
 				"objectSyncName", objectSyncName,
@@ -446,7 +455,32 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 	return false
 }
 
-func (md *messageDispatcher) ensureObjectSyncStatusInitialized(namespace, name string) (*v1alpha1.ObjectSync, error) {
+func objectSyncSpecFromMessage(msg *beehivemodel.Message, resourceName string) v1alpha1.ObjectSyncSpec {
+	return v1alpha1.ObjectSyncSpec{
+		ObjectAPIVersion: util.GetMessageAPIVersion(msg),
+		ObjectKind:       util.GetMessageResourceType(msg),
+		ObjectName:       resourceName,
+	}
+}
+
+func fillMissingObjectSyncSpec(spec *v1alpha1.ObjectSyncSpec, desired v1alpha1.ObjectSyncSpec) bool {
+	updated := false
+	if spec.ObjectAPIVersion == "" && desired.ObjectAPIVersion != "" {
+		spec.ObjectAPIVersion = desired.ObjectAPIVersion
+		updated = true
+	}
+	if spec.ObjectKind == "" && desired.ObjectKind != "" {
+		spec.ObjectKind = desired.ObjectKind
+		updated = true
+	}
+	if spec.ObjectName == "" && desired.ObjectName != "" {
+		spec.ObjectName = desired.ObjectName
+		updated = true
+	}
+	return updated
+}
+
+func (md *messageDispatcher) ensureObjectSyncInitialized(namespace, name string, desiredSpec v1alpha1.ObjectSyncSpec) (*v1alpha1.ObjectSync, error) {
 	var objectSync *v1alpha1.ObjectSync
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		latest, err := md.reliableClient.
@@ -456,22 +490,32 @@ func (md *messageDispatcher) ensureObjectSyncStatusInitialized(namespace, name s
 		if err != nil {
 			return err
 		}
+		latest = latest.DeepCopy()
+		if fillMissingObjectSyncSpec(&latest.Spec, desiredSpec) {
+			latest, err = md.reliableClient.
+				ReliablesyncsV1alpha1().
+				ObjectSyncs(namespace).
+				Update(context.Background(), latest, metav1.UpdateOptions{})
+			if err != nil {
+				return err
+			}
+		}
 		if latest.Status.ObjectResourceVersion != "" {
 			objectSync = latest
 			return nil
 		}
-		latest = latest.DeepCopy()
-		latest.Status.ObjectResourceVersion = "0"
+		statusLatest := latest.DeepCopy()
+		statusLatest.Status.ObjectResourceVersion = "0"
 		objectSync, err = md.reliableClient.
 			ReliablesyncsV1alpha1().
 			ObjectSyncs(namespace).
-			UpdateStatus(context.Background(), latest, metav1.UpdateOptions{})
+			UpdateStatus(context.Background(), statusLatest, metav1.UpdateOptions{})
 		return err
 	})
 	return objectSync, err
 }
 
-func (md *messageDispatcher) ensureClusterObjectSyncStatusInitialized(name string) (*v1alpha1.ClusterObjectSync, error) {
+func (md *messageDispatcher) ensureClusterObjectSyncInitialized(name string, desiredSpec v1alpha1.ObjectSyncSpec) (*v1alpha1.ClusterObjectSync, error) {
 	var clusterObjectSync *v1alpha1.ClusterObjectSync
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		latest, err := md.reliableClient.
@@ -481,16 +525,26 @@ func (md *messageDispatcher) ensureClusterObjectSyncStatusInitialized(name strin
 		if err != nil {
 			return err
 		}
+		latest = latest.DeepCopy()
+		if fillMissingObjectSyncSpec(&latest.Spec, desiredSpec) {
+			latest, err = md.reliableClient.
+				ReliablesyncsV1alpha1().
+				ClusterObjectSyncs().
+				Update(context.Background(), latest, metav1.UpdateOptions{})
+			if err != nil {
+				return err
+			}
+		}
 		if latest.Status.ObjectResourceVersion != "" {
 			clusterObjectSync = latest
 			return nil
 		}
-		latest = latest.DeepCopy()
-		latest.Status.ObjectResourceVersion = "0"
+		statusLatest := latest.DeepCopy()
+		statusLatest.Status.ObjectResourceVersion = "0"
 		clusterObjectSync, err = md.reliableClient.
 			ReliablesyncsV1alpha1().
 			ClusterObjectSyncs().
-			UpdateStatus(context.Background(), latest, metav1.UpdateOptions{})
+			UpdateStatus(context.Background(), statusLatest, metav1.UpdateOptions{})
 		return err
 	})
 	return clusterObjectSync, err

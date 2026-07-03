@@ -23,9 +23,11 @@ import (
 
 	"github.com/golang/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
+	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	"github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/api/client/clientset/versioned/fake"
 	syncinformer "github.com/kubeedge/api/client/informers/externalversions"
@@ -34,6 +36,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	tf "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/testing"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/session"
+	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	mockcon "github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn/testing"
 )
 
@@ -437,6 +440,80 @@ func TestEnqueueAckMessageInitializesExistingClusterObjectSyncAfterCreateRace(t 
 	}
 	if got.Status.ObjectResourceVersion != "0" {
 		t.Fatalf("expected existing clusterObjectSync status to be initialized to 0, got %q", got.Status.ObjectResourceVersion)
+	}
+}
+
+func TestEnqueueAckMessageBackfillsExistingObjectSyncSpec(t *testing.T) {
+	client := fake.NewSimpleClientset()
+	nmp := common.InitNodeMessagePool(tf.TestNodeID)
+	manager := session.NewSessionManager(10)
+	manager.AddSession(session.NewNodeSession(tf.TestNodeID, tf.TestProjectID, nil, tf.KeepaliveInterval, nmp, client))
+
+	serviceAccountAccess := &policyv1alpha1.ServiceAccountAccess{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "orangepi-agent",
+			Namespace:       tf.TestNamespace,
+			UID:             types.UID("saa-uid"),
+			ResourceVersion: "3",
+		},
+	}
+	msg := beehivemodel.NewMessage("").
+		SetResourceVersion(serviceAccountAccess.ResourceVersion).
+		FillBody(serviceAccountAccess).
+		BuildRouter("edgecontroller", "resource", "node/"+tf.TestNodeID+"/"+tf.TestNamespace+"/serviceaccountaccess/orangepi-agent", "update")
+
+	existingObjectSync := &v1alpha1.ObjectSync{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      synccontroller.BuildObjectSyncName(tf.TestNodeID, string(serviceAccountAccess.UID)),
+			Namespace: tf.TestNamespace,
+		},
+		Spec: v1alpha1.ObjectSyncSpec{
+			ObjectName: serviceAccountAccess.Name,
+		},
+		Status: v1alpha1.ObjectSyncStatus{
+			ObjectResourceVersion: "2",
+		},
+	}
+	if _, err := client.ReliablesyncsV1alpha1().ObjectSyncs(tf.TestNamespace).Create(
+		t.Context(), existingObjectSync, metav1.CreateOptions{}); err != nil {
+		t.Fatalf("failed to seed objectSync: %v", err)
+	}
+
+	objectSyncIndexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
+	if err := objectSyncIndexer.Add(existingObjectSync); err != nil {
+		t.Fatalf("failed to seed objectSync lister: %v", err)
+	}
+	objectSyncLister := synclisters.NewObjectSyncLister(objectSyncIndexer)
+	clusterObjectSyncLister := synclisters.NewClusterObjectSyncLister(cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{}))
+	dispatcher := &messageDispatcher{
+		reliableClient:          client,
+		SessionManager:          manager,
+		objectSyncLister:        objectSyncLister,
+		clusterObjectSyncLister: clusterObjectSyncLister,
+	}
+	dispatcher.AddNodeMessagePool(tf.TestNodeID, nmp)
+
+	dispatcher.enqueueAckMessage(tf.TestNodeID, msg)
+
+	if _, exists, _ := nmp.AckMessageStore.Get(msg); !exists {
+		t.Fatalf("expected message to be enqueued after objectSync spec backfill")
+	}
+	got, err := client.ReliablesyncsV1alpha1().ObjectSyncs(tf.TestNamespace).Get(
+		t.Context(), existingObjectSync.Name, metav1.GetOptions{})
+	if err != nil {
+		t.Fatalf("failed to get objectSync: %v", err)
+	}
+	if got.Spec.ObjectAPIVersion != "policy.kubeedge.io/v1alpha1" {
+		t.Fatalf("expected objectSync apiVersion to be backfilled, got %q", got.Spec.ObjectAPIVersion)
+	}
+	if got.Spec.ObjectKind != "ServiceAccountAccess" {
+		t.Fatalf("expected objectSync kind to be backfilled, got %q", got.Spec.ObjectKind)
+	}
+	if got.Spec.ObjectName != serviceAccountAccess.Name {
+		t.Fatalf("expected objectSync name to stay %q, got %q", serviceAccountAccess.Name, got.Spec.ObjectName)
+	}
+	if got.Status.ObjectResourceVersion != "2" {
+		t.Fatalf("expected objectSync status to remain 2 before ack, got %q", got.Status.ObjectResourceVersion)
 	}
 }
 
