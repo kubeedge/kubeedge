@@ -1530,3 +1530,163 @@ func generateTwinContent(eventID, deviceID string) ([]byte, []byte, dtcontext.DT
 	context := contextFunc(deviceID)
 	return content, contentKeyTwin, context
 }
+
+// contextWithCommChan returns a DTContext that has deviceID registered and a
+// CommChan entry for dtcommon.CommModule so that context.Send() succeeds.
+func contextWithCommChan(deviceID string) (dtcontext.DTContext, chan interface{}) {
+	commChannel := make(chan interface{}, 8)
+	commChan := map[string]chan interface{}{
+		dtcommon.CommModule: commChannel,
+	}
+	ctx := dtcontext.DTContext{
+		DeviceList:  &sync.Map{},
+		DeviceMutex: &sync.Map{},
+		Mutex:       &sync.RWMutex{},
+		CommChan:    commChan,
+	}
+	var mu sync.Mutex
+	ctx.DeviceMutex.Store(deviceID, &mu)
+	device := dttype.Device{}
+	ctx.DeviceList.Store(deviceID, &device)
+	return ctx, commChannel
+}
+
+// TestDealGetTwin_DeviceFound verifies DealGetTwin when the device exists in
+// the context and a CommChan is available. The function must reach
+// BuildDeviceTwinResult, build a response, and dispatch it via context.Send.
+func TestDealGetTwin_DeviceFound(t *testing.T) {
+	klog.InitFlags(nil)
+
+	baseMsg := dttype.BaseMessage{EventID: event1}
+	payload, _ := json.Marshal(baseMsg)
+
+	tests := []struct {
+		name    string
+		setup   func() (dtcontext.DTContext, chan interface{})
+		payload []byte
+		wantErr bool
+	}{
+		{
+			name: "TestDealGetTwin_DeviceFound(): device found with CommChan – Send succeeds",
+			setup: func() (dtcontext.DTContext, chan interface{}) {
+				return contextWithCommChan(deviceB)
+			},
+			payload: payload,
+			wantErr: false,
+		},
+		{
+			name: "TestDealGetTwin_DeviceFound(): device found but CommChan absent – Send returns error",
+			setup: func() (dtcontext.DTContext, chan interface{}) {
+				// contextFunc registers the device but provides no CommChan,
+				// so context.Send → CommTo returns "Not found chan".
+				ctx := contextFunc(deviceB)
+				return ctx, nil
+			},
+			payload: payload,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, commChan := tt.setup()
+
+			err := DealGetTwin(&ctx, deviceB, tt.payload)
+			if tt.wantErr && err == nil {
+				t.Errorf("DealGetTwin() expected an error but got nil")
+			}
+			if !tt.wantErr && err != nil {
+				t.Errorf("DealGetTwin() unexpected error: %v", err)
+			}
+
+			// commChan is buffered (size 8), so Send never blocks. Assert
+			// synchronously that a message was dispatched on the success path.
+			if commChan != nil && !tt.wantErr {
+				select {
+				case _, ok := <-commChan:
+					if !ok {
+						t.Errorf("expected message on commChan, but channel was closed")
+					}
+				default:
+					t.Errorf("expected message on commChan, but none was received")
+				}
+			}
+		})
+	}
+}
+
+// TestDealUpdateResult_NilError verifies that dealUpdateResult sends the
+// payload bytes directly (not an error envelope) when err == nil, i.e. the
+// success branch (line 300: result = payload).
+func TestDealUpdateResult_NilError(t *testing.T) {
+	ctx, commChan := contextWithCommChan(deviceB)
+
+	payload := []byte(`{"key":"val"}`)
+	err := dealUpdateResult(&ctx, deviceB, event1, dtcommon.InternalErrorCode, nil, payload)
+	if err != nil {
+		t.Fatalf("dealUpdateResult() with nil err expected nil return, got: %v", err)
+	}
+
+	// commChan is buffered (size 8); read directly without spawning a goroutine.
+	var received *dttype.DTMessage
+	select {
+	case v, ok := <-commChan:
+		if ok {
+			received = v.(*dttype.DTMessage)
+		}
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("timed out waiting for message on CommChan")
+	}
+
+	if received == nil {
+		t.Fatal("expected a DTMessage on CommChan, got none")
+	}
+	// The dispatched message content must equal the raw payload (success path).
+	msg, ok := received.Msg.Content.([]byte)
+	if !ok {
+		t.Fatalf("expected []byte message content, got %T", received.Msg.Content)
+	}
+	if !reflect.DeepEqual(msg, payload) {
+		t.Errorf("dealUpdateResult() sent %q, want %q", msg, payload)
+	}
+}
+
+// TestDealTwinSync_DeviceNotInContext verifies that dealTwinSync returns nil
+// even when DealDeviceTwin logs an error (device not in context): the function
+// is intentionally designed to swallow that error and return nil.
+func TestDealTwinSync_DeviceNotInContext(t *testing.T) {
+	// Build a valid sync payload for a device that does NOT exist in the context.
+	update := keyTwinUpdateFunc()
+	payload, _ := json.Marshal(update)
+
+	// Use an empty context – no device registered, no CommChan.
+	emptyCtx := dtcontext.DTContext{
+		DeviceList:  &sync.Map{},
+		DeviceMutex: &sync.Map{},
+		Mutex:       &sync.RWMutex{},
+		CommChan:    map[string]chan interface{}{},
+	}
+	// dealTwinSync calls context.Lock(resource) which calls GetMutex; because
+	// no mutex is registered for the resource the lock is a no-op.  The
+	// function must still return nil (it ignores DealDeviceTwin errors).
+	msg := msgTypeFunc(payload)
+	err := dealTwinSync(&emptyCtx, deviceA, msg)
+	if err != nil {
+		t.Errorf("dealTwinSync() expected nil when device not in context, got: %v", err)
+	}
+}
+
+// TestDealGetTwin_MalformedPayload exercises the UnmarshalBaseMessage-error
+// branch of DealGetTwin and confirms the function returns the Send error when
+// CommChan is absent (covering the klog path at line 361).
+func TestDealGetTwin_MalformedPayload_NoCommChan(t *testing.T) {
+	ctx := contextFunc(deviceB)
+	// Deliberately malformed JSON so UnmarshalBaseMessage fails.
+	malformed := []byte("{bad json}")
+	err := DealGetTwin(&ctx, deviceB, malformed)
+	// context.Send returns "Not found chan" because contextFunc does not wire a
+	// CommChan – this is the only non-nil return path after the error branch.
+	if err == nil {
+		t.Error("DealGetTwin() expected non-nil error when CommChan absent, got nil")
+	}
+}
