@@ -133,9 +133,11 @@ func (conn *WSConnection) pingLoop(stop <-chan struct{}) {
 					// by the read deadline, not here.
 					continue
 				}
-				// The connection is gone (closed or broken); the read side
-				// surfaces the failure via the read deadline.
+				// The connection is gone (closed or broken); close it so
+				// the read loop unblocks immediately instead of waiting
+				// for the read deadline to expire.
 				klog.V(2).Infof("ping loop stopped: %v", err)
+				_ = conn.wsConn.Close()
 				return
 			}
 		}
