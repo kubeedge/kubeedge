@@ -1,9 +1,11 @@
 package edgehub
 
 import (
+	"math"
 	"sync"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/flowcontrol"
 	"k8s.io/klog/v2"
 
@@ -29,6 +31,29 @@ type EdgeHub struct {
 }
 
 var _ core.Module = (*EdgeHub)(nil)
+
+const (
+	// reconnectBaseDelay is the initial wait before the first reconnect attempt.
+	reconnectBaseDelay = time.Second
+	// reconnectFactor is the exponential growth factor between attempts.
+	reconnectFactor = 2.0
+	// reconnectJitter randomizes each wait so that many edge nodes losing the
+	// connection to the same cloudcore at once do not reconnect in lockstep.
+	reconnectJitter = 0.2
+)
+
+// newReconnectBackoff builds the exponential backoff used between reconnect
+// attempts. It is capped at the previous fixed wait (Heartbeat*2), so the
+// longest wait never regresses while early attempts happen much sooner.
+func newReconnectBackoff() wait.Backoff {
+	return wait.Backoff{
+		Duration: reconnectBaseDelay,
+		Factor:   reconnectFactor,
+		Jitter:   reconnectJitter,
+		Cap:      time.Duration(config.Config.Heartbeat) * time.Second * 2,
+		Steps:    math.MaxInt32,
+	}
+}
 
 var certSync map[string]chan bool
 
@@ -99,6 +124,7 @@ func (eh *EdgeHub) Start() {
 
 	go eh.ifRotationDone()
 
+	backoff := newReconnectBackoff()
 	for {
 		select {
 		case <-beehiveContext.Done():
@@ -112,16 +138,16 @@ func (eh *EdgeHub) Start() {
 			return
 		}
 
-		waitTime := time.Duration(config.Config.Heartbeat) * time.Second * 2
-
 		err = eh.chClient.Init()
 		if err != nil {
+			waitTime := backoff.Step()
 			klog.Errorf("connection failed: %v, will reconnect after %s", err, waitTime.String())
 			time.Sleep(waitTime)
 			continue
 		}
 		// execute hook func after connect
 		eh.pubConnectInfo(true)
+		connectedAt := time.Now()
 		go eh.routeToEdge()
 		go eh.routeToCloud()
 		go eh.keepalive()
@@ -134,7 +160,13 @@ func (eh *EdgeHub) Start() {
 		// execute hook fun after disconnect
 		eh.pubConnectInfo(false)
 
-		// sleep one period of heartbeat, then try to connect cloud hub again
+		// a connection that stayed up at least one full backoff cap is treated as
+		// healthy, so the backoff resets and the next reconnect starts quickly; a
+		// connection that keeps flapping keeps backing off to spare cloudcore.
+		if time.Since(connectedAt) >= backoff.Cap {
+			backoff = newReconnectBackoff()
+		}
+		waitTime := backoff.Step()
 		klog.Warningf("connection is broken, will reconnect after %s", waitTime.String())
 		time.Sleep(waitTime)
 

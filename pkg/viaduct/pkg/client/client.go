@@ -38,6 +38,10 @@ type Options struct {
 	HandshakeTimeout time.Duration
 	// consumer for raw data
 	Consumer io.Writer
+	// ReadDeadline is the idle read timeout for the connection. When greater
+	// than zero, the websocket connection keeps it refreshed via ping/pong to
+	// detect half-open connections promptly.
+	ReadDeadline time.Duration
 }
 
 // client including common options and extend options

@@ -55,12 +55,13 @@ func (c *WSClient) Connect() (conn.Connection, error) {
 			peerCerts = resp.TLS.PeerCertificates
 		}
 		return conn.NewConnection(&conn.ConnectionOptions{
-			ConnType: api.ProtocolTypeWS,
-			ConnUse:  c.options.ConnUse,
-			Base:     wsConn,
-			Consumer: c.options.Consumer,
-			Handler:  c.options.Handler,
-			CtrlLane: lane.NewLane(api.ProtocolTypeWS, wsConn),
+			ConnType:     api.ProtocolTypeWS,
+			ConnUse:      c.options.ConnUse,
+			Base:         wsConn,
+			Consumer:     c.options.Consumer,
+			Handler:      c.options.Handler,
+			ReadDeadline: c.options.ReadDeadline,
+			CtrlLane:     lane.NewLane(api.ProtocolTypeWS, wsConn),
 			State: &conn.ConnectionState{
 				State:            api.StatConnected,
 				Headers:          c.exOpts.Header.Clone(),

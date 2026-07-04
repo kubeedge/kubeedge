@@ -32,6 +32,10 @@ type WSConnection struct {
 	messageFifo        *fifo.MessageFifo
 	locker             sync.Mutex
 	OnReadTransportErr func(nodeID, projectID string)
+	// readTimeout is the idle read timeout. When greater than zero, the read
+	// loop keeps the underlying connection's read deadline refreshed through
+	// ping/pong so a half-open connection is detected within readTimeout.
+	readTimeout time.Duration
 }
 
 func NewWSConn(options *ConnectionOptions) *WSConnection {
@@ -44,6 +48,7 @@ func NewWSConn(options *ConnectionOptions) *WSConnection {
 		autoRoute:          options.AutoRoute,
 		messageFifo:        fifo.NewMessageFifo(),
 		OnReadTransportErr: options.OnReadTransportErr,
+		readTimeout:        options.ReadDeadline,
 	}
 }
 
@@ -100,6 +105,16 @@ func (conn *WSConnection) handleRawData() {
 }
 
 func (conn *WSConnection) handleMessage() {
+	if conn.readTimeout > 0 {
+		_ = conn.wsConn.SetReadDeadline(time.Now().Add(conn.readTimeout))
+		conn.wsConn.SetPongHandler(func(string) error {
+			return conn.wsConn.SetReadDeadline(time.Now().Add(conn.readTimeout))
+		})
+		stop := make(chan struct{})
+		defer close(stop)
+		go conn.keepalive(stop)
+	}
+
 	for {
 		msg := &model.Message{}
 		err := lane.NewLane(api.ProtocolTypeWS, conn.wsConn).ReadMessage(msg)
@@ -116,6 +131,11 @@ func (conn *WSConnection) handleMessage() {
 			}
 
 			return
+		}
+
+		// a successful read means the peer is alive, extend the read deadline
+		if conn.readTimeout > 0 {
+			_ = conn.wsConn.SetReadDeadline(time.Now().Add(conn.readTimeout))
 		}
 
 		// filter control message
@@ -149,9 +169,36 @@ func (conn *WSConnection) handleMessage() {
 	}
 }
 
+// keepalive periodically sends websocket ping control frames so the peer's
+// pong refreshes the read deadline set in handleMessage. If the connection is
+// half-open, no pong arrives, the read deadline fires and the read loop tears
+// the connection down instead of blocking until the kernel TCP timeout.
+func (conn *WSConnection) keepalive(stop <-chan struct{}) {
+	pingPeriod := conn.readTimeout * 9 / 10
+	if pingPeriod <= 0 {
+		return
+	}
+	ticker := time.NewTicker(pingPeriod)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-stop:
+			return
+		case <-ticker.C:
+			conn.locker.Lock()
+			err := conn.wsConn.WriteControl(websocket.PingMessage, nil, time.Now().Add(conn.readTimeout))
+			conn.locker.Unlock()
+			if err != nil {
+				klog.Errorf("failed to send ping to peer, error: %+v", err)
+				return
+			}
+		}
+	}
+}
+
 func (conn *WSConnection) SetReadDeadline(t time.Time) error {
 	conn.ReadDeadline = t
-	return nil
+	return conn.wsConn.SetReadDeadline(t)
 }
 
 func (conn *WSConnection) SetWriteDeadline(t time.Time) error {

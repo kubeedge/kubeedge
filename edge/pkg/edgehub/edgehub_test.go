@@ -18,6 +18,7 @@ package edgehub
 
 import (
 	"testing"
+	"time"
 
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
@@ -115,5 +116,51 @@ func TestEnable(t *testing.T) {
 				t.Errorf("EdgeHub.Enable() returned expected results. got = %v, want = %v", got, tt.want)
 			}
 		})
+	}
+}
+
+// TestNewReconnectBackoff checks the reconnect backoff grows exponentially with
+// jitter and is capped at the previous fixed wait (Heartbeat*2).
+func TestNewReconnectBackoff(t *testing.T) {
+	config.Config.Heartbeat = 15
+	cap := time.Duration(config.Config.Heartbeat) * time.Second * 2 // 30s
+
+	backoff := newReconnectBackoff()
+	if backoff.Duration != reconnectBaseDelay {
+		t.Errorf("backoff base = %s, want %s", backoff.Duration, reconnectBaseDelay)
+	}
+	if backoff.Factor != reconnectFactor {
+		t.Errorf("backoff factor = %v, want %v", backoff.Factor, reconnectFactor)
+	}
+	if backoff.Jitter != reconnectJitter {
+		t.Errorf("backoff jitter = %v, want %v", backoff.Jitter, reconnectJitter)
+	}
+	if backoff.Cap != cap {
+		t.Errorf("backoff cap = %s, want %s", backoff.Cap, cap)
+	}
+
+	// Each step lies in [base*factor^i, base*factor^i*(1+jitter)] until it caps.
+	steps := []struct {
+		low  time.Duration
+		high time.Duration
+	}{
+		{1 * time.Second, 1200 * time.Millisecond},
+		{2 * time.Second, 2400 * time.Millisecond},
+		{4 * time.Second, 4800 * time.Millisecond},
+	}
+	for i, s := range steps {
+		got := backoff.Step()
+		if got < s.low || got > s.high {
+			t.Errorf("step %d = %s, want within [%s, %s]", i, got, s.low, s.high)
+		}
+	}
+
+	// After enough steps the wait is capped at Cap (plus jitter) and never grows further.
+	var last time.Duration
+	for i := 0; i < 20; i++ {
+		last = backoff.Step()
+	}
+	if last < cap || last > time.Duration(float64(cap)*(1+reconnectJitter)) {
+		t.Errorf("capped step = %s, want within [%s, %s]", last, cap, time.Duration(float64(cap)*(1+reconnectJitter)))
 	}
 }
