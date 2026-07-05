@@ -122,6 +122,9 @@ func TestEnable(t *testing.T) {
 // TestNewReconnectBackoff checks the reconnect backoff grows exponentially with
 // jitter and is capped at the previous fixed wait (Heartbeat*2).
 func TestNewReconnectBackoff(t *testing.T) {
+	oldHeartbeat := config.Config.Heartbeat
+	defer func() { config.Config.Heartbeat = oldHeartbeat }()
+
 	config.Config.Heartbeat = 15
 	cap := time.Duration(config.Config.Heartbeat) * time.Second * 2 // 30s
 
@@ -162,5 +165,12 @@ func TestNewReconnectBackoff(t *testing.T) {
 	}
 	if last < cap || last > time.Duration(float64(cap)*(1+reconnectJitter)) {
 		t.Errorf("capped step = %s, want within [%s, %s]", last, cap, time.Duration(float64(cap)*(1+reconnectJitter)))
+	}
+
+	// a non-positive heartbeat must still yield a valid, capped backoff instead
+	// of one that grows without limit.
+	config.Config.Heartbeat = 0
+	if got := newReconnectBackoff(); got.Cap <= 0 {
+		t.Errorf("backoff cap with non-positive heartbeat = %s, want > 0", got.Cap)
 	}
 }

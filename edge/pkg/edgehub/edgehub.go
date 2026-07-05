@@ -40,17 +40,26 @@ const (
 	// reconnectJitter randomizes each wait so that many edge nodes losing the
 	// connection to the same cloudcore at once do not reconnect in lockstep.
 	reconnectJitter = 0.2
+	// defaultHeartbeat mirrors the config default and is used as a fallback when
+	// the configured heartbeat is non-positive, so the backoff cap stays valid.
+	defaultHeartbeat = 15
 )
 
 // newReconnectBackoff builds the exponential backoff used between reconnect
 // attempts. It is capped at the previous fixed wait (Heartbeat*2), so the
-// longest wait never regresses while early attempts happen much sooner.
+// longest wait never regresses while early attempts happen much sooner. A
+// non-positive heartbeat falls back to the default, otherwise the cap would be
+// zero and the backoff would grow without limit.
 func newReconnectBackoff() wait.Backoff {
+	heartbeat := config.Config.Heartbeat
+	if heartbeat <= 0 {
+		heartbeat = defaultHeartbeat
+	}
 	return wait.Backoff{
 		Duration: reconnectBaseDelay,
 		Factor:   reconnectFactor,
 		Jitter:   reconnectJitter,
-		Cap:      time.Duration(config.Config.Heartbeat) * time.Second * 2,
+		Cap:      time.Duration(heartbeat) * time.Second * 2,
 		Steps:    math.MaxInt32,
 	}
 }

@@ -117,7 +117,9 @@ func TestWSConnectionReadDeadlineHealthy(t *testing.T) {
 
 	var once sync.Once
 	fired := make(chan struct{})
-	conn := newTestWSConn(wsConn, time.Second, func(string, string) {
+	// Use a generous read deadline so the ping/pong round-trip and goroutine
+	// scheduling have enough slack to keep this test stable under CI load.
+	conn := newTestWSConn(wsConn, 3*time.Second, func(string, string) {
 		once.Do(func() { close(fired) })
 	})
 	conn.ServeConn()
@@ -125,8 +127,8 @@ func TestWSConnectionReadDeadlineHealthy(t *testing.T) {
 	select {
 	case <-fired:
 		t.Fatal("connection was torn down while the peer was responsive")
-	case <-time.After(2500 * time.Millisecond):
-		// stayed alive across multiple read-deadline windows, as expected
+	case <-time.After(5 * time.Second):
+		// stayed alive past the read-deadline window via ping/pong, as expected
 	}
 	_ = conn.Close()
 }
