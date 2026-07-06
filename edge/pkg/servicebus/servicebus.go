@@ -2,6 +2,7 @@ package servicebus
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -235,8 +236,12 @@ func server(stopChan <-chan struct{}) {
 	h := buildBasicHandler(timeout)
 	// TODO we should add tls for servicebus http server later
 	s := http.Server{
-		Addr:    fmt.Sprintf("%s:%d", servicebusConfig.Config.Server, servicebusConfig.Config.Port),
-		Handler: h,
+		Addr:              fmt.Sprintf("%s:%d", servicebusConfig.Config.Server, servicebusConfig.Config.Port),
+		Handler:           h,
+		ReadHeaderTimeout: 10 * time.Second,
+		TLSConfig: &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		},
 	}
 	go func() {
 		<-stopChan
