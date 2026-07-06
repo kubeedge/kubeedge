@@ -19,6 +19,7 @@ package edge
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -167,16 +168,16 @@ func getEdgeCoreBinary(ctx context.Context, opts UpgradeOptions, config *cfgv1al
 	if err := ctrcli.PullImage(ctx, image, nil, nil); err != nil {
 		return "", fmt.Errorf("failed to pull image %s, err: %v", image, err)
 	}
-	// If the ImageDigest is not empty, verify the image.
-	if opts.ImageDigest != "" {
-		local, err := ctrcli.GetImageDigest(ctx, image)
-		if err != nil {
-			return "", fmt.Errorf("failed to get image digest of %s, err: %v", image, err)
-		}
-		if local != opts.ImageDigest {
-			return "", fmt.Errorf("image digest of %s is not correct, local: %s, expected: %s",
-				image, local, opts.ImageDigest)
-		}
+	if opts.ImageDigest == "" {
+		return "", errors.New("image-digest is required for edge upgrade")
+	}
+	local, err := ctrcli.GetImageDigest(ctx, image)
+	if err != nil {
+		return "", fmt.Errorf("failed to get image digest of %s, err: %v", image, err)
+	}
+	if local != opts.ImageDigest {
+		return "", fmt.Errorf("image digest of %s is not correct, local: %s, expected: %s",
+			image, local, opts.ImageDigest)
 	}
 	// Copy edgecore binary from the image to the upgrade path.
 	containerFilePath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)

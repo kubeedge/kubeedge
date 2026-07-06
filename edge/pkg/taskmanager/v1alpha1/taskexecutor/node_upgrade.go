@@ -209,6 +209,9 @@ func keadmUpgrade(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.Ed
 func prepareKeadm(upgradeReq *commontypes.NodeUpgradeJobRequest) error {
 	ctx := context.Background()
 	config := options.GetEdgeCoreConfig()
+	if upgradeReq.ImageDigest == "" {
+		return errors.New("imageDigest is required for node upgrade jobs")
+	}
 
 	// install the requested installer keadm from docker image
 	klog.Infof("Begin to download version %s keadm", upgradeReq.Version)
@@ -225,15 +228,13 @@ func prepareKeadm(upgradeReq *commontypes.NodeUpgradeJobRequest) error {
 		return fmt.Errorf("pull image failed: %v", err)
 	}
 	// Check installation-package image digest
-	if upgradeReq.ImageDigest != "" {
-		var local string
-		local, err = ctrcli.GetImageDigest(ctx, image)
-		if err != nil {
-			return err
-		}
-		if upgradeReq.ImageDigest != local {
-			return fmt.Errorf("invalid installation-package image digest value: %s", local)
-		}
+	var local string
+	local, err = ctrcli.GetImageDigest(ctx, image)
+	if err != nil {
+		return err
+	}
+	if upgradeReq.ImageDigest != local {
+		return fmt.Errorf("invalid installation-package image digest value: %s", local)
 	}
 	containerPath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KeadmBinaryName)
 	hostPath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KeadmBinaryName)

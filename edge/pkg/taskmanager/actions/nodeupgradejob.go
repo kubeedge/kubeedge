@@ -19,6 +19,7 @@ package actions
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"runtime"
@@ -130,6 +131,11 @@ func (nodeUpgradeJobActionHandler) checkItems(
 			return resp
 		}
 	}
+	expectedDigest, err := expectedUpgradeImageDigest(spec.ImageDigestGetter)
+	if err != nil {
+		resp.err = err
+		return resp
+	}
 
 	// Pull installation-package image.
 	cfg := options.GetEdgeCoreConfig()
@@ -146,27 +152,15 @@ func (nodeUpgradeJobActionHandler) checkItems(
 		return resp
 	}
 
-	// If the ImageDigestGetter is not empty, verify the image digest.
-	if getter := spec.ImageDigestGetter; getter != nil {
-		var expectedDigest string
-		switch {
-		case runtime.GOARCH == "arm64" && getter.ARM64 != "":
-			expectedDigest = getter.ARM64
-		case runtime.GOARCH == "amd64" && getter.AMD64 != "":
-			expectedDigest = getter.AMD64
-		default:
-			resp.err = fmt.Errorf("unsupported the arch %s to verify the image digest", runtime.GOARCH)
-			return resp
-		}
-		local, err := ctrcli.GetImageDigest(ctx, image)
-		if err != nil {
-			resp.err = fmt.Errorf("failed to get image digest of %s, err: %v", image, err)
-		}
-		if local != expectedDigest {
-			resp.err = fmt.Errorf("image digest of %s is not correct, local: %s, expected: %s",
-				image, local, expectedDigest)
-			return resp
-		}
+	local, err := ctrcli.GetImageDigest(ctx, image)
+	if err != nil {
+		resp.err = fmt.Errorf("failed to get image digest of %s, err: %v", image, err)
+		return resp
+	}
+	if local != expectedDigest {
+		resp.err = fmt.Errorf("image digest of %s is not correct, local: %s, expected: %s",
+			image, local, expectedDigest)
+		return resp
 	}
 
 	// Copy new keadm bainnary from the image to /usr/local/bin.
@@ -179,6 +173,20 @@ func (nodeUpgradeJobActionHandler) checkItems(
 		return resp
 	}
 	return resp
+}
+
+func expectedUpgradeImageDigest(getter *operationsv1alpha2.ImageDigestGetter) (string, error) {
+	if getter == nil {
+		return "", errors.New("imageDigestGetter is required for node upgrade jobs")
+	}
+	switch {
+	case runtime.GOARCH == "arm64" && getter.ARM64 != "":
+		return getter.ARM64, nil
+	case runtime.GOARCH == "amd64" && getter.AMD64 != "":
+		return getter.AMD64, nil
+	default:
+		return "", fmt.Errorf("image digest is required for arch %s", runtime.GOARCH)
+	}
 }
 
 func (nodeUpgradeJobActionHandler) waitingConfirmation(

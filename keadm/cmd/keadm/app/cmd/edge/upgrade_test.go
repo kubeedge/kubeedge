@@ -309,15 +309,6 @@ func TestUpgradeExecutorUpgrade(t *testing.T) {
 
 func TestGetEdgeCoreBinary(t *testing.T) {
 	const wantHostPath = "/etc/kubeedge/upgrade/v1.1.0/edgecore"
-	var checked int
-
-	opts := UpgradeOptions{
-		Image:     "kubeedge/installation-package",
-		ToVersion: "v1.1.0",
-		BaseOptions: BaseOptions{
-			Config: constants.EdgecoreConfigPath,
-		},
-	}
 	cfg := &cfgv1alpha2.EdgeCoreConfig{
 		Modules: &cfgv1alpha2.Modules{
 			Edged: &cfgv1alpha2.Edged{
@@ -329,34 +320,81 @@ func TestGetEdgeCoreBinary(t *testing.T) {
 		},
 	}
 
-	patches := gomonkey.NewPatches()
-	defer patches.Reset()
+	t.Run("requires image digest", func(t *testing.T) {
+		opts := UpgradeOptions{
+			Image:     "kubeedge/installation-package",
+			ToVersion: "v1.1.0",
+			BaseOptions: BaseOptions{
+				Config: constants.EdgecoreConfigPath,
+			},
+		}
 
-	patches.ApplyFunc(containers.NewContainerRuntime, func(endpoint, cgroupDriver string,
-	) (containers.ContainerRuntime, error) {
-		assert.Equal(t, cfg.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint, endpoint)
-		assert.Equal(t, cfg.Modules.Edged.TailoredKubeletConfig.CgroupDriver, cgroupDriver)
-		checked++
-		return &containers.ContainerRuntimeImpl{}, nil
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyFunc(containers.NewContainerRuntime, func(endpoint, cgroupDriver string,
+		) (containers.ContainerRuntime, error) {
+			assert.Equal(t, cfg.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint, endpoint)
+			assert.Equal(t, cfg.Modules.Edged.TailoredKubeletConfig.CgroupDriver, cgroupDriver)
+			return &containers.ContainerRuntimeImpl{}, nil
+		})
+		patches.ApplyMethodFunc(reflect.TypeOf(&containers.ContainerRuntimeImpl{}), "PullImage",
+			func(_ctx context.Context, image string, _authConfig *runtimeapi.AuthConfig, _sandboxConfig *runtimeapi.PodSandboxConfig) error {
+				assert.Equal(t, opts.Image+":"+opts.ToVersion, image)
+				return nil
+			})
+
+		path, err := getEdgeCoreBinary(context.TODO(), opts, cfg)
+		assert.EqualError(t, err, "image-digest is required for edge upgrade")
+		assert.Empty(t, path)
 	})
-	patches.ApplyMethodFunc(reflect.TypeOf(&containers.ContainerRuntimeImpl{}), "PullImage",
-		func(_ctx context.Context, image string, _authConfig *runtimeapi.AuthConfig, _sandboxConfig *runtimeapi.PodSandboxConfig) error {
-			assert.Equal(t, opts.Image+":"+opts.ToVersion, image)
-			checked++
-			return nil
-		})
-	patches.ApplyMethodFunc(reflect.TypeOf(&containers.ContainerRuntimeImpl{}), "CopyResources",
-		func(_ctx context.Context, edgeImage string, files map[string]string) error {
-			assert.Equal(t, opts.Image+":"+opts.ToVersion, edgeImage)
-			hostpath, ok := files["/usr/local/bin/edgecore"]
-			assert.True(t, ok)
-			assert.Equal(t, wantHostPath, hostpath)
-			checked++
-			return nil
-		})
 
-	path, err := getEdgeCoreBinary(context.TODO(), opts, cfg)
-	assert.NoError(t, err)
-	assert.Equal(t, 3, checked)
-	assert.Equal(t, wantHostPath, path)
+	t.Run("copies verified binary", func(t *testing.T) {
+		var checked int
+		opts := UpgradeOptions{
+			Image:       "kubeedge/installation-package",
+			ImageDigest: "sha256:test",
+			ToVersion:   "v1.1.0",
+			BaseOptions: BaseOptions{
+				Config: constants.EdgecoreConfigPath,
+			},
+		}
+
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyFunc(containers.NewContainerRuntime, func(endpoint, cgroupDriver string,
+		) (containers.ContainerRuntime, error) {
+			assert.Equal(t, cfg.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint, endpoint)
+			assert.Equal(t, cfg.Modules.Edged.TailoredKubeletConfig.CgroupDriver, cgroupDriver)
+			checked++
+			return &containers.ContainerRuntimeImpl{}, nil
+		})
+		patches.ApplyMethodFunc(reflect.TypeOf(&containers.ContainerRuntimeImpl{}), "PullImage",
+			func(_ctx context.Context, image string, _authConfig *runtimeapi.AuthConfig, _sandboxConfig *runtimeapi.PodSandboxConfig) error {
+				assert.Equal(t, opts.Image+":"+opts.ToVersion, image)
+				checked++
+				return nil
+			})
+		patches.ApplyMethodFunc(reflect.TypeOf(&containers.ContainerRuntimeImpl{}), "GetImageDigest",
+			func(_ctx context.Context, image string) (string, error) {
+				assert.Equal(t, opts.Image+":"+opts.ToVersion, image)
+				checked++
+				return opts.ImageDigest, nil
+			})
+		patches.ApplyMethodFunc(reflect.TypeOf(&containers.ContainerRuntimeImpl{}), "CopyResources",
+			func(_ctx context.Context, edgeImage string, files map[string]string) error {
+				assert.Equal(t, opts.Image+":"+opts.ToVersion, edgeImage)
+				hostpath, ok := files["/usr/local/bin/edgecore"]
+				assert.True(t, ok)
+				assert.Equal(t, wantHostPath, hostpath)
+				checked++
+				return nil
+			})
+
+		path, err := getEdgeCoreBinary(context.TODO(), opts, cfg)
+		assert.NoError(t, err)
+		assert.Equal(t, 4, checked)
+		assert.Equal(t, wantHostPath, path)
+	})
 }

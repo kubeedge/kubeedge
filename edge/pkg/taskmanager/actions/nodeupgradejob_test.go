@@ -89,13 +89,6 @@ func TestNodeUpgradeJobPostRun(t *testing.T) {
 
 func TestNodeUpgradeJobCheckItems(t *testing.T) {
 	ctx := context.TODO()
-	specser := &cachedSpecSerializer{
-		spec: &operationsv1alpha2.NodeUpgradeJobSpec{
-			CheckItems: []string{"cpu", "mem", "disk"},
-			Image:      "kubeedge/installation-package",
-			Version:    "v1.21.0",
-		},
-	}
 	cfg := &cfgv1alpha2.EdgeCoreConfig{
 		Modules: &cfgv1alpha2.Modules{
 			Edged: &cfgv1alpha2.Edged{
@@ -111,6 +104,13 @@ func TestNodeUpgradeJobCheckItems(t *testing.T) {
 	}
 
 	t.Run("check items failed", func(t *testing.T) {
+		specser := &cachedSpecSerializer{
+			spec: &operationsv1alpha2.NodeUpgradeJobSpec{
+				CheckItems: []string{"cpu", "mem", "disk"},
+				Image:      "kubeedge/installation-package",
+				Version:    "v1.21.0",
+			},
+		}
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
@@ -122,8 +122,14 @@ func TestNodeUpgradeJobCheckItems(t *testing.T) {
 		assert.EqualError(t, resp.Error(), "test error")
 	})
 
-	t.Run("check items success", func(t *testing.T) {
-		var pullImageCalled, copyResourcesCalled bool
+	t.Run("check items requires image digest getter", func(t *testing.T) {
+		specser := &cachedSpecSerializer{
+			spec: &operationsv1alpha2.NodeUpgradeJobSpec{
+				CheckItems: []string{"cpu", "mem", "disk"},
+				Image:      "kubeedge/installation-package",
+				Version:    "v1.21.0",
+			},
+		}
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
@@ -141,24 +147,30 @@ func TestNodeUpgradeJobCheckItems(t *testing.T) {
 		})
 		patches.ApplyMethodFunc(reflect.TypeOf(&containers.ContainerRuntimeImpl{}), "PullImage",
 			func(_ctx context.Context, image string, _authConfig *runtimeapi.AuthConfig, _sandboxConfig *runtimeapi.PodSandboxConfig) error {
-				pullImageCalled = true
 				assert.Equal(t, "kubeedge/installation-package:v1.21.0", image)
-				return nil
-			})
-		patches.ApplyMethodFunc(reflect.TypeOf(&containers.ContainerRuntimeImpl{}), "CopyResources",
-			func(_ctx context.Context, edgeImage string, files map[string]string) error {
-				copyResourcesCalled = true
-				assert.Equal(t, "kubeedge/installation-package:v1.21.0", edgeImage)
-				hostpath, ok := files["/usr/local/bin/keadm"]
-				assert.True(t, ok)
-				assert.Equal(t, "/usr/local/bin/keadm", hostpath)
 				return nil
 			})
 
 		resp := h.checkItems(ctx, "", "", specser)
-		require.NoError(t, resp.Error())
-		assert.True(t, pullImageCalled)
-		assert.True(t, copyResourcesCalled)
+		require.EqualError(t, resp.Error(), "imageDigestGetter is required for node upgrade jobs")
+	})
+
+}
+
+func TestExpectedUpgradeImageDigest(t *testing.T) {
+	t.Run("requires digest getter", func(t *testing.T) {
+		digest, err := expectedUpgradeImageDigest(nil)
+		require.EqualError(t, err, "imageDigestGetter is required for node upgrade jobs")
+		assert.Empty(t, digest)
+	})
+
+	t.Run("returns digest for current architecture", func(t *testing.T) {
+		digest, err := expectedUpgradeImageDigest(&operationsv1alpha2.ImageDigestGetter{
+			AMD64: "sha256:amd64",
+			ARM64: "sha256:arm64",
+		})
+		require.NoError(t, err)
+		assert.NotEmpty(t, digest)
 	})
 }
 
