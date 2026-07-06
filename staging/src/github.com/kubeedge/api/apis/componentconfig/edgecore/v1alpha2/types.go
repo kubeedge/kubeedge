@@ -1049,6 +1049,10 @@ type ServiceBus struct {
 	Port int `json:"port"`
 	// Timeout indicates timeout for servicebus receive mseeage
 	Timeout int `json:"timeout"`
+	// TLSCertFile indicates the file containing x509 Certificate for HTTPS
+	TLSCertFile string `json:"tlsCertFile,omitempty"`
+	// TLSPrivateKeyFile indicates the file containing x509 private key matching tlsCertFile
+	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile,omitempty"`
 }
 
 // DeviceTwin indicates the DeviceTwin module config

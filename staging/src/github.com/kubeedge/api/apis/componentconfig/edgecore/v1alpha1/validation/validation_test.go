@@ -253,10 +253,35 @@ func TestValidateModuleServiceBus(t *testing.T) {
 			expected: field.ErrorList{},
 		},
 		{
-			name: "case2 enabled",
+			name: "case2 enabled with missing tls files",
 			input: v1alpha1.ServiceBus{
-				Enable: true,
+				Enable:            true,
+				TLSCertFile:       "/not/exist.crt",
+				TLSPrivateKeyFile: "/not/exist.key",
 			},
+			expected: field.ErrorList{
+				field.Invalid(field.NewPath("tlsCertFile"), "/not/exist.crt", "tlsCertFile not exist"),
+				field.Invalid(field.NewPath("tlsPrivateKeyFile"), "/not/exist.key", "tlsPrivateKeyFile not exist"),
+			},
+		},
+		{
+			name: "case3 enabled with valid tls files",
+			input: func() v1alpha1.ServiceBus {
+				dir := t.TempDir()
+				certFile, err := os.CreateTemp(dir, "cert")
+				if err != nil {
+					t.Fatalf("create temp cert file failed: %v", err)
+				}
+				keyFile, err := os.CreateTemp(dir, "key")
+				if err != nil {
+					t.Fatalf("create temp key file failed: %v", err)
+				}
+				return v1alpha1.ServiceBus{
+					Enable:            true,
+					TLSCertFile:       certFile.Name(),
+					TLSPrivateKeyFile: keyFile.Name(),
+				}
+			}(),
 			expected: field.ErrorList{},
 		},
 	}

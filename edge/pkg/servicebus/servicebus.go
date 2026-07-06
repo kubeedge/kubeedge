@@ -3,6 +3,7 @@ package servicebus
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -248,7 +249,15 @@ func server(stopChan <-chan struct{}) {
 	}()
 
 	klog.Infof("[servicebus]start to listen and server at %v", s.Addr)
-	utilruntime.HandleError(s.ListenAndServe())
+	utilruntime.HandleError(serveWithTLS(&s, servicebusConfig.Config.TLSCertFile, servicebusConfig.Config.TLSPrivateKeyFile))
+}
+
+func serveWithTLS(server *http.Server, certFile, keyFile string) error {
+	err := server.ListenAndServeTLS(certFile, keyFile)
+	if errors.Is(err, http.ErrServerClosed) {
+		return nil
+	}
+	return err
 }
 
 func buildBasicHandler(timeout time.Duration) http.Handler {

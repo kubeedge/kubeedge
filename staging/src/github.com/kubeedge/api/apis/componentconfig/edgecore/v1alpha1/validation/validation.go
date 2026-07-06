@@ -123,6 +123,12 @@ func ValidateModuleServiceBus(s v1alpha1.ServiceBus) field.ErrorList {
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
+	if !utilvalidation.FileIsExist(s.TLSCertFile) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("tlsCertFile"), s.TLSCertFile, "tlsCertFile not exist"))
+	}
+	if !utilvalidation.FileIsExist(s.TLSPrivateKeyFile) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("tlsPrivateKeyFile"), s.TLSPrivateKeyFile, "tlsPrivateKeyFile not exist"))
+	}
 	return allErrs
 }
 
