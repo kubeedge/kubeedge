@@ -157,6 +157,10 @@ func (executor *upgradeExecutor) newReporter(upgradeID, toVersion string) upgrde
 // getEdgeCoreBinary pulls the installation-package image and obtains the edgecore binary from it.
 // The edgecore binary is copied to the upgrade path, and the filepath is returned.
 func getEdgeCoreBinary(ctx context.Context, opts UpgradeOptions, config *cfgv1alpha2.EdgeCoreConfig) (string, error) {
+	if opts.ImageDigest == "" {
+		return "", errors.New("image-digest is required for edge upgrade")
+	}
+
 	ctrcli, err := containers.NewContainerRuntime(
 		config.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint,
 		config.Modules.Edged.TailoredKubeletConfig.CgroupDriver)
@@ -167,9 +171,6 @@ func getEdgeCoreBinary(ctx context.Context, opts UpgradeOptions, config *cfgv1al
 	// Pull installation-package image
 	if err := ctrcli.PullImage(ctx, image, nil, nil); err != nil {
 		return "", fmt.Errorf("failed to pull image %s, err: %v", image, err)
-	}
-	if opts.ImageDigest == "" {
-		return "", errors.New("image-digest is required for edge upgrade")
 	}
 	local, err := ctrcli.GetImageDigest(ctx, image)
 	if err != nil {

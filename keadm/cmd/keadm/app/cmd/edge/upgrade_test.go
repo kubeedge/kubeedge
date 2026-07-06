@@ -329,21 +329,6 @@ func TestGetEdgeCoreBinary(t *testing.T) {
 			},
 		}
 
-		patches := gomonkey.NewPatches()
-		defer patches.Reset()
-
-		patches.ApplyFunc(containers.NewContainerRuntime, func(endpoint, cgroupDriver string,
-		) (containers.ContainerRuntime, error) {
-			assert.Equal(t, cfg.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint, endpoint)
-			assert.Equal(t, cfg.Modules.Edged.TailoredKubeletConfig.CgroupDriver, cgroupDriver)
-			return &containers.ContainerRuntimeImpl{}, nil
-		})
-		patches.ApplyMethodFunc(reflect.TypeOf(&containers.ContainerRuntimeImpl{}), "PullImage",
-			func(_ctx context.Context, image string, _authConfig *runtimeapi.AuthConfig, _sandboxConfig *runtimeapi.PodSandboxConfig) error {
-				assert.Equal(t, opts.Image+":"+opts.ToVersion, image)
-				return nil
-			})
-
 		path, err := getEdgeCoreBinary(context.TODO(), opts, cfg)
 		assert.EqualError(t, err, "image-digest is required for edge upgrade")
 		assert.Empty(t, path)
