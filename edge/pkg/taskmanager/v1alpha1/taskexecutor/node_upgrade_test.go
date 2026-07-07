@@ -90,6 +90,10 @@ func TestOpenUpgradeLogFileRejectsSymlink(t *testing.T) {
 	_, err := openUpgradeLogFile(logPath)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "too many levels of symbolic links")
+
+	data, readErr := os.ReadFile(target)
+	require.NoError(t, readErr)
+	require.Equal(t, "target", string(data))
 }
 
 func TestOpenUpgradeLogFileTruncatesExistingContent(t *testing.T) {
@@ -177,7 +181,10 @@ exec "$@"
 		keadmExecutablePath = originalKeadmPath
 	})
 
-	cmd, err := newSystemdRunUpgradeCommand(systemdRunPath, req, opts)
+	cmd, err := newSystemdRunUpgradeCommand(systemdRunCapabilities{
+		path:           systemdRunPath,
+		supportsSetenv: true,
+	}, req, opts)
 	require.NoError(t, err)
 	require.NoError(t, cmd.Run())
 
@@ -186,13 +193,31 @@ exec "$@"
 	require.Equal(t, strings.Join(buildKeadmUpgradeArgs(req, opts), "\n")+"\n", string(data))
 }
 
+func TestNewSystemdRunUpgradeCommandAddsCollectWhenSupported(t *testing.T) {
+	req := commontypes.NodeUpgradeJobRequest{
+		UpgradeID: "upgrade-id",
+		HistoryID: "history-id",
+		Version:   "v1.17.0",
+		Image:     "example.com/package:v1.17.0",
+	}
+	opts := &options.EdgeCoreOptions{ConfigFile: "/etc/kubeedge/edgecore.yaml"}
+
+	cmd, err := newSystemdRunUpgradeCommand(systemdRunCapabilities{
+		path:            "/usr/bin/systemd-run",
+		supportsSetenv:  true,
+		supportsCollect: true,
+	}, req, opts)
+	require.NoError(t, err)
+	require.Contains(t, cmd.Args, systemdRunCollectFlag)
+}
+
 func TestBuildKeadmUpgradeUnitNameEmptyIDUsesPrefix(t *testing.T) {
-	require.Equal(t, keadmUpgradeUnitPrefix, buildKeadmUpgradeUnitName(""))
+	require.Equal(t, keadmUpgradeUnitPrefix, buildKeadmUpgradeUnitName("", ""))
 }
 
 func TestBuildKeadmUpgradeUnitNameBoundsLengthAndHashes(t *testing.T) {
 	longID := strings.Repeat("very-long-upgrade-id-", 32)
-	unitName := buildKeadmUpgradeUnitName(longID)
+	unitName := buildKeadmUpgradeUnitName(longID, "history-id")
 
 	require.LessOrEqual(t, len(unitName), keadmUpgradeUnitMaxNameLen)
 	require.True(t, strings.HasPrefix(unitName, keadmUpgradeUnitPrefix+"-"))
@@ -202,5 +227,12 @@ func TestBuildKeadmUpgradeUnitNameKeepsSamePrefixIDsDistinct(t *testing.T) {
 	id1 := strings.Repeat("same-prefix-", 20) + "one"
 	id2 := strings.Repeat("same-prefix-", 20) + "two"
 
-	require.NotEqual(t, buildKeadmUpgradeUnitName(id1), buildKeadmUpgradeUnitName(id2))
+	require.NotEqual(t, buildKeadmUpgradeUnitName(id1, "history"), buildKeadmUpgradeUnitName(id2, "history"))
+}
+
+func TestBuildKeadmUpgradeUnitNameKeepsSameUpgradeIDDifferentHistoryIDsDistinct(t *testing.T) {
+	require.NotEqual(t,
+		buildKeadmUpgradeUnitName("upgrade-id", "history-1"),
+		buildKeadmUpgradeUnitName("upgrade-id", "history-2"),
+	)
 }

@@ -24,15 +24,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"k8s.io/klog/v2"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
-	"syscall"
-
-	"golang.org/x/sys/unix"
-	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/common/constants"
 	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
@@ -54,6 +51,7 @@ const (
 	keadmUpgradeUnitMaxNameLen = 255 - len(".service")
 	keadmUpgradeUnitHashLen    = 12
 	systemdRunSetenvFlag       = "--setenv"
+	systemdRunCollectFlag      = "--collect"
 	systemdRunUpgradeScript    = `exec "$KUBEEDGE_KEADM_PATH" upgrade edge --upgradeID "$KUBEEDGE_UPGRADE_ID" --historyID "$KUBEEDGE_HISTORY_ID" --fromVersion "$KUBEEDGE_FROM_VERSION" --toVersion "$KUBEEDGE_TO_VERSION" --config "$KUBEEDGE_CONFIG" --image "$KUBEEDGE_IMAGE"`
 	systemdRunEnvKeadmPath     = "KUBEEDGE_KEADM_PATH"
 	systemdRunEnvUpgradeID     = "KUBEEDGE_UPGRADE_ID"
@@ -245,6 +243,12 @@ type keadmUpgradeLauncher struct {
 	systemdManaged bool
 }
 
+type systemdRunCapabilities struct {
+	path            string
+	supportsSetenv  bool
+	supportsCollect bool
+}
+
 func waitForUpgradeCommand(cmd *exec.Cmd, logFile *os.File) {
 	defer func() {
 		if cerr := logFile.Close(); cerr != nil {
@@ -258,12 +262,12 @@ func waitForUpgradeCommand(cmd *exec.Cmd, logFile *os.File) {
 
 func newKeadmUpgradeLauncher(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) (*keadmUpgradeLauncher, error) {
 	logPath := keadmUpgradeLogPath()
-	systemdRunPath, useSystemdRun, err := detectSystemdRunPath()
+	caps, useSystemdRun, err := detectSystemdRunCapabilities()
 	if err != nil {
 		return nil, err
 	}
 	if useSystemdRun {
-		cmd, err := newSystemdRunUpgradeCommand(systemdRunPath, upgradeReq, opts)
+		cmd, err := newSystemdRunUpgradeCommand(caps, upgradeReq, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -296,9 +300,9 @@ func newKeadmUpgradeCommand(upgradeReq commontypes.NodeUpgradeJobRequest, opts *
 	return cmd, logFile, nil
 }
 
-func newSystemdRunUpgradeCommand(systemdRunPath string, upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) (*exec.Cmd, error) {
+func newSystemdRunUpgradeCommand(caps systemdRunCapabilities, upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) (*exec.Cmd, error) {
 	args := []string{
-		"--unit", buildKeadmUpgradeUnitName(upgradeReq.UpgradeID),
+		"--unit", buildKeadmUpgradeUnitName(upgradeReq.UpgradeID, upgradeReq.HistoryID),
 		"--description", "KubeEdge node upgrade",
 		buildSystemdRunSetenvArg(systemdRunEnvKeadmPath, keadmExecutablePath),
 		buildSystemdRunSetenvArg(systemdRunEnvUpgradeID, upgradeReq.UpgradeID),
@@ -311,7 +315,10 @@ func newSystemdRunUpgradeCommand(systemdRunPath string, upgradeReq commontypes.N
 		"-c",
 		systemdRunUpgradeScript,
 	}
-	return exec.Command(systemdRunPath, args...), nil
+	if caps.supportsCollect {
+		args = append([]string{systemdRunCollectFlag}, args...)
+	}
+	return exec.Command(caps.path, args...), nil
 }
 
 func buildSystemdRunSetenvArg(name, value string) string {
@@ -335,41 +342,46 @@ func keadmUpgradeLogPath() string {
 	return filepath.Join(constants.KubeEdgeLogPath, keadmUpgradeLogName)
 }
 
-func detectSystemdRunPath() (string, bool, error) {
+func detectSystemdRunCapabilities() (systemdRunCapabilities, bool, error) {
 	if runtime.GOOS != "linux" {
-		return "", false, nil
+		return systemdRunCapabilities{}, false, nil
 	}
 	if _, err := os.Stat("/run/systemd/system"); err != nil {
-		return "", false, nil
+		return systemdRunCapabilities{}, false, nil
 	}
 	systemdRunPath, err := exec.LookPath("systemd-run")
 	if err != nil {
-		return "", false, fmt.Errorf("systemd-managed upgrade requires systemd-run: %w", err)
+		return systemdRunCapabilities{}, false, fmt.Errorf("systemd-managed upgrade requires systemd-run: %w", err)
 	}
-	supported, err := systemdRunSupportsSetenv(systemdRunPath)
+	caps, err := inspectSystemdRunCapabilities(systemdRunPath)
 	if err != nil {
-		return "", false, err
+		return systemdRunCapabilities{}, false, err
 	}
-	if !supported {
-		return "", false, fmt.Errorf("systemd-managed upgrade requires systemd-run support for %s", systemdRunSetenvFlag)
+	if !caps.supportsSetenv {
+		return systemdRunCapabilities{}, false, fmt.Errorf("systemd-managed upgrade requires systemd-run support for %s", systemdRunSetenvFlag)
 	}
-	return systemdRunPath, true, nil
+	return caps, true, nil
 }
 
-func systemdRunSupportsSetenv(systemdRunPath string) (bool, error) {
+func inspectSystemdRunCapabilities(systemdRunPath string) (systemdRunCapabilities, error) {
 	output, err := exec.Command(systemdRunPath, "--help").CombinedOutput()
 	if err != nil {
-		return false, fmt.Errorf("inspect systemd-run capabilities failed: %w, %s", err, output)
+		return systemdRunCapabilities{}, fmt.Errorf("inspect systemd-run capabilities failed: %w, %s", err, output)
 	}
-	return bytes.Contains(output, []byte(systemdRunSetenvFlag)), nil
+	return systemdRunCapabilities{
+		path:            systemdRunPath,
+		supportsSetenv:  bytes.Contains(output, []byte(systemdRunSetenvFlag)),
+		supportsCollect: bytes.Contains(output, []byte(systemdRunCollectFlag)),
+	}, nil
 }
 
-func buildKeadmUpgradeUnitName(upgradeID string) string {
-	if upgradeID == "" {
+func buildKeadmUpgradeUnitName(upgradeID, historyID string) string {
+	identity := buildKeadmUpgradeUnitIdentity(upgradeID, historyID)
+	if identity == "" {
 		return keadmUpgradeUnitPrefix
 	}
-	sanitizedID := sanitizeSystemdUnitComponent(upgradeID)
-	hashBytes := sha256.Sum256([]byte(upgradeID))
+	sanitizedID := sanitizeSystemdUnitComponent(identity)
+	hashBytes := sha256.Sum256([]byte(identity))
 	hashSuffix := hex.EncodeToString(hashBytes[:])[:keadmUpgradeUnitHashLen]
 	maxReadableLen := keadmUpgradeUnitMaxNameLen - len(keadmUpgradeUnitPrefix) - len(hashSuffix) - 2
 	if maxReadableLen < 0 {
@@ -382,6 +394,19 @@ func buildKeadmUpgradeUnitName(upgradeID string) string {
 		return keadmUpgradeUnitPrefix + "-" + hashSuffix
 	}
 	return keadmUpgradeUnitPrefix + "-" + sanitizedID + "-" + hashSuffix
+}
+
+func buildKeadmUpgradeUnitIdentity(upgradeID, historyID string) string {
+	switch {
+	case upgradeID == "" && historyID == "":
+		return ""
+	case historyID == "":
+		return upgradeID
+	case upgradeID == "":
+		return historyID
+	default:
+		return upgradeID + "-" + historyID
+	}
 }
 
 func sanitizeSystemdUnitComponent(value string) string {
@@ -432,55 +457,23 @@ func openUpgradeLogFile(logPath string) (*os.File, error) {
 	if err := ensureSecureLogDir(filepath.Dir(logPath)); err != nil {
 		return nil, err
 	}
-
-	fd, err := unix.Open(logPath, unix.O_CREAT|unix.O_WRONLY|unix.O_TRUNC|unix.O_CLOEXEC|unix.O_NOFOLLOW, uint32(keadmUpgradeLogFilePerm))
+	logFile, err := openAndValidateUpgradeLogFile(logPath)
 	if err != nil {
-		return nil, fmt.Errorf("open upgrade log file %s failed: %w", logPath, err)
+		return nil, err
 	}
-	logFile := os.NewFile(uintptr(fd), logPath)
-	if logFile == nil {
-		_ = unix.Close(fd)
-		return nil, fmt.Errorf("open upgrade log file %s failed: create file handle", logPath)
-	}
-	if err := ensureRegularOwnedFile(logFile); err != nil {
+	if err := logFile.Truncate(0); err != nil {
 		_ = logFile.Close()
-		return nil, fmt.Errorf("upgrade log file %s %w", logPath, err)
+		return nil, fmt.Errorf("truncate upgrade log file %s failed: %w", logPath, err)
+	}
+	if _, err := logFile.Seek(0, 0); err != nil {
+		_ = logFile.Close()
+		return nil, fmt.Errorf("rewind upgrade log file %s failed: %w", logPath, err)
 	}
 	if err := logFile.Chmod(keadmUpgradeLogFilePerm); err != nil {
 		_ = logFile.Close()
 		return nil, fmt.Errorf("set upgrade log file permissions on %s failed: %w", logPath, err)
 	}
 	return logFile, nil
-}
-
-func ensureRegularOwnedFile(logFile *os.File) error {
-	info, err := logFile.Stat()
-	if err != nil {
-		return fmt.Errorf("inspect file failed: %w", err)
-	}
-	if !info.Mode().IsRegular() {
-		return errors.New("must be a regular file")
-	}
-	return ensureOwnedByCurrentUser(info.Sys())
-}
-
-func ensureOwnedByCurrentUser(stat any) error {
-	statT, ok := stat.(*syscall.Stat_t)
-	if !ok {
-		return errors.New("owner could not be determined")
-	}
-	if statT.Uid != uint32(os.Geteuid()) {
-		return fmt.Errorf("must be owned by uid %d", os.Geteuid())
-	}
-	return nil
-}
-
-func infoOwner(path string) any {
-	info, err := os.Lstat(path)
-	if err != nil {
-		return nil
-	}
-	return info.Sys()
 }
 
 func prepareKeadm(upgradeReq *commontypes.NodeUpgradeJobRequest) error {
