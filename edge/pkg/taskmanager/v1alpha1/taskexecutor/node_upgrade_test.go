@@ -1,13 +1,30 @@
+/*
+Copyright 2026 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package taskexecutor
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/kubeedge/api/apis/common/constants"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/pkg/version"
@@ -52,7 +69,7 @@ func TestNewKeadmUpgradeCommandBuildsDirectExecCommand(t *testing.T) {
 		_ = logFile.Close()
 	})
 
-	require.Equal(t, filepath.Join(constants.KubeEdgeUsrBinPath, constants.KeadmBinaryName), cmd.Path)
+	require.Equal(t, keadmExecutablePath, cmd.Path)
 	require.Equal(t, append([]string{cmd.Path}, buildKeadmUpgradeArgs(req, opts)...), cmd.Args)
 	require.Same(t, logFile, cmd.Stdout)
 	require.Same(t, logFile, cmd.Stderr)
@@ -72,7 +89,7 @@ func TestOpenUpgradeLogFileRejectsSymlink(t *testing.T) {
 
 	_, err := openUpgradeLogFile(logPath)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "must not be a symlink")
+	require.Contains(t, err.Error(), "too many levels of symbolic links")
 }
 
 func TestOpenUpgradeLogFileTruncatesExistingContent(t *testing.T) {
@@ -98,12 +115,13 @@ func TestOpenUpgradeLogFileTruncatesExistingContent(t *testing.T) {
 	require.Equal(t, os.FileMode(0o600), info.Mode().Perm())
 }
 
-func TestPrepareUpgradeLogFileCreatesProtectedDirectoryAndFile(t *testing.T) {
+func TestOpenUpgradeLogFileCreatesProtectedDirectoryAndFile(t *testing.T) {
 	logDir := filepath.Join(t.TempDir(), "var", "log", "kubeedge")
 	logPath := filepath.Join(logDir, keadmUpgradeLogName)
 
-	err := prepareUpgradeLogFile(logPath)
+	logFile, err := openUpgradeLogFile(logPath)
 	require.NoError(t, err)
+	require.NoError(t, logFile.Close())
 
 	dirInfo, err := os.Stat(logDir)
 	require.NoError(t, err)
@@ -114,34 +132,75 @@ func TestPrepareUpgradeLogFileCreatesProtectedDirectoryAndFile(t *testing.T) {
 	require.Equal(t, os.FileMode(0o600), fileInfo.Mode().Perm())
 }
 
-func TestNewSystemdRunUpgradeCommandBuildsTransientUnitInvocation(t *testing.T) {
+func TestNewSystemdRunUpgradeCommandPreservesLiteralArgs(t *testing.T) {
 	req := commontypes.NodeUpgradeJobRequest{
-		UpgradeID: "upgrade id/42",
-		HistoryID: "history-id",
-		Version:   "v1.17.0",
-		Image:     "example.com/installation-package:v1.17.0",
+		UpgradeID: "upgrade ${KUBEEDGE_TEST_VALUE}",
+		HistoryID: "history ${KUBEEDGE_TEST_VALUE}",
+		Version:   "v1.17.0 ${KUBEEDGE_TEST_VALUE}",
+		Image:     "example.com/package:${KUBEEDGE_TEST_VALUE}",
 	}
-	opts := &options.EdgeCoreOptions{ConfigFile: "/etc/kubeedge/edgecore.yaml"}
-	logPath := "/var/log/kubeedge/keadm-upgrade.log"
+	opts := &options.EdgeCoreOptions{ConfigFile: "/etc/kubeedge/${KUBEEDGE_TEST_VALUE}.yaml"}
 
-	executablePath, err := os.Executable()
-	require.NoError(t, err)
 	binDir := t.TempDir()
+	capturedArgsPath := filepath.Join(t.TempDir(), "argv.txt")
+	helperPath := filepath.Join(binDir, "keadm-helper.sh")
 	systemdRunPath := filepath.Join(binDir, "systemd-run")
-	require.NoError(t, os.Symlink(executablePath, systemdRunPath))
-	t.Setenv("PATH", binDir)
 
-	cmd, err := newSystemdRunUpgradeCommand(req, opts, logPath)
+	require.NoError(t, os.WriteFile(helperPath, []byte(fmt.Sprintf(`#!/bin/sh
+printf '%%s\n' "$@" > %q
+`, capturedArgsPath)), 0o755))
+	require.NoError(t, os.WriteFile(systemdRunPath, []byte(`#!/bin/sh
+if [ "$1" = "--help" ]; then
+	printf '%s\n' '--setenv'
+	exit 0
+fi
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+		--unit|--description)
+			shift 2
+			;;
+		--setenv=*)
+			export "${1#--setenv=}"
+			shift
+			;;
+		*)
+			break
+			;;
+	esac
+done
+exec "$@"
+`), 0o755))
+
+	originalKeadmPath := keadmExecutablePath
+	keadmExecutablePath = helperPath
+	t.Cleanup(func() {
+		keadmExecutablePath = originalKeadmPath
+	})
+
+	cmd, err := newSystemdRunUpgradeCommand(systemdRunPath, req, opts)
 	require.NoError(t, err)
-	require.Equal(t, systemdRunPath, cmd.Path)
-	require.Contains(t, cmd.Args, "--collect")
-	require.Contains(t, cmd.Args, "--service-type=exec")
-	require.Contains(t, cmd.Args, "StandardOutput=append:"+logPath)
-	require.Contains(t, cmd.Args, "StandardError=append:"+logPath)
-	require.Contains(t, cmd.Args, filepath.Join(constants.KubeEdgeUsrBinPath, constants.KeadmBinaryName))
-	require.Contains(t, cmd.Args, "--upgradeID")
-	require.Contains(t, cmd.Args, req.UpgradeID)
-	require.Contains(t, cmd.Args, "--image")
-	require.Contains(t, cmd.Args, req.Image)
-	require.Contains(t, cmd.Args, "kubeedge-keadm-upgrade-upgrade-id-42")
+	require.NoError(t, cmd.Run())
+
+	data, err := os.ReadFile(capturedArgsPath)
+	require.NoError(t, err)
+	require.Equal(t, strings.Join(buildKeadmUpgradeArgs(req, opts), "\n")+"\n", string(data))
+}
+
+func TestBuildKeadmUpgradeUnitNameEmptyIDUsesPrefix(t *testing.T) {
+	require.Equal(t, keadmUpgradeUnitPrefix, buildKeadmUpgradeUnitName(""))
+}
+
+func TestBuildKeadmUpgradeUnitNameBoundsLengthAndHashes(t *testing.T) {
+	longID := strings.Repeat("very-long-upgrade-id-", 32)
+	unitName := buildKeadmUpgradeUnitName(longID)
+
+	require.LessOrEqual(t, len(unitName), keadmUpgradeUnitMaxNameLen)
+	require.True(t, strings.HasPrefix(unitName, keadmUpgradeUnitPrefix+"-"))
+}
+
+func TestBuildKeadmUpgradeUnitNameKeepsSamePrefixIDsDistinct(t *testing.T) {
+	id1 := strings.Repeat("same-prefix-", 20) + "one"
+	id2 := strings.Repeat("same-prefix-", 20) + "two"
+
+	require.NotEqual(t, buildKeadmUpgradeUnitName(id1), buildKeadmUpgradeUnitName(id2))
 }
