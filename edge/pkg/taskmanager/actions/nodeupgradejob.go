@@ -30,11 +30,13 @@ import (
 	klog "k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/common/constants"
+	cfgv1alpha2 "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/pkg/containers"
+	keimage "github.com/kubeedge/kubeedge/pkg/image"
 	"github.com/kubeedge/kubeedge/pkg/nodetask/actionflow"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 	upgradeedge "github.com/kubeedge/kubeedge/pkg/upgrade/edge"
@@ -139,9 +141,10 @@ func (nodeUpgradeJobActionHandler) checkItems(
 
 	// Pull installation-package image.
 	cfg := options.GetEdgeCoreConfig()
+	endpoint, cgroupDriver := getNodeUpgradeRuntimeSettings(cfg)
 	ctrcli, err := containers.NewContainerRuntime(
-		cfg.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint,
-		cfg.Modules.Edged.TailoredKubeletConfig.CgroupDriver)
+		endpoint,
+		cgroupDriver)
 	if err != nil {
 		resp.err = fmt.Errorf("failed to new container runtime, err: %v", err)
 		return resp
@@ -162,14 +165,19 @@ func (nodeUpgradeJobActionHandler) checkItems(
 			image, local, expectedDigest)
 		return resp
 	}
+	immutableImage, err := keimage.ImmutableImageRef(image, expectedDigest)
+	if err != nil {
+		resp.err = fmt.Errorf("failed to build immutable image ref for %s, err: %v", image, err)
+		return resp
+	}
 
 	// Copy new keadm bainnary from the image to /usr/local/bin.
 	containerPath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KeadmBinaryName)
 	hostPath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KeadmBinaryName)
 	files := map[string]string{containerPath: hostPath}
-	if err := ctrcli.CopyResources(ctx, image, files); err != nil {
+	if err := ctrcli.CopyResources(ctx, immutableImage, files); err != nil {
 		resp.err = fmt.Errorf("failed to copy keadm from %s in the image %s to the host path %s, err: %v",
-			containerPath, image, hostPath, err)
+			containerPath, immutableImage, hostPath, err)
 		return resp
 	}
 	return resp
@@ -179,14 +187,24 @@ func expectedUpgradeImageDigest(getter *operationsv1alpha2.ImageDigestGetter) (s
 	if getter == nil {
 		return "", errors.New("imageDigestGetter is required for node upgrade jobs")
 	}
+	var value string
 	switch {
 	case runtime.GOARCH == "arm64" && getter.ARM64 != "":
-		return getter.ARM64, nil
+		value = getter.ARM64
 	case runtime.GOARCH == "amd64" && getter.AMD64 != "":
-		return getter.AMD64, nil
+		value = getter.AMD64
 	default:
 		return "", fmt.Errorf("image digest is required for arch %s", runtime.GOARCH)
 	}
+	return keimage.NormalizeDigest(value)
+}
+
+func getNodeUpgradeRuntimeSettings(config *cfgv1alpha2.EdgeCoreConfig) (string, string) {
+	if config == nil || config.Modules == nil || config.Modules.Edged == nil || config.Modules.Edged.TailoredKubeletConfig == nil {
+		return "", ""
+	}
+	return config.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint,
+		config.Modules.Edged.TailoredKubeletConfig.CgroupDriver
 }
 
 func (nodeUpgradeJobActionHandler) waitingConfirmation(
@@ -253,6 +271,15 @@ func (h *nodeUpgradeJobActionHandler) upgrade(
 	cmdline.WriteString("keadm upgrade edge --force --toVersion " + spec.Version)
 	if spec.Image != "" {
 		cmdline.WriteString(" --image " + spec.Image)
+	}
+	if spec.ImageDigestGetter != nil {
+		expectedDigest, err := expectedUpgradeImageDigest(spec.ImageDigestGetter)
+		if err != nil {
+			resp.err = err
+			resp.interrupt = true
+			return resp
+		}
+		cmdline.WriteString(" --image-digest " + expectedDigest)
 	}
 	cmdline.WriteString(" >> /tmp/keadm.log 2>&1")
 	cmd := execs.NewCommand(cmdline.String())

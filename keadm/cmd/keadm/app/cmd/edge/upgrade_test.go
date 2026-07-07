@@ -309,6 +309,7 @@ func TestUpgradeExecutorUpgrade(t *testing.T) {
 
 func TestGetEdgeCoreBinary(t *testing.T) {
 	const wantHostPath = "/etc/kubeedge/upgrade/v1.1.0/edgecore"
+	const validDigest = "sha256:e47afdf2746ad10ee76dd64289eae01895000327c0f23c5b498959eca6953695"
 	cfg := &cfgv1alpha2.EdgeCoreConfig{
 		Modules: &cfgv1alpha2.Modules{
 			Edged: &cfgv1alpha2.Edged{
@@ -338,7 +339,7 @@ func TestGetEdgeCoreBinary(t *testing.T) {
 		var checked int
 		opts := UpgradeOptions{
 			Image:       "kubeedge/installation-package",
-			ImageDigest: "sha256:test",
+			ImageDigest: validDigest,
 			ToVersion:   "v1.1.0",
 			BaseOptions: BaseOptions{
 				Config: constants.EdgecoreConfigPath,
@@ -369,7 +370,7 @@ func TestGetEdgeCoreBinary(t *testing.T) {
 			})
 		patches.ApplyMethodFunc(reflect.TypeOf(&containers.ContainerRuntimeImpl{}), "CopyResources",
 			func(_ctx context.Context, edgeImage string, files map[string]string) error {
-				assert.Equal(t, opts.Image+":"+opts.ToVersion, edgeImage)
+				assert.Equal(t, "docker.io/kubeedge/installation-package@"+validDigest, edgeImage)
 				hostpath, ok := files["/usr/local/bin/edgecore"]
 				assert.True(t, ok)
 				assert.Equal(t, wantHostPath, hostpath)
@@ -381,5 +382,20 @@ func TestGetEdgeCoreBinary(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 4, checked)
 		assert.Equal(t, wantHostPath, path)
+	})
+
+	t.Run("rejects malformed digest", func(t *testing.T) {
+		opts := UpgradeOptions{
+			Image:       "kubeedge/installation-package",
+			ImageDigest: "sha256:not-a-real-digest",
+			ToVersion:   "v1.1.0",
+			BaseOptions: BaseOptions{
+				Config: constants.EdgecoreConfigPath,
+			},
+		}
+
+		path, err := getEdgeCoreBinary(context.TODO(), opts, cfg)
+		assert.ErrorContains(t, err, "invalid image digest")
+		assert.Empty(t, path)
 	})
 }

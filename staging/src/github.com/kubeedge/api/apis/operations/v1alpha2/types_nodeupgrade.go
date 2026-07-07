@@ -97,9 +97,8 @@ type NodeUpgradeJobSpec struct {
 	// +optional
 	Image string `json:"image,omitempty"`
 
-	// ImageDigestGetter define registry v2 interface access configuration.
-	// As a transition, it is not required at first, and the image digest is checked when this field is set.
-	// +optional
+	// ImageDigestGetter defines the expected installation-package image digests for each platform.
+	// Node upgrade jobs require the digest for the current platform and verify the pulled image before copying binaries.
 	ImageDigestGetter *ImageDigestGetter `json:"imageDigestGatter"`
 
 	// Concurrency specifies the maximum number of concurrent that edge nodes associated with
@@ -124,21 +123,21 @@ type NodeUpgradeJobSpec struct {
 	RequireConfirmation bool `json:"requireConfirmation,omitempty"`
 }
 
-// ImageDigestGetter used to define a method for getting the image digest.
+// ImageDigestGetter defines the expected installation-package image digests used during node upgrades.
 type ImageDigestGetter struct {
-	// ARM64 indicates the image digest of the arm64 platform for verification.
+	// ARM64 indicates the required image digest of the arm64 platform for verification.
 	// E.g., sha256:0738039541234567890123456789012345678901234567890123456789012345
-	// +optional
+	// +required
 	ARM64 string `json:"arm64,omitempty"`
 
-	// AMD64 indicates the image digest of the amd64 platform for verification.
+	// AMD64 indicates the required image digest of the amd64 platform for verification.
 	// E.g., sha256:0738039541234567890123456789012345678901234567890123456789012345
-	// +optional
+	// +required
 	AMD64 string `json:"amd64,omitempty"`
 
 	// RegistryAPI define registry v2 interface access configuration.
-	// Used to automatically gets multiple platform image digests from a remote registry
-	// to set values into ARM64 and AMD64 fields.
+	// Used to automatically fetch multiple platform image digests from a remote registry
+	// and populate the ARM64 and AMD64 fields before the upgrade is dispatched.
 	// +optional
 	RegistryAPI *RegistryAPI `json:"registryAPI,omitempty"`
 }
