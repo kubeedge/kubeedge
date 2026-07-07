@@ -21,7 +21,6 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     env:
-      FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
       TRUSTED_FOSSA_EVENT: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') }}
     steps:
       - uses: actions/checkout@v4
@@ -31,6 +30,8 @@ jobs:
       - run: go version
       - name: require FOSSA secret on trusted events
         if: env.TRUSTED_FOSSA_EVENT == 'true'
+        env:
+          FOSSA_API_KEY: ${{ secrets.FOSSA_API_KEY }}
         run: |
           if [ -z "${FOSSA_API_KEY}" ]; then
             echo "FOSSA_API_KEY must be configured for trusted FOSSA workflow runs." >&2
@@ -38,7 +39,7 @@ jobs:
           fi
       # Runs a set of commands to initialize and analyze with FOSSA
       - name: run FOSSA analysis
-        if: env.FOSSA_API_KEY != ''
+        if: env.TRUSTED_FOSSA_EVENT == 'true'
         uses: fossas/fossa-action@29693cc50323968e039056be419b32989fc5880c # v2.0.0
         with:
-          api-key: ${{ env.FOSSA_API_KEY }}
+          api-key: ${{ secrets.FOSSA_API_KEY }}
