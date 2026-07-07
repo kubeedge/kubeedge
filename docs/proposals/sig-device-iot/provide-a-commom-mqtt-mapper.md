@@ -64,7 +64,7 @@ The architectures and related concepts are shown in the below figure. In the fig
 
 1. Generate Mapper files through the Mapper-Framework framework
 
-   1)Download kubeedge-master.zip from the official website, take the mapper-framework under the staging folder in it, and transfer it to the VM master node.
+   1) Download kubeedge-master.zip from the official website, extract the mapper-framework directory from its staging folder, and transfer it to the VM master node.
 
    2)Execute a command:
 
