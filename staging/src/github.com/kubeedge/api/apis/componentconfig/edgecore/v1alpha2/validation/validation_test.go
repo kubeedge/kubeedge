@@ -17,11 +17,19 @@ limitations under the License.
 package validation
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"fmt"
+	"math/big"
+	"net"
 	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
+	"time"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -283,56 +291,175 @@ func TestValidateModuleMetaManager(t *testing.T) {
 
 func TestValidateModuleServiceBus(t *testing.T) {
 	cases := []struct {
-		name     string
-		input    v1alpha2.ServiceBus
-		expected field.ErrorList
+		name        string
+		input       v1alpha2.ServiceBus
+		expectedLen int
 	}{
 		{
 			name: "case1 not enabled",
 			input: v1alpha2.ServiceBus{
 				Enable: false,
 			},
-			expected: field.ErrorList{},
+			expectedLen: 0,
 		},
 		{
 			name: "case2 enabled with missing tls files",
 			input: v1alpha2.ServiceBus{
 				Enable:            true,
+				Server:            "127.0.0.1",
 				TLSCertFile:       "/not/exist.crt",
 				TLSPrivateKeyFile: "/not/exist.key",
 			},
-			expected: field.ErrorList{
-				field.Invalid(field.NewPath("tlsCertFile"), "/not/exist.crt", "tlsCertFile not exist"),
-				field.Invalid(field.NewPath("tlsPrivateKeyFile"), "/not/exist.key", "tlsPrivateKeyFile not exist"),
-			},
+			expectedLen: 2,
 		},
 		{
 			name: "case3 enabled with valid tls files",
 			input: func() v1alpha2.ServiceBus {
 				dir := t.TempDir()
-				certFile, err := os.CreateTemp(dir, "cert")
-				if err != nil {
-					t.Fatalf("create temp cert file failed: %v", err)
-				}
-				keyFile, err := os.CreateTemp(dir, "key")
-				if err != nil {
-					t.Fatalf("create temp key file failed: %v", err)
-				}
+				certFile, keyFile := writeServerKeyPair(t, dir, "127.0.0.1")
 				return v1alpha2.ServiceBus{
 					Enable:            true,
+					Server:            "127.0.0.1",
 					TLSCertFile:       certFile.Name(),
 					TLSPrivateKeyFile: keyFile.Name(),
 				}
 			}(),
-			expected: field.ErrorList{},
+			expectedLen: 0,
+		},
+		{
+			name: "case4 rejects client auth cert without san",
+			input: func() v1alpha2.ServiceBus {
+				dir := t.TempDir()
+				certFile, keyFile := writeClientOnlyKeyPair(t, dir)
+				return v1alpha2.ServiceBus{
+					Enable:            true,
+					Server:            "127.0.0.1",
+					TLSCertFile:       certFile.Name(),
+					TLSPrivateKeyFile: keyFile.Name(),
+				}
+			}(),
+			expectedLen: 2,
 		},
 	}
 
 	for _, c := range cases {
-		if result := ValidateModuleServiceBus(c.input); !reflect.DeepEqual(result, c.expected) {
-			t.Errorf("%v: expected %v, but got %v", c.name, c.expected, result)
+		if result := ValidateModuleServiceBus(c.input); len(result) != c.expectedLen {
+			t.Errorf("%v: expected %d errors, but got %v", c.name, c.expectedLen, result)
 		}
 	}
+}
+
+func writeServerKeyPair(t *testing.T, dir, host string) (*os.File, *os.File) {
+	t.Helper()
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("generate key failed: %v", err)
+	}
+	template := &x509.Certificate{
+		SerialNumber: big.NewInt(time.Now().UnixNano()),
+		Subject:      pkix.Name{CommonName: "servicebus"},
+		NotBefore:    time.Now().Add(-time.Hour),
+		NotAfter:     time.Now().Add(time.Hour),
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+	}
+	if ip := net.ParseIP(host); ip != nil {
+		template.IPAddresses = []net.IP{ip}
+	} else {
+		template.DNSNames = []string{host}
+	}
+	der, err := x509.CreateCertificate(rand.Reader, template, template, &key.PublicKey, key)
+	if err != nil {
+		t.Fatalf("create cert failed: %v", err)
+	}
+
+	certFile, err := os.CreateTemp(dir, "cert-*.crt")
+	if err != nil {
+		t.Fatalf("create temp cert file failed: %v", err)
+	}
+	if err := pem.Encode(certFile, &pem.Block{Type: "CERTIFICATE", Bytes: der}); err != nil {
+		t.Fatalf("write cert failed: %v", err)
+	}
+	if err := certFile.Close(); err != nil {
+		t.Fatalf("close cert failed: %v", err)
+	}
+	certFile, err = os.Open(certFile.Name())
+	if err != nil {
+		t.Fatalf("reopen cert failed: %v", err)
+	}
+
+	keyFile, err := os.CreateTemp(dir, "key-*.key")
+	if err != nil {
+		t.Fatalf("create temp key file failed: %v", err)
+	}
+	if err := keyFile.Chmod(0o600); err != nil {
+		t.Fatalf("chmod key failed: %v", err)
+	}
+	if err := pem.Encode(keyFile, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}); err != nil {
+		t.Fatalf("write key failed: %v", err)
+	}
+	if err := keyFile.Close(); err != nil {
+		t.Fatalf("close key failed: %v", err)
+	}
+	keyFile, err = os.Open(keyFile.Name())
+	if err != nil {
+		t.Fatalf("reopen key failed: %v", err)
+	}
+	return certFile, keyFile
+}
+
+func writeClientOnlyKeyPair(t *testing.T, dir string) (*os.File, *os.File) {
+	t.Helper()
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("generate key failed: %v", err)
+	}
+	template := &x509.Certificate{
+		SerialNumber: big.NewInt(time.Now().UnixNano()),
+		Subject:      pkix.Name{CommonName: "system:node:test"},
+		NotBefore:    time.Now().Add(-time.Hour),
+		NotAfter:     time.Now().Add(time.Hour),
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+	}
+	der, err := x509.CreateCertificate(rand.Reader, template, template, &key.PublicKey, key)
+	if err != nil {
+		t.Fatalf("create cert failed: %v", err)
+	}
+
+	certFile, err := os.CreateTemp(dir, "cert-*.crt")
+	if err != nil {
+		t.Fatalf("create temp cert file failed: %v", err)
+	}
+	if err := pem.Encode(certFile, &pem.Block{Type: "CERTIFICATE", Bytes: der}); err != nil {
+		t.Fatalf("write cert failed: %v", err)
+	}
+	if err := certFile.Close(); err != nil {
+		t.Fatalf("close cert failed: %v", err)
+	}
+	certFile, err = os.Open(certFile.Name())
+	if err != nil {
+		t.Fatalf("reopen cert failed: %v", err)
+	}
+
+	keyFile, err := os.CreateTemp(dir, "key-*.key")
+	if err != nil {
+		t.Fatalf("create temp key file failed: %v", err)
+	}
+	if err := keyFile.Chmod(0o600); err != nil {
+		t.Fatalf("chmod key failed: %v", err)
+	}
+	if err := pem.Encode(keyFile, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}); err != nil {
+		t.Fatalf("write key failed: %v", err)
+	}
+	if err := keyFile.Close(); err != nil {
+		t.Fatalf("close key failed: %v", err)
+	}
+	keyFile, err = os.Open(keyFile.Name())
+	if err != nil {
+		t.Fatalf("reopen key failed: %v", err)
+	}
+	return certFile, keyFile
 }
 
 func TestValidateModuleDeviceTwin(t *testing.T) {

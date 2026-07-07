@@ -151,8 +151,8 @@ func NewDefaultEdgeCoreConfig() *EdgeCoreConfig {
 				Server:            "127.0.0.1",
 				Port:              9060,
 				Timeout:           60,
-				TLSCertFile:       constants.DefaultCertFile,
-				TLSPrivateKeyFile: constants.DefaultKeyFile,
+				TLSCertFile:       "",
+				TLSPrivateKeyFile: "",
 			},
 			DeviceTwin: &DeviceTwin{
 				Enable: true,

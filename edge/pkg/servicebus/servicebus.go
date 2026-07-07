@@ -3,12 +3,15 @@ package servicebus
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -26,11 +29,14 @@ import (
 	servicebusConfig "github.com/kubeedge/kubeedge/edge/pkg/servicebus/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus/util"
 	"github.com/kubeedge/kubeedge/pkg/features"
+	utilvalidation "github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 
 var (
 	inited int32
-	c      = make(chan struct{})
+
+	serverMu sync.Mutex
+	active   *http.Server
 )
 
 const (
@@ -38,10 +44,8 @@ const (
 	maxBodySize = 5 * 1e6
 )
 
-// servicebus struct
 type servicebus struct {
-	enable bool
-	// default 127.0.0.1
+	enable  bool
 	server  string
 	port    int
 	timeout int
@@ -73,7 +77,6 @@ func newServicebus(enable bool, server string, port, timeout int) *servicebus {
 	}
 }
 
-// Register register servicebus
 func Register(s *v1alpha2.ServiceBus) {
 	servicebusConfig.InitConfigure(s)
 	core.Register(newServicebus(s.Enable, s.Server, s.Port, s.Timeout))
@@ -102,19 +105,16 @@ func (sb *servicebus) RestartPolicy() *core.ModuleRestartPolicy {
 }
 
 func (sb *servicebus) Start() {
-	// no need to call TopicInit now, we have fixed topic
 	htc.Timeout = time.Second * 10
 	uc.Client = htc
 	if !sb.sbs.IsTableEmpty() {
-		if atomic.CompareAndSwapInt32(&inited, 0, 1) {
-			go server(c)
-		}
+		startServer()
 	}
-	//Get message from channel
 	for {
 		select {
 		case <-beehiveContext.Done():
 			klog.Warning("servicebus stop")
+			stopServer()
 			return
 		default:
 		}
@@ -124,7 +124,6 @@ func (sb *servicebus) Start() {
 			continue
 		}
 
-		// build new message with required field & send message to servicebus
 		klog.V(4).Info("servicebus receive msg")
 		go processMessage(&msg)
 	}
@@ -140,20 +139,16 @@ func processMessage(msg *beehiveModel.Message) {
 	switch msg.GetOperation() {
 	case message.OperationStart:
 		if err := dbc.InsertUrls(resource); err != nil {
-			// TODO: handle err
 			klog.Error(err)
 		}
-		if atomic.CompareAndSwapInt32(&inited, 0, 1) {
-			go server(c)
-		}
+		startServer()
 	case message.OperationStop:
 		if err := dbc.DeleteUrlsByKey(resource); err != nil {
-			// TODO: handle err
 			klog.Error(err)
 		}
 
 		if dbc.IsTableEmpty() {
-			c <- struct{}{}
+			stopServer()
 		}
 	default:
 		r := strings.Split(resource, ":")
@@ -188,7 +183,6 @@ func processMessage(msg *beehiveModel.Message) {
 			return
 		}
 
-		//send message with resource to the edge part
 		operation := httpRequest.Method
 		targetURL := "http://127.0.0.1:" + r[0] + r[1]
 		resp, err := uc.HTTPDo(operation, targetURL, httpRequest.Header, httpRequest.Body)
@@ -223,46 +217,128 @@ func processMessage(msg *beehiveModel.Message) {
 	}
 }
 
-func server(stopChan <-chan struct{}) {
-	var (
-		timeout time.Duration
-		err     error
-	)
-	if timeout, err = time.ParseDuration(fmt.Sprintf("%vs", servicebusConfig.Config.Timeout)); err != nil {
-		klog.Errorf("can't format timeout and the default value will be set")
-		timeout, _ = time.ParseDuration("10s")
+func startServer() {
+	serverMu.Lock()
+	if active != nil {
+		serverMu.Unlock()
+		return
 	}
 
-	h := buildBasicHandler(timeout)
-	// TODO we should add tls for servicebus http server later
-	s := http.Server{
-		Addr:              fmt.Sprintf("%s:%d", servicebusConfig.Config.Server, servicebusConfig.Config.Port),
-		Handler:           h,
-		ReadHeaderTimeout: 10 * time.Second,
-		TLSConfig: &tls.Config{
-			MinVersion: tls.VersionTLS12,
-		},
-	}
-	go func() {
-		<-stopChan
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if err := s.Shutdown(ctx); err != nil {
-			klog.Errorf("Server shutdown failed: %s", err)
-		}
+	srv, listener, err := newTLSServer(servicebusConfig.Config.ServiceBus)
+	if err != nil {
+		serverMu.Unlock()
 		atomic.StoreInt32(&inited, 0)
-	}()
+		utilruntime.HandleError(err)
+		return
+	}
+	active = srv
+	atomic.StoreInt32(&inited, 1)
+	serverMu.Unlock()
 
-	klog.Infof("[servicebus]start to listen and server at %v", s.Addr)
-	utilruntime.HandleError(serveWithTLS(&s, servicebusConfig.Config.TLSCertFile, servicebusConfig.Config.TLSPrivateKeyFile))
+	go serveTLS(srv, listener)
 }
 
-func serveWithTLS(server *http.Server, certFile, keyFile string) error {
-	err := server.ListenAndServeTLS(certFile, keyFile)
-	if errors.Is(err, http.ErrServerClosed) {
-		return nil
+func stopServer() {
+	serverMu.Lock()
+	srv := active
+	active = nil
+	atomic.StoreInt32(&inited, 0)
+	serverMu.Unlock()
+
+	if srv == nil {
+		return
 	}
-	return err
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		klog.Errorf("Server shutdown failed: %s", err)
+	}
+}
+
+func serveTLS(srv *http.Server, listener net.Listener) {
+	defer func() {
+		_ = listener.Close()
+		serverMu.Lock()
+		if active == srv {
+			active = nil
+		}
+		atomic.StoreInt32(&inited, 0)
+		serverMu.Unlock()
+	}()
+
+	klog.Infof("[servicebus] start to listen and serve at %v", srv.Addr)
+	if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		utilruntime.HandleError(err)
+	}
+}
+
+func newTLSServer(cfg v1alpha2.ServiceBus) (*http.Server, net.Listener, error) {
+	timeout, err := time.ParseDuration(fmt.Sprintf("%vs", cfg.Timeout))
+	if err != nil {
+		klog.Errorf("can't format timeout and the default value will be set")
+		timeout = 10 * time.Second
+	}
+
+	address := fmt.Sprintf("%s:%d", cfg.Server, cfg.Port)
+	if !utilvalidation.IsLoopbackHost(cfg.Server) {
+		return nil, nil, fmt.Errorf("servicebus without client authentication must bind to a loopback address")
+	}
+	tlsConfig, err := loadTLSConfig(cfg.TLSCertFile, cfg.TLSPrivateKeyFile)
+	if err != nil {
+		return nil, nil, err
+	}
+	srv := &http.Server{
+		Addr:              address,
+		Handler:           buildBasicHandler(timeout),
+		ReadHeaderTimeout: 10 * time.Second,
+		TLSConfig:         tlsConfig,
+	}
+	rawListener, err := net.Listen("tcp", address)
+	if err != nil {
+		return nil, nil, err
+	}
+	return srv, tls.NewListener(rawListener, tlsConfig), nil
+}
+
+func loadTLSConfig(certFile, keyFile string) (*tls.Config, error) {
+	if _, err := loadCertificate(certFile, keyFile); err != nil {
+		return nil, err
+	}
+	return &tls.Config{
+		MinVersion: tls.VersionTLS12,
+		GetCertificate: func(*tls.ClientHelloInfo) (*tls.Certificate, error) {
+			cert, err := loadCertificate(certFile, keyFile)
+			if err != nil {
+				return nil, err
+			}
+			return cert, nil
+		},
+	}, nil
+}
+
+func loadCertificate(certFile, keyFile string) (*tls.Certificate, error) {
+	host := servicebusConfig.Config.Server
+	if host == "" {
+		host = "127.0.0.1"
+	}
+	if parsedHost, _, err := net.SplitHostPort(host); err == nil {
+		host = parsedHost
+	}
+	if errs := utilvalidation.ValidateServerTLSFiles(certFile, keyFile, host, time.Now()); len(errs) > 0 {
+		return nil, fmt.Errorf("invalid servicebus tls files: %s", strings.Join(errs, "; "))
+	}
+
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return nil, err
+	}
+	if cert.Leaf == nil && len(cert.Certificate) > 0 {
+		cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &cert, nil
 }
 
 func buildBasicHandler(timeout time.Duration) http.Handler {
@@ -275,7 +351,6 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 			sResp.Code = http.StatusBadRequest
 			sResp.Msg = "can't read data from body of the http's request"
 			if _, err := w.Write(marshalResult(sResp)); err != nil {
-				// TODO: handle err
 				klog.Error(err)
 			}
 			return
@@ -284,7 +359,6 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 			sResp.Code = http.StatusBadRequest
 			sResp.Msg = "invalid params"
 			if _, err := w.Write(marshalResult(sResp)); err != nil {
-				// TODO: handle err
 				klog.Error(err)
 			}
 			return
@@ -293,7 +367,6 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 			sResp.Code = http.StatusBadRequest
 			sResp.Msg = fmt.Sprintf("url %s is not allowed and please make a rule for this url in the cloud", sReq.TargetURL)
 			if _, err := w.Write(marshalResult(sResp)); err != nil {
-				// TODO: handle err
 				klog.Error(err)
 			}
 			return
@@ -305,7 +378,6 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 			sResp.Code = http.StatusBadRequest
 			sResp.Msg = err.Error()
 			if _, err := w.Write(marshalResult(sResp)); err != nil {
-				// TODO: handle err
 				klog.Error(err)
 			}
 			return
@@ -315,7 +387,6 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 			sResp.Code = http.StatusInternalServerError
 			sResp.Msg = err.Error()
 			if _, err := w.Write(marshalResult(sResp)); err != nil {
-				// TODO: handle err
 				klog.Error(err)
 			}
 			return
@@ -325,7 +396,6 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 		sResp.Msg = "receive response from cloud successfully"
 		sResp.Body = string(resp)
 		if _, err := w.Write(marshalResult(sResp)); err != nil {
-			// TODO: handle err
 			klog.Error(err)
 		}
 	})

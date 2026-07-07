@@ -18,8 +18,11 @@ package validation
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"path"
+	"strings"
+	"time"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/klog/v2"
@@ -130,11 +133,45 @@ func ValidateModuleServiceBus(s v1alpha2.ServiceBus) field.ErrorList {
 		return field.ErrorList{}
 	}
 	allErrs := field.ErrorList{}
+	if s.TLSCertFile == "" {
+		allErrs = append(allErrs, field.Required(field.NewPath("tlsCertFile"), "tlsCertFile is required when servicebus is enabled"))
+	}
+	if s.TLSPrivateKeyFile == "" {
+		allErrs = append(allErrs, field.Required(field.NewPath("tlsPrivateKeyFile"), "tlsPrivateKeyFile is required when servicebus is enabled"))
+	}
+	if len(allErrs) > 0 {
+		return allErrs
+	}
 	if !utilvalidation.FileIsExist(s.TLSCertFile) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("tlsCertFile"), s.TLSCertFile, "tlsCertFile not exist"))
 	}
 	if !utilvalidation.FileIsExist(s.TLSPrivateKeyFile) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("tlsPrivateKeyFile"), s.TLSPrivateKeyFile, "tlsPrivateKeyFile not exist"))
+	}
+	if len(allErrs) > 0 {
+		return allErrs
+	}
+
+	host := s.Server
+	if host == "" {
+		host = "127.0.0.1"
+	}
+	if parsedHost, _, err := net.SplitHostPort(host); err == nil {
+		host = parsedHost
+	}
+	if !utilvalidation.IsLoopbackHost(host) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("server"), s.Server, "servicebus without client authentication must bind to a loopback address"))
+		return allErrs
+	}
+	for _, errMsg := range utilvalidation.ValidateServerTLSFiles(s.TLSCertFile, s.TLSPrivateKeyFile, host, time.Now()) {
+		switch {
+		case strings.HasPrefix(errMsg, "tlsCertFile"):
+			allErrs = append(allErrs, field.Invalid(field.NewPath("tlsCertFile"), s.TLSCertFile, errMsg))
+		case strings.HasPrefix(errMsg, "tlsPrivateKeyFile"):
+			allErrs = append(allErrs, field.Invalid(field.NewPath("tlsPrivateKeyFile"), s.TLSPrivateKeyFile, errMsg))
+		default:
+			allErrs = append(allErrs, field.Invalid(field.NewPath("tlsCertFile"), s.TLSCertFile, errMsg))
+		}
 	}
 	return allErrs
 }
