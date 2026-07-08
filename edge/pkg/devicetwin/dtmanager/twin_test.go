@@ -1530,3 +1530,103 @@ func generateTwinContent(eventID, deviceID string) ([]byte, []byte, dtcontext.DT
 	context := contextFunc(deviceID)
 	return content, contentKeyTwin, context
 }
+
+// TestDealMsgTwinMissingMetadata verifies that a twin sync update whose twin is nil or
+// carries no metadata is skipped instead of dereferencing a nil Metadata and panicking.
+func TestDealMsgTwinMissingMetadata(t *testing.T) {
+	str := typeString
+	emptyResult := dttype.DealTwinResult{
+		Add:        make([]models.DeviceTwin, 0),
+		Delete:     make([]models.DeviceDelete, 0),
+		Update:     make([]models.DeviceTwinUpdate, 0),
+		Result:     make(map[string]*dttype.MsgTwin),
+		SyncResult: make(map[string]*dttype.MsgTwin),
+		Document:   make(map[string]*dttype.TwinDoc),
+	}
+
+	newContext := func() *dtcontext.DTContext {
+		context := contextFunc(deviceA)
+		twin := map[string]*dttype.MsgTwin{
+			key1: {
+				Expected: &dttype.TwinValue{Value: &str},
+				Metadata: &dttype.TypeMetadata{Type: typeString},
+			},
+		}
+		context.DeviceList.Store(deviceA, &dttype.Device{Twin: twin})
+		return &context
+	}
+
+	tests := []struct {
+		name     string
+		msgTwins map[string]*dttype.MsgTwin
+	}{
+		{
+			name: "TestDealMsgTwinMissingMetadata(): Case 1: synced twin without metadata is skipped",
+			msgTwins: map[string]*dttype.MsgTwin{
+				key1: {Expected: &dttype.TwinValue{Value: &str}},
+			},
+		},
+		{
+			name:     "TestDealMsgTwinMissingMetadata(): Case 2: nil synced twin is skipped",
+			msgTwins: map[string]*dttype.MsgTwin{key1: nil},
+		},
+		{
+			name: "TestDealMsgTwinMissingMetadata(): Case 3: uncached synced twin without metadata is skipped",
+			msgTwins: map[string]*dttype.MsgTwin{
+				"key2": {Expected: &dttype.TwinValue{Value: &str}},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := DealMsgTwin(newContext(), deviceA, tt.msgTwins, SyncDealType); !reflect.DeepEqual(got, emptyResult) {
+				t.Errorf("DTManager.DealMsgTwin() case failed: got = %+v, want = %+v", got, emptyResult)
+			}
+		})
+	}
+}
+
+// TestIsTwinValueDiffNilValue verifies that a twin value object with a nil Value is treated
+// as carrying no value rather than dereferencing the nil Value pointer and panicking.
+func TestIsTwinValueDiffNilValue(t *testing.T) {
+	cachedValue := typeString
+	newValue := valueType
+	twin := &dttype.MsgTwin{
+		Expected: &dttype.TwinValue{Value: &cachedValue},
+		Metadata: &dttype.TypeMetadata{Type: typeString},
+	}
+
+	tests := []struct {
+		name    string
+		msgTwin *dttype.MsgTwin
+		want    bool
+	}{
+		{
+			name: "TestIsTwinValueDiffNilValue(): Case 1: nil expected value reports no diff",
+			msgTwin: &dttype.MsgTwin{
+				Expected: &dttype.TwinValue{},
+				Metadata: &dttype.TypeMetadata{Type: typeString},
+			},
+			want: false,
+		},
+		{
+			name: "TestIsTwinValueDiffNilValue(): Case 2: present expected value reports diff",
+			msgTwin: &dttype.MsgTwin{
+				Expected: &dttype.TwinValue{Value: &newValue},
+				Metadata: &dttype.TypeMetadata{Type: typeString},
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := isTwinValueDiff(twin, tt.msgTwin, DealExpected)
+			if err != nil {
+				t.Errorf("DTManager.isTwinValueDiff() unexpected error: %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("DTManager.isTwinValueDiff() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

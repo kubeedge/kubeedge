@@ -557,7 +557,7 @@ func isTwinValueDiff(twin *dttype.MsgTwin, msgTwin *dttype.MsgTwin, dealType int
 		msgTwinValue = msgTwin.Actual
 		hasTwin = true
 	}
-	if msgTwinValue != nil {
+	if msgTwinValue != nil && msgTwinValue.Value != nil {
 		hasMsgTwin = true
 	}
 
@@ -1010,10 +1010,11 @@ func DealMsgTwin(context *dtcontext.DTContext, deviceID string, msgTwins map[str
 
 	var err error
 	for key, msgTwin := range msgTwins {
+		if dealType >= 1 && (msgTwin == nil || msgTwin.Metadata == nil) {
+			klog.Warningf("Skip syncing twin %s of device %s: metadata is missing", key, deviceID)
+			continue
+		}
 		if twin, exist := twins[key]; exist {
-			if dealType >= 1 && msgTwin != nil && (msgTwin.Metadata == nil) {
-				klog.Info("Not found metadata of twin")
-			}
 			if msgTwin == nil && dealType == 0 || dealType >= 1 && strings.Compare(msgTwin.Metadata.Type, dtcommon.TypeDeleted) == 0 {
 				dealTwinDelete(&returnResult, deviceID, key, twin, msgTwin, dealType)
 				continue
