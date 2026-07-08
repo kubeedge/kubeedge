@@ -38,7 +38,7 @@ func GetLocalIP(hostName string) (string, error) {
 
 	// fix https://github.com/kubeedge/kubeedge/issues/6023
 	// LookupIP maybe get docker0 ip's or other cni ip's
-	// maybe get default route interface ip's can be safter
+	// Using the IP of the default-route interface may be safer.
 	// if get default ip fails then should use LookupIP
 	// ignore when ChooseHostInterface fails
 	ipAddr, err = utilnet.ChooseHostInterface()
