@@ -41,6 +41,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	apimachineryType "k8s.io/apimachinery/pkg/types"
 	patchtypes "k8s.io/apimachinery/pkg/types"
 	k8sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -61,6 +62,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/types"
 	routerrule "github.com/kubeedge/kubeedge/cloud/pkg/router/rule"
+	comconstants "github.com/kubeedge/kubeedge/common/constants"
 	common "github.com/kubeedge/kubeedge/common/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/pkg/features"
@@ -1026,7 +1028,7 @@ func (uc *UpstreamController) patchNode() {
 				continue
 			}
 
-			node, err := uc.kubeClient.CoreV1().Nodes().Patch(utilcontext.FromMessage(context.TODO(), msg), name, patchtypes.StrategicMergePatchType, patchBytes, metaV1.PatchOptions{}, "status")
+			node, err := uc.kubeClient.CoreV1().Nodes().Patch(utilcontext.FromMessage(context.TODO(), msg), name, apimachineryType.StrategicMergePatchType, patchBytes, metaV1.PatchOptions{}, "status")
 			if err != nil {
 				klog.Errorf("message: %s process failure, patch node failed with error: %v, namespace: %s, name: %s", msg.GetID(), err, namespace, name)
 			}
@@ -1152,7 +1154,7 @@ func (uc *UpstreamController) updateNode() {
 					klog.Warningf("marshal node data failed with err: %s", err)
 					continue
 				}
-				node, err := uc.kubeClient.CoreV1().Nodes().Patch(utilcontext.FromMessage(context.Background(), msg), getNode.Name, patchtypes.StrategicMergePatchType, byteNode, metaV1.PatchOptions{})
+				node, err := uc.kubeClient.CoreV1().Nodes().Patch(utilcontext.FromMessage(context.Background(), msg), getNode.Name, apimachineryType.StrategicMergePatchType, byteNode, metaV1.PatchOptions{})
 				if err != nil {
 					klog.Warningf("message: %s process failure, update node failed with error: %s, namespace: %s, name: %s", msg.GetID(), err, getNode.Namespace, getNode.Name)
 					continue
@@ -1214,7 +1216,7 @@ func (uc *UpstreamController) patchPod() {
 				continue
 			}
 
-			updatedPod, err := uc.kubeClient.CoreV1().Pods(namespace).Patch(utilcontext.FromMessage(context.TODO(), msg), name, patchtypes.StrategicMergePatchType, patchBytes, metaV1.PatchOptions{}, "status")
+			updatedPod, err := uc.kubeClient.CoreV1().Pods(namespace).Patch(utilcontext.FromMessage(context.TODO(), msg), name, apimachineryType.StrategicMergePatchType, patchBytes, metaV1.PatchOptions{}, "status")
 			if err != nil {
 				klog.Errorf("message: %s process failure, patch pod failed with error: %v, namespace: %s, name: %s", msg.GetID(), err, namespace, name)
 			}
@@ -1650,7 +1652,7 @@ func UpdateAnnotation(ctx context.Context, nodeName string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get cloudcore localIP with err:%v", err)
 	}
-	if value, ok := node.Annotations[common.EdgeMappingCloudKey]; ok {
+	if value, ok := node.Annotations[comconstants.EdgeMappingCloudKey]; ok {
 		if value == localIP {
 			return nil
 		}
@@ -1658,7 +1660,7 @@ func UpdateAnnotation(ctx context.Context, nodeName string) error {
 	if node.Annotations == nil {
 		node.Annotations = make(map[string]string)
 	}
-	node.Annotations[common.EdgeMappingCloudKey] = localIP
+	node.Annotations[comconstants.EdgeMappingCloudKey] = localIP
 	_, err = client.GetKubeClient().CoreV1().Nodes().Update(ctx, node, metaV1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update node:%s with err:%v", nodeName, err)
