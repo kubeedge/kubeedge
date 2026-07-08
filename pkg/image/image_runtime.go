@@ -19,10 +19,10 @@ package image
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/distribution/reference"
+	digest "github.com/opencontainers/go-digest"
 	"go.opentelemetry.io/otel/trace/noop"
 	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -80,17 +80,24 @@ func (runtime *RuntimeImpl) GetImageDigest(ctx context.Context, image string) (s
 		return "", err
 	}
 	if resp.Image == nil {
-		return "", nil
+		return "", fmt.Errorf("image %s not found in local runtime", image)
 	}
-	for i := range resp.Image.RepoTags {
-		tag := resp.Image.RepoTags[i]
-		if tag == image {
-			repoDigest := resp.Image.RepoDigests[i]
-			digestIndex := strings.LastIndex(repoDigest, "@sha256:")
-			return repoDigest[digestIndex+1:], nil
+
+	repository, err := imageRepository(image)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse image %s: %v", image, err)
+	}
+	for _, repoDigest := range resp.Image.RepoDigests {
+		repoDigest = ConvToCRIImage(repoDigest)
+		repo, dgst, err := parseRepositoryDigest(repoDigest)
+		if err != nil {
+			return "", fmt.Errorf("failed to parse repo digest %s for image %s: %v", repoDigest, image, err)
+		}
+		if repo == repository {
+			return dgst, nil
 		}
 	}
-	return "", nil
+	return "", fmt.Errorf("image digest for repository %s not found in local runtime", repository)
 }
 
 func (runtime *RuntimeImpl) PullImage(
@@ -119,4 +126,55 @@ func ConvToCRIImage(image string) string {
 		return image
 	}
 	return ref.String()
+}
+
+func NormalizeDigest(value string) (string, error) {
+	dgst, err := digest.Parse(value)
+	if err != nil {
+		return "", fmt.Errorf("invalid image digest %q: %v", value, err)
+	}
+	if err := dgst.Validate(); err != nil {
+		return "", fmt.Errorf("invalid image digest %q: %v", value, err)
+	}
+	return dgst.String(), nil
+}
+
+func ImmutableImageRef(image, dgst string) (string, error) {
+	named, err := reference.ParseNormalizedNamed(image)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse image %s: %v", image, err)
+	}
+	normalizedDigest, err := NormalizeDigest(dgst)
+	if err != nil {
+		return "", err
+	}
+	canonical, err := reference.WithDigest(reference.TrimNamed(named), digest.Digest(normalizedDigest))
+	if err != nil {
+		return "", fmt.Errorf("failed to build immutable image ref for %s: %v", image, err)
+	}
+	return canonical.String(), nil
+}
+
+func imageRepository(image string) (string, error) {
+	named, err := reference.ParseNormalizedNamed(image)
+	if err != nil {
+		return "", err
+	}
+	return reference.TrimNamed(named).Name(), nil
+}
+
+func parseRepositoryDigest(repoDigest string) (string, string, error) {
+	ref, err := reference.ParseNormalizedNamed(repoDigest)
+	if err != nil {
+		return "", "", err
+	}
+	digested, ok := ref.(reference.Digested)
+	if !ok {
+		return "", "", fmt.Errorf("reference %s does not include a digest", repoDigest)
+	}
+	normalizedDigest, err := NormalizeDigest(digested.Digest().String())
+	if err != nil {
+		return "", "", err
+	}
+	return reference.TrimNamed(ref).Name(), normalizedDigest, nil
 }

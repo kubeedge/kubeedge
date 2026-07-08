@@ -19,6 +19,7 @@ package edge
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -32,6 +33,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/containers"
+	keimage "github.com/kubeedge/kubeedge/pkg/image"
 	upgrdeedge "github.com/kubeedge/kubeedge/pkg/upgrade/edge"
 	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
@@ -156,6 +158,14 @@ func (executor *upgradeExecutor) newReporter(upgradeID, toVersion string) upgrde
 // getEdgeCoreBinary pulls the installation-package image and obtains the edgecore binary from it.
 // The edgecore binary is copied to the upgrade path, and the filepath is returned.
 func getEdgeCoreBinary(ctx context.Context, opts UpgradeOptions, config *cfgv1alpha2.EdgeCoreConfig) (string, error) {
+	expectedDigest, err := keimage.NormalizeDigest(opts.ImageDigest)
+	if err != nil {
+		if opts.ImageDigest == "" {
+			return "", errors.New("image-digest is required for edge upgrade")
+		}
+		return "", err
+	}
+
 	ctrcli, err := containers.NewContainerRuntime(
 		config.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint,
 		config.Modules.Edged.TailoredKubeletConfig.CgroupDriver)
@@ -167,24 +177,25 @@ func getEdgeCoreBinary(ctx context.Context, opts UpgradeOptions, config *cfgv1al
 	if err := ctrcli.PullImage(ctx, image, nil, nil); err != nil {
 		return "", fmt.Errorf("failed to pull image %s, err: %v", image, err)
 	}
-	// If the ImageDigest is not empty, verify the image.
-	if opts.ImageDigest != "" {
-		local, err := ctrcli.GetImageDigest(ctx, image)
-		if err != nil {
-			return "", fmt.Errorf("failed to get image digest of %s, err: %v", image, err)
-		}
-		if local != opts.ImageDigest {
-			return "", fmt.Errorf("image digest of %s is not correct, local: %s, expected: %s",
-				image, local, opts.ImageDigest)
-		}
+	local, err := ctrcli.GetImageDigest(ctx, image)
+	if err != nil {
+		return "", fmt.Errorf("failed to get image digest of %s, err: %v", image, err)
+	}
+	if local != expectedDigest {
+		return "", fmt.Errorf("image digest of %s is not correct, local: %s, expected: %s",
+			image, local, expectedDigest)
+	}
+	immutableImage, err := keimage.ImmutableImageRef(image, expectedDigest)
+	if err != nil {
+		return "", err
 	}
 	// Copy edgecore binary from the image to the upgrade path.
 	containerFilePath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
 	hostPath := filepath.Join(upgradePath(opts.ToVersion), constants.KubeEdgeBinaryName)
 	files := map[string]string{containerFilePath: hostPath}
-	if err := ctrcli.CopyResources(ctx, image, files); err != nil {
+	if err := ctrcli.CopyResources(ctx, immutableImage, files); err != nil {
 		return "", fmt.Errorf("failed to copy edgecore from %s in the image %s to host %s, err: %v",
-			containerFilePath, image, hostPath, err)
+			containerFilePath, immutableImage, hostPath, err)
 	}
 	return hostPath, nil
 }

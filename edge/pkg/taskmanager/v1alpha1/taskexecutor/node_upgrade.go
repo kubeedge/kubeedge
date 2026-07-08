@@ -21,18 +21,21 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/common/constants"
+	cfgv1alpha2 "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
 	"github.com/kubeedge/kubeedge/common/types"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/pkg/containers"
+	keimage "github.com/kubeedge/kubeedge/pkg/image"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -191,16 +194,38 @@ func upgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 
 func keadmUpgrade(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) error {
 	klog.Infof("Begin to run upgrade command")
-	upgradeCmd := fmt.Sprintf("keadm upgrade edge --upgradeID %s --historyID %s --fromVersion %s --toVersion %s --config %s --image %s > /tmp/keadm.log 2>&1",
-		upgradeReq.UpgradeID, upgradeReq.HistoryID, version.Get(), upgradeReq.Version, opts.ConfigFile, upgradeReq.Image)
-
-	// run upgrade cmd to upgrade edge node
-	// use nohup command to start a child progress
-	command := fmt.Sprintf("nohup %s &", upgradeCmd)
-	cmd := exec.Command("bash", "-c", command)
-	s, err := cmd.CombinedOutput()
+	expectedDigest, err := keimage.NormalizeDigest(upgradeReq.ImageDigest)
 	if err != nil {
-		return fmt.Errorf("run upgrade command %s failed: %v, %s", command, err, s)
+		return err
+	}
+
+	logFile, err := os.OpenFile("/tmp/keadm.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	if err != nil {
+		return fmt.Errorf("open /tmp/keadm.log failed: %v", err)
+	}
+	defer func() {
+		if err := logFile.Close(); err != nil {
+			klog.Warningf("failed to close /tmp/keadm.log: %v", err)
+		}
+	}()
+
+	cmd := exec.Command("nohup",
+		"keadm", "upgrade", "edge",
+		"--upgradeID", upgradeReq.UpgradeID,
+		"--historyID", upgradeReq.HistoryID,
+		"--fromVersion", version.Get().String(),
+		"--toVersion", upgradeReq.Version,
+		"--config", opts.ConfigFile,
+		"--image", upgradeReq.Image,
+		"--image-digest", expectedDigest,
+	)
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("run upgrade command failed: %v", err)
+	}
+	if err := cmd.Process.Release(); err != nil {
+		return fmt.Errorf("release upgrade command process failed: %v", err)
 	}
 	klog.Infof("!!! Finish upgrade from Version %s to %s ...", version.Get(), upgradeReq.Version)
 	return nil
@@ -209,10 +234,18 @@ func keadmUpgrade(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.Ed
 func prepareKeadm(upgradeReq *commontypes.NodeUpgradeJobRequest) error {
 	ctx := context.Background()
 	config := options.GetEdgeCoreConfig()
+	if upgradeReq.ImageDigest == "" {
+		return errors.New("imageDigest is required for node upgrade jobs")
+	}
+	expectedDigest, err := keimage.NormalizeDigest(upgradeReq.ImageDigest)
+	if err != nil {
+		return err
+	}
 
 	// install the requested installer keadm from docker image
 	klog.Infof("Begin to download version %s keadm", upgradeReq.Version)
-	ctrcli, err := containers.NewContainerRuntime(config.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint, config.Modules.Edged.TailoredKubeletConfig.CgroupDriver)
+	endpoint, cgroupDriver := containerRuntimeSettings(config)
+	ctrcli, err := containers.NewContainerRuntime(endpoint, cgroupDriver)
 	if err != nil {
 		return fmt.Errorf("failed to new container runtime: %v", err)
 	}
@@ -225,22 +258,32 @@ func prepareKeadm(upgradeReq *commontypes.NodeUpgradeJobRequest) error {
 		return fmt.Errorf("pull image failed: %v", err)
 	}
 	// Check installation-package image digest
-	if upgradeReq.ImageDigest != "" {
-		var local string
-		local, err = ctrcli.GetImageDigest(ctx, image)
-		if err != nil {
-			return err
-		}
-		if upgradeReq.ImageDigest != local {
-			return fmt.Errorf("invalid installation-package image digest value: %s", local)
-		}
+	var local string
+	local, err = ctrcli.GetImageDigest(ctx, image)
+	if err != nil {
+		return err
+	}
+	if expectedDigest != local {
+		return fmt.Errorf("invalid installation-package image digest value: %s", local)
+	}
+	immutableImage, err := keimage.ImmutableImageRef(image, expectedDigest)
+	if err != nil {
+		return err
 	}
 	containerPath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KeadmBinaryName)
 	hostPath := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KeadmBinaryName)
 	files := map[string]string{containerPath: hostPath}
-	err = ctrcli.CopyResources(ctx, image, files)
+	err = ctrcli.CopyResources(ctx, immutableImage, files)
 	if err != nil {
 		return fmt.Errorf("failed to cp file from image to host: %v", err)
 	}
 	return nil
+}
+
+func containerRuntimeSettings(config *cfgv1alpha2.EdgeCoreConfig) (string, string) {
+	if config == nil || config.Modules == nil || config.Modules.Edged == nil || config.Modules.Edged.TailoredKubeletConfig == nil {
+		return "", ""
+	}
+	return config.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint,
+		config.Modules.Edged.TailoredKubeletConfig.CgroupDriver
 }
