@@ -1599,13 +1599,29 @@ func TestDealGetTwin_DeviceFound(t *testing.T) {
 				t.Errorf("DealGetTwin() unexpected error: %v", err)
 			}
 
-			// commChan is buffered (size 8), so Send never blocks. Assert
-			// synchronously that a message was dispatched on the success path.
+			// commChan is buffered (size 8), so Send never blocks. On the
+			// success path, assert both that a message was dispatched and that
+			// its key fields (Type, Action, Msg) are set correctly.
 			if commChan != nil && !tt.wantErr {
 				select {
-				case _, ok := <-commChan:
+				case v, ok := <-commChan:
 					if !ok {
 						t.Errorf("expected message on commChan, but channel was closed")
+						break
+					}
+					msg, ok := v.(*dttype.DTMessage)
+					if !ok {
+						t.Errorf("expected *dttype.DTMessage on commChan, got %T", v)
+						break
+					}
+					if msg.Type != dtcommon.CommModule {
+						t.Errorf("DTMessage.Type = %q, want %q", msg.Type, dtcommon.CommModule)
+					}
+					if msg.Action != dtcommon.SendToEdge {
+						t.Errorf("DTMessage.Action = %q, want %q", msg.Action, dtcommon.SendToEdge)
+					}
+					if msg.Msg == nil {
+						t.Errorf("DTMessage.Msg is nil, expected a model.Message")
 					}
 				default:
 					t.Errorf("expected message on commChan, but none was received")
@@ -1617,7 +1633,7 @@ func TestDealGetTwin_DeviceFound(t *testing.T) {
 
 // TestDealUpdateResult_NilError verifies that dealUpdateResult sends the
 // payload bytes directly (not an error envelope) when err == nil, i.e. the
-// success branch (line 300: result = payload).
+// success branch where result = payload.
 func TestDealUpdateResult_NilError(t *testing.T) {
 	ctx, commChan := contextWithCommChan(deviceB)
 
@@ -1631,8 +1647,13 @@ func TestDealUpdateResult_NilError(t *testing.T) {
 	var received *dttype.DTMessage
 	select {
 	case v, ok := <-commChan:
-		if ok {
-			received = v.(*dttype.DTMessage)
+		if !ok {
+			t.Fatal("commChan closed unexpectedly")
+		}
+		var assertOk bool
+		received, assertOk = v.(*dttype.DTMessage)
+		if !assertOk {
+			t.Fatalf("expected *dttype.DTMessage on commChan, got %T", v)
 		}
 	case <-time.After(500 * time.Millisecond):
 		t.Fatal("timed out waiting for message on CommChan")
@@ -1678,7 +1699,7 @@ func TestDealTwinSync_DeviceNotInContext(t *testing.T) {
 
 // TestDealGetTwin_MalformedPayload exercises the UnmarshalBaseMessage-error
 // branch of DealGetTwin and confirms the function returns the Send error when
-// CommChan is absent (covering the klog path at line 361).
+// CommChan is absent.
 func TestDealGetTwin_MalformedPayload_NoCommChan(t *testing.T) {
 	ctx := contextFunc(deviceB)
 	// Deliberately malformed JSON so UnmarshalBaseMessage fails.
