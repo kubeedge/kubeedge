@@ -366,6 +366,20 @@ func TestWSLaneWithoutPack_WriteDeadlineExpired(t *testing.T) {
 	require.Error(t, err, "WriteMessage must fail after an expired write deadline")
 }
 
+// TestWSLane_WriteDeadlineExpired verifies that setting an already-expired write
+// deadline causes the next WriteMessage call to return a timeout error for the
+// packed WSLane variant, proving deadline propagation to the underlying conn.
+func TestWSLane_WriteDeadlineExpired(t *testing.T) {
+	_, clientConn := newTestWSPair(t)
+
+	l := NewWSLane(clientConn)
+	require.NoError(t, l.SetWriteDeadline(time.Now().Add(-time.Second)))
+
+	msg := &model.Message{Header: model.MessageHeader{ID: "wslane-deadline-test"}}
+	err := l.WriteMessage(msg)
+	require.Error(t, err, "WriteMessage must fail after an expired write deadline")
+}
+
 // TestWSLaneWithoutPack_SetReadDeadline_Zero verifies that setting a zero
 // time.Time clears the read deadline on the underlying connection without error.
 func TestWSLaneWithoutPack_SetReadDeadline_Zero(t *testing.T) {
@@ -384,6 +398,8 @@ func TestWSLaneWithoutPack_SetReadDeadline_Zero(t *testing.T) {
 
 // TestWSLaneWithoutPack_ReadAfterClose verifies that ReadMessage returns an
 // error when the underlying WebSocket connection has been closed by the peer.
+// A short read deadline bounds the test so it cannot block indefinitely if
+// the close frame is delayed.
 func TestWSLaneWithoutPack_ReadAfterClose(t *testing.T) {
 	serverConn, clientConn := newTestWSPair(t)
 
@@ -392,8 +408,9 @@ func TestWSLaneWithoutPack_ReadAfterClose(t *testing.T) {
 	// Close the client side — the server should see an error on its next read.
 	require.NoError(t, clientConn.Close())
 
-	// Give the close frame time to arrive.
-	time.Sleep(20 * time.Millisecond)
+	// Set a short read deadline so the test is deterministic: if the close
+	// frame is delayed the read will time out rather than blocking forever.
+	require.NoError(t, serverLane.SetReadDeadline(time.Now().Add(200*time.Millisecond)))
 
 	msg := &model.Message{}
 	err := serverLane.ReadMessage(msg)
