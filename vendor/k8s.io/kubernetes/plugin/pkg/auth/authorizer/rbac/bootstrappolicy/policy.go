@@ -603,6 +603,10 @@ func ClusterRoles() []rbacv1.ClusterRole {
 			rbacv1helpers.NewRule(Read...).Groups(resourceGroup).Resources("deviceclasses").RuleOrDie(),
 			rbacv1helpers.NewRule(ReadUpdate...).Groups(resourceGroup).Resources("resourceclaims").RuleOrDie(),
 			rbacv1helpers.NewRule(ReadUpdate...).Groups(resourceGroup).Resources("resourceclaims/status").RuleOrDie(),
+			// Needed for DRAResourceClaimGranularStatusAuthorization (beta in k8s v1.36, on by default).
+			// The resourceclaims/binding subresource is inert on clusters older than v1.33 but safe to add in preparation.
+			// Ref: kubernetes/kubernetes#138149
+			rbacv1helpers.NewRule("update", "patch").Groups(resourceGroup).Resources("resourceclaims/binding").RuleOrDie(),
 			rbacv1helpers.NewRule(ReadUpdate...).Groups(legacyGroup).Resources("pods/finalizers").RuleOrDie(),
 			rbacv1helpers.NewRule(Read...).Groups(resourceGroup).Resources("resourceslices").RuleOrDie(),
 		)
