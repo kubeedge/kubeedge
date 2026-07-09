@@ -109,10 +109,10 @@ func newTestWSPair(t *testing.T) (serverConn, clientConn *websocket.Conn) {
 
 type fakeQuicStream struct{}
 
-func (fakeQuicStream) StreamID() quic.StreamID           { return 0 }
-func (fakeQuicStream) Read(_ []byte) (int, error)        { return 0, io.EOF }
-func (fakeQuicStream) Write(p []byte) (int, error)       { return len(p), nil }
-func (fakeQuicStream) Close() error                      { return nil }
+func (fakeQuicStream) StreamID() quic.StreamID            { return 0 }
+func (fakeQuicStream) Read(_ []byte) (int, error)         { return 0, io.EOF }
+func (fakeQuicStream) Write(p []byte) (int, error)        { return len(p), nil }
+func (fakeQuicStream) Close() error                       { return nil }
 func (fakeQuicStream) CancelWrite(_ quic.ErrorCode) error { return nil }
 func (fakeQuicStream) CancelRead(_ quic.ErrorCode) error  { return nil }
 func (fakeQuicStream) Context() context.Context           { return context.Background() }
