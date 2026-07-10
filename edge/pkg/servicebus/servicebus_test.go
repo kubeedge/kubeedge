@@ -283,7 +283,6 @@ func TestBuildBasicHandler_OversizedBody(t *testing.T) {
 	assert.Equal(t, "can't read data from body of the http's request", resp.Msg)
 }
 
-
 func TestBuildBasicHandler_UnregisteredURL(t *testing.T) {
 	handler := buildBasicHandlerWithDeps(5*time.Second, basicHandlerDeps{
 		getURLByKey: func(string) (*models.TargetUrls, error) {
