@@ -129,9 +129,7 @@ kubernetes controller which manages devices so that the device metadata/status d
 				// By default, IptablesManager manages tunnel port related iptables rules
 				// The internal mode will share the host network, forward to the stream port.
 				streamPort := int(config.Modules.CloudStream.StreamPort)
-				if mgr := iptables.NewIptablesManager(config.KubeAPIConfig, streamPort); mgr != nil {
-					go mgr.Run(ctx)
-				}
+				go iptables.NewIptablesManager(config.KubeAPIConfig, streamPort).Run(ctx)
 			}
 
 			// Start all modules
@@ -174,7 +172,7 @@ func registerModules(c *v1alpha1.CloudCoreConfig) {
 	devicecontroller.Register(c.Modules.DeviceController)
 	taskmanager.Register(c.Modules.TaskManager)
 	synccontroller.Register(c.Modules.SyncController)
-	cloudstream.Register(c.Modules.CloudStream, c.CommonConfig)
+	cloudstream.Register(c.Modules.CloudStream, c.CommonConfig, c.Modules.IptablesManager)
 	router.Register(c.Modules.Router)
 	dynamiccontroller.Register(c.Modules.DynamicController, enableAuthorization)
 	policycontroller.Register(client.CrdConfig)

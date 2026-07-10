@@ -32,7 +32,7 @@ func TestNewCloudStream(t *testing.T) {
 	enable := true
 	tunnelPort := 8000
 
-	cs := newCloudStream(true, 8000)
+	cs := newCloudStream(true, 8000, v1alpha1.InternalMode)
 
 	assert.Equal(cs.enable, enable)
 	assert.Equal(cs.tunnelPort, tunnelPort)
@@ -52,7 +52,7 @@ func TestRegister(t *testing.T) {
 	}
 	config.InitConfigure(controller)
 
-	Register(controller, commonConfig)
+	Register(controller, commonConfig, nil)
 
 	Coremodules := core.GetModules()
 	mod, exists := Coremodules[modules.CloudStreamModuleName]

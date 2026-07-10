@@ -20,28 +20,33 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
-	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 )
 
 type cloudStream struct {
-	enable     bool
-	tunnelPort int
+	enable          bool
+	tunnelPort      int
+	iptablesMgrMode v1alpha1.IptablesMgrMode
 }
 
 var _ core.Module = (*cloudStream)(nil)
 
-func newCloudStream(enable bool, tunnelPort int) *cloudStream {
+func newCloudStream(enable bool, tunnelPort int, iptablesMgrMode v1alpha1.IptablesMgrMode) *cloudStream {
 	return &cloudStream{
-		enable:     enable,
-		tunnelPort: tunnelPort,
+		enable:          enable,
+		tunnelPort:      tunnelPort,
+		iptablesMgrMode: iptablesMgrMode,
 	}
 }
 
-func Register(controller *v1alpha1.CloudStream, commonConfig *v1alpha1.CommonConfig) {
+func Register(controller *v1alpha1.CloudStream, commonConfig *v1alpha1.CommonConfig, iptablesMgr *v1alpha1.IptablesManager) {
 	config.InitConfigure(controller)
-	core.Register(newCloudStream(controller.Enable, commonConfig.TunnelPort))
+	iptablesMgrMode := v1alpha1.InternalMode
+	if iptablesMgr != nil {
+		iptablesMgrMode = iptablesMgr.Mode
+	}
+	core.Register(newCloudStream(controller.Enable, commonConfig.TunnelPort, iptablesMgrMode))
 }
 
 func (s *cloudStream) Name() string {
@@ -56,12 +61,8 @@ func (s *cloudStream) Start() {
 	// TODO: Will improve in the future
 	ok := <-cloudhub.DoneTLSTunnelCerts
 	if ok {
-		cloudCoreIP := ""
-		if len(hubconfig.Config.AdvertiseAddress) > 0 {
-			cloudCoreIP = hubconfig.Config.AdvertiseAddress[0]
-		}
 		streamPort := int(config.Config.StreamPort)
-		ts := newTunnelServer(s.tunnelPort, cloudCoreIP, streamPort)
+		ts := newTunnelServer(s.tunnelPort, streamPort, s.iptablesMgrMode)
 
 		// start new tunnel server
 		go ts.Start()

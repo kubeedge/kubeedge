@@ -54,6 +54,7 @@ import (
 	crdClientset "github.com/kubeedge/api/client/clientset/versioned"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	utilcontext "github.com/kubeedge/kubeedge/cloud/pkg/common/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
@@ -62,7 +63,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/types"
 	routerrule "github.com/kubeedge/kubeedge/cloud/pkg/router/rule"
-	comconstants "github.com/kubeedge/kubeedge/common/constants"
 	common "github.com/kubeedge/kubeedge/common/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/pkg/features"
@@ -696,23 +696,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 					nodeStatusRequest.Status.DaemonEndpoints.KubeletEndpoint.Port = getNode.Status.DaemonEndpoints.KubeletEndpoint.Port
 				}
 
-				// Preserve EdgeTunnelIP address set by CloudCore.
-				// edgecore heartbeat does not include EdgeTunnelIP in its address
-				// list, so it must be re-applied after status overwrite, following
-				// the same pattern as KubeletEndpoint.Port preservation above.
-				var edgeTunnelAddrs []v1.NodeAddress
-				for _, addr := range getNode.Status.Addresses {
-					if addr.Type == common.NodeEdgeTunnelIP {
-						edgeTunnelAddrs = append(edgeTunnelAddrs, addr)
-					}
-				}
-
 				getNode.Status = nodeStatusRequest.Status
-
-				if len(edgeTunnelAddrs) > 0 {
-					getNode.Status.Addresses = append(
-						getNode.Status.Addresses, edgeTunnelAddrs...)
-				}
 
 				node, err := uc.kubeClient.CoreV1().Nodes().UpdateStatus(utilcontext.FromMessage(context.Background(), msg), getNode, metaV1.UpdateOptions{})
 				if err != nil {
@@ -1028,54 +1012,18 @@ func (uc *UpstreamController) patchNode() {
 				continue
 			}
 
+			if features.DefaultFeatureGate.Enabled(features.EdgeTunnelIP) && shouldUseEdgeTunnelIP() {
+				enriched, mergeErr := mergeEdgeTunnelIPIntoPatch(context.TODO(), name, patchBytes)
+				if mergeErr != nil {
+					klog.Warningf("message: %s, failed to merge EdgeTunnelIP into patch for node %s: %v", msg.GetID(), name, mergeErr)
+				} else {
+					patchBytes = enriched
+				}
+			}
+
 			node, err := uc.kubeClient.CoreV1().Nodes().Patch(utilcontext.FromMessage(context.TODO(), msg), name, apimachineryType.StrategicMergePatchType, patchBytes, metaV1.PatchOptions{}, "status")
 			if err != nil {
 				klog.Errorf("message: %s process failure, patch node failed with error: %v, namespace: %s, name: %s", msg.GetID(), err, namespace, name)
-			}
-
-			// The strategic-merge patch sent by edgecore does not include EdgeTunnelIP,
-			// causing the field manager to drop cloudcore's ownership of that address entry.
-			// Re-add EdgeTunnelIP after the patch if the feature gate is enabled and it was lost.
-			if err == nil && features.DefaultFeatureGate.Enabled(features.EdgeTunnelIP) {
-				hasEdgeTunnelIP := false
-				for _, addr := range node.Status.Addresses {
-					if addr.Type == common.NodeEdgeTunnelIP {
-						hasEdgeTunnelIP = true
-						break
-					}
-				}
-				if !hasEdgeTunnelIP {
-					if cloudCoreIP := node.Annotations[common.EdgeMappingCloudKey]; cloudCoreIP != "" {
-						// Fetch fresh node to avoid stale-ResourceVersion conflicts; another actor
-						// (kube-controller-manager, updateNodeKubeletEndpoint) may have bumped
-						// the RV between our Patch call and this UpdateStatus.
-						if freshNode, getErr := client.GetKubeClient().CoreV1().Nodes().Get(
-							context.Background(), name, metaV1.GetOptions{}); getErr == nil {
-							alreadySet := false
-							for _, addr := range freshNode.Status.Addresses {
-								if addr.Type == common.NodeEdgeTunnelIP {
-									alreadySet = true
-									break
-								}
-							}
-							if !alreadySet {
-								freshNode.Status.Addresses = append(freshNode.Status.Addresses, v1.NodeAddress{
-									Type:    common.NodeEdgeTunnelIP,
-									Address: cloudCoreIP,
-								})
-								if updated, updateErr := client.GetKubeClient().CoreV1().Nodes().UpdateStatus(
-									context.Background(), freshNode, metaV1.UpdateOptions{}); updateErr != nil {
-									klog.Errorf("message: %s, failed to restore EdgeTunnelIP after nodepatch: %v", msg.GetID(), updateErr)
-								} else {
-									node = updated
-									klog.V(4).Infof("message: %s, restored EdgeTunnelIP on node %s to %s", msg.GetID(), name, cloudCoreIP)
-								}
-							}
-						} else {
-							klog.Errorf("message: %s, failed to get node %s for EdgeTunnelIP restore: %v", msg.GetID(), name, getErr)
-						}
-					}
-				}
 			}
 
 			resMsg := model.NewMessage(msg.GetID()).
@@ -1090,6 +1038,73 @@ func (uc *UpstreamController) patchNode() {
 			klog.V(4).Infof("message: %s, patch node status successfully, namespace: %s, name: %s", msg.GetID(), namespace, name)
 		}
 	}
+}
+
+// shouldUseEdgeTunnelIP returns true when advertiseAddress is configured,
+// indicating a potentially separated topology where EdgeTunnelIP is needed
+// to route API server traffic through CloudCore. In co-located setups
+// (no advertiseAddress), iptablesManager DNAT handles routing directly.
+func shouldUseEdgeTunnelIP() bool {
+	return len(hubconfig.Config.AdvertiseAddress) > 0
+}
+
+// mergeEdgeTunnelIPIntoPatch injects the EdgeTunnelIP address into patchBytes
+// before the Patch call, eliminating the window between Patch and a subsequent
+// UpdateStatus where EdgeTunnelIP would be absent from the node.
+// Follows the fixupPatchForNodeStatusAddresses pattern from component-helpers:
+// uses $patch:replace to atomically set the full addresses list.
+func mergeEdgeTunnelIPIntoPatch(ctx context.Context, nodeName string, patchBytes []byte) ([]byte, error) {
+	node, err := client.GetKubeClient().CoreV1().Nodes().Get(ctx, nodeName, metaV1.GetOptions{})
+	if err != nil {
+		return patchBytes, err
+	}
+	cloudCoreIP := node.Annotations[common.EdgeMappingCloudKey]
+	if cloudCoreIP == "" {
+		return patchBytes, nil
+	}
+
+	// Build the desired addresses: current addresses (minus any stale EdgeTunnelIP) + new entry.
+	addresses := make([]v1.NodeAddress, 0, len(node.Status.Addresses)+1)
+	for _, addr := range node.Status.Addresses {
+		if addr.Type == common.NodeEdgeTunnelIP {
+			continue
+		}
+		addresses = append(addresses, addr)
+	}
+	addresses = append(addresses, v1.NodeAddress{
+		Type:    common.NodeEdgeTunnelIP,
+		Address: cloudCoreIP,
+	})
+
+	// Marshal typed list then add $patch:replace so the strategic merge patch
+	// replaces the addresses array entirely instead of merging by type key.
+	addrBytes, err := json.Marshal(addresses)
+	if err != nil {
+		return patchBytes, err
+	}
+	var addrArray []any
+	if err := json.Unmarshal(addrBytes, &addrArray); err != nil {
+		return patchBytes, err
+	}
+	addrArray = append(addrArray, map[string]any{"$patch": "replace"})
+
+	var patchMap map[string]any
+	if err := json.Unmarshal(patchBytes, &patchMap); err != nil {
+		return patchBytes, err
+	}
+
+	status := patchMap["status"]
+	if status == nil {
+		status = map[string]any{}
+		patchMap["status"] = status
+	}
+	statusMap, ok := status.(map[string]any)
+	if !ok {
+		return patchBytes, fmt.Errorf("unexpected data in patch")
+	}
+	statusMap["addresses"] = addrArray
+
+	return json.Marshal(patchMap)
 }
 
 func (uc *UpstreamController) updateNode() {
@@ -1652,7 +1667,7 @@ func UpdateAnnotation(ctx context.Context, nodeName string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get cloudcore localIP with err:%v", err)
 	}
-	if value, ok := node.Annotations[comconstants.EdgeMappingCloudKey]; ok {
+	if value, ok := node.Annotations[common.EdgeMappingCloudKey]; ok {
 		if value == localIP {
 			return nil
 		}
@@ -1660,7 +1675,7 @@ func UpdateAnnotation(ctx context.Context, nodeName string) error {
 	if node.Annotations == nil {
 		node.Annotations = make(map[string]string)
 	}
-	node.Annotations[comconstants.EdgeMappingCloudKey] = localIP
+	node.Annotations[common.EdgeMappingCloudKey] = localIP
 	_, err = client.GetKubeClient().CoreV1().Nodes().Update(ctx, node, metaV1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update node:%s with err:%v", nodeName, err)
