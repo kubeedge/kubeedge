@@ -641,6 +641,16 @@ func filterPodByNodeName(pod *v1.Pod, nodeName string) bool {
 	return pod.Spec.NodeName == nodeName
 }
 
+func kubeletHealthCheckURL(address string, port int32) string {
+	host := address
+	if host == "" || host == "0.0.0.0" {
+		host = "127.0.0.1"
+	} else if host == "::" {
+		host = "::1"
+	}
+	return fmt.Sprintf("http://%s/healthz/syncloop", net.JoinHostPort(host, fmt.Sprintf("%d", port)))
+}
+
 func kubeletHealthCheck(address string, port int32, kubeletReadyChan chan struct{}) {
 	if port == 0 {
 		klog.Warning("ReadOnlyPort is disabled (port=0), skipping kubelet health check")
@@ -648,14 +658,7 @@ func kubeletHealthCheck(address string, port int32, kubeletReadyChan chan struct
 		return
 	}
 
-	host := address
-	if host == "" || host == "0.0.0.0" {
-		host = "127.0.0.1"
-	} else if host == "::" {
-		host = "::1"
-	}
-
-	url := fmt.Sprintf("http://%s/healthz/syncloop", net.JoinHostPort(host, fmt.Sprintf("%d", port)))
+	url := kubeletHealthCheckURL(address, port)
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
