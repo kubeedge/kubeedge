@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 
@@ -485,4 +486,61 @@ func TestAccessInfoStruct(t *testing.T) {
 	assert.Equal(t, "test-type", info.Type)
 	assert.Equal(t, "test/topic", info.Topic)
 	assert.Equal(t, []byte("test-content"), info.Content)
+}
+
+// TestClientReassignRace runs the reconnect path (which reassigns pubCli/subCli)
+// concurrently with the accessors that the eventbus loop uses to read them. It
+// must be run under -race: before the fix, reading PubCli/SubCli while the
+// connection-lost callback reassigned them was a data race.
+func TestClientReassignRace(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+	patches.ApplyFunc(MQTT.NewClient, func(_ *MQTT.ClientOptions) MQTT.Client {
+		return NewTestMQTTClient()
+	})
+	patches.ApplyFunc(util.HubClientInit, func(_, _, _, _ string) *MQTT.ClientOptions {
+		return &MQTT.ClientOptions{}
+	})
+	patches.ApplyFunc(util.LoopConnect, func(_ string, _ MQTT.Client) {})
+
+	mq := &Client{
+		MQTTUrl:     "tcp://localhost:1883",
+		PubClientID: "pub-id",
+		SubClientID: "sub-id",
+	}
+	mq.InitPubClient()
+	mq.InitSubClient()
+
+	stop := make(chan struct{})
+	var readers, writers sync.WaitGroup
+
+	for i := 0; i < 4; i++ {
+		readers.Add(1)
+		go func() {
+			defer readers.Done()
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+					_ = mq.PubCli()
+					_ = mq.SubCli()
+				}
+			}
+		}()
+	}
+	for i := 0; i < 2; i++ {
+		writers.Add(1)
+		go func() {
+			defer writers.Done()
+			for j := 0; j < 50; j++ {
+				mq.InitPubClient()
+				mq.InitSubClient()
+			}
+		}()
+	}
+
+	writers.Wait()
+	close(stop)
+	readers.Wait()
 }

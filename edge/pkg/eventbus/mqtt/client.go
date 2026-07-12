@@ -3,6 +3,7 @@ package mqtt
 import (
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
@@ -11,6 +12,10 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 )
+
+// disconnectQuiesce is the milliseconds paho waits to finish in-flight work
+// when disconnecting a client that is being replaced on reconnect.
+const disconnectQuiesce = 250
 
 const UploadTopic = "SYS/dis/upload_records"
 
@@ -66,8 +71,28 @@ type Client struct {
 	SubClientID string
 	Username    string
 	Password    string
-	PubCli      MQTT.Client
-	SubCli      MQTT.Client
+
+	// cliLock guards pubCli and subCli, which are reassigned from the
+	// connection-lost callbacks while the eventbus loop reads them.
+	cliLock sync.RWMutex
+	pubCli  MQTT.Client
+	subCli  MQTT.Client
+}
+
+// PubCli returns the publish client. It is safe to call concurrently with the
+// reconnect path that reassigns the client.
+func (mq *Client) PubCli() MQTT.Client {
+	mq.cliLock.RLock()
+	defer mq.cliLock.RUnlock()
+	return mq.pubCli
+}
+
+// SubCli returns the subscribe client. It is safe to call concurrently with the
+// reconnect path that reassigns the client.
+func (mq *Client) SubCli() MQTT.Client {
+	mq.cliLock.RLock()
+	defer mq.cliLock.RUnlock()
+	return mq.subCli
 }
 
 // AccessInfo that deliver between edge-hub and cloud-hub
@@ -138,8 +163,19 @@ func (mq *Client) InitSubClient() {
 	subOpts.OnConnect = onSubConnect
 	subOpts.AutoReconnect = false
 	subOpts.OnConnectionLost = onSubConnectionLost
-	mq.SubCli = MQTT.NewClient(subOpts)
-	util.LoopConnect(mq.SubClientID, mq.SubCli)
+	cli := MQTT.NewClient(subOpts)
+
+	mq.cliLock.Lock()
+	old := mq.subCli
+	mq.subCli = cli
+	mq.cliLock.Unlock()
+	// release the client being replaced, otherwise its goroutines leak on every
+	// broker reconnect.
+	if old != nil {
+		old.Disconnect(disconnectQuiesce)
+	}
+
+	util.LoopConnect(mq.SubClientID, cli)
 	klog.Info("finish hub-client sub")
 }
 
@@ -157,7 +193,18 @@ func (mq *Client) InitPubClient() {
 	pubOpts := util.HubClientInit(mq.MQTTUrl, mq.PubClientID, mq.Username, mq.Password)
 	pubOpts.OnConnectionLost = onPubConnectionLost
 	pubOpts.AutoReconnect = false
-	mq.PubCli = MQTT.NewClient(pubOpts)
-	util.LoopConnect(mq.PubClientID, mq.PubCli)
+	cli := MQTT.NewClient(pubOpts)
+
+	mq.cliLock.Lock()
+	old := mq.pubCli
+	mq.pubCli = cli
+	mq.cliLock.Unlock()
+	// release the client being replaced, otherwise its goroutines leak on every
+	// broker reconnect.
+	if old != nil {
+		old.Disconnect(disconnectQuiesce)
+	}
+
+	util.LoopConnect(mq.PubClientID, cli)
 	klog.Info("finish hub-client pub")
 }
