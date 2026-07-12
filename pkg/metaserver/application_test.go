@@ -20,7 +20,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"sync"
 	"testing"
 	"time"
 
@@ -556,7 +555,6 @@ func TestReset(t *testing.T) {
 
 func TestAddAndClose(t *testing.T) {
 	app := Application{
-		countLock: &sync.Mutex{},
 		count:     1, // Initial count
 	}
 
@@ -581,7 +579,6 @@ func TestAddAndClose(t *testing.T) {
 
 func TestLastCloseTime(t *testing.T) {
 	app1 := Application{
-		countLock: &sync.Mutex{},
 		count:     1,
 		Timestamp: time.Now(),
 	}
@@ -589,7 +586,6 @@ func TestLastCloseTime(t *testing.T) {
 	assert.True(t, result1.IsZero())
 
 	app2 := Application{
-		countLock: &sync.Mutex{},
 		count:     0,
 		Timestamp: time.Time{}, // Zero timestamp
 	}
@@ -598,7 +594,6 @@ func TestLastCloseTime(t *testing.T) {
 
 	expectedTime := time.Now()
 	app3 := Application{
-		countLock: &sync.Mutex{},
 		count:     0,
 		Timestamp: expectedTime,
 	}

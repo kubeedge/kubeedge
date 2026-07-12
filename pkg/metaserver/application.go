@@ -62,7 +62,7 @@ type Application struct {
 
 	// count the number of current citations
 	count     uint64
-	countLock *sync.Mutex
+	countLock sync.Mutex
 	// Timestamp record the last closing time of application, only make sense when count == 0
 	Timestamp time.Time
 }
@@ -89,7 +89,6 @@ func NewApplication(ctx context.Context, key string, verb ApplicationVerb, noden
 		ctx:         ctx2,
 		cancel:      cancel,
 		count:       0,
-		countLock:   &sync.Mutex{},
 		Timestamp:   time.Time{},
 	}
 	app.Add()
@@ -158,8 +157,12 @@ func (a *Application) Namespace() string {
 }
 
 func (a *Application) Cancel() {
-	if a.cancel != nil {
-		a.cancel()
+	a.countLock.Lock()
+	cancel := a.cancel
+	a.countLock.Unlock()
+
+	if cancel != nil {
+		cancel()
 	}
 }
 
@@ -169,8 +172,12 @@ func (a *Application) GetStatus() ApplicationStatus {
 
 // Wait the result of application after it is applied by application agent
 func (a *Application) Wait() {
-	if a.ctx != nil {
-		<-a.ctx.Done()
+	a.countLock.Lock()
+	ctx := a.ctx
+	a.countLock.Unlock()
+
+	if ctx != nil {
+		<-ctx.Done()
 	}
 }
 
