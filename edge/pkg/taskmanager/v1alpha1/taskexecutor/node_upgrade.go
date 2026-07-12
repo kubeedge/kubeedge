@@ -17,14 +17,19 @@ limitations under the License.
 package taskexecutor
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"k8s.io/klog/v2"
+	"os"
 	"os/exec"
 	"path/filepath"
-
-	"k8s.io/klog/v2"
+	"runtime"
+	"strings"
 
 	"github.com/kubeedge/api/apis/common/constants"
 	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
@@ -38,8 +43,26 @@ import (
 )
 
 const (
-	TaskUpgrade = "upgrade"
+	TaskUpgrade                = "upgrade"
+	keadmUpgradeLogName        = "keadm-upgrade.log"
+	keadmUpgradeLogDirPerm     = 0o750
+	keadmUpgradeLogFilePerm    = 0o600
+	keadmUpgradeUnitPrefix     = "kubeedge-keadm-upgrade"
+	keadmUpgradeUnitMaxNameLen = 255 - len(".service")
+	keadmUpgradeUnitHashLen    = 12
+	systemdRunSetenvFlag       = "--setenv"
+	systemdRunCollectFlag      = "--collect"
+	systemdRunUpgradeScript    = `exec "$KUBEEDGE_KEADM_PATH" upgrade edge --upgradeID "$KUBEEDGE_UPGRADE_ID" --historyID "$KUBEEDGE_HISTORY_ID" --fromVersion "$KUBEEDGE_FROM_VERSION" --toVersion "$KUBEEDGE_TO_VERSION" --config "$KUBEEDGE_CONFIG" --image "$KUBEEDGE_IMAGE"`
+	systemdRunEnvKeadmPath     = "KUBEEDGE_KEADM_PATH"
+	systemdRunEnvUpgradeID     = "KUBEEDGE_UPGRADE_ID"
+	systemdRunEnvHistoryID     = "KUBEEDGE_HISTORY_ID"
+	systemdRunEnvFromVersion   = "KUBEEDGE_FROM_VERSION"
+	systemdRunEnvToVersion     = "KUBEEDGE_TO_VERSION"
+	systemdRunEnvConfig        = "KUBEEDGE_CONFIG"
+	systemdRunEnvImage         = "KUBEEDGE_IMAGE"
 )
+
+var keadmExecutablePath = filepath.Join(constants.KubeEdgeUsrBinPath, constants.KeadmBinaryName)
 
 type Upgrade struct {
 	*BaseExecutor
@@ -191,19 +214,266 @@ func upgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 
 func keadmUpgrade(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) error {
 	klog.Infof("Begin to run upgrade command")
-	upgradeCmd := fmt.Sprintf("keadm upgrade edge --upgradeID %s --historyID %s --fromVersion %s --toVersion %s --config %s --image %s > /tmp/keadm.log 2>&1",
-		upgradeReq.UpgradeID, upgradeReq.HistoryID, version.Get(), upgradeReq.Version, opts.ConfigFile, upgradeReq.Image)
-
-	// run upgrade cmd to upgrade edge node
-	// use nohup command to start a child progress
-	command := fmt.Sprintf("nohup %s &", upgradeCmd)
-	cmd := exec.Command("bash", "-c", command)
-	s, err := cmd.CombinedOutput()
+	launcher, err := newKeadmUpgradeLauncher(upgradeReq, opts)
 	if err != nil {
-		return fmt.Errorf("run upgrade command %s failed: %v, %s", command, err, s)
+		return err
+	}
+	if launcher.systemdManaged {
+		output, err := launcher.cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("start systemd upgrade command %v failed: %w, %s", launcher.cmd.Args, err, output)
+		}
+		klog.Infof("Started transient systemd unit for upgrade command %v", launcher.cmd.Args)
+	} else {
+		if err := launcher.cmd.Start(); err != nil {
+			if cerr := launcher.logFile.Close(); cerr != nil {
+				klog.Warningf("failed to close upgrade log file %s: %v", launcher.logFile.Name(), cerr)
+			}
+			return fmt.Errorf("start upgrade command %v failed: %w", launcher.cmd.Args, err)
+		}
+		go waitForUpgradeCommand(launcher.cmd, launcher.logFile)
 	}
 	klog.Infof("!!! Finish upgrade from Version %s to %s ...", version.Get(), upgradeReq.Version)
 	return nil
+}
+
+type keadmUpgradeLauncher struct {
+	cmd            *exec.Cmd
+	logFile        *os.File
+	systemdManaged bool
+}
+
+type systemdRunCapabilities struct {
+	path            string
+	supportsSetenv  bool
+	supportsCollect bool
+}
+
+func waitForUpgradeCommand(cmd *exec.Cmd, logFile *os.File) {
+	defer func() {
+		if cerr := logFile.Close(); cerr != nil {
+			klog.Warningf("failed to close upgrade log file %s: %v", logFile.Name(), cerr)
+		}
+	}()
+	if err := cmd.Wait(); err != nil {
+		klog.Errorf("upgrade command %v failed: %v", cmd.Args, err)
+	}
+}
+
+func newKeadmUpgradeLauncher(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) (*keadmUpgradeLauncher, error) {
+	logPath := keadmUpgradeLogPath()
+	caps, useSystemdRun, err := detectSystemdRunCapabilities()
+	if err != nil {
+		return nil, err
+	}
+	if useSystemdRun {
+		cmd, err := newSystemdRunUpgradeCommand(caps, upgradeReq, opts)
+		if err != nil {
+			return nil, err
+		}
+		return &keadmUpgradeLauncher{
+			cmd:            cmd,
+			systemdManaged: true,
+		}, nil
+	}
+
+	cmd, logFile, err := newKeadmUpgradeCommand(upgradeReq, opts, logPath)
+	if err != nil {
+		return nil, err
+	}
+	return &keadmUpgradeLauncher{
+		cmd:     cmd,
+		logFile: logFile,
+	}, nil
+}
+
+func newKeadmUpgradeCommand(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions, logPath string) (*exec.Cmd, *os.File, error) {
+	logFile, err := openUpgradeLogFile(logPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cmd := exec.Command(keadmExecutablePath, buildKeadmUpgradeArgs(upgradeReq, opts)...)
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+
+	return cmd, logFile, nil
+}
+
+func newSystemdRunUpgradeCommand(caps systemdRunCapabilities, upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) (*exec.Cmd, error) {
+	args := []string{
+		"--unit", buildKeadmUpgradeUnitName(upgradeReq.UpgradeID, upgradeReq.HistoryID),
+		"--description", "KubeEdge node upgrade",
+		buildSystemdRunSetenvArg(systemdRunEnvKeadmPath, keadmExecutablePath),
+		buildSystemdRunSetenvArg(systemdRunEnvUpgradeID, upgradeReq.UpgradeID),
+		buildSystemdRunSetenvArg(systemdRunEnvHistoryID, upgradeReq.HistoryID),
+		buildSystemdRunSetenvArg(systemdRunEnvFromVersion, version.Get().String()),
+		buildSystemdRunSetenvArg(systemdRunEnvToVersion, upgradeReq.Version),
+		buildSystemdRunSetenvArg(systemdRunEnvConfig, opts.ConfigFile),
+		buildSystemdRunSetenvArg(systemdRunEnvImage, upgradeReq.Image),
+		"/bin/sh",
+		"-c",
+		systemdRunUpgradeScript,
+	}
+	if caps.supportsCollect {
+		args = append([]string{systemdRunCollectFlag}, args...)
+	}
+	return exec.Command(caps.path, args...), nil
+}
+
+func buildSystemdRunSetenvArg(name, value string) string {
+	return systemdRunSetenvFlag + "=" + name + "=" + value
+}
+
+func buildKeadmUpgradeArgs(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) []string {
+	return []string{
+		"upgrade",
+		"edge",
+		"--upgradeID", upgradeReq.UpgradeID,
+		"--historyID", upgradeReq.HistoryID,
+		"--fromVersion", version.Get().String(),
+		"--toVersion", upgradeReq.Version,
+		"--config", opts.ConfigFile,
+		"--image", upgradeReq.Image,
+	}
+}
+
+func keadmUpgradeLogPath() string {
+	return filepath.Join(constants.KubeEdgeLogPath, keadmUpgradeLogName)
+}
+
+func detectSystemdRunCapabilities() (systemdRunCapabilities, bool, error) {
+	if runtime.GOOS != "linux" {
+		return systemdRunCapabilities{}, false, nil
+	}
+	if _, err := os.Stat("/run/systemd/system"); err != nil {
+		return systemdRunCapabilities{}, false, nil
+	}
+	systemdRunPath, err := exec.LookPath("systemd-run")
+	if err != nil {
+		return systemdRunCapabilities{}, false, fmt.Errorf("systemd-managed upgrade requires systemd-run: %w", err)
+	}
+	caps, err := inspectSystemdRunCapabilities(systemdRunPath)
+	if err != nil {
+		return systemdRunCapabilities{}, false, err
+	}
+	if !caps.supportsSetenv {
+		return systemdRunCapabilities{}, false, fmt.Errorf("systemd-managed upgrade requires systemd-run support for %s", systemdRunSetenvFlag)
+	}
+	return caps, true, nil
+}
+
+func inspectSystemdRunCapabilities(systemdRunPath string) (systemdRunCapabilities, error) {
+	output, err := exec.Command(systemdRunPath, "--help").CombinedOutput()
+	if err != nil {
+		return systemdRunCapabilities{}, fmt.Errorf("inspect systemd-run capabilities failed: %w, %s", err, output)
+	}
+	return systemdRunCapabilities{
+		path:            systemdRunPath,
+		supportsSetenv:  bytes.Contains(output, []byte(systemdRunSetenvFlag)),
+		supportsCollect: bytes.Contains(output, []byte(systemdRunCollectFlag)),
+	}, nil
+}
+
+func buildKeadmUpgradeUnitName(upgradeID, historyID string) string {
+	identity := buildKeadmUpgradeUnitIdentity(upgradeID, historyID)
+	if identity == "" {
+		return keadmUpgradeUnitPrefix
+	}
+	sanitizedID := sanitizeSystemdUnitComponent(identity)
+	hashBytes := sha256.Sum256([]byte(identity))
+	hashSuffix := hex.EncodeToString(hashBytes[:])[:keadmUpgradeUnitHashLen]
+	maxReadableLen := keadmUpgradeUnitMaxNameLen - len(keadmUpgradeUnitPrefix) - len(hashSuffix) - 2
+	if maxReadableLen < 0 {
+		maxReadableLen = 0
+	}
+	if len(sanitizedID) > maxReadableLen {
+		sanitizedID = sanitizedID[:maxReadableLen]
+	}
+	if sanitizedID == "" {
+		return keadmUpgradeUnitPrefix + "-" + hashSuffix
+	}
+	return keadmUpgradeUnitPrefix + "-" + sanitizedID + "-" + hashSuffix
+}
+
+func buildKeadmUpgradeUnitIdentity(upgradeID, historyID string) string {
+	switch {
+	case upgradeID == "" && historyID == "":
+		return ""
+	case historyID == "":
+		return upgradeID
+	case upgradeID == "":
+		return historyID
+	default:
+		return upgradeID + "-" + historyID
+	}
+}
+
+func sanitizeSystemdUnitComponent(value string) string {
+	var b strings.Builder
+	for _, r := range value {
+		switch {
+		case r >= 'a' && r <= 'z':
+			b.WriteRune(r)
+		case r >= 'A' && r <= 'Z':
+			b.WriteRune(r)
+		case r >= '0' && r <= '9':
+			b.WriteRune(r)
+		case r == '-', r == '_', r == '.':
+			b.WriteRune(r)
+		default:
+			b.WriteByte('-')
+		}
+	}
+	return b.String()
+}
+
+func ensureSecureLogDir(logDir string) error {
+	if info, err := os.Lstat(logDir); err == nil {
+		if info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("upgrade log directory %s must not be a symlink", logDir)
+		}
+		if !info.IsDir() {
+			return fmt.Errorf("upgrade log directory %s is not a directory", logDir)
+		}
+	} else if os.IsNotExist(err) {
+		if err := os.MkdirAll(logDir, keadmUpgradeLogDirPerm); err != nil {
+			return fmt.Errorf("create upgrade log directory %s failed: %w", logDir, err)
+		}
+	} else {
+		return fmt.Errorf("inspect upgrade log directory %s failed: %w", logDir, err)
+	}
+
+	if err := ensureOwnedByCurrentUser(infoOwner(logDir)); err != nil {
+		return fmt.Errorf("upgrade log directory %s %w", logDir, err)
+	}
+	if err := os.Chmod(logDir, keadmUpgradeLogDirPerm); err != nil {
+		return fmt.Errorf("set upgrade log directory permissions on %s failed: %w", logDir, err)
+	}
+	return nil
+}
+
+func openUpgradeLogFile(logPath string) (*os.File, error) {
+	if err := ensureSecureLogDir(filepath.Dir(logPath)); err != nil {
+		return nil, err
+	}
+	logFile, err := openAndValidateUpgradeLogFile(logPath)
+	if err != nil {
+		return nil, err
+	}
+	if err := logFile.Truncate(0); err != nil {
+		_ = logFile.Close()
+		return nil, fmt.Errorf("truncate upgrade log file %s failed: %w", logPath, err)
+	}
+	if _, err := logFile.Seek(0, 0); err != nil {
+		_ = logFile.Close()
+		return nil, fmt.Errorf("rewind upgrade log file %s failed: %w", logPath, err)
+	}
+	if err := logFile.Chmod(keadmUpgradeLogFilePerm); err != nil {
+		_ = logFile.Close()
+		return nil, fmt.Errorf("set upgrade log file permissions on %s failed: %w", logPath, err)
+	}
+	return logFile, nil
 }
 
 func prepareKeadm(upgradeReq *commontypes.NodeUpgradeJobRequest) error {
