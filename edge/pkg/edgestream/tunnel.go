@@ -91,6 +91,21 @@ func (s *TunnelSession) serveContainerAttachConnection(m *stream.Message) error 
 	return attachCon.Serve(s.Tunnel)
 }
 
+func (s *TunnelSession) servePortForwardConnection(m *stream.Message) error {
+	portForwardCon := &stream.EdgedPortForwardConnection{
+		ReadChan: make(chan *stream.Message, 128),
+		Stop:     make(chan struct{}, 2),
+	}
+	if err := json.Unmarshal(m.Data, portForwardCon); err != nil {
+		klog.Errorf("unmarshal connector data error %v", err)
+		return err
+	}
+
+	s.AddLocalConnection(m.ConnectID, portForwardCon)
+	klog.V(6).Infof("Get PortForward Connection info: %+v", *portForwardCon)
+	return portForwardCon.Serve(s.Tunnel)
+}
+
 func (s *TunnelSession) serveMetricsConnection(m *stream.Message) error {
 	metricsCon := &stream.EdgedMetricsConnection{
 		ReadChan: make(chan *stream.Message, 128),
@@ -122,6 +137,10 @@ func (s *TunnelSession) ServeConnection(m *stream.Message) {
 	case stream.MessageTypeAttachConnect:
 		if err := s.serveContainerAttachConnection(m); err != nil {
 			klog.Errorf("Serve Attach connection error %s", m.String())
+		}
+	case stream.MessageTypePortForwardConnect:
+		if err := s.servePortForwardConnection(m); err != nil {
+			klog.Errorf("Serve PortForward connection error %s", m.String())
 		}
 	default:
 		panic(fmt.Sprintf("Wrong message type %v", m.MessageType))
@@ -191,10 +210,24 @@ func (s *TunnelSession) Serve() error {
 			return fmt.Errorf("close tunnel stream connection, error:%s", string(mess.Data))
 		}
 
-		if (mess.MessageType < stream.MessageTypeData) || (mess.MessageType >= stream.MessageTypeAttachConnect) {
+		if isConnectMessageType(mess.MessageType) {
 			go s.ServeConnection(mess)
+			continue
 		}
 		s.WriteToLocalConnection(mess)
+	}
+}
+
+func isConnectMessageType(messageType stream.MessageType) bool {
+	switch messageType {
+	case stream.MessageTypeLogsConnect,
+		stream.MessageTypeExecConnect,
+		stream.MessageTypeMetricConnect,
+		stream.MessageTypeAttachConnect,
+		stream.MessageTypePortForwardConnect:
+		return true
+	default:
+		return false
 	}
 }
 
