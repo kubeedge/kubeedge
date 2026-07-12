@@ -87,4 +87,26 @@ func TestImagePrePullJobUpdateNodeTaskStatus(t *testing.T) {
 		})
 		require.NoError(t, err)
 	})
+
+	t.Run("callback returns error", func(t *testing.T) {
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		gomonkey.ApplyFunc(status.GetImagePrePullJobStatusUpdater, func() *status.StatusUpdater {
+			return &status.StatusUpdater{}
+		})
+		gomonkey.ApplyMethodFunc(reflect.TypeOf(&status.StatusUpdater{}), "UpdateStatus",
+			func(opts status.UpdateStatusOptions) {
+				require.NotNil(t, opts.Callback)
+				opts.Callback(assert.AnError)
+			})
+
+		handler := &ImagePrePullJobHandler{}
+		err := handler.UpdateNodeTaskStatus(jobName, nodeNmae, true, taskmsg.UpstreamMessage{
+			Action: string(operationsv1alpha2.ImagePrePullJobActionPull),
+			Succ:   true,
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to update image prepull job status")
+	})
 }
