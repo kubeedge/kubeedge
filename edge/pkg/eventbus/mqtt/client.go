@@ -103,13 +103,27 @@ type AccessInfo struct {
 	Content []byte `json:"content"`
 }
 
-func onPubConnectionLost(_ MQTT.Client, err error) {
+func onPubConnectionLost(client MQTT.Client, err error) {
 	klog.Errorf("onPubConnectionLost with error: %v", err)
+	// Ignore the event when it comes from a client that has already been
+	// replaced; otherwise a superseded client would reconnect and displace the
+	// current active one, starting an extra connection loop.
+	if MQTTHub == nil || client != MQTTHub.PubCli() {
+		klog.Warning("ignore connection lost event from a superseded pub client")
+		return
+	}
 	go MQTTHub.InitPubClient()
 }
 
-func onSubConnectionLost(_ MQTT.Client, err error) {
+func onSubConnectionLost(client MQTT.Client, err error) {
 	klog.Errorf("onSubConnectionLost with error: %v", err)
+	// Ignore the event when it comes from a client that has already been
+	// replaced; otherwise a superseded client would reconnect and displace the
+	// current active one, starting an extra connection loop.
+	if MQTTHub == nil || client != MQTTHub.SubCli() {
+		klog.Warning("ignore connection lost event from a superseded sub client")
+		return
+	}
 	go MQTTHub.InitSubClient()
 }
 

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -543,4 +544,40 @@ func TestClientReassignRace(t *testing.T) {
 	writers.Wait()
 	close(stop)
 	readers.Wait()
+}
+
+// TestOnConnectionLostSupersededClient verifies that a connection-lost event from
+// a client that has already been replaced does not trigger another reconnect,
+// while an event from the current active client does.
+func TestOnConnectionLostSupersededClient(t *testing.T) {
+	origMQTTHub := MQTTHub
+	defer func() { MQTTHub = origMQTTHub }()
+
+	active := NewTestMQTTClient()
+	superseded := NewTestMQTTClient()
+	MQTTHub = &Client{pubCli: active, subCli: active}
+
+	var pubReconnects, subReconnects int32
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+	patches.ApplyMethod(reflect.TypeOf(MQTTHub), "InitPubClient", func(_ *Client) {
+		atomic.AddInt32(&pubReconnects, 1)
+	})
+	patches.ApplyMethod(reflect.TypeOf(MQTTHub), "InitSubClient", func(_ *Client) {
+		atomic.AddInt32(&subReconnects, 1)
+	})
+
+	// a superseded client is ignored: no reconnect goroutine is started, so the
+	// counters stay at zero.
+	onPubConnectionLost(superseded, errors.New("connection lost"))
+	onSubConnectionLost(superseded, errors.New("connection lost"))
+	assert.Equal(t, int32(0), atomic.LoadInt32(&pubReconnects))
+	assert.Equal(t, int32(0), atomic.LoadInt32(&subReconnects))
+
+	// the active client triggers exactly one reconnect for each direction.
+	onPubConnectionLost(active, errors.New("connection lost"))
+	onSubConnectionLost(active, errors.New("connection lost"))
+	assert.Eventually(t, func() bool {
+		return atomic.LoadInt32(&pubReconnects) == 1 && atomic.LoadInt32(&subReconnects) == 1
+	}, time.Second, 10*time.Millisecond)
 }
