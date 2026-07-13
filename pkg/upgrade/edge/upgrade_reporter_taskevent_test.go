@@ -228,3 +228,32 @@ func TestReportTaskResult_MissingCAFile(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to read ca")
 }
+
+func TestReportTaskResult_InvalidClientCert(t *testing.T) {
+	caFile, err := os.CreateTemp("", "test-ca-*.crt")
+	require.NoError(t, err)
+	defer func() { _ = os.Remove(caFile.Name()) }()
+	
+	// Create dummy non-empty file for CA to pass the read check
+	_, err = caFile.Write([]byte("dummy-ca"))
+	require.NoError(t, err)
+	require.NoError(t, caFile.Close())
+
+	config := &edgeconfig.EdgeCoreConfig{}
+	config.Modules = &edgeconfig.Modules{
+		EdgeHub: &edgeconfig.EdgeHub{
+			TLSCAFile:         caFile.Name(),
+			TLSCertFile:       "/invalid/cert/path",
+			TLSPrivateKeyFile: "/invalid/key/path",
+		},
+		Edged: &edgeconfig.Edged{
+			TailoredKubeletFlag: edgeconfig.TailoredKubeletFlag{
+				HostnameOverride: "test-node",
+			},
+		},
+	}
+
+	err = ReportTaskResult(config, TaskTypeUpgrade, "job1", fsm.Event{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to load client certificate")
+}

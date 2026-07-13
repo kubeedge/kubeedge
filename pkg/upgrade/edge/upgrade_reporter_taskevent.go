@@ -93,11 +93,12 @@ func ReportTaskResult(config *edgeconfig.EdgeCoreConfig, taskType, taskID string
 	certFile := edgeHub.TLSCertFile
 	keyFile := edgeHub.TLSPrivateKeyFile
 	var certs []tls.Certificate
-	cliCrt, err := tls.LoadX509KeyPair(certFile, keyFile)
-	if err == nil {
+	if certFile != "" || keyFile != "" {
+		cliCrt, err := tls.LoadX509KeyPair(certFile, keyFile)
+		if err != nil {
+			return fmt.Errorf("failed to load client certificate: %v", err)
+		}
 		certs = []tls.Certificate{cliCrt}
-	} else {
-		klog.Warningf("failed to load client certificate: %v", err)
 	}
 
 	transport := &http.Transport{
