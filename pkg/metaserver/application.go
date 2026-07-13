@@ -182,12 +182,16 @@ func (a *Application) Wait() {
 }
 
 func (a *Application) Reset() {
-	if a.ctx != nil && a.cancel != nil {
-		a.cancel()
-	}
+	a.countLock.Lock()
+	oldCancel := a.cancel
 	a.ctx, a.cancel = context.WithCancel(beehiveContext.GetContext())
 	a.Reason = ""
 	a.RespBody = []byte{}
+	a.countLock.Unlock()
+
+	if oldCancel != nil {
+		oldCancel()
+	}
 }
 
 func (a *Application) Add() {

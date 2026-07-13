@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"testing"
 	"time"
+	"sync"
 
 	"github.com/stretchr/testify/assert"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -631,4 +632,38 @@ func TestWait(t *testing.T) {
 	}
 	// Should not block or panic when context is nil
 	app.Wait()
+}
+
+func TestConcurrentResetWaitCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	app := Application{
+		ctx:    ctx,
+		cancel: cancel,
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 100; i++ {
+			app.Reset()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 100; i++ {
+			app.Wait()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 100; i++ {
+			app.Cancel()
+		}
+	}()
+
+	wg.Wait()
 }
