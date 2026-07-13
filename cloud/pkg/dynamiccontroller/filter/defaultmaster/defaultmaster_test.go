@@ -175,6 +175,7 @@ func TestFilterResourceOptionalEndpointPortFields(t *testing.T) {
 			var filteredEndpointSlice discovery.EndpointSlice
 			err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.Object, &filteredEndpointSlice)
 			assert.NoError(t, err)
+			assert.Equal(t, defaultMetaServerIP, filteredEndpointSlice.Endpoints[0].Addresses[0])
 			for i := range tt.wantPorts {
 				assert.Equal(t, tt.wantPorts[i], filteredEndpointSlice.Ports[i].Port)
 			}
