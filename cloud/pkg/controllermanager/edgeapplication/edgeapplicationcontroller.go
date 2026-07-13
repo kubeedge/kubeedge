@@ -326,7 +326,7 @@ func (c *Controller) updateTemplate(ctx context.Context, tmpl *unstructured.Unst
 		klog.Warningf("cannot find LastAppliedTemplateAnnotation on obj %s/%s of gvk %s, update it with new template",
 			curObj.GetNamespace(), curObj.GetName(), curObj.GroupVersionKind())
 		if err := c.Client.Update(ctx, tmpl); err != nil {
-			return fmt.Errorf("failed to update object with template %s, %w", tmpl, err)
+			return fmt.Errorf("failed to update object with template %v, %w", tmpl, err)
 		}
 		return nil
 	}
@@ -428,11 +428,17 @@ func (c *Controller) removeResource(ctx context.Context, info utils.ResourceInfo
 		Kind:    info.Kind,
 	}
 	unstructuredObj.SetGroupVersionKind(gvk)
-	if err := c.Client.Get(ctx, types.NamespacedName{Namespace: info.Namespace, Name: info.Name}, unstructuredObj); err != nil && apierrors.IsNotFound(err) {
+	if err := c.Client.Get(ctx, types.NamespacedName{Namespace: info.Namespace, Name: info.Name}, unstructuredObj); err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
 		return fmt.Errorf("failed to get obj %s/%s of gvk %s, %w", info.Namespace, info.Name, gvk, err)
 	}
 
-	if err := c.Client.Delete(ctx, unstructuredObj); err != nil && apierrors.IsNotFound(err) {
+	if err := c.Client.Delete(ctx, unstructuredObj); err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
 		return fmt.Errorf("failed to delete obj %s/%s of gvk %s, %w", info.Namespace, info.Name, gvk, err)
 	}
 	return nil
@@ -485,7 +491,7 @@ func (c *Controller) addOrUpdateLastContainedResourcesAnnotation(ctx context.Con
 func (c *Controller) update(ctx context.Context, tmpl *unstructured.Unstructured, curObj *unstructured.Unstructured) error {
 	if c.UseServerSideApply {
 		if err := c.Client.Update(ctx, tmpl); err != nil {
-			return fmt.Errorf("failed to update object with template %s, %w", tmpl, err)
+			return fmt.Errorf("failed to update object with template %v, %w", tmpl, err)
 		}
 		return nil
 	}
@@ -603,7 +609,7 @@ func isSameAsLastApplied(objInEdgeApp *unstructured.Unstructured, curObj runtime
 		return false, nil
 	}
 
-	return false, fmt.Errorf("cannot find last applied template in annotation, %w, possibly it is not created by EdgeApplication Controller", err)
+	return false, fmt.Errorf("cannot find last applied template in annotation, possibly it is not created by EdgeApplication Controller")
 }
 
 // needOverride determines if a obj needs override, according to its gvk.
