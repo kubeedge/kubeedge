@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -73,13 +72,9 @@ func TestNewApplication(t *testing.T) {
 
 	for _, test := range cases {
 		app, err := NewApplication(test.ctx, test.key, test.verb, test.nodename, test.subresource, test.option, test.reqBody)
-<<<<<<< Updated upstream
-		require.NoError(t, err)
-=======
 		if !assert.NoError(t, err) {
 			continue
 		}
->>>>>>> Stashed changes
 		assert.Equal(t, test.key, app.Key)
 		assert.Equal(t, test.verb, app.Verb)
 		assert.Equal(t, test.nodename, app.Nodename)
@@ -246,13 +241,9 @@ func TestOptionTo(t *testing.T) {
 	for _, test := range cases {
 		var result map[string]string
 		err := test.app.OptionTo(&result)
-<<<<<<< Updated upstream
-		require.NoError(t, err)
-=======
 		if !assert.NoError(t, err) {
 			continue
 		}
->>>>>>> Stashed changes
 		assert.Equal(t, test.stdResult, result)
 	}
 
@@ -276,13 +267,9 @@ func TestReqBodyTo(t *testing.T) {
 	for _, test := range cases {
 		var result map[string]string
 		err := test.app.ReqBodyTo(&result)
-<<<<<<< Updated upstream
-		require.NoError(t, err)
-=======
 		if !assert.NoError(t, err) {
 			continue
 		}
->>>>>>> Stashed changes
 		assert.Equal(t, result, test.stdResult)
 	}
 
@@ -307,13 +294,9 @@ func TestRespBodyTo(t *testing.T) {
 	for _, test := range cases {
 		var result map[string]string
 		err := test.app.RespBodyTo(&result)
-<<<<<<< Updated upstream
-		require.NoError(t, err)
-=======
 		if !assert.NoError(t, err) {
 			continue
 		}
->>>>>>> Stashed changes
 		assert.Equal(t, test.expected, result)
 	}
 
@@ -441,7 +424,7 @@ func TestMsgToApplication(t *testing.T) {
 			if test.hasError {
 				assert.Error(t, err)
 			} else {
-				require.NoError(t, err)
+				assert.NoError(t, err)
 				assert.Equal(t, test.stdResult, app)
 			}
 		})
@@ -488,7 +471,7 @@ func TestMsgToApplications(t *testing.T) {
 			if test.hasError {
 				assert.Error(t, err)
 			} else {
-				require.NoError(t, err)
+				assert.NoError(t, err)
 				assert.Equal(t, test.stdResult, apps)
 			}
 		})
