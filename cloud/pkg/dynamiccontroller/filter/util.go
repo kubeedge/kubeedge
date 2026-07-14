@@ -27,7 +27,7 @@ func IsBelongToSameGroup(targetNodeName string, epNodeName string) bool {
 	if !GetDynamicResourceInformer(v1.SchemeGroupVersion.WithResource("nodes")).Informer().HasSynced() {
 		klog.Info("nodes informer has not synced yet")
 		getNode = func(nodeName string) (interface{}, error) {
-			return client.GetDynamicClient().Resource(v1.SchemeGroupVersion.WithResource("nodes")).Get(context.TODO(), nodeName, metav1.GetOptions{})
+			return client.GetDynamicClient().Resource(v1.SchemeGroupVersion.WithResource("nodes")).Get(context.Background(), nodeName, metav1.GetOptions{})
 		}
 	} else {
 		getNode = func(nodeName string) (interface{}, error) {

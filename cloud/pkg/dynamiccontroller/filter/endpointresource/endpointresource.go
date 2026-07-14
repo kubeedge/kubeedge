@@ -131,7 +131,7 @@ func filterEndpoints(targetNode string, obj runtime.Object) {
 
 	if !filter.GetDynamicResourceInformer(v1.SchemeGroupVersion.WithResource("services")).Informer().HasSynced() {
 		klog.Info("services informer has not synced yet")
-		svcRaw, err = client.GetDynamicClient().Resource(v1.SchemeGroupVersion.WithResource("services")).Namespace(ep.Namespace).Get(context.TODO(), svcName, metav1.GetOptions{})
+		svcRaw, err = client.GetDynamicClient().Resource(v1.SchemeGroupVersion.WithResource("services")).Namespace(ep.Namespace).Get(context.Background(), svcName, metav1.GetOptions{})
 		if err != nil {
 			klog.Errorf("filter endpoint for svc %s error: %v", svcName, err)
 			return

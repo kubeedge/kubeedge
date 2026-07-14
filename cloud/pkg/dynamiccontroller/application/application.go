@@ -107,7 +107,7 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		if err := app.OptionTo(option); err != nil {
 			return nil, err
 		}
-		list, err := c.dynamicClient.Resource(gvr).Namespace(ns).List(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), *option)
+		list, err := c.dynamicClient.Resource(gvr).Namespace(ns).List(utilcontext.WithEdgeNode(context.Background(), app.Nodename), *option)
 		if err != nil {
 			return nil, fmt.Errorf("get current list error: %v", err)
 		}
@@ -130,7 +130,7 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		if err := app.OptionTo(option); err != nil {
 			return nil, err
 		}
-		retObj, err := c.dynamicClient.Resource(gvr).Namespace(ns).Get(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), name, *option)
+		retObj, err := c.dynamicClient.Resource(gvr).Namespace(ns).Get(utilcontext.WithEdgeNode(context.Background(), app.Nodename), name, *option)
 		if err != nil {
 			return nil, err
 		}
@@ -147,9 +147,9 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		var retObj interface{}
 		var err error
 		if app.Subresource == "" {
-			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Create(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), obj, *option)
+			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Create(utilcontext.WithEdgeNode(context.Background(), app.Nodename), obj, *option)
 		} else {
-			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Create(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), obj, *option, app.Subresource)
+			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Create(utilcontext.WithEdgeNode(context.Background(), app.Nodename), obj, *option, app.Subresource)
 		}
 		if err != nil {
 			return nil, err
@@ -160,7 +160,7 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		if err := app.OptionTo(&option); err != nil {
 			return nil, err
 		}
-		if err := c.dynamicClient.Resource(gvr).Namespace(ns).Delete(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), name, *option); err != nil {
+		if err := c.dynamicClient.Resource(gvr).Namespace(ns).Delete(utilcontext.WithEdgeNode(context.Background(), app.Nodename), name, *option); err != nil {
 			return nil, err
 		}
 		return nil, nil
@@ -176,9 +176,9 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		var retObj interface{}
 		var err error
 		if app.Subresource == "" {
-			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Update(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), obj, *option)
+			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Update(utilcontext.WithEdgeNode(context.Background(), app.Nodename), obj, *option)
 		} else {
-			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Update(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), obj, *option, app.Subresource)
+			retObj, err = c.dynamicClient.Resource(gvr).Namespace(ns).Update(utilcontext.WithEdgeNode(context.Background(), app.Nodename), obj, *option, app.Subresource)
 		}
 		if err != nil {
 			return nil, err
@@ -193,7 +193,7 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		if err := app.ReqBodyTo(obj); err != nil {
 			return nil, err
 		}
-		retObj, err := c.dynamicClient.Resource(gvr).Namespace(ns).UpdateStatus(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), obj, *option)
+		retObj, err := c.dynamicClient.Resource(gvr).Namespace(ns).UpdateStatus(utilcontext.WithEdgeNode(context.Background(), app.Nodename), obj, *option)
 		if err != nil {
 			return nil, err
 		}
@@ -203,7 +203,7 @@ func (c *Center) ProcessApplication(app *metaserver.Application) (interface{}, e
 		if err := app.OptionTo(pi); err != nil {
 			return nil, err
 		}
-		retObj, err := c.dynamicClient.Resource(gvr).Namespace(ns).Patch(utilcontext.WithEdgeNode(context.TODO(), app.Nodename), pi.Name, pi.PatchType, pi.Data, pi.Options, pi.Subresources...)
+		retObj, err := c.dynamicClient.Resource(gvr).Namespace(ns).Patch(utilcontext.WithEdgeNode(context.Background(), app.Nodename), pi.Name, pi.PatchType, pi.Data, pi.Options, pi.Subresources...)
 		if err != nil {
 			return nil, err
 		}
@@ -219,7 +219,7 @@ func (c *Center) passThroughRequest(app *metaserver.Application) (interface{}, e
 		return nil, fmt.Errorf("converting kubeClient to *kubernetes.Clientset type failed")
 	}
 	verb := strings.ToUpper(string(app.Verb))
-	return kubeClient.RESTClient().Verb(verb).AbsPath(app.Key).Body(app.ReqBody).Do(utilcontext.WithEdgeNode(context.TODO(), app.Nodename)).Raw()
+	return kubeClient.RESTClient().Verb(verb).AbsPath(app.Key).Body(app.ReqBody).Do(utilcontext.WithEdgeNode(context.Background(), app.Nodename)).Raw()
 }
 
 // Response update application, generate and send resp message to edge
@@ -370,7 +370,7 @@ func (c *Center) checkNodePermission(app *metaserver.Application) error {
 			Groups: []string{constants.NodesGroup},
 		},
 	}
-	ret, err := c.kubeClient.AuthorizationV1().SubjectAccessReviews().Create(context.TODO(), subjectAccessReview, metav1.CreateOptions{})
+	ret, err := c.kubeClient.AuthorizationV1().SubjectAccessReviews().Create(context.Background(), subjectAccessReview, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("node %s permission check failed: %v", app.Nodename, err)
 	}
