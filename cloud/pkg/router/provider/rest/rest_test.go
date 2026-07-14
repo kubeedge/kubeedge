@@ -17,6 +17,7 @@ limitations under the License.
 package rest
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"runtime"
@@ -27,18 +28,29 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// blockingTarget simulates a target (like the rest and eventbus targets) that
-// ignores the stop channel and stays busy until it is released.
+// blockingTarget simulates a slow target. By default it ignores the stop
+// channel (like the rest and eventbus targets); when readStop is set it waits on
+// stop as well (like the servicebus target) and reports when it received it.
 type blockingTarget struct {
-	entered chan struct{}
-	release chan struct{}
+	entered  chan struct{}
+	release  chan struct{}
+	readStop bool
+	gotStop  chan struct{}
 }
 
 func (b *blockingTarget) Name() string { return "blocking-target" }
 
-func (b *blockingTarget) GoToTarget(_ map[string]interface{}, _ chan struct{}) (interface{}, error) {
+func (b *blockingTarget) GoToTarget(_ map[string]interface{}, stop chan struct{}) (interface{}, error) {
 	close(b.entered)
-	<-b.release
+	if b.readStop {
+		select {
+		case <-stop:
+			close(b.gotStop)
+		case <-b.release:
+		}
+	} else {
+		<-b.release
+	}
 	return nil, nil
 }
 
@@ -88,4 +100,72 @@ func TestForwardTimeoutDoesNotHangOrLeak(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 	}
 	assert.Falsef(t, leaked, "worker goroutine leaked after timeout: before=%d after=%d", before, after)
+}
+
+// TestForwardClientDisconnect verifies that when the client disconnects while a
+// slow target is still running, Forward returns the disconnect error without
+// blocking on the stop send.
+func TestForwardClientDisconnect(t *testing.T) {
+	r := &Rest{Path: "rest"}
+	target := &blockingTarget{
+		entered: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	// release the worker at the end so it does not leak past the test.
+	defer close(target.release)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	req := httptest.NewRequest(http.MethodGet, "/default/node1/rest/foo", nil).WithContext(ctx)
+	data := map[string]interface{}{
+		"request":   req,
+		"timeout":   5 * time.Second,
+		"data":      []byte("payload"),
+		"messageID": "msg-1",
+	}
+
+	// cancel the request once the worker has started so the client-disconnect
+	// branch runs before the timeout.
+	go func() {
+		<-target.entered
+		cancel()
+	}()
+
+	resp, err := r.Forward(target, data)
+	assert.Nil(t, resp)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "client disconnected")
+}
+
+// TestForwardStopSignalReachesTarget verifies that on timeout the stop signal is
+// delivered to a target that waits on it (the non-blocking send still reaches a
+// waiting receiver).
+func TestForwardStopSignalReachesTarget(t *testing.T) {
+	r := &Rest{Path: "rest"}
+	target := &blockingTarget{
+		entered:  make(chan struct{}),
+		release:  make(chan struct{}),
+		readStop: true,
+		gotStop:  make(chan struct{}),
+	}
+	defer close(target.release)
+
+	req := httptest.NewRequest(http.MethodGet, "/default/node1/rest/foo", nil)
+	data := map[string]interface{}{
+		"request":   req,
+		"timeout":   50 * time.Millisecond,
+		"data":      []byte("payload"),
+		"messageID": "msg-1",
+	}
+
+	resp, err := r.Forward(target, data)
+	require.NoError(t, err)
+	httpResp, ok := resp.(*http.Response)
+	require.True(t, ok)
+	assert.Equal(t, http.StatusRequestTimeout, httpResp.StatusCode)
+
+	select {
+	case <-target.gotStop:
+	case <-time.After(time.Second):
+		t.Fatal("target did not receive the stop signal")
+	}
 }

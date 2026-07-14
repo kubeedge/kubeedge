@@ -182,10 +182,9 @@ func (r *Rest) Forward(target provider.Target, data interface{}) (interface{}, e
 		httpResponse.StatusCode = http.StatusRequestTimeout
 		httpResponse.Body = io.NopCloser(strings.NewReader("wait to get response time out"))
 		klog.Warningf("operation timeout, msg id: %s, write result: get response timeout", messageID)
-	case _, ok := <-request.Context().Done():
-		if !ok {
-			return nil, errors.New("failed to get request close channel")
-		}
+	case <-request.Context().Done():
+		// Done() is closed on cancellation, so a two-value receive here always
+		// reports the channel as closed; handle the disconnect directly.
 		timer.Stop()
 		klog.Warningf("Client disconnected for handling resource, msg id: %s", messageID)
 		signalStop(stop)
