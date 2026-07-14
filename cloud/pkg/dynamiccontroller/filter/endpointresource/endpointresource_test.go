@@ -21,6 +21,7 @@ import (
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	discovery "k8s.io/api/discovery/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -202,14 +203,14 @@ func TestFilterEndpointSlice(t *testing.T) {
 	}
 
 	unstructEpSlice, err := runtime.DefaultUnstructuredConverter.ToUnstructured(epSlice)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	epSliceUnstructured := &unstructured.Unstructured{Object: unstructEpSlice}
 
 	filterEndpointSlice("target-node", epSliceUnstructured)
 
 	var result discovery.EndpointSlice
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(epSliceUnstructured.Object, &result)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Len(t, result.Endpoints, 1, "Should only include endpoints from node1")
 	assert.Equal(t, nodeName1, *result.Endpoints[0].NodeName)
@@ -254,14 +255,14 @@ func TestFilterEndpointSlice(t *testing.T) {
 // 	}
 
 // 	unstructEp, err := runtime.DefaultUnstructuredConverter.ToUnstructured(endpoints)
-// 	assert.NoError(t, err)
+// 	require.NoError(t, err)
 // 	epUnstructured := &unstructured.Unstructured{Object: unstructEp}
 
 // 	filterEndpoints("target-node", epUnstructured)
 
 // 	var result v1.Endpoints
 // 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(epUnstructured.Object, &result)
-// 	assert.NoError(t, err)
+// 	require.NoError(t, err)
 
 // 	assert.Len(t, result.Subsets[0].Addresses, 1, "Should only include addresses from node1")
 // 	assert.Equal(t, nodeName1, *result.Subsets[0].Addresses[0].NodeName)
@@ -328,7 +329,7 @@ func TestFilterEndpointsAddress(t *testing.T) {
 // 	}
 
 // 	unstructEpSlice, err := runtime.DefaultUnstructuredConverter.ToUnstructured(epSlice)
-// 	assert.NoError(t, err)
+// 	require.NoError(t, err)
 // 	epSliceUnstructured := &unstructured.Unstructured{Object: unstructEpSlice}
 // 	epSliceUnstructured.SetGroupVersionKind(schema.GroupVersionKind{Kind: resourceEpSliceName})
 
@@ -336,7 +337,7 @@ func TestFilterEndpointsAddress(t *testing.T) {
 
 // 	var resultEpSlice discovery.EndpointSlice
 // 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(epSliceUnstructured.Object, &resultEpSlice)
-// 	assert.NoError(t, err)
+// 	require.NoError(t, err)
 // 	assert.Len(t, resultEpSlice.Endpoints, 1, "Should only include endpoints from node1")
 // 	assert.Equal(t, nodeName1, *resultEpSlice.Endpoints[0].NodeName)
 
@@ -364,7 +365,7 @@ func TestFilterEndpointsAddress(t *testing.T) {
 // 	}
 
 // 	unstructEp, err := runtime.DefaultUnstructuredConverter.ToUnstructured(endpoints)
-// 	assert.NoError(t, err)
+// 	require.NoError(t, err)
 // 	epUnstructured := &unstructured.Unstructured{Object: unstructEp}
 // 	epUnstructured.SetGroupVersionKind(schema.GroupVersionKind{Kind: resourceEpName})
 
@@ -372,7 +373,7 @@ func TestFilterEndpointsAddress(t *testing.T) {
 
 // 	var resultEp v1.Endpoints
 // 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(epUnstructured.Object, &resultEp)
-// 	assert.NoError(t, err)
+// 	require.NoError(t, err)
 // 	assert.Len(t, resultEp.Subsets[0].Addresses, 1, "Should only include addresses from node1")
 // 	assert.Equal(t, nodeName1, *resultEp.Subsets[0].Addresses[0].NodeName)
 
@@ -423,7 +424,7 @@ func TestFilterEndpointsAddress(t *testing.T) {
 // 	}
 
 // 	unstructEp, err := runtime.DefaultUnstructuredConverter.ToUnstructured(endpoints)
-// 	assert.NoError(t, err)
+// 	require.NoError(t, err)
 // 	epUnstructured := &unstructured.Unstructured{Object: unstructEp}
 
 // 	origAddresses := endpoints.Subsets[0].Addresses
@@ -432,7 +433,7 @@ func TestFilterEndpointsAddress(t *testing.T) {
 
 // 	var result v1.Endpoints
 // 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(epUnstructured.Object, &result)
-// 	assert.NoError(t, err)
+// 	require.NoError(t, err)
 
 // 	assert.Equal(t, len(origAddresses), len(result.Subsets[0].Addresses),
 // 		"Addresses should not be filtered when no topology annotation is present")
