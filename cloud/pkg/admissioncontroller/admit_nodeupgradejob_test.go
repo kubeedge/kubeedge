@@ -61,7 +61,7 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 				},
 			},
 			expectedAllowed: false,
-			expectedError:   "version must begin with prefix 'v'",
+			expectedError:   "invalid version 1.0.0",
 		},
 		{
 			name:      "Invalid Semver",
@@ -73,7 +73,19 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 				},
 			},
 			expectedAllowed: false,
-			expectedError:   "version is not a semver compatible version",
+			expectedError:   "invalid version v1.0",
+		},
+		{
+			name:      "Invalid image",
+			operation: admissionv1.Create,
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version: "v1.0.0",
+					Image:   "invalid-image",
+				},
+			},
+			expectedAllowed: false,
+			expectedError:   "invalid image repo invalid-image",
 		},
 		{
 			name:      "No NodeNames and LabelSelector",
@@ -197,7 +209,17 @@ func TestValidateNodeUpgradeJob(t *testing.T) {
 					NodeNames: []string{"node1"},
 				},
 			},
-			expectedErr: "version must begin with prefix 'v'",
+			expectedErr: "invalid version 1.0.0",
+		},
+		{
+			name: "Invalid image",
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version: "v1.0.0",
+					Image:   "invalid-image",
+				},
+			},
+			expectedErr: "invalid image repo invalid-image",
 		},
 		{
 			name: "Invalid version (not semver compatible)",
@@ -207,7 +229,7 @@ func TestValidateNodeUpgradeJob(t *testing.T) {
 					NodeNames: []string{"node1"},
 				},
 			},
-			expectedErr: "version is not a semver compatible version",
+			expectedErr: "invalid version v1.0",
 		},
 		{
 			name: "Missing both NodeNames and LabelSelector",
