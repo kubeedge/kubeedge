@@ -583,3 +583,22 @@ func TestOnConnectionLostSupersededClient(t *testing.T) {
 		return atomic.LoadInt32(&pubReconnects) == 1 && atomic.LoadInt32(&subReconnects) == 1
 	}, time.Second, 10*time.Millisecond)
 }
+
+// TestClientOperations verifies the lock-guarded Publish/Subscribe/Unsubscribe
+// wrappers delegate to the current pub/sub client.
+func TestClientOperations(t *testing.T) {
+	pub := NewTestMQTTClient()
+	sub := NewTestMQTTClient()
+	mq := &Client{pubCli: pub, subCli: sub}
+
+	pubToken := mq.Publish("topic/pub", 1, false, []byte("payload"))
+	assert.NotNil(t, pubToken)
+	assert.Equal(t, []byte("payload"), pub.publishTopics["topic/pub"])
+
+	subToken := mq.Subscribe("topic/sub", 1, nil)
+	assert.NotNil(t, subToken)
+	assert.True(t, sub.subscribeTopics["topic/sub"])
+
+	unsubToken := mq.Unsubscribe("topic/sub")
+	assert.NotNil(t, unsubToken)
+}
