@@ -296,12 +296,12 @@ func TestOnPubConnectionLost(t *testing.T) {
 	origMQTTHub := MQTTHub
 	defer func() { MQTTHub = origMQTTHub }()
 
-	initCalled := false
+	var initCalled atomic.Bool
 	MQTTHub = &Client{}
 
 	patch := gomonkey.ApplyMethod(reflect.TypeOf(MQTTHub), "InitPubClient",
 		func(_ *Client) {
-			initCalled = true
+			initCalled.Store(true)
 		})
 	defer patch.Reset()
 
@@ -309,19 +309,19 @@ func TestOnPubConnectionLost(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond)
 
-	assert.True(t, initCalled, "InitPubClient should be called")
+	assert.True(t, initCalled.Load(), "InitPubClient should be called")
 }
 
 func TestOnSubConnectionLost(t *testing.T) {
 	origMQTTHub := MQTTHub
 	defer func() { MQTTHub = origMQTTHub }()
 
-	initCalled := false
+	var initCalled atomic.Bool
 	MQTTHub = &Client{}
 
 	patch := gomonkey.ApplyMethod(reflect.TypeOf(MQTTHub), "InitSubClient",
 		func(_ *Client) {
-			initCalled = true
+			initCalled.Store(true)
 		})
 	defer patch.Reset()
 
@@ -329,7 +329,7 @@ func TestOnSubConnectionLost(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond)
 
-	assert.True(t, initCalled, "InitSubClient should be called")
+	assert.True(t, initCalled.Load(), "InitSubClient should be called")
 }
 
 func TestOnSubConnect(t *testing.T) {
@@ -524,8 +524,10 @@ func TestClientReassignRace(t *testing.T) {
 				case <-stop:
 					return
 				default:
-					_ = mq.PubCli()
-					_ = mq.SubCli()
+					// exercise the lock-guarded reads of pubCli/subCli
+					// concurrently with the writers reassigning them.
+					_ = mq.isActivePubClient(nil)
+					_ = mq.isActiveSubClient(nil)
 				}
 			}
 		}()
