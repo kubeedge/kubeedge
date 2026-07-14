@@ -87,3 +87,13 @@ func TestFoundAllFlows(t *testing.T) {
 	require.NotNil(t, FlowConfigUpdateJob.Find(string(v1alpha2.ConfigUpdateJobActionRollBack)))
 	require.Nil(t, FlowConfigUpdateJob.Find("unknown"))
 }
+
+func TestFindWithNilFlow(t *testing.T) {
+	var f *Flow
+	require.Nil(t, f.Find("anything"))
+}
+
+func TestFindWithEmptyFlow(t *testing.T) {
+	f := &Flow{}
+	require.Nil(t, f.Find("anything"))
+}

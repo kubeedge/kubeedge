@@ -44,7 +44,7 @@ func (sf *Flow) Find(name string) *Action {
 	if sf == nil {
 		return nil
 	}
-	
+
 	return doFind(name, sf.First)
 }
 
