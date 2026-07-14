@@ -39,6 +39,10 @@ func (r *Reader) Read() ([]byte, error) {
 	header := PackageHeader{}
 	header.Unpack(headerBuffer)
 
+	if header.PayloadLen > MaxPayloadLen {
+		return nil, fmt.Errorf("payload length %d exceeds maximum %d", header.PayloadLen, MaxPayloadLen)
+	}
+
 	payloadBuffer := make([]byte, header.PayloadLen)
 	_, err = io.ReadFull(r.reader, payloadBuffer)
 	if err != nil {
