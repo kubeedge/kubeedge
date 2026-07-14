@@ -22,14 +22,13 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"strings"
 
-	"github.com/blang/semver"
 	admissionv1 "k8s.io/api/admission/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/operations/v1alpha1"
+	"github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 
 func serveNodeUpgradeJob(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +48,6 @@ func admitNodeUpgradeJob(review admissionv1.AdmissionReview) *admissionv1.Admiss
 		if _, _, err := deserializer.Decode(raw, nil, &upgrade); err != nil {
 			return admissionResponse(fmt.Errorf("validation failed with error: %v", err))
 		}
-
 		return admissionResponse(validateNodeUpgradeJob(&upgrade))
 
 	case admissionv1.Update:
@@ -58,7 +56,6 @@ func admitNodeUpgradeJob(review admissionv1.AdmissionReview) *admissionv1.Admiss
 		if _, _, err := deserializer.Decode(review.Request.Object.Raw, nil, &newUpgrade); err != nil {
 			return admissionResponse(fmt.Errorf("validation failed with error: %v", err))
 		}
-
 		oldUpgrade := v1alpha1.NodeUpgradeJob{}
 		if _, _, err := deserializer.Decode(review.Request.OldObject.Raw, nil, &oldUpgrade); err != nil {
 			return admissionResponse(fmt.Errorf("validation failed with error: %v", err))
@@ -82,16 +79,13 @@ func admitNodeUpgradeJob(review admissionv1.AdmissionReview) *admissionv1.Admiss
 }
 
 func validateNodeUpgradeJob(upgrade *v1alpha1.NodeUpgradeJob) error {
-	// version must be valid
-	if !strings.HasPrefix(upgrade.Spec.Version, "v") {
-		return fmt.Errorf("version must begin with prefix 'v'")
+	if !validation.ValidateVersion(upgrade.Spec.Version) {
+		return fmt.Errorf("invalid version %s", upgrade.Spec.Version)
 	}
-
-	_, err := semver.Parse(strings.TrimPrefix(upgrade.Spec.Version, "v"))
-	if err != nil {
-		return fmt.Errorf("version is not a semver compatible version: %v", err)
+	// Image is a optional field.
+	if upgrade.Spec.Image != "" && !validation.ValidateImageRepo(upgrade.Spec.Image) {
+		return fmt.Errorf("invalid image repo %s", upgrade.Spec.Image)
 	}
-
 	// we must specify NodeNames or LabelSelector, and we can only specify only one
 	if len(upgrade.Spec.NodeNames) == 0 && upgrade.Spec.LabelSelector == nil {
 		return fmt.Errorf("both NodeNames and LabelSelctor are NOT specified")
