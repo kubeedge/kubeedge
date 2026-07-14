@@ -367,27 +367,36 @@ func TestNodeUpgradeJobReportActionStatus(t *testing.T) {
 	h := nodeUpgradeJobActionHandler{
 		logger: klog.Background(),
 	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			patches := gomonkey.NewPatches()
-			defer patches.Reset()
 
-			patches.ApplyFunc(message.ReportNodeTaskStatus, func(_res taskmsg.Resource, msgbody taskmsg.UpstreamMessage) {
-				assert.Equal(t, c.action, msgbody.Action)
-				if c.extendEmpty {
-					assert.Empty(t, msgbody.Extend)
-				} else {
-					assert.NotEmpty(t, msgbody.Extend)
-				}
-				if c.resp.Error() == nil {
-					assert.True(t, msgbody.Succ)
-				} else {
-					assert.False(t, msgbody.Succ)
-					assert.Equal(t, c.resp.Error().Error(), msgbody.Reason)
-				}
-			})
+	reports := make([]taskmsg.UpstreamMessage, 0, 1)
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+	patches.ApplyFunc(message.ReportNodeTaskStatus, func(_ taskmsg.Resource, msgbody taskmsg.UpstreamMessage) {
+		reports = append(reports, msgbody)
+	})
+
+	for _, c := range cases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			reports = reports[:0]
 
 			h.reportActionStatus(jobName, nodeName, c.action, c.resp)
+
+			require.Len(t, reports, 1)
+			msgbody := reports[0]
+
+			assert.Equal(t, c.action, msgbody.Action)
+			if c.extendEmpty {
+				assert.Empty(t, msgbody.Extend)
+			} else {
+				assert.NotEmpty(t, msgbody.Extend)
+			}
+			if c.resp.Error() == nil {
+				assert.True(t, msgbody.Succ)
+			} else {
+				assert.False(t, msgbody.Succ)
+				assert.Equal(t, c.resp.Error().Error(), msgbody.Reason)
+			}
 		})
 	}
 }
