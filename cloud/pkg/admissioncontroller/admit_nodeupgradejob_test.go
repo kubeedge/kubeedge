@@ -61,7 +61,7 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 				},
 			},
 			expectedAllowed: false,
-			expectedError:   "version must begin with prefix 'v'",
+			expectedError:   "invalid version 1.0.0",
 		},
 		{
 			name:      "Invalid Semver",
@@ -73,7 +73,19 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 				},
 			},
 			expectedAllowed: false,
-			expectedError:   "version is not a semver compatible version",
+			expectedError:   "invalid version v1.0",
+		},
+		{
+			name:      "Invalid image",
+			operation: admissionv1.Create,
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version: "v1.0.0",
+					Image:   "invalid-image",
+				},
+			},
+			expectedAllowed: false,
+			expectedError:   "invalid image repo invalid-image",
 		},
 		{
 			name:      "No NodeNames and LabelSelector",
@@ -84,7 +96,7 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 				},
 			},
 			expectedAllowed: false,
-			expectedError:   "both NodeNames and LabelSelector are NOT specified",
+			expectedError:   "both NodeNames and LabelSelctor are NOT specified",
 		},
 		{
 			name:      "Both NodeNames and LabelSelector",
@@ -97,7 +109,7 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 				},
 			},
 			expectedAllowed: false,
-			expectedError:   "both NodeNames and LabelSelector are specified",
+			expectedError:   "both NodeNames and LabelSelctor are specified",
 		},
 		{
 			name:      "Valid Update",
@@ -197,7 +209,17 @@ func TestValidateNodeUpgradeJob(t *testing.T) {
 					NodeNames: []string{"node1"},
 				},
 			},
-			expectedErr: "version must begin with prefix 'v'",
+			expectedErr: "invalid version 1.0.0",
+		},
+		{
+			name: "Invalid image",
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version: "v1.0.0",
+					Image:   "invalid-image",
+				},
+			},
+			expectedErr: "invalid image repo invalid-image",
 		},
 		{
 			name: "Invalid version (not semver compatible)",
@@ -207,7 +229,7 @@ func TestValidateNodeUpgradeJob(t *testing.T) {
 					NodeNames: []string{"node1"},
 				},
 			},
-			expectedErr: "version is not a semver compatible version",
+			expectedErr: "invalid version v1.0",
 		},
 		{
 			name: "Missing both NodeNames and LabelSelector",
@@ -216,7 +238,7 @@ func TestValidateNodeUpgradeJob(t *testing.T) {
 					Version: "v1.0.0",
 				},
 			},
-			expectedErr: "both NodeNames and LabelSelector are NOT specified",
+			expectedErr: "both NodeNames and LabelSelctor are NOT specified",
 		},
 		{
 			name: "Both NodeNames and LabelSelector specified",
@@ -227,7 +249,7 @@ func TestValidateNodeUpgradeJob(t *testing.T) {
 					LabelSelector: &metav1.LabelSelector{},
 				},
 			},
-			expectedErr: "both NodeNames and LabelSelector are specified",
+			expectedErr: "both NodeNames and LabelSelctor are specified",
 		},
 		{
 			name: "Valid upgrade job",
@@ -322,10 +344,10 @@ func TestMutatingNodeUpgradeJob(t *testing.T) {
 	err = json.Unmarshal(response.Patch, &patch)
 	assert.NoError(err)
 	assert.Len(patch, 2)
-	assert.Equal("add", patch[0]["op"])
+	assert.Equal("replace", patch[0]["op"])
 	assert.Equal("/spec/concurrency", patch[0]["path"])
 	assert.Equal(float64(1), patch[0]["value"])
-	assert.Equal("add", patch[1]["op"])
+	assert.Equal("replace", patch[1]["op"])
 	assert.Equal("/spec/timeoutSeconds", patch[1]["path"])
 	assert.Equal(float64(300), patch[1]["value"])
 }
@@ -356,19 +378,19 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 			},
 			expectedPatch: []patchValue{
 				{
-					Op:    "add",
+					Op:    "replace",
 					Path:  "/spec/concurrency",
 					Value: 1,
 				},
 				{
-					Op:    "add",
+					Op:    "replace",
 					Path:  "/spec/timeoutSeconds",
 					Value: func() *uint32 { v := uint32(300); return &v }(),
 				},
 			},
 		},
 		{
-			name: "TimeoutSeconds specified",
+			name: "Concurrency specified",
 			spec: v1alpha1.NodeUpgradeJobSpec{
 				Version:        "v1.0.0",
 				NodeNames:      []string{"node1"},
@@ -376,14 +398,14 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 			},
 			expectedPatch: []patchValue{
 				{
-					Op:    "add",
+					Op:    "replace",
 					Path:  "/spec/concurrency",
 					Value: 1,
 				},
 			},
 		},
 		{
-			name: "Concurrency specified",
+			name: "TimeoutSeconds specified",
 			spec: v1alpha1.NodeUpgradeJobSpec{
 				Version:     "v1.0.0",
 				NodeNames:   []string{"node1"},
@@ -391,7 +413,7 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 			},
 			expectedPatch: []patchValue{
 				{
-					Op:    "add",
+					Op:    "replace",
 					Path:  "/spec/timeoutSeconds",
 					Value: func() *uint32 { v := uint32(300); return &v }(),
 				},
