@@ -20,9 +20,9 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
-	"sync"
 
 	"github.com/stretchr/testify/assert"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -556,7 +556,7 @@ func TestReset(t *testing.T) {
 
 func TestAddAndClose(t *testing.T) {
 	app := Application{
-		count:     1, // Initial count
+		count: 1, // Initial count
 	}
 
 	app.Add()
@@ -649,6 +649,8 @@ func TestConcurrentResetWaitCancel(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			app.Reset()
 		}
+		// Ensure the final context is cancelled so Wait does not hang
+		app.Cancel()
 	}()
 
 	go func() {
