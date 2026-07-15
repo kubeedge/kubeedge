@@ -26,6 +26,12 @@ import (
 )
 
 func TestInitConfigure(t *testing.T) {
+	// Use t.Cleanup to restore global state after the test execution
+	t.Cleanup(func() {
+		once = sync.Once{}
+		Config = Configure{}
+	})
+
 	// Reset the sync.Once and Config just in case for clean test
 	once = sync.Once{}
 	Config = Configure{}
@@ -39,11 +45,14 @@ func TestInitConfigure(t *testing.T) {
 	require.Equal(t, true, Config.Enable)
 	require.Equal(t, *dc, Config.DeviceController)
 
+	// Save the initialized Config state
+	expectedConfig := Config
+
 	// Test sync.Once works, subsequent calls should not overwrite
 	dc2 := &v1alpha1.DeviceController{
 		Enable: false,
 	}
 	InitConfigure(dc2)
 
-	require.Equal(t, true, Config.Enable, "Config should not be overwritten after first initialization")
+	require.Equal(t, expectedConfig, Config, "Entire config should remain unchanged after first initialization")
 }
