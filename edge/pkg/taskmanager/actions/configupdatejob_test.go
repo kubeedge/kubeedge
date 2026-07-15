@@ -47,3 +47,36 @@ func TestBuildConfigUpdateArgsDoesNotUseShell(t *testing.T) {
 		t.Fatalf("args must not invoke a shell: %v", args)
 	}
 }
+
+func TestBuildConfigUpdateArgsSortsFields(t *testing.T) {
+	updateFields := map[string]string{
+		"z.key": "z",
+		"a.key": "a",
+	}
+
+	args := buildConfigUpdateArgs(updateFields)
+
+	if len(args) != 3 {
+		t.Fatalf("expected 3 args, got %d: %v", len(args), args)
+	}
+	if args[0] != "config-update" {
+		t.Fatalf("expected config-update subcommand, got %q", args[0])
+	}
+	if args[1] != "--set" {
+		t.Fatalf("expected --set flag, got %q", args[1])
+	}
+	if args[2] != "a.key=a,z.key=z" {
+		t.Fatalf("unexpected --set value: %q", args[2])
+	}
+}
+
+func TestBuildConfigUpdateArgsEmptyFields(t *testing.T) {
+	args := buildConfigUpdateArgs(map[string]string{})
+
+	if len(args) != 3 {
+		t.Fatalf("expected 3 args, got %d: %v", len(args), args)
+	}
+	if args[0] != "config-update" || args[1] != "--set" || args[2] != "" {
+		t.Fatalf("unexpected args for empty update fields: %v", args)
+	}
+}
