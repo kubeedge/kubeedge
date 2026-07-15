@@ -32,9 +32,6 @@ func TestInitConfigure(t *testing.T) {
 		Config = Configure{}
 	})
 
-	// Reset the sync.Once and Config just in case for clean test
-	once = sync.Once{}
-	Config = Configure{}
 
 	dc := &v1alpha1.DeviceController{
 		Enable: true,
