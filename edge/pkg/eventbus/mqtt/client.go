@@ -3,6 +3,7 @@ package mqtt
 import (
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
@@ -11,6 +12,10 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 )
+
+// disconnectQuiesce is the milliseconds paho waits to finish in-flight work
+// when disconnecting a client that is being replaced on reconnect.
+const disconnectQuiesce = 250
 
 const UploadTopic = "SYS/dis/upload_records"
 
@@ -66,8 +71,58 @@ type Client struct {
 	SubClientID string
 	Username    string
 	Password    string
-	PubCli      MQTT.Client
-	SubCli      MQTT.Client
+
+	// cliLock guards pubCli and subCli, which are reassigned from the
+	// connection-lost callbacks while the eventbus loop uses them.
+	cliLock sync.RWMutex
+	pubCli  MQTT.Client
+	subCli  MQTT.Client
+
+	// pubInitLock and subInitLock serialize the full reconnect lifecycle
+	// (build, swap, disconnect the replaced client, connect) so concurrent
+	// connection-lost callbacks cannot interleave and reconnect a client that
+	// has already been replaced.
+	pubInitLock sync.Mutex
+	subInitLock sync.Mutex
+}
+
+// Publish publishes on the current publish client while holding the read lock,
+// so the reconnect path cannot replace and disconnect the client during the
+// call.
+func (mq *Client) Publish(topic string, qos byte, retained bool, payload interface{}) MQTT.Token {
+	mq.cliLock.RLock()
+	defer mq.cliLock.RUnlock()
+	return mq.pubCli.Publish(topic, qos, retained, payload)
+}
+
+// Subscribe subscribes on the current subscribe client while holding the read
+// lock; see Publish for the rationale.
+func (mq *Client) Subscribe(topic string, qos byte, callback MQTT.MessageHandler) MQTT.Token {
+	mq.cliLock.RLock()
+	defer mq.cliLock.RUnlock()
+	return mq.subCli.Subscribe(topic, qos, callback)
+}
+
+// Unsubscribe unsubscribes on the current subscribe client while holding the
+// read lock; see Publish for the rationale.
+func (mq *Client) Unsubscribe(topics ...string) MQTT.Token {
+	mq.cliLock.RLock()
+	defer mq.cliLock.RUnlock()
+	return mq.subCli.Unsubscribe(topics...)
+}
+
+// isActivePubClient reports whether client is the current publish client.
+func (mq *Client) isActivePubClient(client MQTT.Client) bool {
+	mq.cliLock.RLock()
+	defer mq.cliLock.RUnlock()
+	return mq.pubCli == client
+}
+
+// isActiveSubClient reports whether client is the current subscribe client.
+func (mq *Client) isActiveSubClient(client MQTT.Client) bool {
+	mq.cliLock.RLock()
+	defer mq.cliLock.RUnlock()
+	return mq.subCli == client
 }
 
 // AccessInfo that deliver between edge-hub and cloud-hub
@@ -78,13 +133,27 @@ type AccessInfo struct {
 	Content []byte `json:"content"`
 }
 
-func onPubConnectionLost(_ MQTT.Client, err error) {
+func onPubConnectionLost(client MQTT.Client, err error) {
 	klog.Errorf("onPubConnectionLost with error: %v", err)
+	// Ignore the event when it comes from a client that has already been
+	// replaced; otherwise a superseded client would reconnect and displace the
+	// current active one, starting an extra connection loop.
+	if MQTTHub == nil || !MQTTHub.isActivePubClient(client) {
+		klog.Warning("ignore connection lost event from a superseded pub client")
+		return
+	}
 	go MQTTHub.InitPubClient()
 }
 
-func onSubConnectionLost(_ MQTT.Client, err error) {
+func onSubConnectionLost(client MQTT.Client, err error) {
 	klog.Errorf("onSubConnectionLost with error: %v", err)
+	// Ignore the event when it comes from a client that has already been
+	// replaced; otherwise a superseded client would reconnect and displace the
+	// current active one, starting an extra connection loop.
+	if MQTTHub == nil || !MQTTHub.isActiveSubClient(client) {
+		klog.Warning("ignore connection lost event from a superseded sub client")
+		return
+	}
 	go MQTTHub.InitSubClient()
 }
 
@@ -125,6 +194,10 @@ func OnSubMessageReceived(_ MQTT.Client, msg MQTT.Message) {
 
 // InitSubClient init sub client
 func (mq *Client) InitSubClient() {
+	// Serialize the whole lifecycle so concurrent connection-lost callbacks
+	// cannot interleave and reconnect a client that has already been replaced.
+	mq.subInitLock.Lock()
+	defer mq.subInitLock.Unlock()
 	timeStr := strconv.FormatInt(time.Now().UnixNano()/1e6, 10)
 	right := len(timeStr)
 	if right > 10 {
@@ -138,13 +211,28 @@ func (mq *Client) InitSubClient() {
 	subOpts.OnConnect = onSubConnect
 	subOpts.AutoReconnect = false
 	subOpts.OnConnectionLost = onSubConnectionLost
-	mq.SubCli = MQTT.NewClient(subOpts)
-	util.LoopConnect(mq.SubClientID, mq.SubCli)
+	cli := MQTT.NewClient(subOpts)
+
+	mq.cliLock.Lock()
+	old := mq.subCli
+	mq.subCli = cli
+	mq.cliLock.Unlock()
+	// release the client being replaced, otherwise its goroutines leak on every
+	// broker reconnect.
+	if old != nil {
+		old.Disconnect(disconnectQuiesce)
+	}
+
+	util.LoopConnect(mq.SubClientID, cli)
 	klog.Info("finish hub-client sub")
 }
 
 // InitPubClient init pub client
 func (mq *Client) InitPubClient() {
+	// Serialize the whole lifecycle so concurrent connection-lost callbacks
+	// cannot interleave and reconnect a client that has already been replaced.
+	mq.pubInitLock.Lock()
+	defer mq.pubInitLock.Unlock()
 	timeStr := strconv.FormatInt(time.Now().UnixNano()/1e6, 10)
 	right := len(timeStr)
 	if right > 10 {
@@ -157,7 +245,18 @@ func (mq *Client) InitPubClient() {
 	pubOpts := util.HubClientInit(mq.MQTTUrl, mq.PubClientID, mq.Username, mq.Password)
 	pubOpts.OnConnectionLost = onPubConnectionLost
 	pubOpts.AutoReconnect = false
-	mq.PubCli = MQTT.NewClient(pubOpts)
-	util.LoopConnect(mq.PubClientID, mq.PubCli)
+	cli := MQTT.NewClient(pubOpts)
+
+	mq.cliLock.Lock()
+	old := mq.pubCli
+	mq.pubCli = cli
+	mq.cliLock.Unlock()
+	// release the client being replaced, otherwise its goroutines leak on every
+	// broker reconnect.
+	if old != nil {
+		old.Disconnect(disconnectQuiesce)
+	}
+
+	util.LoopConnect(mq.PubClientID, cli)
 	klog.Info("finish hub-client pub")
 }
