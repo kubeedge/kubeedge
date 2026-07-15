@@ -66,7 +66,7 @@ func (h *ImagePrePullJobHandler) UpdateNodeTaskStatus(
 ) error {
 	var (
 		actoinStatus operationsv1alpha2.ImagePrePullJobActionStatus
-		err          error
+		retErr       error
 		wg           sync.WaitGroup
 	)
 
@@ -97,14 +97,14 @@ func (h *ImagePrePullJobHandler) UpdateNodeTaskStatus(
 			ExtendInfo:   upmsg.Extend,
 			ActionStatus: &actoinStatus,
 		},
-		Callback: func(err error) {
-			if err != nil {
-				err = fmt.Errorf("failed to update image prepull job status, err: %v", err)
+		Callback: func(cbErr error) {
+			if cbErr != nil {
+				retErr = fmt.Errorf("failed to update image prepull job status: %w", cbErr)
 			}
 			wg.Done()
 		},
 	}
 	status.GetImagePrePullJobStatusUpdater().UpdateStatus(opts)
 	wg.Wait()
-	return err
+	return retErr
 }
