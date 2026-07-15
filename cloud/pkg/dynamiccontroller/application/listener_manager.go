@@ -92,7 +92,11 @@ func (lm *listenerManager) GetListenersForNode(nodeName string) map[string]*Sele
 		return nil
 	}
 
-	return listeners
+	copyMap := make(map[string]*SelectorListener, len(listeners))
+	for k, v := range listeners {
+		copyMap[k] = v
+	}
+	return copyMap
 }
 
 func (lm *listenerManager) GetListenersForGVR(gvr schema.GroupVersionResource) map[string]*SelectorListener {
@@ -104,5 +108,9 @@ func (lm *listenerManager) GetListenersForGVR(gvr schema.GroupVersionResource) m
 		return nil
 	}
 
-	return listeners
+	copyMap := make(map[string]*SelectorListener, len(listeners))
+	for k, v := range listeners {
+		copyMap[k] = v
+	}
+	return copyMap
 }

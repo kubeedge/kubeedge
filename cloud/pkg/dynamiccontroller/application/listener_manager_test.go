@@ -155,3 +155,37 @@ func TestGetListenersForGVR(t *testing.T) {
 	nonExistentGVRListeners := lm.GetListenersForGVR(nonExistentGVR)
 	assert.Nil(nonExistentGVRListeners)
 }
+
+func TestGetListenersReturnsCopy(t *testing.T) {
+	assert := assert.New(t)
+	lm := newListenerManager()
+
+	listener1 := NewSelectorListener("testID1", "node1", testGVR, selector1)
+	lm.AddListener(listener1)
+
+	// Verify GetListenersForNode returns a copy
+	nodeListeners := lm.GetListenersForNode("node1")
+	assert.Len(nodeListeners, 1)
+
+	// Mutate the returned map
+	delete(nodeListeners, "testID1")
+	assert.Len(nodeListeners, 0)
+
+	// Verify the original map in manager is unchanged
+	nodeListenersOriginal := lm.GetListenersForNode("node1")
+	assert.Len(nodeListenersOriginal, 1)
+	assert.Contains(nodeListenersOriginal, "testID1")
+
+	// Verify GetListenersForGVR returns a copy
+	gvrListeners := lm.GetListenersForGVR(testGVR)
+	assert.Len(gvrListeners, 1)
+
+	// Mutate the returned map
+	delete(gvrListeners, "testID1")
+	assert.Len(gvrListeners, 0)
+
+	// Verify the original map in manager is unchanged
+	gvrListenersOriginal := lm.GetListenersForGVR(testGVR)
+	assert.Len(gvrListenersOriginal, 1)
+	assert.Contains(gvrListenersOriginal, "testID1")
+}
