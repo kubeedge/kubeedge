@@ -1,9 +1,11 @@
 package edgehub
 
 import (
+	"math"
 	"sync"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/flowcontrol"
 	"k8s.io/klog/v2"
 
@@ -18,14 +20,40 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/features"
 )
 
+// reconnectBackoff returns the backoff used between reconnect attempts.
+// It starts small and grows exponentially with jitter, capped at 30s, so
+// that a quickly-recovered network surfaces a NotReady node back to Ready
+// within seconds instead of waiting heartbeat*2 (up to 4 minutes when
+// heartbeat is configured to 120s).
+func reconnectBackoff() wait.Backoff {
+	return wait.Backoff{
+		Duration: 2 * time.Second,
+		Factor:   2.0,
+		Jitter:   0.2,
+		Cap:      30 * time.Second,
+		// Steps only bounds how many times Duration may grow — it never
+		// stops Step() from returning values: once Cap is reached, Step()
+		// keeps returning a jittered value in [Cap, Cap*(1+Jitter))
+		// indefinitely. MaxInt32 just ensures growth is never cut short.
+		Steps: math.MaxInt32,
+	}
+}
+
 // EdgeHub defines edgehub object structure
 type EdgeHub struct {
-	certManager   certificate.CertManager
-	chClient      clients.Adapter
+	certManager certificate.CertManager
+	chClient    clients.Adapter
+	// reconnectChan is buffered(1); the transport-error senders
+	// (routeToEdge / routeToCloud / keepalive) deliver through the
+	// non-blocking triggerReconnect, so signals for one outage coalesce.
 	reconnectChan chan struct{}
-	rateLimiter   flowcontrol.RateLimiter
-	keeperLock    sync.RWMutex
-	enable        bool
+	// rotateChan carries certificate-rotation signals separately from
+	// reconnectChan so they are never coalesced or drained away: a rotation
+	// must always be followed by a reconnect that reloads the certificate.
+	rotateChan  chan struct{}
+	rateLimiter flowcontrol.RateLimiter
+	keeperLock  sync.RWMutex
+	enable      bool
 }
 
 var _ core.Module = (*EdgeHub)(nil)
@@ -46,11 +74,42 @@ func newEdgeHub(enable bool) *EdgeHub {
 	NewCertSyncChannel()
 	return &EdgeHub{
 		enable:        enable,
-		reconnectChan: make(chan struct{}),
+		reconnectChan: make(chan struct{}, 1),
+		rotateChan:    make(chan struct{}, 1),
 		rateLimiter: flowcontrol.NewTokenBucketRateLimiter(
 			float32(config.Config.EdgeHub.MessageQPS),
 			int(config.Config.EdgeHub.MessageBurst)),
 	}
+}
+
+// triggerReconnect requests a reconnect without blocking. If a reconnect
+// signal is already pending, the call is a no-op since one signal is
+// sufficient to drive the reconnect loop.
+func (eh *EdgeHub) triggerReconnect() {
+	select {
+	case eh.reconnectChan <- struct{}{}:
+	default:
+	}
+}
+
+// drainReconnect discards a pending transport reconnect signal, if any.
+// It deliberately does not touch rotateChan: dropping a rotation signal
+// could leave a connection running on a stale certificate until the next
+// natural disconnect.
+func (eh *EdgeHub) drainReconnect() {
+	select {
+	case <-eh.reconnectChan:
+	default:
+	}
+}
+
+// shouldResetBackoff reports whether the connection stayed up long enough to
+// consider the previous outage over. Resetting on every successful handshake
+// would let a connect-then-die loop (e.g. an overloaded CloudHub or a broken
+// LB) retry at the initial ~2s interval forever — a connection storm across
+// a large fleet. Surviving longer than the backoff cap is taken as healthy.
+func shouldResetBackoff(connectedAt time.Time, b wait.Backoff) bool {
+	return time.Since(connectedAt) > b.Cap
 }
 
 // Register register edgehub
@@ -99,6 +158,7 @@ func (eh *EdgeHub) Start() {
 
 	go eh.ifRotationDone()
 
+	backoff := reconnectBackoff()
 	for {
 		select {
 		case <-beehiveContext.Done():
@@ -112,14 +172,37 @@ func (eh *EdgeHub) Start() {
 			return
 		}
 
-		waitTime := time.Duration(config.Config.Heartbeat) * time.Second * 2
-
+		// A rotation that completed while we were disconnected is already
+		// satisfied by the upcoming Init(), which reads the newest
+		// certificate from disk (certManager writes the files before
+		// signaling). Discard such a stale signal now — while still
+		// disconnected — so it does not trigger a redundant reconnect right
+		// after the connection is established. A rotation completing after
+		// this point sends a fresh signal that survives to the wait below.
+		select {
+		case <-eh.rotateChan:
+		default:
+		}
 		err = eh.chClient.Init()
 		if err != nil {
-			klog.Errorf("connection failed: %v, will reconnect after %s", err, waitTime.String())
-			time.Sleep(waitTime)
+			sleep := backoff.Step()
+			klog.Errorf("connection failed: %v, will reconnect after %s", err, sleep.String())
+			select {
+			case <-beehiveContext.Done():
+				klog.Warning("EdgeHub stop")
+				return
+			case <-time.After(sleep):
+			}
 			continue
 		}
+		// Drain any stale transport-error signal queued by the previous
+		// generation of goroutines while Init was in flight. Without this,
+		// the stale signal would be received immediately by the wait below,
+		// triggering an unnecessary reconnect cycle right after a successful
+		// connect. Certificate-rotation signals are deliberately not
+		// drained (see rotateChan).
+		eh.drainReconnect()
+		connectedAt := time.Now()
 		// execute hook func after connect
 		eh.pubConnectInfo(true)
 		go eh.routeToEdge()
@@ -128,24 +211,53 @@ func (eh *EdgeHub) Start() {
 
 		// wait the stop signal
 		// stop authinfo manager/websocket connection
-		<-eh.reconnectChan
+		rotated := false
+		select {
+		case <-beehiveContext.Done():
+			// Module shutdown: clean up like the reconnect/rotation paths
+			// below instead of relying on process teardown.
+			eh.chClient.UnInit()
+			eh.pubConnectInfo(false)
+			klog.Warning("EdgeHub stop")
+			return
+		case <-eh.reconnectChan:
+		case <-eh.rotateChan:
+			// The certificate was rotated (possibly while the connect above
+			// was in flight). Re-establish the connection so chClient.Init()
+			// reloads the new certificate from disk.
+			rotated = true
+		}
 		eh.chClient.UnInit()
 
 		// execute hook fun after disconnect
 		eh.pubConnectInfo(false)
 
-		// sleep one period of heartbeat, then try to connect cloud hub again
-		klog.Warningf("connection is broken, will reconnect after %s", waitTime.String())
-		time.Sleep(waitTime)
-
-		// clean channel
-	clean:
-		for {
-			select {
-			case <-eh.reconnectChan:
-			default:
-				break clean
-			}
+		if rotated {
+			// A certificate rotation is an intentional, healthy reconnect,
+			// not a transport failure, so reconnect immediately without a
+			// backoff wait.
+			klog.Info("certificate rotated, reconnecting to reload it")
+			continue
 		}
+
+		// Reset the backoff only after the connection proved healthy for a
+		// while, so a connect-then-die loop keeps backing off instead of
+		// hammering the cloud at the initial interval.
+		if shouldResetBackoff(connectedAt, backoff) {
+			backoff = reconnectBackoff()
+		}
+		sleep := backoff.Step()
+		klog.Warningf("connection is broken, will reconnect after %s", sleep.String())
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("EdgeHub stop")
+			return
+		case <-time.After(sleep):
+		}
+
+		// reconnectChan is buffered(1) and triggerReconnect is non-blocking,
+		// so at most one queued signal can remain. A single non-blocking
+		// receive is sufficient to start the next cycle from a clean state.
+		eh.drainReconnect()
 	}
 }

@@ -356,8 +356,12 @@ func TestKeepalive(t *testing.T) {
 		{
 			name: "Heartbeat failure Case",
 			hub: &EdgeHub{
-				chClient:      mockAdapter,
-				reconnectChan: make(chan struct{}),
+				chClient: mockAdapter,
+				// buffered(1) is the production invariant established by
+				// newEdgeHub; triggerReconnect's non-blocking send relies
+				// on it (an unbuffered channel would race with the
+				// receiver parking and could drop the signal).
+				reconnectChan: make(chan struct{}, 1),
 			},
 		},
 	}
