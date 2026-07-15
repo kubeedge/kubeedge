@@ -193,8 +193,8 @@ github.com/coreos/go-semver/semver
 github.com/coreos/go-systemd/v22/daemon
 github.com/coreos/go-systemd/v22/dbus
 github.com/coreos/go-systemd/v22/journal
-# github.com/cyphar/filepath-securejoin v0.3.6
-## explicit; go 1.18
+# github.com/cyphar/filepath-securejoin v0.2.4
+## explicit; go 1.13
 github.com/cyphar/filepath-securejoin
 # github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 ## explicit
@@ -537,7 +537,7 @@ github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/kr/fs v0.1.0
 ## explicit
 github.com/kr/fs
-# github.com/kubeedge/api v0.0.0 => ./staging/src/github.com/kubeedge/api
+# github.com/kubeedge/api v0.0.0-00010101000000-000000000000 => ./staging/src/github.com/kubeedge/api
 ## explicit; go 1.22.9
 github.com/kubeedge/api/apis/apps/v1alpha1
 github.com/kubeedge/api/apis/common/constants
