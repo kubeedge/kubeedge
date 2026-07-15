@@ -1,6 +1,8 @@
 package endpointresource
 
 import (
+	"time"
+
 	"context"
 
 	v1 "k8s.io/api/core/v1"
@@ -131,7 +133,9 @@ func filterEndpoints(targetNode string, obj runtime.Object) {
 
 	if !filter.GetDynamicResourceInformer(v1.SchemeGroupVersion.WithResource("services")).Informer().HasSynced() {
 		klog.Info("services informer has not synced yet")
-		svcRaw, err = client.GetDynamicClient().Resource(v1.SchemeGroupVersion.WithResource("services")).Namespace(ep.Namespace).Get(context.TODO(), svcName, metav1.GetOptions{})
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		svcRaw, err = client.GetDynamicClient().Resource(v1.SchemeGroupVersion.WithResource("services")).Namespace(ep.Namespace).Get(ctx, svcName, metav1.GetOptions{})
 		if err != nil {
 			klog.Errorf("filter endpoint for svc %s error: %v", svcName, err)
 			return

@@ -511,7 +511,7 @@ func TestProcessApplication(t *testing.T) {
 		},
 	}
 
-	_, err := dynamicClient.Resource(deployGVR).Namespace("default").Create(context.TODO(), deployment, metav1.CreateOptions{})
+	_, err := dynamicClient.Resource(deployGVR).Namespace("default").Create(context.Background(), deployment, metav1.CreateOptions{})
 	assert.NoError(t, err)
 	t.Run("WATCH verb", func(t *testing.T) {
 		originalEnableAuthorization := config.Config.EnableAuthorization
