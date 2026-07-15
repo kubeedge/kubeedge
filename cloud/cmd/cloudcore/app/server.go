@@ -208,6 +208,13 @@ func NegotiateTunnelPort() (*int, error) {
 			return nil, err
 		}
 
+		if record.IPTunnelPort == nil {
+			record.IPTunnelPort = make(map[string]int)
+		}
+		if record.Port == nil {
+			record.Port = make(map[int]bool)
+		}
+
 		port, found := record.IPTunnelPort[localIP]
 		if found {
 			return &port, nil
@@ -292,10 +299,13 @@ func updateCloudCoreConfigMap(c *v1alpha1.CloudCoreConfig) {
 		return
 	}
 
+	if cloudCoreCM.Data == nil {
+		cloudCoreCM.Data = make(map[string]string)
+	}
 	cloudCoreCM.Data["cloudcore.yaml"] = string(configBytes)
 
 	_, err = kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Update(context.TODO(), cloudCoreCM, metav1.UpdateOptions{})
 	if err != nil {
-		klog.Errorf("Failed to marshal cloudcore config: %v", err)
+		klog.Errorf("Failed to update CloudCore configMap: %v", err)
 	}
 }
