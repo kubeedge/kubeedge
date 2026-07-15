@@ -96,7 +96,7 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 				},
 			},
 			expectedAllowed: false,
-			expectedError:   "both NodeNames and LabelSelctor are NOT specified",
+			expectedError:   "both NodeNames and LabelSelector are NOT specified",
 		},
 		{
 			name:      "Both NodeNames and LabelSelector",
@@ -109,7 +109,7 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 				},
 			},
 			expectedAllowed: false,
-			expectedError:   "both NodeNames and LabelSelctor are specified",
+			expectedError:   "both NodeNames and LabelSelector are specified",
 		},
 		{
 			name:      "Valid Update",
@@ -238,7 +238,7 @@ func TestValidateNodeUpgradeJob(t *testing.T) {
 					Version: "v1.0.0",
 				},
 			},
-			expectedErr: "both NodeNames and LabelSelctor are NOT specified",
+			expectedErr: "both NodeNames and LabelSelector are NOT specified",
 		},
 		{
 			name: "Both NodeNames and LabelSelector specified",
@@ -249,7 +249,7 @@ func TestValidateNodeUpgradeJob(t *testing.T) {
 					LabelSelector: &metav1.LabelSelector{},
 				},
 			},
-			expectedErr: "both NodeNames and LabelSelctor are specified",
+			expectedErr: "both NodeNames and LabelSelector are specified",
 		},
 		{
 			name: "Valid upgrade job",
@@ -344,10 +344,10 @@ func TestMutatingNodeUpgradeJob(t *testing.T) {
 	err = json.Unmarshal(response.Patch, &patch)
 	assert.NoError(err)
 	assert.Len(patch, 2)
-	assert.Equal("replace", patch[0]["op"])
+	assert.Equal("add", patch[0]["op"])
 	assert.Equal("/spec/concurrency", patch[0]["path"])
 	assert.Equal(float64(1), patch[0]["value"])
-	assert.Equal("replace", patch[1]["op"])
+	assert.Equal("add", patch[1]["op"])
 	assert.Equal("/spec/timeoutSeconds", patch[1]["path"])
 	assert.Equal(float64(300), patch[1]["value"])
 }
@@ -378,12 +378,12 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 			},
 			expectedPatch: []patchValue{
 				{
-					Op:    "replace",
+					Op:    "add",
 					Path:  "/spec/concurrency",
 					Value: 1,
 				},
 				{
-					Op:    "replace",
+					Op:    "add",
 					Path:  "/spec/timeoutSeconds",
 					Value: func() *uint32 { v := uint32(300); return &v }(),
 				},
@@ -398,7 +398,7 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 			},
 			expectedPatch: []patchValue{
 				{
-					Op:    "replace",
+					Op:    "add",
 					Path:  "/spec/concurrency",
 					Value: 1,
 				},
@@ -413,7 +413,7 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 			},
 			expectedPatch: []patchValue{
 				{
-					Op:    "replace",
+					Op:    "add",
 					Path:  "/spec/timeoutSeconds",
 					Value: func() *uint32 { v := uint32(300); return &v }(),
 				},
@@ -426,5 +426,54 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 			patch := generateNodeUpgradeJobPatch(tc.spec)
 			assert.Equal(tc.expectedPatch, patch)
 		})
+	}
+}
+
+func TestValidateNodeUpgradeJobAllowsOptionalAndValidImage(t *testing.T) {
+	cases := []struct {
+		name    string
+		upgrade *v1alpha1.NodeUpgradeJob
+	}{
+		{
+			name: "empty image is allowed",
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.0.0",
+					NodeNames: []string{"node1"},
+				},
+			},
+		},
+		{
+			name: "valid image repo is allowed",
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.0.0",
+					Image:     "kubeedge/installation-package:v1.23.1",
+					NodeNames: []string{"node1"},
+				},
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := validateNodeUpgradeJob(tt.upgrade); err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+		})
+	}
+}
+
+func TestGenerateNodeUpgradeJobPatchReturnsEmptyWhenDefaultsSpecified(t *testing.T) {
+	timeoutSeconds := uint32(600)
+	patch := generateNodeUpgradeJobPatch(v1alpha1.NodeUpgradeJobSpec{
+		Version:        "v1.0.0",
+		NodeNames:      []string{"node1"},
+		Concurrency:    2,
+		TimeoutSeconds: &timeoutSeconds,
+	})
+
+	if len(patch) != 0 {
+		t.Fatalf("expected empty patch, got %#v", patch)
 	}
 }

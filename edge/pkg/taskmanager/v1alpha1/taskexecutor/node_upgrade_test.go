@@ -18,6 +18,7 @@ package taskexecutor
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	commontypes "github.com/kubeedge/kubeedge/common/types"
@@ -50,5 +51,25 @@ func TestBuildKeadmUpgradeArgsDoesNotUseShell(t *testing.T) {
 
 	if !reflect.DeepEqual(args, want) {
 		t.Fatalf("unexpected args: got %v, want %v", args, want)
+	}
+}
+
+func TestKeadmUpgradeReturnsErrorWhenCommandMissing(t *testing.T) {
+	t.Setenv("PATH", t.TempDir())
+
+	err := keadmUpgrade(commontypes.NodeUpgradeJobRequest{
+		UpgradeID: "upgrade-1",
+		HistoryID: "history-1",
+		Version:   "v1.23.1",
+		Image:     "kubeedge/installation-package:v1.23.1",
+	}, &options.EdgeCoreOptions{
+		ConfigFile: "/etc/kubeedge/config/edgecore.yaml",
+	})
+
+	if err == nil {
+		t.Fatal("expected error when keadm command cannot be started")
+	}
+	if !strings.Contains(err.Error(), "failed to start keadm upgrade command") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
