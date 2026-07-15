@@ -165,6 +165,31 @@ func TestFindOrCreateTwinByName(t *testing.T) {
 	}
 }
 
+func TestFindOrCreateTwinByNameNewTwinIsMutable(t *testing.T) {
+	assert := assert.New(t)
+
+	status := &DeviceStatus{
+		Status: v1beta1.DeviceStatusStatus{
+			Twins: []v1beta1.Twin{},
+		},
+	}
+	properties := []v1beta1.DeviceProperty{
+		{
+			Name: "humidity",
+		},
+	}
+
+	// The returned pointer must reference the twin stored in the slice, so that
+	// updates made through it (as updateDeviceStatus does) reach the DeviceStatus
+	// that is later marshalled into the CRD patch.
+	twin := findOrCreateTwinByName("humidity", properties, status)
+	assert.NotNil(twin)
+	twin.Reported = v1beta1.TwinProperty{Value: "60"}
+
+	assert.Len(status.Status.Twins, 1)
+	assert.Equal("60", status.Status.Twins[0].Reported.Value)
+}
+
 func TestFindTwinByName(t *testing.T) {
 	tests := []struct {
 		name         string

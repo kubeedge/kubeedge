@@ -353,11 +353,10 @@ func findOrCreateTwinByName(twinName string, properties []v1beta1.DeviceProperty
 			if twin != nil {
 				return twin
 			}
-			twin = &v1beta1.Twin{
+			deviceStatus.Status.Twins = append(deviceStatus.Status.Twins, v1beta1.Twin{
 				PropertyName: twinName,
-			}
-			deviceStatus.Status.Twins = append(deviceStatus.Status.Twins, *twin)
-			return twin
+			})
+			return &deviceStatus.Status.Twins[len(deviceStatus.Status.Twins)-1]
 		}
 	}
 	return nil
