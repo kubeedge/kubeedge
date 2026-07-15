@@ -126,3 +126,59 @@ func TestFilterResource(t *testing.T) {
 	assert.Equal(int32(defaultMetaServerPort), *filteredEndpointSlice.Ports[0].Port)
 	assert.Equal(defaultEndpointSlicePortName, *filteredEndpointSlice.Ports[0].Name)
 }
+
+func TestFilterResourceOptionalEndpointPortFields(t *testing.T) {
+	tests := []struct {
+		name      string
+		ports     []discovery.EndpointPort
+		wantPorts []*int32
+	}{
+		{
+			name: "unnamed port is ignored",
+			ports: []discovery.EndpointPort{{
+				Port: func(i int32) *int32 { return &i }(443),
+			}},
+			wantPorts: []*int32{func(i int32) *int32 { return &i }(443)},
+		},
+		{
+			name: "https port without number is rewritten",
+			ports: []discovery.EndpointPort{{
+				Name: func(s string) *string { return &s }(defaultEndpointSlicePortName),
+			}},
+			wantPorts: []*int32{func(i int32) *int32 { return &i }(defaultMetaServerPort)},
+		},
+		{
+			name: "unnamed port does not block https port rewrite",
+			ports: []discovery.EndpointPort{
+				{Port: func(i int32) *int32 { return &i }(443)},
+				{Name: func(s string) *string { return &s }(defaultEndpointSlicePortName)},
+			},
+			wantPorts: []*int32{
+				func(i int32) *int32 { return &i }(443),
+				func(i int32) *int32 { return &i }(defaultMetaServerPort),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			endpointSlice := &discovery.EndpointSlice{
+				Endpoints: []discovery.Endpoint{{Addresses: []string{"192.168.1.1"}}},
+				Ports:     tt.ports,
+			}
+			unstr, err := runtime.DefaultUnstructuredConverter.ToUnstructured(endpointSlice)
+			assert.NoError(t, err)
+			unstructuredObj := &unstructured.Unstructured{Object: unstr}
+
+			newDefaultMasterFilter().FilterResource("", unstructuredObj)
+
+			var filteredEndpointSlice discovery.EndpointSlice
+			err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.Object, &filteredEndpointSlice)
+			assert.NoError(t, err)
+			assert.Equal(t, defaultMetaServerIP, filteredEndpointSlice.Endpoints[0].Addresses[0])
+			for i := range tt.wantPorts {
+				assert.Equal(t, tt.wantPorts[i], filteredEndpointSlice.Ports[i].Port)
+			}
+		})
+	}
+}
