@@ -20,6 +20,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -175,6 +176,19 @@ func TestSendEvents(t *testing.T) {
 		})
 	}
 }
+
+func TestSendEventsNilMessage(t *testing.T) {
+	// buildEdgeControllerMessage returns nil when BuildResource fails (here an
+	// empty node name). sendEvents must skip the send instead of dereferencing
+	// the nil message.
+	sync := tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod")
+	// resourceVersion "2" > status "1" forces the update branch; the empty node
+	// name makes buildEdgeControllerMessage return nil.
+	assert.NotPanics(t, func() {
+		sendEvents("", sync, "pod", "2", sync.DeepCopy())
+	}, "sendEvents() must not panic when buildEdgeControllerMessage returns nil")
+}
+
 func newUnstructured(apiVersion, kind, namespace, name string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
