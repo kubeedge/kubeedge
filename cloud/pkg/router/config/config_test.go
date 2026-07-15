@@ -26,7 +26,6 @@ import (
 )
 
 func TestInitConfigure(t *testing.T) {
-	// Reset the global state at the beginning to prevent test flakiness from prior tests
 	once = sync.Once{}
 	Config = Configure{}
 
