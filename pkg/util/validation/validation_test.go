@@ -45,7 +45,7 @@ func TestIsValidIP(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			v := IsValidIP(c.IP)
 			get := len(v) == 0
-			assert.Equal(get, c.Expect)
+			assert.Equal(c.Expect, get)
 		})
 	}
 }
@@ -83,7 +83,7 @@ func TestIsValidPortNum(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.Name, func(t *testing.T) {
 			v := IsValidPortNum(c.Port)
-			assert.Equal(v, c.Expect)
+			assert.Equal(c.Expect, v)
 		})
 	}
 }
@@ -93,5 +93,86 @@ func TestInclusiveRangeError(t *testing.T) {
 
 	result := InclusiveRangeError(1, 65535)
 	expect := "must be between 1 and 65535, inclusive"
-	assert.Equal(result, expect)
+	assert.Equal(expect, result)
+}
+
+func TestValidateImageRepo(t *testing.T) {
+	cases := []struct {
+		imageRepo string
+		want      bool
+	}{
+		{
+			imageRepo: "installation-package",
+			want:      false,
+		},
+		{
+			imageRepo: "kubeedge/installation-package",
+			want:      true,
+		},
+		{
+			imageRepo: "kubeedge/installation-package;bash",
+			want:      false,
+		},
+		{
+			imageRepo: "_kubeedge/installation-package",
+			want:      false,
+		},
+		{
+			imageRepo: "aaa.bbb.ccc/kubeedge/installation-package",
+			want:      true,
+		},
+		{
+			imageRepo: "registry.example.com:5000/kubeedge/installation-package",
+			want:      true,
+		},
+		{
+			imageRepo: "kubeedge/installation-package:v1.23.1",
+			want:      true,
+		},
+		{
+			imageRepo: "kubeedge/installation-package@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			want:      true,
+		},
+		{
+			imageRepo: "kubeedge/installation-package;touch /tmp/pwned",
+			want:      false,
+		},
+		{
+			imageRepo: "kubeedge/installation-package$(touch /tmp/pwned)",
+			want:      false,
+		},
+		{
+			imageRepo: "kubeedge/installation-package`touch /tmp/pwned`",
+			want:      false,
+		},
+		{
+			imageRepo: "kubeedge/installation-package\n touch /tmp/pwned",
+			want:      false,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.imageRepo, func(t *testing.T) {
+			assert.Equal(t, c.want, ValidateImageRepo(c.imageRepo))
+		})
+	}
+}
+
+func TestValidateVersion(t *testing.T) {
+	cases := []struct {
+		version string
+		want    bool
+	}{
+		{version: "v1.0.0", want: true},
+		{version: "V1.0.0", want: false},
+		{version: "1.0.0", want: false},
+		{version: "v1.0", want: false},
+		{version: "v1.0.0;bash", want: false},
+		{version: "v1.0.0-rc1", want: true},
+		{version: "v1.0.0-rc1.1", want: true},
+	}
+	for _, c := range cases {
+		t.Run(c.version, func(t *testing.T) {
+			assert.Equal(t, c.want, ValidateVersion(c.version))
+		})
+	}
 }

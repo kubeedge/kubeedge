@@ -26,6 +26,9 @@ func (w *Writer) Write(data []byte) (int, error) {
 		klog.Error("bad io writer")
 		return 0, fmt.Errorf("bad io writer")
 	}
+	if len(data) > int(MaxPayloadLen) {
+		return 0, fmt.Errorf("payload length %d exceeds maximum %d", len(data), MaxPayloadLen)
+	}
 
 	// packing header
 	header := NewPackageHeader(Message)

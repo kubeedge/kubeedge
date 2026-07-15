@@ -193,16 +193,13 @@ func TestProcessInsert(t *testing.T) {
 	})
 
 	//jsonMarshall fail
-	msg = model.NewMessage("").BuildRouter(ModuleNameEdged, GroupResource, model.ResourceTypeLease, model.InsertOperation).FillBody(make(chan int))
+	msg = model.NewMessage("").BuildRouter(ModuleNameController, GroupResource, model.ResourceTypeLease, model.InsertOperation).FillBody(make(chan int))
 	meta.processInsert(*msg)
 	message, err = beehiveContext.Receive(ModuleNameEdgeHub)
 	if err != nil {
 		t.Errorf("EdgeHub Channel not found: %v", err)
 		return
 	}
-	message.Header.ParentID = message.GetID()
-	beehiveContext.SendResp(message)
-	message, err = beehiveContext.Receive(ModuleNameEdged)
 	t.Run("MarshallFail", func(t *testing.T) {
 		if message.GetContent() != marshalError {
 			t.Errorf("Wrong Error message received : Wanted %v and Got %v", marshalError, message.GetContent())
