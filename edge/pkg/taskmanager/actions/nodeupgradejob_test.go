@@ -259,51 +259,50 @@ func TestNodeUpgradeJobBackup(t *testing.T) {
 }
 
 func TestNodeUpgradeJobUpgrade(t *testing.T) {
-	ctx := context.TODO()
-	specser := &cachedSpecSerializer{}
-	h := nodeUpgradeJobActionHandler{
-		logger: klog.Background(),
-	}
-
-	t.Run("get spec failed", func(t *testing.T) {
-		resp := h.upgrade(ctx, "", "", specser)
-		require.ErrorContains(t, resp.Error(), "failed to conv spec to NodeUpgradeJobSpec, actual type <nil>")
-		require.True(t, resp.NeedInterrupt())
-	})
-
-	t.Run("standard upgrade command", func(t *testing.T) {
-		patches := gomonkey.NewPatches()
-		defer patches.Reset()
-
-		patches.ApplyMethod(reflect.TypeOf((*execs.Command)(nil)), "Exec",
-			func(cmd *execs.Command) error {
-				assert.Equal(t, "bash -c keadm upgrade edge --force --toVersion 1.21.0 >> /tmp/keadm.log 2>&1", cmd.GetCommand())
-				return nil
-			})
-
-		specser.spec = &operationsv1alpha2.NodeUpgradeJobSpec{
-			Version: "1.21.0",
+	t.Run("standard upgrade command args", func(t *testing.T) {
+		spec := &operationsv1alpha2.NodeUpgradeJobSpec{
+			Version: "v1.21.0",
 		}
-		resp := h.upgrade(ctx, "", "", specser)
-		require.NoError(t, resp.Error())
+
+		args := buildNodeUpgradeJobCommandArgs(spec)
+
+		assert.Equal(t, []string{
+			"upgrade", "edge",
+			"--force",
+			"--toVersion", "v1.21.0",
+		}, args)
 	})
 
-	t.Run("custom image repository upgrade command", func(t *testing.T) {
-		patches := gomonkey.NewPatches()
-		defer patches.Reset()
-
-		patches.ApplyMethod(reflect.TypeOf((*execs.Command)(nil)), "Exec",
-			func(cmd *execs.Command) error {
-				assert.Equal(t, "bash -c keadm upgrade edge --force --toVersion 1.21.0 --image custom.com/kubeedge/installation-package >> /tmp/keadm.log 2>&1", cmd.GetCommand())
-				return nil
-			})
-
-		specser.spec = &operationsv1alpha2.NodeUpgradeJobSpec{
-			Version: "1.21.0",
+	t.Run("custom image repository upgrade command args", func(t *testing.T) {
+		spec := &operationsv1alpha2.NodeUpgradeJobSpec{
+			Version: "v1.21.0",
 			Image:   "custom.com/kubeedge/installation-package",
 		}
-		resp := h.upgrade(ctx, "", "", specser)
-		require.NoError(t, resp.Error())
+
+		args := buildNodeUpgradeJobCommandArgs(spec)
+
+		assert.Equal(t, []string{
+			"upgrade", "edge",
+			"--force",
+			"--toVersion", "v1.21.0",
+			"--image", "custom.com/kubeedge/installation-package",
+		}, args)
+	})
+
+	t.Run("malicious fields are kept as argv values", func(t *testing.T) {
+		spec := &operationsv1alpha2.NodeUpgradeJobSpec{
+			Version: "v1.21.0; touch /tmp/pwned",
+			Image:   "custom.com/kubeedge/installation-package$(touch /tmp/pwned)",
+		}
+
+		args := buildNodeUpgradeJobCommandArgs(spec)
+
+		assert.Equal(t, []string{
+			"upgrade", "edge",
+			"--force",
+			"--toVersion", "v1.21.0; touch /tmp/pwned",
+			"--image", "custom.com/kubeedge/installation-package$(touch /tmp/pwned)",
+		}, args)
 	})
 }
 

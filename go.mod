@@ -19,7 +19,7 @@ require (
 	github.com/golang/protobuf v1.5.4
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/kubeedge/api v0.0.0
+	github.com/kubeedge/api v0.0.0-00010101000000-000000000000
 	github.com/kubeedge/beehive v0.0.0
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/mattn/go-sqlite3 v1.14.22
@@ -112,7 +112,7 @@ require (
 	github.com/containerd/ttrpc v1.2.5 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
-	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
+	github.com/cyphar/filepath-securejoin v0.2.4
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/distribution/reference v0.6.0
 	github.com/docker/cli v23.0.3+incompatible // indirect
