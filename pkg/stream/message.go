@@ -43,6 +43,8 @@ func (m MessageType) String() string {
 		return "DATA"
 	case MessageTypeRemoveConnect:
 		return "REMOVE_CONNECT"
+	case MessageTypePortForwardConnect:
+		return "PORT_FORWARD_CONNECT"
 	}
 	return "UNKNOWN"
 }

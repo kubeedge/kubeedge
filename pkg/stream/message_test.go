@@ -47,6 +47,10 @@ func TestMessageType_String(t *testing.T) {
 			stdResult: "ATTACH_CONNECT",
 		},
 		{
+			msg:       MessageTypePortForwardConnect,
+			stdResult: "PORT_FORWARD_CONNECT",
+		},
+		{
 			msg:       MessageTypeMetricConnect,
 			stdResult: "METRIC_CONNECT",
 		},

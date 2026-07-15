@@ -60,6 +60,14 @@ func (s *StreamServer) installDebugHandler() {
 	s.container.Add(ws)
 
 	ws = new(restful.WebService)
+	ws.Path("/portForward")
+	ws.Route(ws.GET("/{podNamespace}/{podID}").
+		To(s.getPortForward))
+	ws.Route(ws.POST("/{podNamespace}/{podID}").
+		To(s.getPortForward))
+	s.container.Add(ws)
+
+	ws = new(restful.WebService)
 	ws.Path("/exec")
 
 	ws.Route(ws.GET("/{podNamespace}/{podID}/{containerName}").
@@ -355,6 +363,73 @@ func (s *StreamServer) getAttach(request *restful.Request, response *restful.Res
 	if err = attachConnection.Serve(); err != nil {
 		err = fmt.Errorf("apiconnection Serve %s in %s error %v",
 			attachConnection.String(), session.String(), err)
+		return
+	}
+}
+
+func (s *StreamServer) getPortForward(request *restful.Request, response *restful.Response) {
+	var err error
+	defer func() {
+		if err != nil {
+			response.WriteHeader(http.StatusInternalServerError)
+			klog.Errorf("Failed to get portForward, err: %v", err)
+		}
+	}()
+
+	sessionKey, err := s.getSessionKey(request.Request.URL.Path)
+	if err != nil {
+		err = fmt.Errorf("can not get session key: %v", err)
+		return
+	}
+	session, ok := s.tunnel.getSession(sessionKey)
+	if !ok {
+		err = fmt.Errorf("portForward: can not find %v session ", sessionKey)
+		return
+	}
+
+	if !httpstream.IsUpgradeRequest(request.Request) {
+		err = fmt.Errorf("request was not an upgrade")
+		return
+	}
+
+	requestHijacker, ok := response.ResponseWriter.(http.Hijacker)
+	if !ok {
+		klog.V(6).Infof("Unable to hijack response writer: %T", response.ResponseWriter)
+		err = fmt.Errorf("request connection cannot be hijacked: %T", response.ResponseWriter)
+		return
+	}
+
+	requestHijackedConn, _, err := requestHijacker.Hijack()
+	if err != nil {
+		klog.V(6).Infof("Unable to hijack response: %v", err)
+		err = fmt.Errorf("error hijacking connection: %v", err)
+		return
+	}
+	defer requestHijackedConn.Close()
+
+	portForwardConnection, err := session.AddAPIServerConnection(s, &ContainerPortForwardConnection{
+		r:            request,
+		Conn:         requestHijackedConn,
+		session:      session,
+		ctx:          request.Request.Context(),
+		edgePeerStop: make(chan struct{}, 2),
+		closeChan:    make(chan bool),
+	})
+	if err != nil {
+		err = fmt.Errorf("add apiServer portForward connection into %s error %v", session.String(), err)
+		return
+	}
+
+	defer func() {
+		if err != nil {
+			session.DeleteAPIServerConnection(portForwardConnection)
+			klog.Infof("Delete %s from %s", portForwardConnection.String(), session.String())
+		}
+	}()
+
+	if err = portForwardConnection.Serve(); err != nil {
+		err = fmt.Errorf("apiconnection Serve %s in %s error %v",
+			portForwardConnection.String(), session.String(), err)
 		return
 	}
 }
