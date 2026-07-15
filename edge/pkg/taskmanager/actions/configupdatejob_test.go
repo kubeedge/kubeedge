@@ -21,6 +21,11 @@ import (
 	"testing"
 )
 
+const (
+	testConfigUpdateCommand = "config-update"
+	testConfigUpdateSetFlag = "--set"
+)
+
 func TestBuildConfigUpdateArgsDoesNotUseShell(t *testing.T) {
 	updateFields := map[string]string{
 		"modules.edgehub.websocket.url":           "ws://127.0.0.1:10000/e632aba927ea4ac2b575ec1603d56f10/events",
@@ -32,10 +37,10 @@ func TestBuildConfigUpdateArgsDoesNotUseShell(t *testing.T) {
 	if len(args) != 3 {
 		t.Fatalf("expected 3 args, got %d: %v", len(args), args)
 	}
-	if args[0] != "config-update" {
+	if args[0] != testConfigUpdateCommand {
 		t.Fatalf("expected config-update subcommand, got %q", args[0])
 	}
-	if args[1] != "--set" {
+	if args[1] != testConfigUpdateSetFlag {
 		t.Fatalf("expected --set flag, got %q", args[1])
 	}
 	if !strings.Contains(args[2], "30; touch /tmp/pwned") {
@@ -59,10 +64,10 @@ func TestBuildConfigUpdateArgsSortsFields(t *testing.T) {
 	if len(args) != 3 {
 		t.Fatalf("expected 3 args, got %d: %v", len(args), args)
 	}
-	if args[0] != "config-update" {
+	if args[0] != testConfigUpdateCommand {
 		t.Fatalf("expected config-update subcommand, got %q", args[0])
 	}
-	if args[1] != "--set" {
+	if args[1] != testConfigUpdateSetFlag {
 		t.Fatalf("expected --set flag, got %q", args[1])
 	}
 	if args[2] != "a.key=a,z.key=z" {
@@ -76,7 +81,7 @@ func TestBuildConfigUpdateArgsEmptyFields(t *testing.T) {
 	if len(args) != 3 {
 		t.Fatalf("expected 3 args, got %d: %v", len(args), args)
 	}
-	if args[0] != "config-update" || args[1] != "--set" || args[2] != "" {
+	if args[0] != testConfigUpdateCommand || args[1] != testConfigUpdateSetFlag || args[2] != "" {
 		t.Fatalf("unexpected args for empty update fields: %v", args)
 	}
 }
