@@ -17,7 +17,6 @@ limitations under the License.
 package config
 
 import (
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -26,13 +25,8 @@ import (
 )
 
 func TestInitConfigure(t *testing.T) {
-	// Reset the global state at the beginning to prevent test flakiness from prior tests
-	once = new(sync.Once)
-	config = Configure{}
-
 	// Use t.Cleanup to restore global state after the test execution
 	t.Cleanup(func() {
-		once = new(sync.Once)
 		config = Configure{}
 	})
 
@@ -44,6 +38,11 @@ func TestInitConfigure(t *testing.T) {
 	require.Equal(t, *dt, config.DeviceTwin)
 	require.Equal(t, nodeName, config.NodeName)
 
+	c := Get()
+	require.NotNil(t, c)
+	require.Equal(t, *dt, c.DeviceTwin)
+	require.Equal(t, nodeName, c.NodeName)
+
 	// Save the initialized config state
 	expectedConfig := config
 
@@ -52,26 +51,4 @@ func TestInitConfigure(t *testing.T) {
 	InitConfigure(dt2, "different-node")
 
 	require.Equal(t, expectedConfig, config, "Entire config should remain unchanged after first initialization")
-}
-
-func TestGet(t *testing.T) {
-	// Reset the global state at the beginning to prevent test flakiness from prior tests
-	once = new(sync.Once)
-	config = Configure{}
-
-	// Use t.Cleanup to restore global state after the test execution
-	t.Cleanup(func() {
-		once = new(sync.Once)
-		config = Configure{}
-	})
-
-	dt := &v1alpha2.DeviceTwin{}
-	nodeName := "test-node"
-
-	InitConfigure(dt, nodeName)
-
-	c := Get()
-	require.NotNil(t, c)
-	require.Equal(t, *dt, c.DeviceTwin)
-	require.Equal(t, nodeName, c.NodeName)
 }
