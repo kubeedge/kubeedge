@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
@@ -337,6 +338,62 @@ func TestNodeSessionSendAckMessage(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			executeTest(t, test)
 		})
+	}
+}
+
+func TestSaveNamespaceResourceSuccessDoesNotMoveObjectSyncStatusBackward(t *testing.T) {
+	client := fake.NewSimpleClientset()
+	existingObjectSync := tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "5"), "Pod")
+	if _, err := client.ReliablesyncsV1alpha1().ObjectSyncs(tf.TestNamespace).Create(
+		t.Context(), existingObjectSync, metav1.CreateOptions{}); err != nil {
+		t.Fatalf("failed to seed objectSync: %v", err)
+	}
+
+	session := NewNodeSession(
+		tf.TestNodeID,
+		tf.TestProjectID,
+		nil,
+		tf.KeepaliveInterval,
+		common.InitNodeMessagePool(tf.TestNodeID),
+		client,
+	)
+	session.saveNamespaceResourceSuccess(tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "3"), "update"))
+
+	got, err := client.ReliablesyncsV1alpha1().ObjectSyncs(tf.TestNamespace).Get(
+		t.Context(), existingObjectSync.Name, metav1.GetOptions{})
+	if err != nil {
+		t.Fatalf("failed to get objectSync: %v", err)
+	}
+	if got.Status.ObjectResourceVersion != "5" {
+		t.Fatalf("expected objectSync status to stay at 5, got %q", got.Status.ObjectResourceVersion)
+	}
+}
+
+func TestSaveNonNamespaceResourceSuccessDoesNotMoveClusterObjectSyncStatusBackward(t *testing.T) {
+	client := fake.NewSimpleClientset()
+	existingClusterObjectSync := tf.NewClusterObjectSync(tf.NewTestNodeResource(tf.TestNodeID, tf.TestNodeUID, "5"), "Node")
+	if _, err := client.ReliablesyncsV1alpha1().ClusterObjectSyncs().Create(
+		t.Context(), existingClusterObjectSync, metav1.CreateOptions{}); err != nil {
+		t.Fatalf("failed to seed clusterObjectSync: %v", err)
+	}
+
+	session := NewNodeSession(
+		tf.TestNodeID,
+		tf.TestProjectID,
+		nil,
+		tf.KeepaliveInterval,
+		common.InitNodeMessagePool(tf.TestNodeID),
+		client,
+	)
+	session.saveNonNamespaceResourceSuccess(tf.NewNodeMessage(tf.NewTestNodeResource(tf.TestNodeID, tf.TestNodeUID, "3"), "update"))
+
+	got, err := client.ReliablesyncsV1alpha1().ClusterObjectSyncs().Get(
+		t.Context(), existingClusterObjectSync.Name, metav1.GetOptions{})
+	if err != nil {
+		t.Fatalf("failed to get clusterObjectSync: %v", err)
+	}
+	if got.Status.ObjectResourceVersion != "5" {
+		t.Fatalf("expected clusterObjectSync status to stay at 5, got %q", got.Status.ObjectResourceVersion)
 	}
 }
 
