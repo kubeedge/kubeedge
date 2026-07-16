@@ -26,6 +26,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
@@ -36,6 +37,7 @@ import (
 	"github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	crdfake "github.com/kubeedge/api/client/clientset/versioned/fake"
 	crdinformers "github.com/kubeedge/api/client/informers/externalversions"
+	reliablesyncslisters "github.com/kubeedge/api/client/listers/reliablesyncs/v1alpha1"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	tf "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/testing"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
@@ -303,6 +305,88 @@ func TestEnqueueNodeForGC(t *testing.T) {
 
 	if got := testController.nodeGCQueue.Len(); got != 2 {
 		t.Errorf("enqueueNodeForGC() queue len = %d, want 2", got)
+	}
+}
+
+type failingObjectSyncLister struct{}
+
+func (failingObjectSyncLister) List(labels.Selector) ([]*v1alpha1.ObjectSync, error) {
+	return nil, errors.New("list error")
+}
+func (failingObjectSyncLister) ObjectSyncs(string) reliablesyncslisters.ObjectSyncNamespaceLister {
+	return nil
+}
+
+type failingClusterObjectSyncLister struct{}
+
+func (failingClusterObjectSyncLister) List(labels.Selector) ([]*v1alpha1.ClusterObjectSync, error) {
+	return nil, errors.New("list error")
+}
+func (failingClusterObjectSyncLister) Get(string) (*v1alpha1.ClusterObjectSync, error) {
+	return nil, errors.New("get error")
+}
+
+type failingNodeLister struct{}
+
+func (failingNodeLister) List(labels.Selector) ([]*v1.Node, error) {
+	return nil, errors.New("node list error")
+}
+func (failingNodeLister) Get(string) (*v1.Node, error) {
+	return nil, errors.New("node get error")
+}
+
+func TestNodeGCHandlesListErrors(t *testing.T) {
+	emptyCRD := crdinformers.NewSharedInformerFactory(crdfake.NewSimpleClientset(), 0)
+	emptyObjectSyncLister := emptyCRD.Reliablesyncs().V1alpha1().ObjectSyncs().Lister()
+
+	t.Run("ObjectSync list error", func(t *testing.T) {
+		ctl := newSyncController(true)
+		ctl.objectSyncLister = failingObjectSyncLister{}
+		ctl.clusterObjectSyncLister = failingClusterObjectSyncLister{}
+		if err := ctl.gcNodeSyncs("node"); err == nil {
+			t.Error("gcNodeSyncs() expected error from ObjectSync lister, got nil")
+		}
+		ctl.enqueueOrphanedNodeSyncs() // must return after the list error, not panic
+	})
+
+	t.Run("ClusterObjectSync list error", func(t *testing.T) {
+		ctl := newSyncController(true)
+		ctl.objectSyncLister = emptyObjectSyncLister
+		ctl.clusterObjectSyncLister = failingClusterObjectSyncLister{}
+		if err := ctl.gcNodeSyncs("node"); err == nil {
+			t.Error("gcNodeSyncs() expected error from ClusterObjectSync lister, got nil")
+		}
+		ctl.enqueueOrphanedNodeSyncs() // must return after the cluster list error, not panic
+	})
+}
+
+func TestGCNodeSyncsSkipsOtherNodes(t *testing.T) {
+	objectSync := tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod")
+	testController := newGCTestController(t, objectSync)
+
+	// GC for a different node must not touch this node's records.
+	if err := testController.gcNodeSyncs("some-other-node"); err != nil {
+		t.Fatalf("gcNodeSyncs() returned error: %v", err)
+	}
+	got, _ := testController.crdclient.ReliablesyncsV1alpha1().ObjectSyncs(tf.TestNamespace).List(context.Background(), metav1.ListOptions{})
+	if len(got.Items) != 1 {
+		t.Errorf("gcNodeSyncs() for another node deleted this node's syncs; got %d, want 1", len(got.Items))
+	}
+}
+
+func TestGCNodeSyncsCheckError(t *testing.T) {
+	objectSync := tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod")
+	testController := newGCTestController(t, objectSync)
+	// The node lister returns a non-NotFound error, so garbage cannot be determined
+	// and the records must be kept.
+	testController.nodeLister = failingNodeLister{}
+
+	if err := testController.gcNodeSyncs(getNodeName(objectSync.Name)); err == nil {
+		t.Error("gcNodeSyncs() expected error from node lister, got nil")
+	}
+	got, _ := testController.crdclient.ReliablesyncsV1alpha1().ObjectSyncs(tf.TestNamespace).List(context.Background(), metav1.ListOptions{})
+	if len(got.Items) != 1 {
+		t.Errorf("gcNodeSyncs() deleted syncs despite a node-check error; got %d, want 1", len(got.Items))
 	}
 }
 
