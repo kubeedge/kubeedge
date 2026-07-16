@@ -59,6 +59,10 @@ func TestMessageType_String(t *testing.T) {
 			stdResult: "REMOVE_CONNECT",
 		},
 		{
+			msg:       MessageTypeCloseConnect,
+			stdResult: "CLOSE_CONNECT",
+		},
+		{
 			msg:       100,
 			stdResult: "UNKNOWN",
 		},
