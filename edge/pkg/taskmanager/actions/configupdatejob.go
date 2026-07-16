@@ -20,6 +20,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os/exec"
+	"sort"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -98,15 +100,11 @@ func (h *configUpdateJobActionHandler) updateConfig(
 		return resp
 	}
 
-	var setFields string
-	for updateKey, updateVal := range spec.UpdateFields {
-		setFields = setFields + fmt.Sprintf("%s=%s,", updateKey, updateVal)
-	}
-	setFields = strings.TrimSuffix(setFields, ",")
-	cmdStr := execs.NewCommand(fmt.Sprintf("keadm config-update --set %s", setFields))
-	err := cmdStr.Exec()
+	args := buildConfigUpdateArgs(spec.UpdateFields)
+	cmd := exec.Command("keadm", args...)
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		resp.err = err
+		resp.err = fmt.Errorf("update config failed, err: %w, output: %s", err, out)
 		return resp
 	}
 	return resp
@@ -150,4 +148,14 @@ func (h *configUpdateJobActionHandler) reportActionStatus(jobname, nodename, act
 		body.Succ = true
 	}
 	message.ReportNodeTaskStatus(res, body)
+}
+
+func buildConfigUpdateArgs(updateFields map[string]string) []string {
+	setFields := make([]string, 0, len(updateFields))
+	for updateKey, updateVal := range updateFields {
+		setFields = append(setFields, fmt.Sprintf("%s=%s", updateKey, updateVal))
+	}
+	sort.Strings(setFields)
+
+	return []string{"config-update", "--set", strings.Join(setFields, ",")}
 }

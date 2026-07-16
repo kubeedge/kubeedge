@@ -61,7 +61,7 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 				},
 			},
 			expectedAllowed: false,
-			expectedError:   "version must begin with prefix 'v'",
+			expectedError:   "invalid version 1.0.0",
 		},
 		{
 			name:      "Invalid Semver",
@@ -73,7 +73,19 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 				},
 			},
 			expectedAllowed: false,
-			expectedError:   "version is not a semver compatible version",
+			expectedError:   "invalid version v1.0",
+		},
+		{
+			name:      "Invalid image",
+			operation: admissionv1.Create,
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version: "v1.0.0",
+					Image:   "invalid-image",
+				},
+			},
+			expectedAllowed: false,
+			expectedError:   "invalid image repo invalid-image",
 		},
 		{
 			name:      "No NodeNames and LabelSelector",
@@ -197,7 +209,17 @@ func TestValidateNodeUpgradeJob(t *testing.T) {
 					NodeNames: []string{"node1"},
 				},
 			},
-			expectedErr: "version must begin with prefix 'v'",
+			expectedErr: "invalid version 1.0.0",
+		},
+		{
+			name: "Invalid image",
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version: "v1.0.0",
+					Image:   "invalid-image",
+				},
+			},
+			expectedErr: "invalid image repo invalid-image",
 		},
 		{
 			name: "Invalid version (not semver compatible)",
@@ -207,7 +229,7 @@ func TestValidateNodeUpgradeJob(t *testing.T) {
 					NodeNames: []string{"node1"},
 				},
 			},
-			expectedErr: "version is not a semver compatible version",
+			expectedErr: "invalid version v1.0",
 		},
 		{
 			name: "Missing both NodeNames and LabelSelector",
@@ -368,7 +390,7 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 			},
 		},
 		{
-			name: "TimeoutSeconds specified",
+			name: "Concurrency specified",
 			spec: v1alpha1.NodeUpgradeJobSpec{
 				Version:        "v1.0.0",
 				NodeNames:      []string{"node1"},
@@ -383,7 +405,7 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 			},
 		},
 		{
-			name: "Concurrency specified",
+			name: "TimeoutSeconds specified",
 			spec: v1alpha1.NodeUpgradeJobSpec{
 				Version:     "v1.0.0",
 				NodeNames:   []string{"node1"},
@@ -404,5 +426,54 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 			patch := generateNodeUpgradeJobPatch(tc.spec)
 			assert.Equal(tc.expectedPatch, patch)
 		})
+	}
+}
+
+func TestValidateNodeUpgradeJobAllowsOptionalAndValidImage(t *testing.T) {
+	cases := []struct {
+		name    string
+		upgrade *v1alpha1.NodeUpgradeJob
+	}{
+		{
+			name: "empty image is allowed",
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.0.0",
+					NodeNames: []string{"node1"},
+				},
+			},
+		},
+		{
+			name: "valid image repo is allowed",
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.0.0",
+					Image:     "kubeedge/installation-package:v1.23.1",
+					NodeNames: []string{"node1"},
+				},
+			},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := validateNodeUpgradeJob(tt.upgrade); err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+		})
+	}
+}
+
+func TestGenerateNodeUpgradeJobPatchReturnsEmptyWhenDefaultsSpecified(t *testing.T) {
+	timeoutSeconds := uint32(600)
+	patch := generateNodeUpgradeJobPatch(v1alpha1.NodeUpgradeJobSpec{
+		Version:        "v1.0.0",
+		NodeNames:      []string{"node1"},
+		Concurrency:    2,
+		TimeoutSeconds: &timeoutSeconds,
+	})
+
+	if len(patch) != 0 {
+		t.Fatalf("expected empty patch, got %#v", patch)
 	}
 }
