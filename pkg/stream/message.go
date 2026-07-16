@@ -88,11 +88,12 @@ func ReadMessageFromTunnel(r io.Reader) (*Message, error) {
 	if err != nil {
 		return nil, err
 	}
+	msgType := MessageType(messageType)
 	klog.V(6).Infof("Receive Tunnel message connectID %d messageType %s data:%v string:[%v]",
-		connectID, MessageType(messageType), data, string(data))
+		connectID, msgType, data, string(data))
 	return &Message{
 		ConnectID:   connectID,
-		MessageType: MessageType(messageType),
+		MessageType: msgType,
 		Data:        data,
 	}, nil
 }
