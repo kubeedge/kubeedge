@@ -7,7 +7,7 @@ import (
 )
 
 var config Configure
-var once sync.Once
+var once = new(sync.Once)
 
 type Configure struct {
 	v1alpha2.DeviceTwin
