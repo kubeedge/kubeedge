@@ -90,7 +90,7 @@ func (conn *WSConnection) handleRawData() {
 	}
 
 	// TODO: support control message processing in raw data mode
-	_, err := io.Copy(conn.consumer, lane.NewLane(api.ProtocolTypeQuic, conn.wsConn))
+	_, err := io.Copy(conn.consumer, lane.NewLane(api.ProtocolTypeWS, conn.wsConn))
 	if err != nil {
 		klog.Errorf("failed to copy data, error: %+v", err)
 		conn.state.State = api.StatDisconnected
