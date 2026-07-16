@@ -28,6 +28,9 @@ func ReadPEMFile(file string) (*pem.Block, error) {
 		return nil, err
 	}
 	p, _ := pem.Decode(bff)
+	if p == nil {
+		return nil, fmt.Errorf("failed to decode PEM block from file %s", file)
+	}
 	return p, nil
 }
 

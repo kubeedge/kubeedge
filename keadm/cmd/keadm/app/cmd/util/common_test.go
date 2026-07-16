@@ -17,6 +17,8 @@ limitations under the License.
 package util
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"errors"
 	"fmt"
 	"os"
@@ -930,5 +932,128 @@ func TestCleanupCompressFile(t *testing.T) {
 
 	if err != nil {
 		t.Logf("Expected error: %v", err)
+	}
+}
+
+type testTarEntry struct {
+	name     string
+	body     string
+	typeflag byte
+}
+
+func createTestTarGz(t *testing.T, entries []testTarEntry) string {
+	t.Helper()
+
+	archivePath := filepath.Join(t.TempDir(), "test.tar.gz")
+	file, err := os.Create(archivePath)
+	if err != nil {
+		t.Fatalf("failed to create test archive: %v", err)
+	}
+
+	gzWriter := gzip.NewWriter(file)
+	tarWriter := tar.NewWriter(gzWriter)
+
+	for _, entry := range entries {
+		header := &tar.Header{
+			Name:     entry.name,
+			Mode:     0644,
+			Typeflag: entry.typeflag,
+		}
+		if entry.typeflag == tar.TypeReg {
+			header.Size = int64(len(entry.body))
+		}
+		if entry.typeflag == tar.TypeDir {
+			header.Mode = 0755
+		}
+
+		if err := tarWriter.WriteHeader(header); err != nil {
+			t.Fatalf("failed to write tar header: %v", err)
+		}
+		if entry.typeflag == tar.TypeReg {
+			if _, err := tarWriter.Write([]byte(entry.body)); err != nil {
+				t.Fatalf("failed to write tar body: %v", err)
+			}
+		}
+	}
+
+	if err := tarWriter.Close(); err != nil {
+		t.Fatalf("failed to close tar writer: %v", err)
+	}
+	if err := gzWriter.Close(); err != nil {
+		t.Fatalf("failed to close gzip writer: %v", err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatalf("failed to close archive file: %v", err)
+	}
+
+	return archivePath
+}
+
+func TestDecompressTarGzAllowsSafeEntries(t *testing.T) {
+	dest := filepath.Join(t.TempDir(), "extract")
+	archivePath := createTestTarGz(t, []testTarEntry{
+		{name: "dir", typeflag: tar.TypeDir},
+		{name: "dir/file.txt", body: "SAFE", typeflag: tar.TypeReg},
+	})
+
+	err := DecompressTarGz(archivePath, dest)
+	assert.NoError(t, err)
+
+	got, err := os.ReadFile(filepath.Join(dest, "dir", "file.txt"))
+	assert.NoError(t, err)
+	assert.Equal(t, "SAFE", string(got))
+}
+
+func TestDecompressTarGzRejectsPathTraversal(t *testing.T) {
+	tests := []struct {
+		name      string
+		entryName string
+	}{
+		{
+			name:      "parent directory traversal",
+			entryName: "../victim.txt",
+		},
+		{
+			name:      "backslash parent directory traversal",
+			entryName: `..\victim.txt`,
+		},
+		{
+			name:      "windows drive absolute path",
+			entryName: `C:\Users\Public\victim.txt`,
+		},
+		{
+			name:      "windows drive absolute path with slashes",
+			entryName: "C:/Users/Public/victim.txt",
+		},
+		{
+			name:      "absolute unix path",
+			entryName: "/tmp/victim.txt",
+		},
+		{
+			name:      "nested parent traversal",
+			entryName: "dir/../../victim.txt",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			base := t.TempDir()
+			dest := filepath.Join(base, "extract")
+			victim := filepath.Join(base, "victim.txt")
+
+			err := os.WriteFile(victim, []byte("ORIGINAL"), 0644)
+			assert.NoError(t, err)
+
+			archivePath := createTestTarGz(t, []testTarEntry{
+				{name: tt.entryName, body: "OVERWRITTEN", typeflag: tar.TypeReg},
+			})
+
+			err = DecompressTarGz(archivePath, dest)
+			assert.Error(t, err)
+
+			got, err := os.ReadFile(victim)
+			assert.NoError(t, err)
+			assert.Equal(t, "ORIGINAL", string(got))
+		})
 	}
 }

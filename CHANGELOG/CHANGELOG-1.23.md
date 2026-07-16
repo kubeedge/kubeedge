@@ -1,8 +1,29 @@
+* [v1.23.1](#v1231)
+    * [Downloads for v1.23.1](#downloads-for-v1231)
+    * [KubeEdge v1.23.1 Release Notes](#kubeedge-v1231-release-notes)
+        * [Security Fixes](#security-fixes)
 * [v1.23.0](#v1230)
     * [Downloads for v1.23.0](#downloads-for-v1230)
     * [KubeEdge v1.23 Release Notes](#kubeedge-v123-release-notes)
         * [1.23 What's New](#123-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
+
+# v1.23.1
+
+## Downloads for v1.23.1
+
+Download v1.23.1 in the [v1.23.1 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.23.1).
+
+## KubeEdge v1.23.1 Release Notes
+
+> This release contains security fixes. Upgrading is strongly recommended for all users on affected versions.
+
+### Security Fixes
+
+- **NodeUpgradeJob command injection (RCE on edge nodes).** The v1alpha2 NodeUpgradeJob handler built the `keadm upgrade edge` command by concatenating the user-controlled `spec.version` and `spec.image` fields into a shell command. An authenticated user able to create or update NodeUpgradeJob resources could inject shell metacharacters and execute arbitrary commands on targeted edge nodes. ([CVE-2026-62371](https://github.com/kubeedge/kubeedge/security/advisories/GHSA-5jpj-293f-rhvj), [#7028](https://github.com/kubeedge/kubeedge/pull/7028))
+- **ConfigUpdateJob command injection (RCE on edge nodes).** ConfigUpdateJob `updateFields` values were concatenated into a shell command. An authenticated user able to create or update ConfigUpdateJob resources could execute arbitrary commands on targeted edge nodes. ([CVE-2026-62182](https://github.com/kubeedge/kubeedge/security/advisories/GHSA-m3c6-2p7h-cfr3), [#7028](https://github.com/kubeedge/kubeedge/pull/7028))
+- **keadm archive path traversal (arbitrary file write on Windows).** The `DecompressTarGz` function joined archive entry names to the destination directory without validation, allowing a crafted archive to write files outside the intended directory during `keadm join` on Windows edge nodes. ([CVE-2026-62369](https://github.com/kubeedge/kubeedge/security/advisories/GHSA-9vm9-pqxx-x83v), [#7028](https://github.com/kubeedge/kubeedge/pull/7028))
+- **viaduct packer unbounded allocation (CloudHub DoS).** The packer allocated a buffer sized by an attacker-declared payload length with no upper bound. An authenticated edge node could send crafted headers to exhaust CloudHub memory. A 32 MiB payload limit is now enforced. ([CVE-2026-62370](https://github.com/kubeedge/kubeedge/security/advisories/GHSA-gfw4-49f9-cp25), [#7028](https://github.com/kubeedge/kubeedge/pull/7028))
 
 # v1.23.0
 

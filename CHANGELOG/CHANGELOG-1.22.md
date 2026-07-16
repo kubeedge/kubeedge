@@ -1,3 +1,8 @@
+* [v1.22.2](#v1222)
+    * [Downloads for v1.22.2](#downloads-for-v1222)
+    * [KubeEdge v1.22.2 Release Notes](#kubeedge-v1222-release-notes)
+        * [Security Fixes](#security-fixes)
+        * [Other Changes](#other-changes)
 * [v1.22.1](#v1221)
     * [Downloads for v1.22.1](#downloads-for-v1221)
     * [KubeEdge v1.22.1 Release Notes](#kubeedge-v1221-release-notes)
@@ -8,6 +13,27 @@
         * [1.22 What's New](#122-whats-new)
         * [Important Steps before Upgrading](#important-steps-before-upgrading)
 
+
+# v1.22.2
+
+## Downloads for v1.22.2
+
+Download v1.22.2 in the [v1.22.2 release page](https://github.com/kubeedge/kubeedge/releases/tag/v1.22.2).
+
+## KubeEdge v1.22.2 Release Notes
+
+> This release contains security fixes. Upgrading is strongly recommended for all users on affected versions.
+
+### Security Fixes
+
+- **NodeUpgradeJob command injection (RCE on edge nodes).** The v1alpha2 NodeUpgradeJob handler built the `keadm upgrade edge` command by concatenating the user-controlled `spec.version` and `spec.image` fields into a shell command. An authenticated user able to create or update NodeUpgradeJob resources could inject shell metacharacters and execute arbitrary commands on targeted edge nodes. ([CVE-2026-62371](https://github.com/kubeedge/kubeedge/security/advisories/GHSA-5jpj-293f-rhvj), [#7029](https://github.com/kubeedge/kubeedge/pull/7029))
+- **ConfigUpdateJob command injection (RCE on edge nodes).** ConfigUpdateJob `updateFields` values were concatenated into a shell command. An authenticated user able to create or update ConfigUpdateJob resources could execute arbitrary commands on targeted edge nodes. ([CVE-2026-62182](https://github.com/kubeedge/kubeedge/security/advisories/GHSA-m3c6-2p7h-cfr3), [#7029](https://github.com/kubeedge/kubeedge/pull/7029))
+- **keadm archive path traversal (arbitrary file write on Windows).** The `DecompressTarGz` function joined archive entry names to the destination directory without validation, allowing a crafted archive to write files outside the intended directory during `keadm join` on Windows edge nodes. ([CVE-2026-62369](https://github.com/kubeedge/kubeedge/security/advisories/GHSA-9vm9-pqxx-x83v), [#7029](https://github.com/kubeedge/kubeedge/pull/7029))
+- **viaduct packer unbounded allocation (CloudHub DoS).** The packer allocated a buffer sized by an attacker-declared payload length with no upper bound. An authenticated edge node could send crafted headers to exhaust CloudHub memory. A 32 MiB payload limit is now enforced. ([CVE-2026-62370](https://github.com/kubeedge/kubeedge/security/advisories/GHSA-gfw4-49f9-cp25), [#7029](https://github.com/kubeedge/kubeedge/pull/7029))
+
+### Other Changes
+
+- Fix keadm config-update not working with numeric types like int32. ([#6586](https://github.com/kubeedge/kubeedge/pull/6586), [@Abirdcfly](https://github.com/Abirdcfly))
 
 # v1.22.1
 
