@@ -7,7 +7,7 @@ import (
 )
 
 var Config Configure
-var once = new(sync.Once)
+var once sync.Once
 
 type Configure struct {
 	v1alpha2.EventBus
