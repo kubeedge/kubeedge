@@ -20,9 +20,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -38,6 +39,7 @@ import (
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 	upgradeedge "github.com/kubeedge/kubeedge/pkg/upgrade/edge"
 	"github.com/kubeedge/kubeedge/pkg/util/execs"
+	"github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 
 func newNodeUpgradeJobRunner() *ActionRunner {
@@ -129,6 +131,15 @@ func (nodeUpgradeJobActionHandler) checkItems(
 			resp.err = err
 			return resp
 		}
+	}
+
+	if !validation.ValidateVersion(spec.Version) {
+		resp.err = fmt.Errorf("invalid version %s", spec.Version)
+		return resp
+	}
+	if spec.Image != "" && !validation.ValidateImageRepo(spec.Image) {
+		resp.err = fmt.Errorf("invalid image repo %s", spec.Image)
+		return resp
 	}
 
 	// Pull installation-package image.
@@ -241,16 +252,41 @@ func (h *nodeUpgradeJobActionHandler) upgrade(
 		resp.interrupt = true // No upgrade yet, no need to roll back.
 		return resp
 	}
-	var cmdline strings.Builder
-	cmdline.WriteString("keadm upgrade edge --force --toVersion " + spec.Version)
-	if spec.Image != "" {
-		cmdline.WriteString(" --image " + spec.Image)
+	if !validation.ValidateVersion(spec.Version) {
+		resp.err = fmt.Errorf("invalid version %s", spec.Version)
+		resp.interrupt = true // No upgrade yet, no need to roll back.
+		return resp
 	}
-	cmdline.WriteString(" >> /tmp/keadm.log 2>&1")
-	cmd := execs.NewCommand(cmdline.String())
-	h.logger.V(2).Info("run upgrade cmd", "cmd", cmdline.String())
-	resp.err = cmd.Exec()
+	if spec.Image != "" && !validation.ValidateImageRepo(spec.Image) {
+		resp.err = fmt.Errorf("invalid image repo %s", spec.Image)
+		resp.interrupt = true // No upgrade yet, no need to roll back.
+		return resp
+	}
+
+	logFile, err := os.OpenFile("/tmp/keadm.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	if err != nil {
+		resp.err = fmt.Errorf("failed to open keadm log file: %w", err)
+		resp.interrupt = true // No upgrade yet, no need to roll back.
+		return resp
+	}
+	defer logFile.Close()
+
+	args := buildNodeUpgradeJobCommandArgs(spec)
+
+	cmd := exec.Command("keadm", args...)
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+	h.logger.V(2).Info("run upgrade cmd", "cmd", "keadm", "args", args)
+	resp.err = cmd.Run()
 	return resp
+}
+
+func buildNodeUpgradeJobCommandArgs(spec *operationsv1alpha2.NodeUpgradeJobSpec) []string {
+	args := []string{"upgrade", "edge", "--force", "--toVersion", spec.Version}
+	if spec.Image != "" {
+		args = append(args, "--image", spec.Image)
+	}
+	return args
 }
 
 func (h *nodeUpgradeJobActionHandler) rollback(

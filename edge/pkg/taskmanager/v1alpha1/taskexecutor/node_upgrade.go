@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -191,19 +192,40 @@ func upgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 
 func keadmUpgrade(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) error {
 	klog.Infof("Begin to run upgrade command")
-	upgradeCmd := fmt.Sprintf("keadm upgrade edge --upgradeID %s --historyID %s --fromVersion %s --toVersion %s --config %s --image %s > /tmp/keadm.log 2>&1",
-		upgradeReq.UpgradeID, upgradeReq.HistoryID, version.Get(), upgradeReq.Version, opts.ConfigFile, upgradeReq.Image)
 
-	// run upgrade cmd to upgrade edge node
-	// use nohup command to start a child progress
-	command := fmt.Sprintf("nohup %s &", upgradeCmd)
-	cmd := exec.Command("bash", "-c", command)
-	s, err := cmd.CombinedOutput()
+	logFile, err := os.OpenFile("/tmp/keadm.log", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
-		return fmt.Errorf("run upgrade command %s failed: %v, %s", command, err, s)
+		return fmt.Errorf("failed to open keadm log file: %w", err)
 	}
-	klog.Infof("!!! Finish upgrade from Version %s to %s ...", version.Get(), upgradeReq.Version)
+	defer logFile.Close()
+
+	args := buildKeadmUpgradeArgs(upgradeReq, opts)
+
+	cmd := exec.Command("nohup", append([]string{"keadm"}, args...)...)
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to start keadm upgrade command: %w", err)
+	}
+	if err := cmd.Process.Release(); err != nil {
+		return fmt.Errorf("failed to release keadm upgrade process: %w", err)
+	}
+
+	klog.Infof("Started keadm upgrade from Version %s to %s ...", version.Get().String(), upgradeReq.Version)
 	return nil
+}
+
+func buildKeadmUpgradeArgs(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) []string {
+	return []string{
+		"upgrade", "edge",
+		"--upgradeID", upgradeReq.UpgradeID,
+		"--historyID", upgradeReq.HistoryID,
+		"--fromVersion", version.Get().String(),
+		"--toVersion", upgradeReq.Version,
+		"--config", opts.ConfigFile,
+		"--image", upgradeReq.Image,
+	}
 }
 
 func prepareKeadm(upgradeReq *commontypes.NodeUpgradeJobRequest) error {
