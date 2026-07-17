@@ -711,7 +711,7 @@ func TestEventHandlerObjectConversion(t *testing.T) {
 		select {
 		case <-freshHandler.events:
 			t.Fatal("Unexpected event received for invalid tombstone object")
-		case <-time.After(100 * time.Millisecond):
+		default:
 		}
 	})
 
