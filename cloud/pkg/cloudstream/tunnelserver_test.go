@@ -322,9 +322,24 @@ func TestGetAddressHost(t *testing.T) {
 			want: "2001:db8::1",
 		},
 		{
+			name: "IPv6 host without port",
+			addr: "2001:db8::1",
+			want: "2001:db8::1",
+		},
+		{
+			name: "Bracketed IPv6 host without port",
+			addr: "[2001:db8::1]",
+			want: "2001:db8::1",
+		},
+		{
 			name: "Host without port",
 			addr: "edge-node",
 			want: "edge-node",
+		},
+		{
+			name: "Empty address",
+			addr: "",
+			want: "",
 		},
 	}
 
