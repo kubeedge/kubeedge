@@ -17,6 +17,8 @@ limitations under the License.
 package wrap
 
 import (
+	"time"
+
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/nodetask/actionflow"
 )
@@ -77,6 +79,10 @@ func (job ConfigUpdateJob) ResourceType() string {
 
 func (job ConfigUpdateJob) Concurrency() int {
 	return int(job.Obj.Spec.Concurrency)
+}
+
+func (job ConfigUpdateJob) Timeout() time.Duration {
+	return jobTimeout(job.Obj.Spec.TimeoutSeconds)
 }
 
 func (job ConfigUpdateJob) Spec() any {

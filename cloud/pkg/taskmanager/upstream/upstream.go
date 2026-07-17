@@ -119,11 +119,14 @@ func handleUpstreamMessage(
 	isFinalAction := upmsg.Succ && action.NextSuccessful == nil ||
 		!upmsg.Succ && action.NextFailure == nil
 
-	// It's the final action, so release the executor.
+	// It's the final action, so release the executor. Otherwise, the node is
+	// still making progress, so refresh its timeout to avoid a false timeout.
 	if isFinalAction {
 		if err := releaseExecutorConcurrent(res); err != nil {
 			return fmt.Errorf("failed to release executor concurrent, err: %v", err)
 		}
+	} else {
+		refreshExecutorConcurrent(res)
 	}
 
 	if err := handler.UpdateNodeTaskStatus(res.JobName, res.NodeName, isFinalAction, upmsg); err != nil {
@@ -138,7 +141,23 @@ func releaseExecutorConcurrent(res taskmsg.Resource) error {
 		return fmt.Errorf("failed to get executor, err: %v", err)
 	}
 	if exec != nil {
-		exec.FinishTask()
+		exec.FinishTask(res.NodeName)
 	}
 	return nil
+}
+
+// refreshExecutorConcurrent refreshes the timeout of the node task on a progress
+// report. A missing executor means the task is already finished, so it is
+// ignored on a best-effort basis.
+func refreshExecutorConcurrent(res taskmsg.Resource) {
+	exec, err := executor.GetExecutor(res.ResourceType, res.JobName)
+	if err != nil {
+		if !errors.Is(err, executor.ErrExecutorNotExists) {
+			klog.Errorf("failed to get executor to refresh node task timeout, err: %v", err)
+		}
+		return
+	}
+	if exec != nil {
+		exec.RefreshTask(res.NodeName)
+	}
 }
