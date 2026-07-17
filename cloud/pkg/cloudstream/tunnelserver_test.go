@@ -305,6 +305,36 @@ func TestConnect(t *testing.T) {
 	}
 }
 
+func TestGetAddressHost(t *testing.T) {
+	tests := []struct {
+		name string
+		addr string
+		want string
+	}{
+		{
+			name: "IPv4 host port",
+			addr: "192.168.1.3:12345",
+			want: "192.168.1.3",
+		},
+		{
+			name: "IPv6 host port",
+			addr: "[2001:db8::1]:12345",
+			want: "2001:db8::1",
+		},
+		{
+			name: "Host without port",
+			addr: "edge-node",
+			want: "edge-node",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, getAddressHost(tt.addr))
+		})
+	}
+}
+
 func TestTLSSetup(t *testing.T) {
 	fakeCert := []byte("fake-certificate-data")
 	fakeKey := []byte("fake-key-data")
