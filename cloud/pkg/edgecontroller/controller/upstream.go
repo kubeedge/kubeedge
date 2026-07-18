@@ -30,8 +30,10 @@ import (
 	"encoding/json"
 	stderrors "errors"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
@@ -54,11 +56,11 @@ import (
 	crdClientset "github.com/kubeedge/api/client/clientset/versioned"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
-	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	utilcontext "github.com/kubeedge/kubeedge/cloud/pkg/common/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/nodetopology"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/controller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/types"
@@ -104,6 +106,10 @@ type UpstreamController struct {
 	crdClient    crdClientset.Interface
 
 	config v1alpha1.EdgeController
+
+	iptablesMgrMode      v1alpha1.IptablesMgrMode
+	edgeTunnelIPOnce     sync.Once
+	edgeTunnelIPDecision bool
 
 	// message channel
 	eventChan                      chan model.Message
@@ -1012,8 +1018,8 @@ func (uc *UpstreamController) patchNode() {
 				continue
 			}
 
-			if features.DefaultFeatureGate.Enabled(features.EdgeTunnelIP) && shouldUseEdgeTunnelIP() {
-				enriched, mergeErr := mergeEdgeTunnelIPIntoPatch(context.TODO(), name, patchBytes)
+			if features.DefaultFeatureGate.Enabled(features.EdgeTunnelIP) && uc.shouldUseEdgeTunnelIP() {
+				enriched, mergeErr := uc.mergeEdgeTunnelIPIntoPatch(context.TODO(), name, patchBytes)
 				if mergeErr != nil {
 					klog.Warningf("message: %s, failed to merge EdgeTunnelIP into patch for node %s: %v", msg.GetID(), name, mergeErr)
 				} else {
@@ -1040,12 +1046,33 @@ func (uc *UpstreamController) patchNode() {
 	}
 }
 
-// shouldUseEdgeTunnelIP returns true when advertiseAddress is configured,
-// indicating a potentially separated topology where EdgeTunnelIP is needed
-// to route API server traffic through CloudCore. In co-located setups
-// (no advertiseAddress), iptablesManager DNAT handles routing directly.
-func shouldUseEdgeTunnelIP() bool {
-	return len(hubconfig.Config.AdvertiseAddress) > 0
+// shouldUseEdgeTunnelIP returns true only when iptablesManager is in internal
+// mode AND kube-apiserver is not colocated with cloudcore -- i.e. the API
+// server cannot reach edge nodes via the iptables DNAT rule installed on
+// cloudcore's own node. Colocation is determined by nodetopology.IsAPIServerColocated,
+// not inferred from configuration presence: advertiseAddress is mandatory
+// and auto-defaulted by cloudcore, so checking whether it is set can never
+// distinguish colocated from separated deployments. This mirrors
+// cloudstream.TunnelServer.shouldUseEdgeTunnelIP exactly, since both control
+// whether the same node ends up with an EdgeTunnelIP address: cloudstream's
+// copy gates the initial connect-time write, this one gates every
+// subsequent heartbeat patch, and they must not disagree.
+//
+// The result is cached for the process lifetime: node placement cannot
+// change without a cloudcore restart.
+func (uc *UpstreamController) shouldUseEdgeTunnelIP() bool {
+	if uc.iptablesMgrMode != v1alpha1.InternalMode {
+		return false
+	}
+	uc.edgeTunnelIPOnce.Do(func() {
+		sameNode, determined := nodetopology.IsAPIServerColocated(context.Background(), uc.kubeClient.CoreV1(), os.Getenv(nodetopology.NodeNameEnvVar))
+		// Cannot verify placement -- assume separated nodes. A redundant
+		// EdgeTunnelIP is harmless when nodes are actually colocated; a
+		// missing one silently breaks kubectl exec/logs/attach when they
+		// are not.
+		uc.edgeTunnelIPDecision = !determined || !sameNode
+	})
+	return uc.edgeTunnelIPDecision
 }
 
 // mergeEdgeTunnelIPIntoPatch injects the EdgeTunnelIP address into patchBytes
@@ -1053,8 +1080,8 @@ func shouldUseEdgeTunnelIP() bool {
 // UpdateStatus where EdgeTunnelIP would be absent from the node.
 // Follows the fixupPatchForNodeStatusAddresses pattern from component-helpers:
 // uses $patch:replace to atomically set the full addresses list.
-func mergeEdgeTunnelIPIntoPatch(ctx context.Context, nodeName string, patchBytes []byte) ([]byte, error) {
-	node, err := client.GetKubeClient().CoreV1().Nodes().Get(ctx, nodeName, metaV1.GetOptions{})
+func (uc *UpstreamController) mergeEdgeTunnelIPIntoPatch(ctx context.Context, nodeName string, patchBytes []byte) ([]byte, error) {
+	node, err := uc.kubeClient.CoreV1().Nodes().Get(ctx, nodeName, metaV1.GetOptions{})
 	if err != nil {
 		return patchBytes, err
 	}
@@ -1684,12 +1711,13 @@ func UpdateAnnotation(ctx context.Context, nodeName string) error {
 }
 
 // NewUpstreamController create UpstreamController from config
-func NewUpstreamController(config *v1alpha1.EdgeController, factory k8sinformer.SharedInformerFactory) (*UpstreamController, error) {
+func NewUpstreamController(config *v1alpha1.EdgeController, iptablesMgrMode v1alpha1.IptablesMgrMode, factory k8sinformer.SharedInformerFactory) (*UpstreamController, error) {
 	uc := &UpstreamController{
-		kubeClient:   client.GetKubeClient(),
-		messageLayer: messagelayer.EdgeControllerMessageLayer(),
-		crdClient:    client.GetCRDClient(),
-		config:       *config,
+		kubeClient:      client.GetKubeClient(),
+		messageLayer:    messagelayer.EdgeControllerMessageLayer(),
+		crdClient:       client.GetCRDClient(),
+		config:          *config,
+		iptablesMgrMode: iptablesMgrMode,
 	}
 	uc.nodeLister = factory.Core().V1().Nodes().Lister()
 	uc.podLister = factory.Core().V1().Pods().Lister()

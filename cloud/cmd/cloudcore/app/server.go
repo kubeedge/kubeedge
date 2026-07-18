@@ -168,7 +168,7 @@ func registerModules(c *v1alpha1.CloudCoreConfig) {
 		!c.Modules.CloudHub.Authorization.Debug
 
 	cloudhub.Register(c.Modules.CloudHub)
-	edgecontroller.Register(c.Modules.EdgeController)
+	edgecontroller.Register(c.Modules.EdgeController, c.Modules.IptablesManager)
 	devicecontroller.Register(c.Modules.DeviceController)
 	taskmanager.Register(c.Modules.TaskManager)
 	synccontroller.Register(c.Modules.SyncController)

@@ -19,13 +19,18 @@ type EdgeController struct {
 
 var _ core.Module = (*EdgeController)(nil)
 
-func newEdgeController(config *v1alpha1.EdgeController) *EdgeController {
+func newEdgeController(config *v1alpha1.EdgeController, iptablesMgr *v1alpha1.IptablesManager) *EdgeController {
 	ec := &EdgeController{config: *config}
 	if !ec.Enable() {
 		return ec
 	}
+	iptablesMgrMode := v1alpha1.InternalMode
+	if iptablesMgr != nil {
+		iptablesMgrMode = iptablesMgr.Mode
+	}
+
 	var err error
-	ec.upstream, err = controller.NewUpstreamController(config, informers.GetInformersManager().GetKubeInformerFactory())
+	ec.upstream, err = controller.NewUpstreamController(config, iptablesMgrMode, informers.GetInformersManager().GetKubeInformerFactory())
 	if err != nil {
 		klog.Exitf("new upstream controller failed with error: %s", err)
 	}
@@ -37,8 +42,8 @@ func newEdgeController(config *v1alpha1.EdgeController) *EdgeController {
 	return ec
 }
 
-func Register(ec *v1alpha1.EdgeController) {
-	core.Register(newEdgeController(ec))
+func Register(ec *v1alpha1.EdgeController, iptablesMgr *v1alpha1.IptablesManager) {
+	core.Register(newEdgeController(ec, iptablesMgr))
 }
 
 // Name of controller

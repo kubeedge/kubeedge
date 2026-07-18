@@ -42,6 +42,7 @@ import (
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	streamconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/nodetopology"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/stream"
@@ -359,16 +360,11 @@ func (s *TunnelServer) removeNodeEdgeTunnelIP(nodeName string) {
 	klog.V(4).Infof("Removed EdgeTunnelIP from node %s", nodeName)
 }
 
-// nodeNameEnvVar is the downward-API environment variable cloudcore's
-// deployment injects (fieldRef: spec.nodeName) so a running instance can
-// identify which node it is scheduled on.
-const nodeNameEnvVar = "NODE_NAME"
-
 // shouldUseEdgeTunnelIP returns true only when iptablesManager is in internal
 // mode AND kube-apiserver is not colocated with cloudcore -- i.e. the API
 // server cannot reach edge nodes via the iptables DNAT rule installed on
-// cloudcore's own node. Colocation is determined by isAPIServerColocated, not
-// inferred from configuration presence: advertiseAddress is mandatory and
+// cloudcore's own node. Colocation is determined by nodetopology.IsAPIServerColocated,
+// not inferred from configuration presence: advertiseAddress is mandatory and
 // auto-defaulted by cloudcore, so checking whether it is set can never
 // distinguish colocated from separated deployments.
 //
@@ -379,7 +375,7 @@ func (s *TunnelServer) shouldUseEdgeTunnelIP() bool {
 		return false
 	}
 	s.edgeTunnelIPOnce.Do(func() {
-		sameNode, determined := isAPIServerColocated(context.Background(), s.kubeClient, os.Getenv(nodeNameEnvVar))
+		sameNode, determined := nodetopology.IsAPIServerColocated(context.Background(), s.kubeClient, os.Getenv(nodetopology.NodeNameEnvVar))
 		// Cannot verify placement (e.g. cloudcore not running as a scheduled
 		// pod, NODE_NAME unset, or a lookup failure) -- assume separated
 		// nodes. A redundant EdgeTunnelIP is harmless when nodes are
@@ -388,54 +384,4 @@ func (s *TunnelServer) shouldUseEdgeTunnelIP() bool {
 		s.edgeTunnelIPDecision = !determined || !sameNode
 	})
 	return s.edgeTunnelIPDecision
-}
-
-// isAPIServerColocated reports whether every reachable kube-apiserver
-// endpoint resolves to an address of nodeName, i.e. whether a node-local
-// iptables DNAT rule installed on that node would actually intercept the API
-// server's outbound traffic.
-//
-// The real, routable API server address(es) are read from the well-known
-// default/kubernetes Endpoints object rather than by inspecting Node or Pod
-// objects: that Endpoints object is populated by the API server itself, so
-// it is accurate for both self-hosted (kubeadm/static-pod) control planes
-// and managed control planes (EKS/GKE/AKS/...) where the API server is not a
-// node in the cluster at all.
-//
-// determined reports whether a definitive answer was possible. Callers must
-// not treat (false, false) as "not colocated" -- it means unknown, e.g.
-// nodeName is empty, or the lookups failed.
-func isAPIServerColocated(ctx context.Context, kubeClient v1.CoreV1Interface, nodeName string) (sameNode bool, determined bool) {
-	if kubeClient == nil || nodeName == "" {
-		return false, false
-	}
-
-	node, err := kubeClient.Nodes().Get(ctx, nodeName, metav1.GetOptions{})
-	if err != nil {
-		klog.V(4).Infof("failed to get own node %q for EdgeTunnelIP placement check: %v", nodeName, err)
-		return false, false
-	}
-	nodeIPs := make(map[string]bool, len(node.Status.Addresses))
-	for _, addr := range node.Status.Addresses {
-		nodeIPs[addr.Address] = true
-	}
-
-	endpoints, err := kubeClient.Endpoints(corev1.NamespaceDefault).Get(ctx, "kubernetes", metav1.GetOptions{})
-	if err != nil {
-		klog.V(4).Infof("failed to get default/kubernetes endpoints for EdgeTunnelIP placement check: %v", err)
-		return false, false
-	}
-
-	found := false
-	for _, subset := range endpoints.Subsets {
-		for _, addr := range subset.Addresses {
-			found = true
-			if !nodeIPs[addr.IP] {
-				// This API server replica is not reachable via nodeName --
-				// a DNAT rule installed there cannot intercept it.
-				return false, true
-			}
-		}
-	}
-	return found, found
 }

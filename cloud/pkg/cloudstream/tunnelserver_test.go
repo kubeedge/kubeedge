@@ -35,6 +35,7 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	streamconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/nodetopology"
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/stream"
@@ -691,7 +692,7 @@ func TestShouldUseEdgeTunnelIP(t *testing.T) {
 	const cloudCoreNodeName = "cloudcore-node"
 
 	t.Run("ExternalMode_AlwaysFalse", func(t *testing.T) {
-		t.Setenv(nodeNameEnvVar, cloudCoreNodeName)
+		t.Setenv(nodetopology.NodeNameEnvVar, cloudCoreNodeName)
 		fakeClient := fake.NewSimpleClientset(
 			cloudCoreNode(cloudCoreNodeName, "10.0.0.9"),
 			kubernetesEndpoints("172.16.5.9"), // clearly separated, would be true under InternalMode
@@ -701,14 +702,14 @@ func TestShouldUseEdgeTunnelIP(t *testing.T) {
 	})
 
 	t.Run("InternalMode_UndeterminedFallsBackToTrue", func(t *testing.T) {
-		t.Setenv(nodeNameEnvVar, "") // cloudcore not running as a scheduled pod -- can't verify placement
+		t.Setenv(nodetopology.NodeNameEnvVar, "") // cloudcore not running as a scheduled pod -- can't verify placement
 		fakeClient := fake.NewSimpleClientset()
 		ts := newTunnelServerWithClient(testTunnelPort, 0, v1alpha1.InternalMode, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*100)
 		assert.True(t, ts.shouldUseEdgeTunnelIP(), "undetermined placement must conservatively assume separated nodes")
 	})
 
 	t.Run("InternalMode_Colocated_False", func(t *testing.T) {
-		t.Setenv(nodeNameEnvVar, cloudCoreNodeName)
+		t.Setenv(nodetopology.NodeNameEnvVar, cloudCoreNodeName)
 		fakeClient := fake.NewSimpleClientset(
 			cloudCoreNode(cloudCoreNodeName, "10.0.0.9"),
 			kubernetesEndpoints("10.0.0.9"),
@@ -718,7 +719,7 @@ func TestShouldUseEdgeTunnelIP(t *testing.T) {
 	})
 
 	t.Run("InternalMode_Separated_True", func(t *testing.T) {
-		t.Setenv(nodeNameEnvVar, cloudCoreNodeName)
+		t.Setenv(nodetopology.NodeNameEnvVar, cloudCoreNodeName)
 		fakeClient := fake.NewSimpleClientset(
 			cloudCoreNode(cloudCoreNodeName, "10.0.0.9"),
 			kubernetesEndpoints("172.16.5.9"),
@@ -728,7 +729,7 @@ func TestShouldUseEdgeTunnelIP(t *testing.T) {
 	})
 
 	t.Run("DecisionIsCachedAfterDetermined", func(t *testing.T) {
-		t.Setenv(nodeNameEnvVar, cloudCoreNodeName)
+		t.Setenv(nodetopology.NodeNameEnvVar, cloudCoreNodeName)
 		fakeClient := fake.NewSimpleClientset(
 			cloudCoreNode(cloudCoreNodeName, "10.0.0.9"),
 			kubernetesEndpoints("10.0.0.9"),
@@ -747,44 +748,6 @@ func TestShouldUseEdgeTunnelIP(t *testing.T) {
 	})
 }
 
-// TestIsAPIServerColocated covers isAPIServerColocated cases not already
-// exercised end-to-end by TestShouldUseEdgeTunnelIP, in particular the HA
-// case: even one apiserver replica outside cloudcore's node means that
-// replica's traffic needs EdgeTunnelIP, so it must not count as colocated.
-func TestIsAPIServerColocated(t *testing.T) {
-	const cloudCoreNodeName = "cloudcore-node"
-
-	t.Run("OwnNodeNotFound", func(t *testing.T) {
-		fakeClient := fake.NewSimpleClientset(kubernetesEndpoints("10.0.0.9"))
-		same, determined := isAPIServerColocated(context.Background(), fakeClient.CoreV1(), cloudCoreNodeName)
-		assert.False(t, same)
-		assert.False(t, determined)
-	})
-
-	t.Run("EndpointsNotFound", func(t *testing.T) {
-		fakeClient := fake.NewSimpleClientset(cloudCoreNode(cloudCoreNodeName, "10.0.0.9"))
-		same, determined := isAPIServerColocated(context.Background(), fakeClient.CoreV1(), cloudCoreNodeName)
-		assert.False(t, same)
-		assert.False(t, determined)
-	})
-
-	t.Run("HAPartialMatchIsNotColocated", func(t *testing.T) {
-		fakeClient := fake.NewSimpleClientset(
-			cloudCoreNode(cloudCoreNodeName, "10.0.0.9"),
-			kubernetesEndpoints("10.0.0.9", "10.0.0.2"), // second replica elsewhere
-		)
-		same, determined := isAPIServerColocated(context.Background(), fakeClient.CoreV1(), cloudCoreNodeName)
-		assert.False(t, same)
-		assert.True(t, determined)
-	})
-
-	t.Run("HAFullMatchIsColocated", func(t *testing.T) {
-		fakeClient := fake.NewSimpleClientset(
-			cloudCoreNode(cloudCoreNodeName, "10.0.0.9", "10.0.0.2"),
-			kubernetesEndpoints("10.0.0.9", "10.0.0.2"),
-		)
-		same, determined := isAPIServerColocated(context.Background(), fakeClient.CoreV1(), cloudCoreNodeName)
-		assert.True(t, same)
-		assert.True(t, determined)
-	})
-}
+// isAPIServerColocated itself is now in cloud/pkg/common/nodetopology, with
+// its own test coverage there (nodetopology_test.go), since edgecontroller's
+// patchNode() path uses the same shared implementation.
