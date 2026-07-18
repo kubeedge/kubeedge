@@ -41,6 +41,8 @@ import (
 	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	messagelayer "github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/nodetopology"
+	common "github.com/kubeedge/kubeedge/common/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 )
 
@@ -179,7 +181,7 @@ func setupTest(t *testing.T) {
 	factory.Coordination().V1().Leases().Informer().GetStore()
 
 	var err error
-	UC, err = NewUpstreamController(defaultConf.Modules.EdgeController, factory)
+	UC, err = NewUpstreamController(defaultConf.Modules.EdgeController, v1alpha1.InternalMode, factory)
 	if err != nil {
 		t.Fatalf("Failed to create UpstreamController: %v", err)
 	}
@@ -1172,4 +1174,174 @@ func TestUpdatePodStatus(t *testing.T) {
 	if updatedPod.Status.Phase != corev1.PodRunning {
 		t.Errorf("Pod phase mismatch, expected %s, got %s", corev1.PodRunning, updatedPod.Status.Phase)
 	}
+}
+
+func kubernetesEndpoints(ips ...string) *corev1.Endpoints {
+	addrs := make([]corev1.EndpointAddress, 0, len(ips))
+	for _, ip := range ips {
+		addrs = append(addrs, corev1.EndpointAddress{IP: ip})
+	}
+	return &corev1.Endpoints{
+		ObjectMeta: metav1.ObjectMeta{Name: "kubernetes", Namespace: corev1.NamespaceDefault},
+		Subsets:    []corev1.EndpointSubset{{Addresses: addrs}},
+	}
+}
+
+func cloudCoreNode(name string, ips ...string) *corev1.Node {
+	addrs := make([]corev1.NodeAddress, 0, len(ips))
+	for _, ip := range ips {
+		addrs = append(addrs, corev1.NodeAddress{Type: corev1.NodeInternalIP, Address: ip})
+	}
+	return &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{Name: name},
+		Status:     corev1.NodeStatus{Addresses: addrs},
+	}
+}
+
+// TestUpstreamShouldUseEdgeTunnelIP exercises UpstreamController's own copy
+// of shouldUseEdgeTunnelIP, used to gate the heartbeat patchNode() path. This
+// used to be a static heuristic (len(AdvertiseAddress) > 0, always true) with
+// no same-node check at all, so patchNode() re-injected EdgeTunnelIP on every
+// heartbeat regardless of topology -- silently overriding whatever
+// cloudstream.TunnelServer's connect()-time decision had correctly computed.
+// These cases mirror cloudstream's TestShouldUseEdgeTunnelIP so the two
+// copies cannot silently diverge again.
+func TestUpstreamShouldUseEdgeTunnelIP(t *testing.T) {
+	const cloudCoreNodeName = "cloudcore-node"
+
+	t.Run("ExternalMode_AlwaysFalse", func(t *testing.T) {
+		t.Setenv(nodetopology.NodeNameEnvVar, cloudCoreNodeName)
+		fakeClient := fake.NewSimpleClientset(
+			cloudCoreNode(cloudCoreNodeName, "10.0.0.9"),
+			kubernetesEndpoints("172.16.5.9"), // clearly separated, would be true under InternalMode
+		)
+		uc := &UpstreamController{kubeClient: fakeClient, iptablesMgrMode: v1alpha1.ExternalMode}
+		if uc.shouldUseEdgeTunnelIP() {
+			t.Error("external iptablesManager mode never needs EdgeTunnelIP")
+		}
+	})
+
+	t.Run("InternalMode_UndeterminedFallsBackToTrue", func(t *testing.T) {
+		t.Setenv(nodetopology.NodeNameEnvVar, "") // cloudcore not running as a scheduled pod -- can't verify placement
+		fakeClient := fake.NewSimpleClientset()
+		uc := &UpstreamController{kubeClient: fakeClient, iptablesMgrMode: v1alpha1.InternalMode}
+		if !uc.shouldUseEdgeTunnelIP() {
+			t.Error("undetermined placement must conservatively assume separated nodes")
+		}
+	})
+
+	t.Run("InternalMode_Colocated_False", func(t *testing.T) {
+		t.Setenv(nodetopology.NodeNameEnvVar, cloudCoreNodeName)
+		fakeClient := fake.NewSimpleClientset(
+			cloudCoreNode(cloudCoreNodeName, "10.0.0.9"),
+			kubernetesEndpoints("10.0.0.9"),
+		)
+		uc := &UpstreamController{kubeClient: fakeClient, iptablesMgrMode: v1alpha1.InternalMode}
+		if uc.shouldUseEdgeTunnelIP() {
+			t.Error("apiserver colocated with cloudcore's node: local DNAT already handles routing")
+		}
+	})
+
+	t.Run("InternalMode_Separated_True", func(t *testing.T) {
+		t.Setenv(nodetopology.NodeNameEnvVar, cloudCoreNodeName)
+		fakeClient := fake.NewSimpleClientset(
+			cloudCoreNode(cloudCoreNodeName, "10.0.0.9"),
+			kubernetesEndpoints("172.16.5.9"),
+		)
+		uc := &UpstreamController{kubeClient: fakeClient, iptablesMgrMode: v1alpha1.InternalMode}
+		if !uc.shouldUseEdgeTunnelIP() {
+			t.Error("apiserver not reachable via cloudcore's node: needs EdgeTunnelIP")
+		}
+	})
+
+	t.Run("DecisionIsCachedAfterDetermined", func(t *testing.T) {
+		t.Setenv(nodetopology.NodeNameEnvVar, cloudCoreNodeName)
+		fakeClient := fake.NewSimpleClientset(
+			cloudCoreNode(cloudCoreNodeName, "10.0.0.9"),
+			kubernetesEndpoints("10.0.0.9"),
+		)
+		uc := &UpstreamController{kubeClient: fakeClient, iptablesMgrMode: v1alpha1.InternalMode}
+		if uc.shouldUseEdgeTunnelIP() {
+			t.Fatal("expected colocated (false) on first call")
+		}
+
+		// Mutate cluster state so a fresh lookup would flip the answer to
+		// "separated" -- the cached decision must not change mid-process.
+		if err := fakeClient.CoreV1().Endpoints(corev1.NamespaceDefault).Delete(context.Background(), "kubernetes", metav1.DeleteOptions{}); err != nil {
+			t.Fatalf("failed to delete endpoints: %v", err)
+		}
+		if _, err := fakeClient.CoreV1().Endpoints(corev1.NamespaceDefault).Create(context.Background(), kubernetesEndpoints("172.16.5.9"), metav1.CreateOptions{}); err != nil {
+			t.Fatalf("failed to create endpoints: %v", err)
+		}
+
+		if uc.shouldUseEdgeTunnelIP() {
+			t.Error("decision must stay cached for the UpstreamController's lifetime")
+		}
+	})
+}
+
+func TestMergeEdgeTunnelIPIntoPatch(t *testing.T) {
+	const nodeName = "edge-node"
+	const cloudCoreIP = "172.19.0.3"
+
+	t.Run("NoAnnotation_PatchUnchanged", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset(&corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{Name: nodeName},
+		})
+		uc := &UpstreamController{kubeClient: fakeClient}
+		patchBytes := []byte(`{"status":{}}`)
+		out, err := uc.mergeEdgeTunnelIPIntoPatch(context.Background(), nodeName, patchBytes)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if string(out) != string(patchBytes) {
+			t.Errorf("expected patch unchanged when no cloudcore annotation, got %s", out)
+		}
+	})
+
+	t.Run("WithAnnotation_InjectsEdgeTunnelIP", func(t *testing.T) {
+		fakeClient := fake.NewSimpleClientset(&corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        nodeName,
+				Annotations: map[string]string{common.EdgeMappingCloudKey: cloudCoreIP},
+			},
+			Status: corev1.NodeStatus{
+				Addresses: []corev1.NodeAddress{
+					{Type: corev1.NodeInternalIP, Address: "10.0.2.15"},
+				},
+			},
+		})
+		uc := &UpstreamController{kubeClient: fakeClient}
+		patchBytes := []byte(`{"status":{}}`)
+		out, err := uc.mergeEdgeTunnelIPIntoPatch(context.Background(), nodeName, patchBytes)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		var patchMap map[string]any
+		if err := json.Unmarshal(out, &patchMap); err != nil {
+			t.Fatalf("failed to unmarshal merged patch: %v", err)
+		}
+		status, ok := patchMap["status"].(map[string]any)
+		if !ok {
+			t.Fatalf("expected status object in patch, got %v", patchMap)
+		}
+		addresses, ok := status["addresses"].([]any)
+		if !ok {
+			t.Fatalf("expected addresses array in patch status, got %v", status)
+		}
+		found := false
+		for _, a := range addresses {
+			addr, ok := a.(map[string]any)
+			if !ok {
+				continue
+			}
+			if addr["type"] == string(common.NodeEdgeTunnelIP) && addr["address"] == cloudCoreIP {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("expected EdgeTunnelIP=%s in merged patch addresses, got %v", cloudCoreIP, addresses)
+		}
+	})
 }

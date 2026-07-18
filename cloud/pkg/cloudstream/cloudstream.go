@@ -25,22 +25,28 @@ import (
 )
 
 type cloudStream struct {
-	enable     bool
-	tunnelPort int
+	enable          bool
+	tunnelPort      int
+	iptablesMgrMode v1alpha1.IptablesMgrMode
 }
 
 var _ core.Module = (*cloudStream)(nil)
 
-func newCloudStream(enable bool, tunnelPort int) *cloudStream {
+func newCloudStream(enable bool, tunnelPort int, iptablesMgrMode v1alpha1.IptablesMgrMode) *cloudStream {
 	return &cloudStream{
-		enable:     enable,
-		tunnelPort: tunnelPort,
+		enable:          enable,
+		tunnelPort:      tunnelPort,
+		iptablesMgrMode: iptablesMgrMode,
 	}
 }
 
-func Register(controller *v1alpha1.CloudStream, commonConfig *v1alpha1.CommonConfig) {
+func Register(controller *v1alpha1.CloudStream, commonConfig *v1alpha1.CommonConfig, iptablesMgr *v1alpha1.IptablesManager) {
 	config.InitConfigure(controller)
-	core.Register(newCloudStream(controller.Enable, commonConfig.TunnelPort))
+	iptablesMgrMode := v1alpha1.InternalMode
+	if iptablesMgr != nil {
+		iptablesMgrMode = iptablesMgr.Mode
+	}
+	core.Register(newCloudStream(controller.Enable, commonConfig.TunnelPort, iptablesMgrMode))
 }
 
 func (s *cloudStream) Name() string {
@@ -55,7 +61,8 @@ func (s *cloudStream) Start() {
 	// TODO: Will improve in the future
 	ok := <-cloudhub.DoneTLSTunnelCerts
 	if ok {
-		ts := newTunnelServer(s.tunnelPort)
+		streamPort := int(config.Config.StreamPort)
+		ts := newTunnelServer(s.tunnelPort, streamPort, s.iptablesMgrMode)
 
 		// start new tunnel server
 		go ts.Start()

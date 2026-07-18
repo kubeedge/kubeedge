@@ -30,8 +30,10 @@ import (
 	"encoding/json"
 	stderrors "errors"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
@@ -58,13 +60,14 @@ import (
 	utilcontext "github.com/kubeedge/kubeedge/cloud/pkg/common/context"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/nodetopology"
 	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/controller"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/types"
 	routerrule "github.com/kubeedge/kubeedge/cloud/pkg/router/rule"
-	comconstants "github.com/kubeedge/kubeedge/common/constants"
 	common "github.com/kubeedge/kubeedge/common/constants"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
+	"github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 	kubeedgeutil "github.com/kubeedge/kubeedge/pkg/util"
 )
@@ -103,6 +106,10 @@ type UpstreamController struct {
 	crdClient    crdClientset.Interface
 
 	config v1alpha1.EdgeController
+
+	iptablesMgrMode      v1alpha1.IptablesMgrMode
+	edgeTunnelIPOnce     sync.Once
+	edgeTunnelIPDecision bool
 
 	// message channel
 	eventChan                      chan model.Message
@@ -1011,6 +1018,15 @@ func (uc *UpstreamController) patchNode() {
 				continue
 			}
 
+			if features.DefaultFeatureGate.Enabled(features.EdgeTunnelIP) && uc.shouldUseEdgeTunnelIP() {
+				enriched, mergeErr := uc.mergeEdgeTunnelIPIntoPatch(context.TODO(), name, patchBytes)
+				if mergeErr != nil {
+					klog.Warningf("message: %s, failed to merge EdgeTunnelIP into patch for node %s: %v", msg.GetID(), name, mergeErr)
+				} else {
+					patchBytes = enriched
+				}
+			}
+
 			node, err := uc.kubeClient.CoreV1().Nodes().Patch(utilcontext.FromMessage(context.TODO(), msg), name, apimachineryType.StrategicMergePatchType, patchBytes, metaV1.PatchOptions{}, "status")
 			if err != nil {
 				klog.Errorf("message: %s process failure, patch node failed with error: %v, namespace: %s, name: %s", msg.GetID(), err, namespace, name)
@@ -1028,6 +1044,94 @@ func (uc *UpstreamController) patchNode() {
 			klog.V(4).Infof("message: %s, patch node status successfully, namespace: %s, name: %s", msg.GetID(), namespace, name)
 		}
 	}
+}
+
+// shouldUseEdgeTunnelIP returns true only when iptablesManager is in internal
+// mode AND kube-apiserver is not colocated with cloudcore -- i.e. the API
+// server cannot reach edge nodes via the iptables DNAT rule installed on
+// cloudcore's own node. Colocation is determined by nodetopology.IsAPIServerColocated,
+// not inferred from configuration presence: advertiseAddress is mandatory
+// and auto-defaulted by cloudcore, so checking whether it is set can never
+// distinguish colocated from separated deployments. This mirrors
+// cloudstream.TunnelServer.shouldUseEdgeTunnelIP exactly, since both control
+// whether the same node ends up with an EdgeTunnelIP address: cloudstream's
+// copy gates the initial connect-time write, this one gates every
+// subsequent heartbeat patch, and they must not disagree.
+//
+// The result is cached for the process lifetime: node placement cannot
+// change without a cloudcore restart.
+func (uc *UpstreamController) shouldUseEdgeTunnelIP() bool {
+	if uc.iptablesMgrMode != v1alpha1.InternalMode {
+		return false
+	}
+	uc.edgeTunnelIPOnce.Do(func() {
+		sameNode, determined := nodetopology.IsAPIServerColocated(context.Background(), uc.kubeClient.CoreV1(), os.Getenv(nodetopology.NodeNameEnvVar))
+		// Cannot verify placement -- assume separated nodes. A redundant
+		// EdgeTunnelIP is harmless when nodes are actually colocated; a
+		// missing one silently breaks kubectl exec/logs/attach when they
+		// are not.
+		uc.edgeTunnelIPDecision = !determined || !sameNode
+	})
+	return uc.edgeTunnelIPDecision
+}
+
+// mergeEdgeTunnelIPIntoPatch injects the EdgeTunnelIP address into patchBytes
+// before the Patch call, eliminating the window between Patch and a subsequent
+// UpdateStatus where EdgeTunnelIP would be absent from the node.
+// Follows the fixupPatchForNodeStatusAddresses pattern from component-helpers:
+// uses $patch:replace to atomically set the full addresses list.
+func (uc *UpstreamController) mergeEdgeTunnelIPIntoPatch(ctx context.Context, nodeName string, patchBytes []byte) ([]byte, error) {
+	node, err := uc.kubeClient.CoreV1().Nodes().Get(ctx, nodeName, metaV1.GetOptions{})
+	if err != nil {
+		return patchBytes, err
+	}
+	cloudCoreIP := node.Annotations[common.EdgeMappingCloudKey]
+	if cloudCoreIP == "" {
+		return patchBytes, nil
+	}
+
+	// Build the desired addresses: current addresses (minus any stale EdgeTunnelIP) + new entry.
+	addresses := make([]v1.NodeAddress, 0, len(node.Status.Addresses)+1)
+	for _, addr := range node.Status.Addresses {
+		if addr.Type == common.NodeEdgeTunnelIP {
+			continue
+		}
+		addresses = append(addresses, addr)
+	}
+	addresses = append(addresses, v1.NodeAddress{
+		Type:    common.NodeEdgeTunnelIP,
+		Address: cloudCoreIP,
+	})
+
+	// Marshal typed list then add $patch:replace so the strategic merge patch
+	// replaces the addresses array entirely instead of merging by type key.
+	addrBytes, err := json.Marshal(addresses)
+	if err != nil {
+		return patchBytes, err
+	}
+	var addrArray []any
+	if err := json.Unmarshal(addrBytes, &addrArray); err != nil {
+		return patchBytes, err
+	}
+	addrArray = append(addrArray, map[string]any{"$patch": "replace"})
+
+	var patchMap map[string]any
+	if err := json.Unmarshal(patchBytes, &patchMap); err != nil {
+		return patchBytes, err
+	}
+
+	status := patchMap["status"]
+	if status == nil {
+		status = map[string]any{}
+		patchMap["status"] = status
+	}
+	statusMap, ok := status.(map[string]any)
+	if !ok {
+		return patchBytes, fmt.Errorf("unexpected data in patch")
+	}
+	statusMap["addresses"] = addrArray
+
+	return json.Marshal(patchMap)
 }
 
 func (uc *UpstreamController) updateNode() {
@@ -1590,7 +1694,7 @@ func UpdateAnnotation(ctx context.Context, nodeName string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get cloudcore localIP with err:%v", err)
 	}
-	if value, ok := node.Annotations[comconstants.EdgeMappingCloudKey]; ok {
+	if value, ok := node.Annotations[common.EdgeMappingCloudKey]; ok {
 		if value == localIP {
 			return nil
 		}
@@ -1598,7 +1702,7 @@ func UpdateAnnotation(ctx context.Context, nodeName string) error {
 	if node.Annotations == nil {
 		node.Annotations = make(map[string]string)
 	}
-	node.Annotations[comconstants.EdgeMappingCloudKey] = localIP
+	node.Annotations[common.EdgeMappingCloudKey] = localIP
 	_, err = client.GetKubeClient().CoreV1().Nodes().Update(ctx, node, metaV1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update node:%s with err:%v", nodeName, err)
@@ -1607,12 +1711,13 @@ func UpdateAnnotation(ctx context.Context, nodeName string) error {
 }
 
 // NewUpstreamController create UpstreamController from config
-func NewUpstreamController(config *v1alpha1.EdgeController, factory k8sinformer.SharedInformerFactory) (*UpstreamController, error) {
+func NewUpstreamController(config *v1alpha1.EdgeController, iptablesMgrMode v1alpha1.IptablesMgrMode, factory k8sinformer.SharedInformerFactory) (*UpstreamController, error) {
 	uc := &UpstreamController{
-		kubeClient:   client.GetKubeClient(),
-		messageLayer: messagelayer.EdgeControllerMessageLayer(),
-		crdClient:    client.GetCRDClient(),
-		config:       *config,
+		kubeClient:      client.GetKubeClient(),
+		messageLayer:    messagelayer.EdgeControllerMessageLayer(),
+		crdClient:       client.GetCRDClient(),
+		config:          *config,
+		iptablesMgrMode: iptablesMgrMode,
 	}
 	uc.nodeLister = factory.Core().V1().Nodes().Lister()
 	uc.podLister = factory.Core().V1().Pods().Lister()

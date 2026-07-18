@@ -23,21 +23,28 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/emicklei/go-restful"
 	"github.com/gorilla/websocket"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	streamconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudstream/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/nodetopology"
+	"github.com/kubeedge/kubeedge/common/constants"
+	"github.com/kubeedge/kubeedge/pkg/features"
 	"github.com/kubeedge/kubeedge/pkg/stream"
 )
 
@@ -51,33 +58,38 @@ type TunnelServer struct {
 	container *restful.Container
 	upgrader  websocket.Upgrader
 	sync.Mutex
-	sessions      map[string]*Session
-	nodeNameIP    sync.Map
-	tunnelPort    int
-	kubeClient    v1.CoreV1Interface
-	retrySleep    time.Duration
-	updateTimeout time.Duration
+	sessions        map[string]*Session
+	nodeNameIP      sync.Map
+	tunnelPort      int
+	streamPort      int
+	iptablesMgrMode v1alpha1.IptablesMgrMode
+	kubeClient      v1.CoreV1Interface
+	retrySleep      time.Duration
+	updateTimeout   time.Duration
+
+	edgeTunnelIPOnce     sync.Once
+	edgeTunnelIPDecision bool
 }
 
-func newTunnelServer(tunnelPort int) *TunnelServer {
+func newTunnelServer(tunnelPort int, streamPort int, iptablesMgrMode v1alpha1.IptablesMgrMode) *TunnelServer {
 	var kubeClient v1.CoreV1Interface
-	// Safely get the kube client, handling the nil case for tests
 	k8sClient := client.GetKubeClient()
 	if k8sClient != nil {
 		kubeClient = k8sClient.CoreV1()
 	}
-
-	return newTunnelServerWithClient(tunnelPort, kubeClient, DefaultRetrySleepTime, DefaultNodeStatusUpdateTimeout)
+	return newTunnelServerWithClient(tunnelPort, streamPort, iptablesMgrMode, kubeClient, DefaultRetrySleepTime, DefaultNodeStatusUpdateTimeout)
 }
 
-func newTunnelServerWithClient(tunnelPort int, kubeClient v1.CoreV1Interface, retrySleep, updateTimeout time.Duration) *TunnelServer {
+func newTunnelServerWithClient(tunnelPort int, streamPort int, iptablesMgrMode v1alpha1.IptablesMgrMode, kubeClient v1.CoreV1Interface, retrySleep, updateTimeout time.Duration) *TunnelServer {
 	return &TunnelServer{
-		container:     restful.NewContainer(),
-		sessions:      make(map[string]*Session),
-		tunnelPort:    tunnelPort,
-		kubeClient:    kubeClient,
-		retrySleep:    retrySleep,
-		updateTimeout: updateTimeout,
+		container:       restful.NewContainer(),
+		sessions:        make(map[string]*Session),
+		tunnelPort:      tunnelPort,
+		streamPort:      streamPort,
+		iptablesMgrMode: iptablesMgrMode,
+		kubeClient:      kubeClient,
+		retrySleep:      retrySleep,
+		updateTimeout:   updateTimeout,
 		upgrader: websocket.Upgrader{
 			HandshakeTimeout: time.Second * 2,
 			ReadBufferSize:   1024,
@@ -155,10 +167,21 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 		}
 		return
 	}
+
+	if features.DefaultFeatureGate.Enabled(features.EdgeTunnelIP) && s.shouldUseEdgeTunnelIP() {
+		if err := s.updateNodeEdgeTunnelIP(hostNameOverride); err != nil {
+			klog.Warningf("Failed to set EdgeTunnelIP on node %s: %v", hostNameOverride, err)
+		}
+	}
+
 	s.addSession(hostNameOverride, session)
 	s.addSession(internalIP, session)
 	s.addNodeIP(hostNameOverride, internalIP)
 	session.Serve()
+
+	if features.DefaultFeatureGate.Enabled(features.EdgeTunnelIP) && s.shouldUseEdgeTunnelIP() {
+		s.removeNodeEdgeTunnelIP(hostNameOverride)
+	}
 }
 
 func (s *TunnelServer) Start() {
@@ -218,24 +241,147 @@ func (s *TunnelServer) updateNodeKubeletEndpoint(nodeName string) error {
 		klog.V(4).Info("Skip updating node kubelet endpoint in test mode")
 		return fmt.Errorf("kubeclient is nil, cannot update node kubelet endpoint")
 	}
-	if err := wait.PollImmediate(s.retrySleep, s.updateTimeout, func() (bool, error) {
-		getNode, err := s.kubeClient.Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
-		if err != nil {
-			klog.Errorf("Failed while getting a Node to retry updating node KubeletEndpoint Port, node: %s, error: %v", nodeName, err)
-			return false, nil
-		}
+	if err := wait.PollUntilContextTimeout(context.Background(), s.retrySleep, s.updateTimeout, true,
+		func(ctx context.Context) (bool, error) {
+			getNode, err := s.kubeClient.Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+			if err != nil {
+				klog.Errorf("Failed while getting a Node to retry updating node KubeletEndpoint Port, node: %s, error: %v", nodeName, err)
+				return false, nil
+			}
 
-		getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(s.tunnelPort)
-		_, err = s.kubeClient.Nodes().UpdateStatus(context.Background(), getNode, metav1.UpdateOptions{})
-		if err != nil {
-			klog.Errorf("Failed to update node KubeletEndpoint Port, node: %s, tunnelPort: %d, err: %v", nodeName, s.tunnelPort, err)
-			return false, nil
-		}
-		return true, nil
-	}); err != nil {
+			// When EdgeTunnelIP is both enabled and actually needed (see
+			// shouldUseEdgeTunnelIP), API server routes via EdgeTunnelIP to
+			// cloudCoreIP and connects on streamPort. Otherwise use tunnelPort
+			// for iptableManager DNAT routing. These two conditions must match
+			// the gating in connect(): if the port switched to streamPort but
+			// the EdgeTunnelIP address was never added (because shouldUse was
+			// false), the API server would dial the node's real IP on
+			// streamPort, which is not listening there.
+			if features.DefaultFeatureGate.Enabled(features.EdgeTunnelIP) && s.shouldUseEdgeTunnelIP() {
+				getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(s.streamPort)
+			} else {
+				getNode.Status.DaemonEndpoints.KubeletEndpoint.Port = int32(s.tunnelPort)
+			}
+
+			_, err = s.kubeClient.Nodes().UpdateStatus(ctx, getNode, metav1.UpdateOptions{})
+			if err != nil {
+				klog.Errorf("Failed to update node KubeletEndpoint Port, node: %s, tunnelPort: %d, err: %v", nodeName, s.tunnelPort, err)
+				return false, nil
+			}
+			return true, nil
+		}); err != nil {
 		klog.Errorf("Update KubeletEndpoint Port of Node '%v' error: %v. ", nodeName, err)
 		return fmt.Errorf("failed to Update KubeletEndpoint Port")
 	}
 	klog.V(4).Infof("Update node KubeletEndpoint Port successfully, node: %s, tunnelPort: %d", nodeName, s.tunnelPort)
 	return nil
+}
+
+func (s *TunnelServer) updateNodeEdgeTunnelIP(nodeName string) error {
+	if s.kubeClient == nil {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), s.updateTimeout)
+	defer cancel()
+	return wait.PollUntilContextTimeout(ctx, s.retrySleep, s.updateTimeout, true,
+		func(ctx context.Context) (bool, error) {
+			node, err := s.kubeClient.Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+			if err != nil {
+				klog.Errorf("Failed to get node %s for EdgeTunnelIP update: %v", nodeName, err)
+				return false, nil
+			}
+			targetIP := ""
+			if node.Annotations != nil {
+				targetIP = node.Annotations[constants.EdgeMappingCloudKey]
+			}
+			if targetIP == "" {
+				klog.Warningf("node %s has no cloudcore annotation, skipping EdgeTunnelIP update", nodeName)
+				return true, nil
+			}
+			// Check if EdgeTunnelIP is already set correctly
+			for _, addr := range node.Status.Addresses {
+				if addr.Type == constants.NodeEdgeTunnelIP && addr.Address == targetIP {
+					return true, nil
+				}
+			}
+			// Remove any existing EdgeTunnelIP entries and add the correct one
+			var addrs []corev1.NodeAddress
+			for _, addr := range node.Status.Addresses {
+				if addr.Type != constants.NodeEdgeTunnelIP {
+					addrs = append(addrs, addr)
+				}
+			}
+			addrs = append(addrs, corev1.NodeAddress{
+				Type:    constants.NodeEdgeTunnelIP,
+				Address: targetIP,
+			})
+			node.Status.Addresses = addrs
+			_, err = s.kubeClient.Nodes().UpdateStatus(ctx, node, metav1.UpdateOptions{})
+			if err != nil {
+				klog.Errorf("Failed to set EdgeTunnelIP on node %s: %v", nodeName, err)
+				return false, nil
+			}
+			klog.V(4).Infof("Set EdgeTunnelIP on node %s to %s", nodeName, targetIP)
+			return true, nil
+		})
+}
+
+func (s *TunnelServer) removeNodeEdgeTunnelIP(nodeName string) {
+	if s.kubeClient == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), s.updateTimeout)
+	defer cancel()
+	node, err := s.kubeClient.Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			klog.Errorf("Failed to get node %s for EdgeTunnelIP removal: %v", nodeName, err)
+		}
+		return
+	}
+	var addrs []corev1.NodeAddress
+	found := false
+	for _, addr := range node.Status.Addresses {
+		if addr.Type == constants.NodeEdgeTunnelIP {
+			found = true
+			continue
+		}
+		addrs = append(addrs, addr)
+	}
+	if !found {
+		return
+	}
+	node.Status.Addresses = addrs
+	_, err = s.kubeClient.Nodes().UpdateStatus(ctx, node, metav1.UpdateOptions{})
+	if err != nil {
+		klog.Errorf("Failed to remove EdgeTunnelIP from node %s: %v", nodeName, err)
+		return
+	}
+	klog.V(4).Infof("Removed EdgeTunnelIP from node %s", nodeName)
+}
+
+// shouldUseEdgeTunnelIP returns true only when iptablesManager is in internal
+// mode AND kube-apiserver is not colocated with cloudcore -- i.e. the API
+// server cannot reach edge nodes via the iptables DNAT rule installed on
+// cloudcore's own node. Colocation is determined by nodetopology.IsAPIServerColocated,
+// not inferred from configuration presence: advertiseAddress is mandatory and
+// auto-defaulted by cloudcore, so checking whether it is set can never
+// distinguish colocated from separated deployments.
+//
+// The result is cached for the process lifetime: node placement cannot
+// change without a cloudcore restart.
+func (s *TunnelServer) shouldUseEdgeTunnelIP() bool {
+	if s.iptablesMgrMode != v1alpha1.InternalMode {
+		return false
+	}
+	s.edgeTunnelIPOnce.Do(func() {
+		sameNode, determined := nodetopology.IsAPIServerColocated(context.Background(), s.kubeClient, os.Getenv(nodetopology.NodeNameEnvVar))
+		// Cannot verify placement (e.g. cloudcore not running as a scheduled
+		// pod, NODE_NAME unset, or a lookup failure) -- assume separated
+		// nodes. A redundant EdgeTunnelIP is harmless when nodes are
+		// actually colocated; a missing one silently breaks kubectl
+		// exec/logs/attach when they are not.
+		s.edgeTunnelIPDecision = !determined || !sameNode
+	})
+	return s.edgeTunnelIPDecision
 }
