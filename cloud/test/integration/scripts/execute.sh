@@ -22,15 +22,15 @@ ENVTEST_BIN_DIR=""
 
 function do_preparation() {
     which setup-envtest &> /dev/null || {
-        go install sigs.k8s.io/controller-runtime/tools/setup-envtest@release-0.19
-        sudo cp $GOPATH/bin/setup-envtest /usr/bin/
+        go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+        sudo cp "$(go env GOPATH)/bin/setup-envtest" /usr/bin/
     }
 
-    ENVTEST_BIN_DIR=$(setup-envtest use 1.23.5 --bin-dir=${ENVTEST_DOWNLOAD_DIR} -p path)
+    ENVTEST_BIN_DIR=$(setup-envtest use 1.29.0 --bin-dir=${ENVTEST_DOWNLOAD_DIR} -p path)
 
     which ginkgo &>/dev/null || {
         go install github.com/onsi/ginkgo/ginkgo@latest
-        sudo cp $GOPATH/bin/ginkgo /usr/bin/
+        sudo cp "$(go env GOPATH)/bin/ginkgo" /usr/bin/
     }
 }
 
