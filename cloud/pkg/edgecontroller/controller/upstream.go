@@ -1474,13 +1474,18 @@ func (uc *UpstreamController) unmarshalPodStatusMessage(msg model.Message) (ns s
 
 	if name, _ := messagelayer.GetResourceName(msg); name == "" {
 		// multi pod status in one message
-		_ = json.Unmarshal(data, &podStatuses)
+		err = json.Unmarshal(data, &podStatuses)
+		if err != nil {
+			klog.Warningf("message: %s process failure, unmarshal content data with error: %s", msg.GetID(), err)
+			podStatuses = nil
+		}
 		return
 	}
 
 	// one pod status per message
 	var status edgeapi.PodStatusRequest
 	if err := json.Unmarshal(data, &status); err != nil {
+		klog.Warningf("message: %s process failure, unmarshal content data with error: %s", msg.GetID(), err)
 		return
 	}
 	podStatuses = append(podStatuses, status)
