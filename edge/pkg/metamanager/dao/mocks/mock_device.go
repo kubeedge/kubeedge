@@ -153,11 +153,15 @@ func (m *MockDeviceService) UpdateDeviceMulti(updates []models.DeviceUpdate) err
 }
 
 func (m *MockDeviceService) AddDeviceTrans(adds []models.Device, addAttrs []models.DeviceAttr, addTwins []models.DeviceTwin) error {
-	return nil
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.AddDeviceTransFunc(adds, addAttrs, addTwins)
 }
 
 func (m *MockDeviceService) DeleteDeviceTrans(deletes []string) error {
-	return nil
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.DeleteDeviceTransFunc(deletes)
 }
 
 func (m *MockDeviceService) SaveDeviceAttr(doc *models.DeviceAttr) error {
