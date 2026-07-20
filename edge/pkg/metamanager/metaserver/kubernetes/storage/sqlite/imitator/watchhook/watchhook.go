@@ -18,7 +18,8 @@ type WatchHook struct {
 	ResourceVersion uint64
 	id              string
 	Receiver
-	lock sync.Mutex
+	lock    sync.Mutex
+	stopped bool
 }
 
 func NewWatchHook(key string, rev uint64, receiver Receiver) (*WatchHook, error) {
@@ -39,6 +40,9 @@ func NewWatchHook(key string, rev uint64, receiver Receiver) (*WatchHook, error)
 func (h *WatchHook) Do(event watch.Event) error {
 	h.Lock()
 	defer h.UnLock()
+	if h.stopped {
+		return nil
+	}
 	return h.Receive(event)
 }
 
@@ -59,7 +63,13 @@ func (h *WatchHook) GetResourceVersion() uint64 {
 
 func (h *WatchHook) Stop() {
 	h.Lock()
-	defer h.UnLock()
+	if h.stopped {
+		h.UnLock()
+		return
+	}
+	h.stopped = true
+	h.UnLock()
+
 	if err := DeleteHook(h.id); err != nil {
 		klog.Error(err)
 	}
