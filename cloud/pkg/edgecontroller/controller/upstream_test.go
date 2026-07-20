@@ -1173,3 +1173,86 @@ func TestUpdatePodStatus(t *testing.T) {
 		t.Errorf("Pod phase mismatch, expected %s, got %s", corev1.PodRunning, updatedPod.Status.Phase)
 	}
 }
+
+func TestUnmarshalPodStatusMessage(t *testing.T) {
+	uc := &UpstreamController{}
+
+	// Case 1: Multi-pod status valid unmarshal
+	multiStatuses := []edgeapi.PodStatusRequest{
+		{Name: "pod1", UID: types.UID("uid-1")},
+		{Name: "pod2", UID: types.UID("uid-2")},
+	}
+	multiData, err := json.Marshal(multiStatuses)
+	if err != nil {
+		t.Fatalf("Failed to marshal multi-pod statuses: %v", err)
+	}
+
+	msgMulti := model.Message{
+		Header: model.MessageHeader{ID: "msg-1"},
+		Router: model.MessageRoute{
+			Resource: "node/node1/default/podstatus",
+		},
+		Content: string(multiData),
+	}
+
+	ns, res := uc.unmarshalPodStatusMessage(msgMulti)
+	if ns != "default" {
+		t.Errorf("expected namespace 'default', got '%s'", ns)
+	}
+	if len(res) != 2 {
+		t.Errorf("expected 2 pod statuses, got %d", len(res))
+	}
+
+	// Case 2: Multi-pod status invalid JSON (verify podStatuses is set to nil)
+	msgMultiInvalid := model.Message{
+		Header: model.MessageHeader{ID: "msg-2"},
+		Router: model.MessageRoute{
+			Resource: "node/node1/default/podstatus",
+		},
+		Content: `{invalid json array}`,
+	}
+
+	_, resInvalid := uc.unmarshalPodStatusMessage(msgMultiInvalid)
+	if resInvalid != nil {
+		t.Errorf("expected nil podStatuses on unmarshal error, got %v", resInvalid)
+	}
+
+	// Case 3: Single-pod status valid unmarshal
+	singleStatus := edgeapi.PodStatusRequest{Name: "pod1", UID: types.UID("uid-1")}
+	singleData, err := json.Marshal(singleStatus)
+	if err != nil {
+		t.Fatalf("Failed to marshal single pod status: %v", err)
+	}
+
+	msgSingle := model.Message{
+		Header: model.MessageHeader{ID: "msg-3"},
+		Router: model.MessageRoute{
+			Resource: "node/node1/default/podstatus/pod1",
+		},
+		Content: string(singleData),
+	}
+
+	nsSingle, resSingle := uc.unmarshalPodStatusMessage(msgSingle)
+	if nsSingle != "default" {
+		t.Errorf("expected namespace 'default', got '%s'", nsSingle)
+	}
+	if len(resSingle) != 1 {
+		t.Errorf("expected 1 pod status, got %d", len(resSingle))
+	}
+
+	// Case 4: Single-pod status invalid JSON
+	msgSingleInvalid := model.Message{
+		Header: model.MessageHeader{ID: "msg-4"},
+		Router: model.MessageRoute{
+			Resource: "node/node1/default/podstatus/pod1",
+		},
+		Content: `invalid json object`,
+	}
+
+	_, resSingleInvalid := uc.unmarshalPodStatusMessage(msgSingleInvalid)
+	if resSingleInvalid != nil {
+		t.Errorf("expected nil podStatuses on single pod unmarshal error, got %v", resSingleInvalid)
+	}
+}
+
+
