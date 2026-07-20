@@ -98,6 +98,9 @@ func verifyCert(cert *x509.Certificate, nodeName string) error {
 
 // verifyCertSubject ...
 func verifyCertSubject(cert *x509.Certificate, nodeName string) error {
+	if len(cert.Subject.Organization) == 0 {
+		return errors.New("certificate subject organization is empty")
+	}
 	if cert.Subject.Organization[0] == "KubeEdge" && cert.Subject.CommonName == "kubeedge.io" {
 		// In order to maintain compatibility with older versions of certificates
 		// this condition will be removed in KubeEdge v1.18.
