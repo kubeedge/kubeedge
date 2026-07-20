@@ -28,6 +28,7 @@ import (
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
@@ -234,6 +235,20 @@ func (wc *watchChan) startWatching(watchClosedCh chan struct{}) {
 			wc.sendError(err)
 			return
 		}
+		// Synthesise a BOOKMARK so informers using AllowWatchBookmarks
+		// (e.g. Cilium >= 1.18, client-go >= 0.26) see the initial list
+		// sync as complete and HasSynced returns true.  MetaServer has no
+		// upstream BOOKMARK source, so we emit one after the local cache
+		// is fully drained into the event pipeline.
+		wc.sendEvent(&watch.Event{
+			Type: watch.Bookmark,
+			Object: &metav1.PartialObjectMetadata{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: fmt.Sprintf("%d", wc.initialRev),
+					Annotations:     map[string]string{"k8s.io/initial-events-end": "true"},
+				},
+			},
+		})
 	}
 	wch := wc.watcher.client.Watch(wc.ctx, wc.key, uint64(wc.initialRev+1))
 	for wres := range wch {
@@ -250,6 +265,16 @@ func (wc *watchChan) processEvent(wg *sync.WaitGroup) {
 	for {
 		select {
 		case e := <-wc.incomingEventChan:
+			// BOOKMARK events have no object key; pass straight to resultChan.
+			// The key-lookup below would log an error and drop them.
+			if e.Type == watch.Bookmark {
+				select {
+				case wc.resultChan <- *e:
+				case <-wc.ctx.Done():
+					return
+				}
+				continue
+			}
 			var res = e
 			key, err := metaserver.KeyFuncObj(e.Object)
 			if err != nil {
