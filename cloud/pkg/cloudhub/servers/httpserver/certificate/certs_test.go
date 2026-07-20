@@ -50,6 +50,43 @@ func TestVerifyCert(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestVerifyCertEmptyOrganization(t *testing.T) {
+	cahandler := certs.GetCAHandler(certs.CAHandlerTypeX509)
+	pk, err := cahandler.GenPrivateKey()
+	require.NoError(t, err)
+
+	caPem, err := cahandler.NewSelfSigned(pk)
+	require.NoError(t, err)
+
+	certshandler := certs.GetHandler(certs.HandlerTypeX509)
+	csrPem, err := certshandler.CreateCSR(pkix.Name{
+		Country:    []string{"CN"},
+		Locality:   []string{"Hangzhou"},
+		Province:   []string{"Zhejiang"},
+		CommonName: "system:node:testnode",
+	}, pk, nil)
+	require.NoError(t, err)
+
+	certPem, err := certshandler.SignCerts(certs.SignCertsOptionsWithCSR(
+		csrPem.Bytes,
+		caPem.Bytes,
+		pk.DER(),
+		[]x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		time.Hour,
+	))
+	require.NoError(t, err)
+
+	origCA := hubconfig.Config.Ca
+	hubconfig.Config.Ca = caPem.Bytes
+	t.Cleanup(func() { hubconfig.Config.Ca = origCA })
+
+	parsed, err := x509.ParseCertificate(certPem.Bytes)
+	require.NoError(t, err)
+
+	err = verifyCert(parsed, "testnode")
+	require.ErrorContains(t, err, "organization is empty")
+}
+
 func TestVerifyAuthorization(t *testing.T) {
 	const cakey = `MHcCAQEEIJQgy45Hw91mXm3pRXwxwDg4BgR4DY1UvHlzm/JXr9K6oAoGCCqGSM49AwEHoUQDQgAEq4Rd11aJ/FXEYBE2YCUMjRZVpqytxDBq2anuzokPculGaTrSDiRy1IKukPhlg34bq7J6wqkF0cmFUvcTjtReqw==`
 	cakeyDer, err := base64.StdEncoding.DecodeString(cakey)
@@ -117,4 +154,14 @@ func TestVerifyAuthorization(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestVerifyCertSubjectEmptyOrganization(t *testing.T) {
+	cert := &x509.Certificate{
+		Subject: pkix.Name{
+			CommonName: "system:node:testnode",
+		},
+	}
+	err := verifyCertSubject(cert, "testnode")
+	require.ErrorContains(t, err, "organization is empty")
 }
