@@ -66,7 +66,7 @@ intentionally omitted from this report.
 
 | Item | x86 Linux | ARM64 Jetson | Windows WSL |
 | --- | --- | --- | --- |
-| Node architecture | amd64 | aarch64 | x86_64 (WSL2) |
+| Node architecture | amd64 | arm64 | amd64 (WSL2) |
 | Operating system | Ubuntu 22.04.4 | Ubuntu 18.04.5 | Ubuntu 22.04.5 |
 | KubeEdge version | v1.23.0 | v1.23.0 | v1.23.0 |
 | Container runtime | containerd 2.2.1 | containerd 1.7.7 | containerd 2.2.1 |
@@ -184,7 +184,7 @@ informational only because prompts and model formats were not fully normalized.
 | `kubectl exec` and `kubectl logs` returned `InternalError` on WSL | The control plane could not remotely operate the edge Pod | Enabled `edgeStream` in `edgecore.yaml` and restarted EdgeCore | Both commands succeeded |
 | Default WSL memory did not represent a constrained node | The low-memory objective could not be evaluated | Set WSL2 to 4 GB RAM and 1 GB swap, then restarted it | All three models ran sequentially |
 | Local TinyLlama GGUF import stalled | The model could not be created in Ollama | Used the packaged `tinyllama:1.1b` model layers | The model was listed and completed inference |
-| Rolling update left a `hostNetwork` Pod pending | Old and new Pods competed for port `11434` on the same node | Terminated the old Pod before the Deployment created the replacement | The replacement Pod reached `1/1 Running` |
+| Rolling update left a `hostNetwork` Pod pending | Old and new Pods competed for port `11434` on the same node | Configure the Deployment with `strategy.type: Recreate` so the old Pod stops before its replacement starts | In this run, manually terminating the old Pod allowed the replacement to reach `1/1 Running`; `Recreate` is recommended for future runs |
 
 ## Conclusions
 
@@ -212,6 +212,20 @@ The current run used an unpinned Ollama image and may have used different model
 quantization formats on different nodes. Prompt lengths and network conditions
 also differed. These factors limit strict reproducibility and cross-node
 comparison.
+
+### Reproducibility
+
+This report provides the environment matrix, validation workflow,
+representative commands, and observed results. It does not yet include the
+exact manifests and scripts used for every run because the Ollama image digest,
+model artifacts, quantization formats, and prompts were not pinned consistently
+across all three nodes. The current report can therefore be used to reproduce
+the deployment workflow, but not an identical benchmark run.
+
+The next stage will add versioned manifests and validation scripts after the
+image digest, model artifact versions and checksums, quantization formats, and
+prompt set are fixed. Raw outputs and metric samples will also be retained where
+practical so that the reported results can be traced to their source data.
 
 The next validation stage should:
 
