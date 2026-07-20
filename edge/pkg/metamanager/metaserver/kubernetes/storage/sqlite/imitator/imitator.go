@@ -201,13 +201,21 @@ func (s *imitator) SetRevision(version interface{}) {
 	}
 }
 
+// registerWatchHook registers the watch hook and can be replaced in tests
+// to exercise the registration-failure path.
+var registerWatchHook = watchhook.NewWatchHook
+
 func (s *imitator) Watch(ctx context.Context, key string, rev uint64) <-chan watch.Event {
 	wch := make(chan watch.Event)
 	receiver := watchhook.NewChanReceiver(wch)
-	wh, err := watchhook.NewWatchHook(key, rev, receiver)
+	wh, err := registerWatchHook(key, rev, receiver)
 	if err != nil {
+		// The detailed error is only logged because this interface cannot
+		// return it. Return a closed non-nil channel so the caller observes
+		// a clean watch termination instead of blocking forever.
 		klog.Errorf("add hook for %s failed, %v", key, err)
-		return nil
+		close(wch)
+		return wch
 	}
 
 	go func() {

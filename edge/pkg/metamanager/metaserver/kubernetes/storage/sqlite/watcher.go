@@ -23,7 +23,6 @@ package sqlite
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 
@@ -239,7 +238,10 @@ func (wc *watchChan) startWatching(watchClosedCh chan struct{}) {
 	for wres := range wch {
 		wc.sendEvent(&wres)
 	}
-	wc.sendError(fmt.Errorf("stop to watch sqlite/meta_v2"))
+	// The source channel closing is a clean watch termination, so only signal
+	// watchClosedCh. Sending an error here as well would make the result
+	// nondeterministic: run selects between errChan and watchClosedCh, so the
+	// client could see either a watch.Error event or a clean ResultChan close.
 	close(watchClosedCh)
 }
 
