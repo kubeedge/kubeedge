@@ -124,7 +124,8 @@ func (s *TunnelSession) ServeConnection(m *stream.Message) {
 			klog.Errorf("Serve Attach connection error %s", m.String())
 		}
 	default:
-		panic(fmt.Sprintf("Wrong message type %v", m.MessageType))
+		klog.Errorf("Wrong message type %v", m.MessageType)
+		return
 	}
 
 	s.DeleteLocalConnection(m.ConnectID)
@@ -191,10 +192,18 @@ func (s *TunnelSession) Serve() error {
 			return fmt.Errorf("close tunnel stream connection, error:%s", string(mess.Data))
 		}
 
-		if (mess.MessageType < stream.MessageTypeData) || (mess.MessageType >= stream.MessageTypeAttachConnect) {
+		switch mess.MessageType {
+		case stream.MessageTypeLogsConnect,
+			stream.MessageTypeExecConnect,
+			stream.MessageTypeMetricConnect,
+			stream.MessageTypeAttachConnect:
 			go s.ServeConnection(mess)
+		case stream.MessageTypeData,
+			stream.MessageTypeRemoveConnect:
+			s.WriteToLocalConnection(mess)
+		default:
+			klog.Errorf("Wrong message type %v", mess.MessageType)
 		}
-		s.WriteToLocalConnection(mess)
 	}
 }
 
