@@ -116,6 +116,9 @@ func (fm *fakeManager) GetLister(gvr schema.GroupVersionResource) (cache.Generic
 	if err != nil {
 		return nil, err
 	}
+	if informerPair == nil {
+		return nil, nil
+	}
 	return informerPair.Lister, nil
 }
 
