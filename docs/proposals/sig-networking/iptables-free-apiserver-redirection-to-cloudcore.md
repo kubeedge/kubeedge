@@ -7,7 +7,7 @@ approvers:
   - "@luomengY"
   - "@Shelley-BaoYue"
 creation-date: 2026-05-08
-last-updated: 2026-06-25
+last-updated: 2026-07-21
 ---
 
 * [Abstract](#1-abstract)
@@ -155,18 +155,40 @@ the node has an `EdgeTunnelIP` address, the API server uses that address.
 
 ![edgetunnelip-apiserver-redirection](../../images/proposals/edgetunnelip-apiserver-redirection-to-cloudcore.png)
 
+`EdgeTunnelIP` is only needed when `iptableManager` DNAT cannot reach the
+API server's node — i.e. `iptableManager` running in **internal** mode
+with cloudcore and the API server on **different** nodes. In external
+DaemonSet mode the DNAT rule already exists on every non-edge node
+(including the API server's), and in internal mode with cloudcore and the
+API server co-located the local DNAT rule already covers it — in both
+cases adding `EdgeTunnelIP` would be redundant. When same-node placement
+cannot be determined, CloudCore conservatively assumes the nodes are
+separated (a redundant `EdgeTunnelIP` is harmless; a missing one silently
+breaks `kubectl exec`/`logs`/`attach`).
+
 When an edge node connects to CloudCore:
 
-1. CloudCore appends `EdgeTunnelIP = cloudCoreIP` to the node's
-   `status.addresses`. `InternalIP` is never touched.
-2. `KubeletEndpoint.Port` is set to `streamPort` (10003).
-3. `upstream.go` is updated to preserve `EdgeTunnelIP` addresses during
-   edgecore heartbeat status overwrites, mirroring the existing
-   `KubeletEndpoint.Port` preservation pattern.
+1. CloudCore determines whether it and the API server are on the same
+   node (see [6.2.8 Same-Node Detection](#8-same-node-detection-shoulduseedgetunnelip)). This
+   decision, combined with the `iptableManager` mode, decides whether
+   `EdgeTunnelIP` is used at all for this connection.
+2. If the same-node check says "not co-located" (or is undetermined),
+   CloudCore appends `EdgeTunnelIP = cloudCoreIP` to the node's
+   `status.addresses` and sets `KubeletEndpoint.Port` to `streamPort`
+   (10003). If it says "co-located", neither happens — the existing
+   `iptableManager` DNAT path handles routing instead, and
+   `KubeletEndpoint.Port` keeps using the negotiated tunnel port.
+   `InternalIP` is never touched either way.
+3. On every edgecore heartbeat, `upstream.go` merges `EdgeTunnelIP` into
+   the incoming strategic-merge patch *before* calling `Patch()`, using
+   the same same-node decision as step 1. This avoids the window a
+   patch-then-`UpdateStatus()` approach would leave open, and ensures the
+   co-located case does not have `EdgeTunnelIP` re-injected on the next
+   heartbeat.
 4. When the edge node disconnects, CloudCore removes the `EdgeTunnelIP`
    address from node status.
 5. The feature is gated behind `FeatureGates["EdgeTunnelIP"]` in cloudcore
-   config for safe rollout.
+   config for safe rollout, in addition to the same-node/mode check above.
 6. `iptableManager` `os.Exit(1)` is replaced with graceful error log and
    return.
 
@@ -205,12 +227,17 @@ const NodeEdgeTunnelIP corev1.NodeAddressType = "EdgeTunnelIP"
 
 #### 2. updateNodeEdgeTunnelIP (new in tunnelserver.go)
 
-Called from `connect()` when the `EdgeTunnelIP` feature gate is enabled.
-Appends `EdgeTunnelIP = cloudCoreIP` to `node.Status.Addresses`. Reads
-`constants.EdgeMappingCloudKey` annotation first as authoritative CloudCore
-IP, falls back to `s.cloudCoreIP`. Checks whether `EdgeTunnelIP` already
-exists with the correct value before updating to avoid unnecessary API calls.
-Uses `wait.PollUntilContextTimeout` to retry.
+Called from `connect()` when the `EdgeTunnelIP` feature gate is enabled
+**and** `shouldUseEdgeTunnelIP()` returns true (see
+[6.2.8 Same-Node Detection](#8-same-node-detection-shoulduseedgetunnelip) — internal mode and
+cloudcore/API server not determined to be co-located). Appends
+`EdgeTunnelIP = cloudCoreIP` to `node.Status.Addresses`. Reads
+`constants.EdgeMappingCloudKey` annotation as the sole source of the
+CloudCore IP — there is no `TunnelServer.cloudCoreIP` field and no
+fallback; if the annotation is empty, the update is skipped and a warning
+is logged. Checks whether `EdgeTunnelIP` already exists with the correct
+value before updating to avoid unnecessary API calls. Uses
+`wait.PollUntilContextTimeout` to retry.
 
 ```go
 func (s *TunnelServer) updateNodeEdgeTunnelIP(nodeName string) error {
@@ -234,51 +261,62 @@ func (s *TunnelServer) removeNodeEdgeTunnelIP(nodeName string) error {
 
 #### 4. updateNodeKubeletEndpoint (modified)
 
-Sets `KubeletEndpoint.Port = s.streamPort` (10003) when EdgeTunnelIP
-feature gate is enabled, so the API server uses the correct CloudStream
-port after routing via `EdgeTunnelIP`. The upstream controller in
-`upstream.go:694` already preserves this field from edgecore heartbeat
-overwrites permanently.
+Sets `KubeletEndpoint.Port = s.streamPort` (10003) only when the
+`EdgeTunnelIP` feature gate is enabled **and** `shouldUseEdgeTunnelIP()`
+returns true, so the API server uses the correct CloudStream port after
+routing via `EdgeTunnelIP`. When `shouldUseEdgeTunnelIP()` returns false
+(co-located case), the port switch is skipped and `KubeletEndpoint.Port`
+keeps whatever the existing `iptableManager` tunnel-port negotiation sets
+it to — gating on the raw feature gate alone would have broken the
+co-located case once same-node detection could genuinely return false.
 
-#### 5. EdgeTunnelIP preservation in upstream.go
+#### 5. EdgeTunnelIP handling in upstream.go's patchNode()
 
-`upstream.go` overwrites the entire node status on every edgecore heartbeat:
+`edgecore` no longer drives node status through the deprecated
+`updateNodeStatus()`/full-status-overwrite path — the active heartbeat
+path is `patchNode()`, which applies a strategic-merge patch via
+`Patch()`. Since edgecore's patch never includes `EdgeTunnelIP`, sending
+it unmodified would silently drop CloudCore's `EdgeTunnelIP` entry on
+every heartbeat, and patching first then re-adding it via a separate
+`UpdateStatus()` call would leave a window where the address is briefly
+absent.
+
+The fix merges `EdgeTunnelIP` into the patch bytes themselves, *before*
+`Patch()` is called, so there is no such window:
 
 ```go
-getNode.Status = nodeStatusRequest.Status
-```
-
-Since edgecore never sends `EdgeTunnelIP` in its address list, this removes
-the address on every heartbeat. The fix mirrors the existing
-`KubeletEndpoint.Port` preservation pattern at `upstream.go:694`:
-
-```go
-// Preserve EdgeTunnelIP addresses set by CloudCore.
-// edgecore heartbeat does not include EdgeTunnelIP so it must
-// be re-applied after status overwrite, following the same
-// pattern as KubeletEndpoint.Port preservation above.
-var edgeTunnelAddrs []corev1.NodeAddress
-for _, addr := range getNode.Status.Addresses {
-    if addr.Type == constants.NodeEdgeTunnelIP {
-        edgeTunnelAddrs = append(edgeTunnelAddrs, addr)
-    }
+func (uc *UpstreamController) patchNode(...) {
+    patchBytes, err := uc.mergeEdgeTunnelIPIntoPatch(nodeName, patchBytes)
+    // ...
+    _, err = uc.kubeClient.CoreV1().Nodes().Patch(
+        ctx, nodeName, patchtypes.StrategicMergePatchType, patchBytes, ...)
 }
-getNode.Status = nodeStatusRequest.Status
-if len(edgeTunnelAddrs) > 0 {
-    getNode.Status.Addresses = append(
-        getNode.Status.Addresses, edgeTunnelAddrs...)
+
+func (uc *UpstreamController) mergeEdgeTunnelIPIntoPatch(
+    nodeName string, patchBytes []byte) ([]byte, error) {
+    // only when uc.shouldUseEdgeTunnelIP() is true:
+    // reads the cloudcore annotation off the current Node, unmarshals
+    // patchBytes, adds/replaces EdgeTunnelIP under status.addresses,
+    // re-marshals and returns the enriched patch
 }
 ```
 
-This is a 3-line surgical addition to `upstream.go` that is completely
-self-contained and does not affect any other behavior.
+`shouldUseEdgeTunnelIP()` here is a method on `UpstreamController`,
+gated on `uc.iptablesMgrMode` and backed by the same
+[same-node detection](#8-same-node-detection-shoulduseedgetunnelip) tunnelserver.go's `connect()`
+uses — both call sites share one implementation so they cannot silently
+diverge on whether a given deployment counts as co-located.
 
 #### 6. FeatureGate
 
 Uses the existing `FeatureGates map[string]bool` in cloudcore v1alpha1
-config types. When `FeatureGates["EdgeTunnelIP"] = true`, CloudCore
-activates `updateNodeEdgeTunnelIP` and `updateNodeKubeletEndpoint` on
-edge node connect, and `removeNodeEdgeTunnelIP` on disconnect.
+config types. When `FeatureGates["EdgeTunnelIP"] = true` **and**
+`shouldUseEdgeTunnelIP()` is also true for the given deployment, CloudCore
+activates `updateNodeEdgeTunnelIP` and the `KubeletEndpoint.Port` switch on
+edge node connect, and `removeNodeEdgeTunnelIP` on disconnect. The feature
+gate alone is necessary but not sufficient — it exists for safe rollout,
+while `shouldUseEdgeTunnelIP()` decides whether this particular topology
+needs the feature at all.
 
 When the feature gate is false (default), behavior is completely unchanged
 from the current release — iptableManager runs as before.
@@ -294,9 +332,57 @@ return
 
 CloudCore remains operational when iptables is unavailable.
 
+#### 8. Same-Node Detection (shouldUseEdgeTunnelIP)
+
+`EdgeTunnelIP` is only activated when both of these hold:
+
+1. `iptableManager` is running in **internal** mode (in external DaemonSet
+   mode the DNAT rule already exists on every non-edge node, so
+   `EdgeTunnelIP` is never needed).
+2. CloudCore and the API server are **not** determined to be on the same
+   node.
+
+The same-node check lives in `cloud/pkg/common/nodetopology`, shared by
+both `cloudstream.TunnelServer` (at connect time) and
+`edgecontroller.UpstreamController` (on every heartbeat patch), so there
+is exactly one implementation instead of two that can silently disagree:
+
+```go
+func IsAPIServerColocated(ctx context.Context, kubeClient kubernetes.Interface,
+    nodeName string) (sameNode bool, determined bool) {
+    // compares cloudcore's own Node (identified via the NODE_NAME
+    // downward-API env var) against the address(es) backing the
+    // well-known default/kubernetes Endpoints object
+}
+```
+
+- CloudCore's node is identified via a `NODE_NAME` env var populated by
+  the downward API (`fieldRef: spec.nodeName`) in the Helm chart's
+  CloudCore Deployment — required for this check to ever resolve in a
+  real deployment.
+- The API server's address(es) come from the `default/kubernetes`
+  Endpoints object, which also naturally handles HA control planes (all
+  replica IPs must match cloudcore's node to count as co-located) and
+  managed control planes (the API server isn't a cluster Node at all, so
+  it never matches — correctly treated as separated).
+- If placement cannot be determined (e.g. `NODE_NAME` unset, or cloudcore
+  itself isn't running as a pod), the check conservatively reports
+  "not co-located" — a redundant `EdgeTunnelIP` is harmless, a missing
+  one silently breaks `kubectl exec`/`logs`/`attach`.
+- Both call sites cache the decision (`sync.Once`) since node placement
+  cannot change without a process restart.
+
 ### 6.3 Request Flow
 
 ![edgetunnelip-flow](../../images/proposals/KubeEdge-EdgeTunnelIP-Connection-and-Request-Routing-Flow.png)
+
+`connect()` only takes the `EdgeTunnelIP` branch shown above when
+`iptableManager` is in internal mode and cloudcore/API server are not
+determined to be co-located (see
+[6.2.8 Same-Node Detection](#8-same-node-detection-shoulduseedgetunnelip)); when co-located, the
+connection flow skips straight to `session.Serve()` without setting
+`EdgeTunnelIP`, and routing falls through to the existing `iptableManager`
+DNAT path instead.
 
 ### 6.4 Configuration
 
@@ -335,6 +421,31 @@ apiServer:
     kubelet-preferred-address-types: "EdgeTunnelIP,InternalIP,ExternalIP,Hostname"
 ```
 
+For managed Kubernetes distributions that expose kube-apiserver as a
+static pod (e.g. via `kind`), this flag is set by editing
+`/etc/kubernetes/manifests/kube-apiserver.yaml` directly on the
+control-plane node — the kubelet's static-pod watcher picks up the change
+and restarts the API server automatically. This is a one-time,
+per-cluster prerequisite; nothing in this proposal automates or documents
+it as part of chart installation.
+
+**`NODE_NAME` environment variable (CloudCore pod only):** required for
+[same-node detection](#8-same-node-detection-shoulduseedgetunnelip) to ever resolve when CloudCore
+runs in-cluster. Populated via the downward API:
+
+```yaml
+env:
+- name: NODE_NAME
+  valueFrom:
+    fieldRef:
+      fieldPath: spec.nodeName
+```
+
+Without it, `shouldUseEdgeTunnelIP()` always falls back to its
+undetermined→"not co-located" default — harmless (a redundant
+`EdgeTunnelIP` still works), but it means the co-located exclusion this
+proposal is meant to provide never actually activates.
+
 ### 6.5 High Availability CloudCore Compatibility
 
 In HA deployments multiple CloudCore instances run simultaneously. The
@@ -351,8 +462,9 @@ IP for the `EdgeTunnelIP` address. In HA:
 2. On failover, edge node reconnects to CloudCore-2. `UpdateAnnotation`
    updates annotation to cloudCore2-IP. CloudCore-2 calls
    `updateNodeEdgeTunnelIP` setting `EdgeTunnelIP = cloudCore2-IP`.
-   The `upstream.go` preservation logic re-appends the updated value
-   on subsequent heartbeats.
+   `upstream.go`'s `mergeEdgeTunnelIPIntoPatch` reads the same updated
+   annotation and keeps injecting the current value into every
+   subsequent heartbeat patch.
 
 3. `EdgeTunnelIP` address type is unique — only one entry per node.
    `updateNodeEdgeTunnelIP` replaces any existing `EdgeTunnelIP` value
@@ -369,10 +481,22 @@ Feature gate defaults to false. All existing deployments are completely
 unaffected until operators explicitly enable the feature and update the
 kube-apiserver flag.
 
-**upstream.go preservation:**
-The 3-line addition mirrors an existing proven pattern. It only acts on
-addresses with type `EdgeTunnelIP` and is a no-op when the feature gate
-is disabled (since no `EdgeTunnelIP` addresses will exist).
+**upstream.go merge-into-patch:**
+`mergeEdgeTunnelIPIntoPatch` only acts on addresses with type
+`EdgeTunnelIP`, only when `shouldUseEdgeTunnelIP()` is true, and is a
+no-op when the feature gate is disabled (since no `EdgeTunnelIP`
+addresses will exist). Because it merges into the patch bytes before
+`Patch()` rather than patching then correcting afterward, there is no
+window where a heartbeat can observe `EdgeTunnelIP` missing.
+
+**Same-node detection accuracy:**
+`shouldUseEdgeTunnelIP()` shares one implementation
+(`nodetopology.IsAPIServerColocated`) between the connect-time and
+heartbeat-time decisions, so they cannot diverge. On managed control
+planes (API server isn't a cluster Node) it always resolves to "not
+co-located" — safe, since a spurious `EdgeTunnelIP` is harmless. In HA,
+all API server replica IPs must match cloudcore's node for "co-located"
+to apply, so a partial match is correctly treated as separated.
 
 **Managed Kubernetes compatibility:**
 Setting `--kubelet-preferred-address-types` requires kube-apiserver access.
@@ -429,16 +553,29 @@ mode with separated cloudcore and API server nodes. Does not work on Cilium.
 ### Unit Tests
 
 - `TestUpdateNodeEdgeTunnelIP` — appends correctly, already correct skips
-  update, reads annotation IP, falls back to s.cloudCoreIP, nil client,
-  node not found
+  update, reads annotation IP, empty annotation is skipped with a warning
+  (no fallback field), nil client, node not found
 - `TestRemoveNodeEdgeTunnelIP` — removes EdgeTunnelIP only, leaves
   InternalIP and other types untouched, not found is success, nil client
-- `TestUpdateNodeKubeletEndpoint` — port = streamPort when feature gate
-  enabled
-- `TestEdgeTunnelIPPreservation` — simulates upstream.go heartbeat overwrite,
-  verifies EdgeTunnelIP is re-appended, InternalIP unchanged
+- `TestUpdateNodeKubeletEndpoint_EdgeTunnelIPEnabled` — port = streamPort
+  when feature gate enabled AND shouldUseEdgeTunnelIP() is true; port
+  stays on the tunnel-port path when shouldUseEdgeTunnelIP() is false
+  (co-located)
+- `TestEdgeTunnelIPPreservation` — simulates edgecore's heartbeat patch,
+  verifies EdgeTunnelIP is merged into the patch before Patch() is called,
+  InternalIP unchanged
 - `TestFeatureGateDisabled` — when gate=false, connect() does not call
   updateNodeEdgeTunnelIP, node addresses unchanged
+- `TestShouldUseEdgeTunnelIP` (tunnelserver.go) /
+  `TestUpstreamShouldUseEdgeTunnelIP` (upstream.go) — external-mode
+  (always false), undetermined-placement fallback (true), colocated
+  (false), separated (true), decision-is-cached — one test suite per call
+  site, exercising the same shared `nodetopology.IsAPIServerColocated`
+  logic
+- `TestIsAPIServerColocated` (nodetopology package) — own-node-not-found,
+  endpoints-not-found, HA-partial-match, HA-full-match, empty-node-name
+- `TestMergeEdgeTunnelIPIntoPatch` — no annotation leaves the patch
+  unchanged, annotation present injects EdgeTunnelIP into the patch JSON
 
 ### Integration Tests
 
@@ -452,13 +589,33 @@ mode with separated cloudcore and API server nodes. Does not work on Cilium.
 - Feature gate disabled: no EdgeTunnelIP address set, iptableManager
   runs unchanged
 - HA failover: EdgeTunnelIP updates to new CloudCore IP on reconnect
+- Internal mode + co-located: EdgeTunnelIP never set, KubeletEndpoint.Port
+  stays on the negotiated tunnel port, iptableManager DNAT handles routing
+- Internal mode + separated: EdgeTunnelIP set and survives heartbeats,
+  KubeletEndpoint.Port = streamPort
+- External DaemonSet mode: EdgeTunnelIP never set regardless of node
+  placement
 
 ### e2e Tests
 
-- Deploy edge pod on kind cluster with EdgeTunnelIP feature gate enabled
-- Confirm `kubectl get nodes -o wide` INTERNAL-IP = real edge node IP
-- Confirm EdgeTunnelIP = cloudCoreIP in node.Status.Addresses
-- Confirm `kubectl logs` and `kubectl exec` succeed
-- Confirm EdgeTunnelIP removed after edge node disconnect
+Run against a 2-node kind cluster (CloudCore deployed via the Helm chart
+so `NODE_NAME` is populated) with the kube-apiserver
+`--kubelet-preferred-address-types` flag configured, covering both
+placements:
+
+- Deploy edge pod with EdgeTunnelIP feature gate enabled
+- Confirm `kubectl get nodes -o wide` INTERNAL-IP = real edge node IP in
+  both placements
+- Separated (CloudCore and API server on different nodes): confirm
+  EdgeTunnelIP = cloudCoreIP in node.Status.Addresses, `kubectl logs`/
+  `kubectl exec` succeed through CloudStream, and no DNAT rule fires on
+  the API server's own node
+- Co-located (CloudCore and API server on the same node): confirm
+  EdgeTunnelIP is correctly absent, `kubectl logs`/`kubectl exec` succeed
+  through the existing `iptableManager` DNAT path instead
+- Confirm EdgeTunnelIP removed after edge node disconnect (separated
+  case), and stays absent across reconnects (co-located case)
+- Confirm EdgeTunnelIP (or its absence) survives multiple edgecore
+  heartbeat cycles without flapping
 - Confirm no Service or Endpoints objects created
 - Confirm cloudcore continues running when iptables fails (os.Exit removed)
