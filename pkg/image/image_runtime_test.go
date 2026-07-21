@@ -21,6 +21,7 @@ import (
 	"errors"
 	"testing"
 
+	godigest "github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/require"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	criapitesting "k8s.io/cri-api/pkg/apis/testing"
@@ -29,56 +30,156 @@ import (
 func TestGetImageDigest(t *testing.T) {
 	ctx := context.TODO()
 	image := "docker.io/kubeedge/installation-package:v1.20.0"
+	validDigest := "sha256:e47afdf2746ad10ee76dd64289eae01895000327c0f23c5b498959eca6953695"
+	validRepoDigest := "docker.io/kubeedge/installation-package@" + validDigest
 
-	t.Run("failed to get image status", func(t *testing.T) {
-		fakeImgSvc := criapitesting.NewFakeImageService()
-		fakeImgSvc.InjectError("ImageStatus", errors.New("test get image status error"))
+	tests := []struct {
+		name        string
+		setup       func(*criapitesting.FakeImageService)
+		wantDigest  string
+		wantErr     bool
+		errContains string
+	}{
+		{
+			name: "ImageStatus error",
+			setup: func(f *criapitesting.FakeImageService) {
+				f.InjectError("ImageStatus", errors.New("test get image status error"))
+			},
+			wantErr:     true,
+			errContains: "test get image status error",
+		},
+		{
+			name:       "image not found",
+			setup:      func(f *criapitesting.FakeImageService) {},
+			wantDigest: "",
+		},
+		{
+			name: "valid sha256 digest",
+			setup: func(f *criapitesting.FakeImageService) {
+				f.Images[image] = &runtimeapi.Image{
+					RepoTags:    []string{image},
+					RepoDigests: []string{validRepoDigest},
+				}
+			},
+			wantDigest: validDigest,
+		},
+		{
+			name: "tag not in RepoTags returns empty",
+			setup: func(f *criapitesting.FakeImageService) {
+				f.Images[image] = &runtimeapi.Image{
+					RepoTags:    []string{"docker.io/kubeedge/installation-package:v1.19.0"},
+					RepoDigests: []string{validRepoDigest},
+				}
+			},
+			wantDigest: "",
+		},
+		{
+			name: "RepoTags longer than RepoDigests no panic",
+			setup: func(f *criapitesting.FakeImageService) {
+				f.Images[image] = &runtimeapi.Image{
+					RepoTags:    []string{image, "docker.io/kubeedge/installation-package:v1.19.0"},
+					RepoDigests: []string{},
+				}
+			},
+			wantDigest: "",
+		},
+		{
+			name: "multiple tags and digests different ordering",
+			setup: func(f *criapitesting.FakeImageService) {
+				f.Images[image] = &runtimeapi.Image{
+					RepoTags: []string{
+						"docker.io/kubeedge/installation-package:v1.19.0",
+						image,
+					},
+					RepoDigests: []string{
+						"docker.io/kubeedge/other@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+						validRepoDigest,
+					},
+				}
+			},
+			wantDigest: validDigest,
+		},
+		{
+			name: "no matching repo in RepoDigests returns empty",
+			setup: func(f *criapitesting.FakeImageService) {
+				f.Images[image] = &runtimeapi.Image{
+					RepoTags:    []string{image},
+					RepoDigests: []string{"docker.io/kubeedge/other@" + validDigest},
+				}
+			},
+			wantDigest: "",
+		},
+		{
+			name: "empty digest after sha256 colon is invalid",
+			setup: func(f *criapitesting.FakeImageService) {
+				f.Images[image] = &runtimeapi.Image{
+					RepoTags:    []string{image},
+					RepoDigests: []string{"docker.io/kubeedge/installation-package@sha256:"},
+				}
+			},
+			wantErr:     true,
+			errContains: "invalid digest",
+		},
+		{
+			name: "truncated digest is invalid",
+			setup: func(f *criapitesting.FakeImageService) {
+				f.Images[image] = &runtimeapi.Image{
+					RepoTags:    []string{image},
+					RepoDigests: []string{"docker.io/kubeedge/installation-package@sha256:123"},
+				}
+			},
+			wantErr:     true,
+			errContains: "invalid digest",
+		},
+		{
+			name: "non-hex digest content is invalid",
+			setup: func(f *criapitesting.FakeImageService) {
+				f.Images[image] = &runtimeapi.Image{
+					RepoTags:    []string{image},
+					RepoDigests: []string{"docker.io/kubeedge/installation-package@sha256:not-hex"},
+				}
+			},
+			wantErr:     true,
+			errContains: "invalid digest",
+		},
+		{
+			name: "digest missing at-sign separator is skipped",
+			setup: func(f *criapitesting.FakeImageService) {
+				f.Images[image] = &runtimeapi.Image{
+					RepoTags:    []string{image},
+					RepoDigests: []string{"docker.io/kubeedge/installation-package" + validDigest},
+				}
+			},
+			wantDigest: "",
+		},
+	}
 
-		imgrt := &RuntimeImpl{
-			imgsvc: fakeImgSvc,
-		}
-		_, err := imgrt.GetImageDigest(ctx, image)
-		require.ErrorContains(t, err, "test get image status error")
-	})
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			fakeImgSvc := criapitesting.NewFakeImageService()
+			tc.setup(fakeImgSvc)
+			imgrt := &RuntimeImpl{imgsvc: fakeImgSvc}
+			digest, err := imgrt.GetImageDigest(ctx, image)
+			if tc.wantErr {
+				require.ErrorContains(t, err, tc.errContains)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.wantDigest, digest)
+		})
+	}
 
-	t.Run("not found image status", func(t *testing.T) {
-		fakeImgSvc := criapitesting.NewFakeImageService()
-		imgrt := &RuntimeImpl{
-			imgsvc: fakeImgSvc,
-		}
-		digest, err := imgrt.GetImageDigest(ctx, image)
-		require.NoError(t, err)
-		require.Equal(t, "", digest)
-	})
-
-	t.Run("match repo tags", func(t *testing.T) {
+	t.Run("returned digest parses cleanly", func(t *testing.T) {
 		fakeImgSvc := criapitesting.NewFakeImageService()
 		fakeImgSvc.Images[image] = &runtimeapi.Image{
 			RepoTags:    []string{image},
-			RepoDigests: []string{"docker.io/kubeedge/installation-package@sha256:e47afdf2746ad10ee76dd64289eae01895000327c0f23c5b498959eca6953695"},
+			RepoDigests: []string{validRepoDigest},
 		}
-
-		imgrt := &RuntimeImpl{
-			imgsvc: fakeImgSvc,
-		}
+		imgrt := &RuntimeImpl{imgsvc: fakeImgSvc}
 		digest, err := imgrt.GetImageDigest(ctx, image)
 		require.NoError(t, err)
-		require.Equal(t, "sha256:e47afdf2746ad10ee76dd64289eae01895000327c0f23c5b498959eca6953695", digest)
-	})
-
-	t.Run("not match repo tags", func(t *testing.T) {
-		fakeImgSvc := criapitesting.NewFakeImageService()
-		fakeImgSvc.Images[image] = &runtimeapi.Image{
-			RepoTags:    []string{"kubeedge/installation-package:v1.20.0"},
-			RepoDigests: []string{"kubeedge/installation-package@sha256:12345"},
-		}
-
-		imgrt := &RuntimeImpl{
-			imgsvc: fakeImgSvc,
-		}
-		digest, err := imgrt.GetImageDigest(ctx, image)
-		require.NoError(t, err)
-		require.Empty(t, digest)
+		d := godigest.Digest(digest)
+		require.NoError(t, d.Validate())
 	})
 }
 
