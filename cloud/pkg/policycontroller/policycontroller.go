@@ -1,3 +1,19 @@
+/*
+Copyright 2024 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package policycontroller
 
 import (
@@ -10,6 +26,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	controllerruntime "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	controllerruntimemetrics "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
@@ -22,10 +39,99 @@ import (
 	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
 )
 
+// DeploymentMode describes how CloudCore is running, which determines the
+// default leader-election and health-probe settings.
+type DeploymentMode int
+
+const (
+	// DeploymentModeStandalone is used when CloudCore is started via keadm or
+	// as a plain binary outside a Kubernetes cluster.  Leader election is
+	// disabled by default because in-cluster credentials are not available.
+	DeploymentModeStandalone DeploymentMode = iota
+
+	// DeploymentModeInCluster is used when CloudCore is running as a
+	// Kubernetes Pod.  Leader election is enabled by default to prevent
+	// duplicate reconciliation in HA deployments.
+	DeploymentModeInCluster
+)
+
+// Options holds the optional settings for the policy controller manager.
+// Every field is safe to leave at its zero value:
+//   - LeaderElection=false disables leader election entirely (safe for keadm /
+//     standalone deployments where in-cluster credentials are absent).
+//   - LeaderElectionNamespace="" is only used when LeaderElection=true; an
+//     explicit, non-empty value avoids the in-cluster namespace auto-detection
+//     that would fail outside a Kubernetes Pod.
+//   - HealthProbeBindAddress="" disables the health-probe HTTP listener.
+type Options struct {
+	// LeaderElection enables leader election so that at most one replica
+	// runs the reconciliation loop at a time.  Should be true only when
+	// CloudCore is deployed as a Kubernetes workload.
+	LeaderElection bool
+
+	// LeaderElectionNamespace is the namespace that holds the leader-election
+	// Lease object.  Must be set explicitly when LeaderElection is true and
+	// CloudCore is running outside a Kubernetes Pod (i.e. via keadm or as a
+	// standalone binary), because controller-runtime cannot auto-detect the
+	// namespace in that case.
+	LeaderElectionNamespace string
+
+	// HealthProbeBindAddress is the TCP address that the health-probe HTTP
+	// server listens on (e.g. ":9002").  An empty string disables the
+	// listener.
+	HealthProbeBindAddress string
+}
+
+// buildOptions returns the Options that Start() will use, derived from the
+// given deployment mode and lease namespace.  Extracting this logic into a
+// pure function makes it independently testable: callers can assert that each
+// supported deployment mode produces the intended leader-election settings
+// without actually starting the manager.
+//
+// For DeploymentModeInCluster, leader election is enabled and the lease is
+// created in leaseNamespace (which must not be empty).
+// For DeploymentModeStandalone, leader election is disabled and the namespace
+// is unused.
+//
+// NOTE: healthz.Ping is a process-level liveness signal only.  It always
+// returns nil and therefore does NOT verify cache synchronization, controller
+// startup, or Lease ownership.  /healthz and /readyz both use this checker,
+// so /readyz does not guarantee that the controller has finished its initial
+// sync; it only confirms the process is alive.
+func buildOptions(mode DeploymentMode, leaseNamespace string) Options {
+	switch mode {
+	case DeploymentModeInCluster:
+		return Options{
+			LeaderElection:          true,
+			LeaderElectionNamespace: leaseNamespace,
+			HealthProbeBindAddress:  ":9002",
+		}
+	default: // DeploymentModeStandalone
+		return Options{
+			LeaderElection:         false,
+			HealthProbeBindAddress: "",
+		}
+	}
+}
+
 // policyController use beehive context message layer
 type policyController struct {
-	manager manager.Manager
+	// kubeCfg is the REST client config used to build the controller-runtime
+	// manager.  It is stored here so that Register() stays side-effect-free
+	// and the manager is only constructed when Start() is called (i.e. when
+	// the module is actually enabled).
+	kubeCfg *rest.Config
 	ctx     context.Context
+
+	// deploymentMode controls whether leader election is enabled.  It is set
+	// to DeploymentModeStandalone by default; callers that know they are
+	// running inside a Kubernetes Pod should set DeploymentModeInCluster.
+	deploymentMode DeploymentMode
+
+	// leaseNamespace is the Kubernetes namespace in which the leader-election
+	// Lease object is created.  Only used when deploymentMode is
+	// DeploymentModeInCluster.  Defaults to "kubeedge".
+	leaseNamespace string
 }
 
 var _ core.Module = (*policyController)(nil)
@@ -37,20 +143,60 @@ func init() {
 	utilruntime.Must(policyv1alpha1.AddToScheme(accessScheme))
 }
 
-func NewAccessRoleControllerManager(ctx context.Context, kubeCfg *rest.Config) (manager.Manager, error) {
-	controllerManager, err := controllerruntime.NewManager(kubeCfg, controllerruntime.Options{
+// newManager constructs and configures a controller-runtime manager according
+// to opts but does NOT register any controllers.  It is the building block
+// used by NewAccessRoleControllerManager and is also called directly by tests
+// that need to verify manager-option handling without dialling a real API
+// server (controller registration is what triggers the API-discovery round
+// trip).
+func newManager(kubeCfg *rest.Config, opts Options) (manager.Manager, error) {
+	mgrOpts := controllerruntime.Options{
 		Scheme: accessScheme,
 		Metrics: controllerruntimemetrics.Options{
 			SecureServing: false,
 			BindAddress:   "0",
 		}, // disable metrics
-		// TODO: leader election
-		// TODO: /healthz
-	})
+		HealthProbeBindAddress: opts.HealthProbeBindAddress,
+	}
+
+	if opts.LeaderElection {
+		mgrOpts.LeaderElection = true
+		mgrOpts.LeaderElectionID = "policy-controller.kubeedge.io"
+		mgrOpts.LeaderElectionNamespace = opts.LeaderElectionNamespace
+	}
+
+	controllerManager, err := controllerruntime.NewManager(kubeCfg, mgrOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create controller manager: %w", err)
 	}
 
+	// healthz.Ping is the standard no-op checker provided by controller-runtime;
+	// it always returns nil, signalling that the process is alive.
+	// NOTE: this is a process-level liveness check only — it does not verify
+	// cache sync, controller startup, or Lease ownership.
+	if err := controllerManager.AddHealthzCheck("ping", healthz.Ping); err != nil {
+		return nil, fmt.Errorf("failed to add healthz check: %w", err)
+	}
+	if err := controllerManager.AddReadyzCheck("ping", healthz.Ping); err != nil {
+		return nil, fmt.Errorf("failed to add readyz check: %w", err)
+	}
+
+	return controllerManager, nil
+}
+
+// NewAccessRoleControllerManager creates a controller-runtime manager for the
+// policy controller and registers all controllers with it.
+//
+// Leader election and the health-probe listener are both opt-in via opts so
+// that callers running outside a Kubernetes cluster (keadm, standalone binary)
+// can pass LeaderElection=false and HealthProbeBindAddress="" without hitting
+// the "not running in-cluster, please specify LeaderElectionNamespace" error
+// that controller-runtime returns when it cannot auto-detect the namespace.
+func NewAccessRoleControllerManager(ctx context.Context, kubeCfg *rest.Config, opts Options) (manager.Manager, error) {
+	controllerManager, err := newManager(kubeCfg, opts)
+	if err != nil {
+		return nil, err
+	}
 	if err := setupControllers(ctx, controllerManager); err != nil {
 		return nil, err
 	}
@@ -73,14 +219,32 @@ func setupControllers(ctx context.Context, mgr manager.Manager) error {
 	return nil
 }
 
+// Register stores the REST config on the policyController and registers the
+// module with the Beehive runtime.  The controller-runtime manager is NOT
+// constructed here; that happens in Start() which Beehive only calls when
+// Enable() returns true.  This ensures that leader election and the
+// health-probe listener are never activated when the RequireAuthorization
+// feature gate is disabled, and that keadm / standalone deployments do not
+// fail during registration.
+//
+// By default, Register creates the module in DeploymentModeStandalone (leader
+// election disabled).  To enable leader election for in-cluster Pod
+// deployments, use RegisterWithOptions instead.
 func Register(kubeCfg *rest.Config) {
-	var pc = &policyController{}
-	pc.ctx = beehiveContext.GetContext()
-	mgr, err := NewAccessRoleControllerManager(pc.ctx, kubeCfg)
-	if err != nil {
-		klog.Fatalf("failed to create controller manager, %v", err)
+	RegisterWithOptions(kubeCfg, DeploymentModeStandalone, "kubeedge")
+}
+
+// RegisterWithOptions is like Register but lets the caller specify the
+// deployment mode and lease namespace explicitly.  CloudCore's main entry-point
+// should call this function (or Register) with the appropriate mode based on
+// whether it is running as a Kubernetes Pod or as a standalone / keadm binary.
+func RegisterWithOptions(kubeCfg *rest.Config, mode DeploymentMode, leaseNamespace string) {
+	pc := &policyController{
+		kubeCfg:        kubeCfg,
+		ctx:            beehiveContext.GetContext(),
+		deploymentMode: mode,
+		leaseNamespace: leaseNamespace,
 	}
-	pc.manager = mgr
 	core.Register(pc)
 }
 
@@ -104,10 +268,25 @@ func (pc *policyController) RestartPolicy() *core.ModuleRestartPolicy {
 	return nil
 }
 
-// Start controller
+// Start creates the controller-runtime manager and runs it.  Beehive only
+// calls Start() when Enable() returns true, so all leader-election and
+// health-probe machinery is activated only when the policy controller module
+// is genuinely enabled.
+//
+// The manager Options are derived from pc.deploymentMode and pc.leaseNamespace
+// via buildOptions(), which is independently testable.  Standalone / keadm
+// deployments receive LeaderElection=false; in-cluster Pod deployments receive
+// LeaderElection=true with an explicit lease namespace.
+//
+// mgr.Start blocks until the manager has stopped.
 func (pc *policyController) Start() {
-	// mgr.Start will block until the manager has stopped
-	if err := pc.manager.Start(pc.ctx); err != nil {
+	opts := buildOptions(pc.deploymentMode, pc.leaseNamespace)
+	mgr, err := NewAccessRoleControllerManager(pc.ctx, pc.kubeCfg, opts)
+	if err != nil {
+		klog.Fatalf("failed to create controller manager, %v", err)
+	}
+	// mgr.Start blocks until the manager has stopped
+	if err := mgr.Start(pc.ctx); err != nil {
 		klog.Fatalf("failed to start controller manager, %v", err)
 	}
 }
