@@ -18,6 +18,8 @@ package edge
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,37 +27,34 @@ import (
 
 func TestJSONFileReporter(t *testing.T) {
 	srcJSONFile := upgradeReportJSONFile
-	upgradeReportJSONFile = "test.json"
 	defer func() {
 		upgradeReportJSONFile = srcJSONFile
 	}()
 
 	t.Run("report upgrade successful", func(t *testing.T) {
+		upgradeReportJSONFile = filepath.Join(t.TempDir(), "upgrade_report.json")
 		var err error
 		err = NewJSONFileReporter(EventTypeBackup, "v1.20.0", "").
 			Report(nil)
 		assert.NoError(t, err)
-		defer func() {
-			err = RemoveJSONReporterInfo()
-			assert.NoError(t, err)
-		}()
 		info, err := ParseJSONReporterInfo()
 		assert.NoError(t, err)
 		assert.Equal(t, EventTypeBackup, info.EventType)
 		assert.True(t, info.Success)
 		assert.Empty(t, info.ErrorMessage)
 		assert.Equal(t, "v1.20.0", info.FromVersion)
+
+		fileInfo, err := os.Stat(upgradeReportJSONFile)
+		assert.NoError(t, err)
+		assert.Equal(t, os.FileMode(upgradeReportFileMode), fileInfo.Mode().Perm())
 	})
 
 	t.Run("report upgrade failed", func(t *testing.T) {
+		upgradeReportJSONFile = filepath.Join(t.TempDir(), "upgrade_report.json")
 		var err error
 		err = NewJSONFileReporter(EventTypeUpgrade, "v1.20.0", "v1.21.0").
 			Report(errors.New("test error"))
 		assert.NoError(t, err)
-		defer func() {
-			err = RemoveJSONReporterInfo()
-			assert.NoError(t, err)
-		}()
 		info, err := ParseJSONReporterInfo()
 		assert.NoError(t, err)
 		assert.Equal(t, EventTypeUpgrade, info.EventType)
@@ -63,5 +62,18 @@ func TestJSONFileReporter(t *testing.T) {
 		assert.Equal(t, "test error", info.ErrorMessage)
 		assert.Equal(t, "v1.20.0", info.FromVersion)
 		assert.Equal(t, "v1.21.0", info.ToVersion)
+	})
+
+	t.Run("report rewrites overly permissive file with restrictive permissions", func(t *testing.T) {
+		upgradeReportJSONFile = filepath.Join(t.TempDir(), "upgrade_report.json")
+		err := os.WriteFile(upgradeReportJSONFile, []byte("{}"), 0o666)
+		assert.NoError(t, err)
+
+		err = NewJSONFileReporter(EventTypeRollback, "v1.21.0", "v1.20.0").Report(nil)
+		assert.NoError(t, err)
+
+		fileInfo, err := os.Stat(upgradeReportJSONFile)
+		assert.NoError(t, err)
+		assert.Equal(t, os.FileMode(upgradeReportFileMode), fileInfo.Mode().Perm())
 	})
 }
