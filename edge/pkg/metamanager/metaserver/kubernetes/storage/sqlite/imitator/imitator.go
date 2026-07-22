@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -37,8 +38,11 @@ type imitator struct {
 }
 
 // Inject transform the message to watch.event, save internal obj/objs to table meta_v2
-// and trigger the corresponding hook to serve watch
-func (s *imitator) Inject(msg model.Message) {
+// and trigger the corresponding hook to serve watch. It returns an aggregated error
+// if any event fails to be saved, so the caller can avoid acknowledging the cloud as
+// if the local cache had been updated.
+func (s *imitator) Inject(msg model.Message) error {
+	var errs []error
 	for _, e := range s.Event(&msg) {
 		// save to meta_v2
 		var err error
@@ -50,12 +54,14 @@ func (s *imitator) Inject(msg model.Message) {
 		}
 		if err != nil {
 			key := metaserver.KeyFunc(e.Object)
-			klog.Errorf("failed to serve event {type:%v,key:%v}", e.Type, key)
+			klog.Errorf("failed to serve event {type:%v,key:%v}, err: %v", e.Type, key, err)
+			errs = append(errs, fmt.Errorf("serve event {type:%v,key:%v}: %w", e.Type, key, err))
 			continue
 		}
 		// TODO: move Trigger inside InsertOrUpdateObj and DeleteObj
 		watchhook.Trigger(e)
 	}
+	return errors.Join(errs...)
 }
 
 // TODO: filter out insert or update req that the obj's rev is smaller than the stored
@@ -75,6 +81,9 @@ func (s *imitator) InsertOrUpdateObj(_ context.Context, obj runtime.Object) erro
 		return err
 	}
 	objRv, err := s.versioner.ObjectResourceVersion(obj)
+	if err != nil {
+		return fmt.Errorf("failed to get object resource version, key: %s, err: %w", key, err)
+	}
 	m := models.MetaV2{
 		Key:                  key,
 		GroupVersionResource: gvr.String(),

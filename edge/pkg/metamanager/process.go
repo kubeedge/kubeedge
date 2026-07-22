@@ -198,7 +198,7 @@ func (m *metaManager) processInsert(message model.Message) {
 		sendToCloud(&message)
 		return
 	}
-	imitator.DefaultV2Client.Inject(message)
+	injectErr := imitator.DefaultV2Client.Inject(message)
 
 	msgSource := message.GetSource()
 	if msgSource == modules.EdgedModuleName {
@@ -208,6 +208,10 @@ func (m *metaManager) processInsert(message model.Message) {
 			return
 		}
 		m.processRemote(message)
+		return
+	}
+	if injectErr != nil {
+		feedbackError(injectErr, message)
 		return
 	}
 	if err := m.handleMessage(&message); err != nil {
@@ -232,7 +236,7 @@ func (m *metaManager) processUpdate(message model.Message) {
 		sendToCloud(&message)
 		return
 	}
-	imitator.DefaultV2Client.Inject(message)
+	injectErr := imitator.DefaultV2Client.Inject(message)
 
 	msgSource := message.GetSource()
 	if msgSource == modules.EdgedModuleName && resType == model.ResourceTypeLease {
@@ -242,6 +246,10 @@ func (m *metaManager) processUpdate(message model.Message) {
 			return
 		}
 		m.processRemote(message)
+		return
+	}
+	if injectErr != nil {
+		feedbackError(injectErr, message)
 		return
 	}
 	if err := m.handleMessage(&message); err != nil {
@@ -312,11 +320,15 @@ func (m *metaManager) processResponse(message model.Message) {
 }
 
 func (m *metaManager) processDelete(message model.Message) {
-	imitator.DefaultV2Client.Inject(message)
+	injectErr := imitator.DefaultV2Client.Inject(message)
 	_, resType, _ := parseResource(&message)
 	if resType == model.ResourceTypePod && message.GetSource() == modules.EdgedModuleName {
 		// if pod is deleted in K8s, then a new delete message will be sent to edge
 		sendToCloud(&message)
+		return
+	}
+	if injectErr != nil {
+		feedbackError(injectErr, message)
 		return
 	}
 
@@ -424,6 +436,8 @@ func (m *metaManager) processVolume(message model.Message) {
 	klog.Infof("process volume get: req[%+v], back[%+v], err[%+v]", message, back, err)
 	if err != nil {
 		klog.Errorf("process volume send to edged failed: %v", err)
+		feedbackError(fmt.Errorf("failed to process volume: %v", err), message)
+		return
 	}
 
 	resp := message.NewRespByMessage(&message, back.GetContent())
