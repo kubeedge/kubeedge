@@ -3,9 +3,11 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -26,6 +28,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/session"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 )
@@ -1813,5 +1816,136 @@ func TestSyncRules(t *testing.T) {
 				t.Errorf("TestCase %q Expected status: %v, got: %v", tt.name, tt.output.Status.NodeList, saa.Status.NodeList)
 			}
 		})
+	}
+}
+
+// TestFilterManagedNodes verifies that filterManagedNodes narrows a target
+// list down to the nodes reported by getManagedEdgeNodes, and that it falls
+// back to sending to all targets when the managed-node set cannot be
+// determined (e.g. CloudHub not yet initialized) instead of silently
+// dropping delivery.
+func TestFilterManagedNodes(t *testing.T) {
+	originalFunc := getManagedEdgeNodes
+	t.Cleanup(func() { getManagedEdgeNodes = originalFunc })
+
+	tests := []struct {
+		name       string
+		targets    []string
+		managed    []string
+		managedErr error
+		want       []string
+	}{
+		{
+			name:    "keeps only managed nodes",
+			targets: []string{"node-a", "node-b", "node-c"},
+			managed: []string{"node-b"},
+			want:    []string{"node-b"},
+		},
+		{
+			name:    "no managed nodes yields empty result",
+			targets: []string{"node-a", "node-b"},
+			managed: []string{},
+			want:    []string{},
+		},
+		{
+			name:       "falls back to unfiltered targets on error",
+			targets:    []string{"node-a", "node-b"},
+			managedErr: errors.New("cloudhub not initialized"),
+			want:       []string{"node-a", "node-b"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			getManagedEdgeNodes = func() ([]string, error) {
+				return tt.managed, tt.managedErr
+			}
+
+			got := filterManagedNodes(tt.targets)
+			sort.Strings(got)
+			sort.Strings(tt.want)
+			if !equality.Semantic.DeepEqual(got, tt.want) {
+				t.Errorf("filterManagedNodes(%v) = %v, want %v", tt.targets, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestGetManagedEdgeNodesSuccess exercises the real (non-overridden)
+// getManagedEdgeNodes implementation's success path via cloudhubGetSessionManager,
+// substituted here with a populated session.Manager instead of the
+// "cloudhub not initialized" error every other test in this file hits (since
+// they never call cloudhub.Register). This confirms getManagedEdgeNodes
+// actually forwards the session manager's node set via
+// nodes.GetManagedEdgeNodes, not just its error-handling branch.
+func TestGetManagedEdgeNodesSuccess(t *testing.T) {
+	sm := &session.Manager{}
+	sm.NodeSessions.Store("node-a", struct{}{})
+	sm.NodeSessions.Store("node-b", struct{}{})
+
+	original := cloudhubGetSessionManager
+	t.Cleanup(func() { cloudhubGetSessionManager = original })
+	cloudhubGetSessionManager = func() (*session.Manager, error) {
+		return sm, nil
+	}
+
+	got, err := getManagedEdgeNodes()
+	if err != nil {
+		t.Fatalf("getManagedEdgeNodes() returned unexpected error: %v", err)
+	}
+	sort.Strings(got)
+	want := []string{"node-a", "node-b"}
+	if !equality.Semantic.DeepEqual(got, want) {
+		t.Errorf("getManagedEdgeNodes() = %v, want %v", got, want)
+	}
+}
+
+// mockMessageLayer records every message sent through it, so send2Edge can be
+// tested directly without wiring up beehiveContext channels.
+type mockMessageLayer struct {
+	sentResources []string
+}
+
+func (m *mockMessageLayer) Send(message model.Message) error {
+	m.sentResources = append(m.sentResources, message.GetResource())
+	return nil
+}
+
+func (m *mockMessageLayer) Receive() (model.Message, error) {
+	return model.Message{}, nil
+}
+
+func (m *mockMessageLayer) Response(model.Message) error {
+	return nil
+}
+
+// TestSend2EdgeFiltersToManagedNodes verifies that send2Edge only delivers to
+// the subset of targets that getManagedEdgeNodes reports as connected to this
+// CloudCore instance. This is the behavior requested to keep the policy
+// controller running on every replica (no leader election) without every
+// replica queuing messages for edge nodes it can never actually reach: only
+// the replica that holds a node's CloudHub session can deliver to it.
+func TestSend2EdgeFiltersToManagedNodes(t *testing.T) {
+	originalFunc := getManagedEdgeNodes
+	t.Cleanup(func() { getManagedEdgeNodes = originalFunc })
+
+	getManagedEdgeNodes = func() ([]string, error) {
+		return []string{"my-node-2"}, nil
+	}
+
+	mock := &mockMessageLayer{}
+	c := &Controller{MessageLayer: mock}
+
+	acc := &policyv1alpha1.ServiceAccountAccess{
+		ObjectMeta: metav1.ObjectMeta{Name: "sa1", Namespace: "my-namespace"},
+	}
+	c.send2Edge(acc, []string{"my-node", "my-node-2", "my-node-3"}, model.UpdateOperation)
+
+	if len(mock.sentResources) != 1 {
+		t.Fatalf("expected send2Edge to deliver to exactly 1 managed node, got %d: %v",
+			len(mock.sentResources), mock.sentResources)
+	}
+	if !strings.Contains(mock.sentResources[0], "my-node-2") {
+		t.Errorf("expected the delivered message to target my-node-2, got resource %q", mock.sentResources[0])
 	}
 }
