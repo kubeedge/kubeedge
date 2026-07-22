@@ -37,6 +37,7 @@ const (
 	EventTypeUpgrade      = "Upgrade"
 	EventTypeRollback     = "Rollback"
 	EventTypeConfigUpdate = "ConfigUpdate"
+	upgradeReportFileMode = 0o600
 )
 
 var upgradeReportJSONFile = filepath.Join(constants.KubeEdgePath, "upgrade_report.json")
@@ -85,7 +86,16 @@ func (r JSONFileReporter) Report(inerr error) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal upgrade result, err: %v", err)
 	}
-	if err := os.WriteFile(upgradeReportJSONFile, bff, os.ModePerm); err != nil {
+	if _, statErr := os.Stat(upgradeReportJSONFile); statErr == nil {
+		if err := os.Chmod(upgradeReportJSONFile, upgradeReportFileMode); err != nil {
+			return fmt.Errorf("failed to tighten permissions on existing upgrade result file %s, err: %v",
+				upgradeReportJSONFile, err)
+		}
+	} else if !os.IsNotExist(statErr) {
+		return fmt.Errorf("failed to stat upgrade result file %s, err: %v",
+			upgradeReportJSONFile, statErr)
+	}
+	if err := os.WriteFile(upgradeReportJSONFile, bff, upgradeReportFileMode); err != nil {
 		return fmt.Errorf("failed to write upgrade result to file %s, err: %v",
 			upgradeReportJSONFile, err)
 	}
