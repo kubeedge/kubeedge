@@ -61,6 +61,25 @@ spec:
         - containerPort: 10004
           name: tunnelport
           protocol: TCP
+        {{- if .Values.cloudCore.featureGates.requireAuthorization }}
+        - containerPort: 9002
+          name: policy-healthz
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 9002
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 9002
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          failureThreshold: 3
+        {{- end }}
         volumeMounts:
         - name: conf
           mountPath: /etc/kubeedge/config

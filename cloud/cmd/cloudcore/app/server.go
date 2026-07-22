@@ -28,6 +28,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apierror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
 	"k8s.io/component-base/term"
@@ -175,7 +176,27 @@ func registerModules(c *v1alpha1.CloudCoreConfig) {
 	cloudstream.Register(c.Modules.CloudStream, c.CommonConfig)
 	router.Register(c.Modules.Router)
 	dynamiccontroller.Register(c.Modules.DynamicController, enableAuthorization)
-	policycontroller.Register(client.CrdConfig)
+	registerPolicyController()
+}
+
+// registerPolicyController registers the policy controller with the appropriate
+// deployment mode.  When rest.InClusterConfig() succeeds the process is running
+// as a Kubernetes Pod (e.g. deployed via Helm), so leader election is enabled
+// with an explicit lease namespace to prevent duplicate reconciliation in HA
+// setups.  When rest.InClusterConfig() fails the process is running via keadm
+// or as a standalone binary without in-cluster credentials, so leader election
+// is disabled to avoid the "not running in-cluster" error from controller-runtime.
+func registerPolicyController() {
+	_, err := rest.InClusterConfig()
+	if err == nil {
+		// Running inside a Kubernetes Pod: enable leader election.
+		klog.Info("policycontroller: detected in-cluster environment, enabling leader election")
+		policycontroller.RegisterWithOptions(client.CrdConfig, policycontroller.DeploymentModeInCluster, "kubeedge")
+	} else {
+		// Running via keadm or as a standalone binary: disable leader election.
+		klog.Info("policycontroller: detected standalone environment, leader election disabled")
+		policycontroller.RegisterWithOptions(client.CrdConfig, policycontroller.DeploymentModeStandalone, "")
+	}
 }
 
 func NegotiateTunnelPort() (*int, error) {
