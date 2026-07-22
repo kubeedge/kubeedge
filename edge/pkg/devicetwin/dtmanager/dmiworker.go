@@ -114,11 +114,15 @@ func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, m
 	if len(resources) != 3 {
 		return fmt.Errorf("wrong resources %s", message.Router.Resource)
 	}
+	content, ok := message.Content.([]byte)
+	if !ok {
+		return errors.New("invalid message content")
+	}
 	var device v1beta1.Device
 	var dm v1beta1.DeviceModel
 	switch resources[1] {
 	case constants.ResourceTypeDevice:
-		err := json.Unmarshal(message.Content.([]byte), &device)
+		err := json.Unmarshal(content, &device)
 		if err != nil {
 			return fmt.Errorf("invalid message content with err: %+v", err)
 		}
@@ -161,7 +165,7 @@ func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, m
 			klog.Warningf("unsupported operation %s", message.GetOperation())
 		}
 	case constants.ResourceTypeDeviceModel:
-		err := json.Unmarshal(message.Content.([]byte), &dm)
+		err := json.Unmarshal(content, &dm)
 		if err != nil {
 			return fmt.Errorf("invalid message content with err: %+v", err)
 		}
