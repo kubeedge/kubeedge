@@ -17,6 +17,7 @@ limitations under the License.
 package edgehub
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -233,7 +234,7 @@ func TestRouteToEdge(t *testing.T) {
 			mockAdapter.EXPECT().Receive().
 				Return(*model.NewMessage(""), errors.New("Connection Refused")).
 				Times(1)
-			go tt.hub.routeToEdge()
+			go tt.hub.routeToEdge(context.Background())
 			stop := <-tt.hub.reconnectChan
 			if stop != struct{}{} {
 				t.Errorf("TestRouteToEdge error got: %v want: %v", stop, struct{}{})
@@ -328,7 +329,7 @@ func TestRouteToCloud(t *testing.T) {
 
 			core.Register(&EdgeHub{enable: true})
 
-			go tt.hub.routeToCloud()
+			go tt.hub.routeToCloud(context.Background())
 			time.Sleep(2 * time.Second)
 
 			msg := model.NewMessage("").BuildHeader("test_id", "", 1)
@@ -369,11 +370,143 @@ func TestKeepalive(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(nil).Times(1)
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(errors.New("Connection Refused")).Times(1)
-			go tt.hub.keepalive()
+			go tt.hub.keepalive(context.Background())
 			got := <-tt.hub.reconnectChan
 			if got != struct{}{} {
 				t.Errorf("TestKeepalive() StopChan = %v, want %v", got, struct{}{})
 			}
 		})
+	}
+}
+
+// TestRouteToCloudGracefulExit tests that routeToCloud exits upon receiving a stop message when context is done.
+func TestRouteToCloudGracefulExit(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+	// Expect NO messages sent to cloud
+	mockAdapter.EXPECT().Send(gomock.Any()).Times(0)
+
+	hub := newEdgeHub(true)
+	hub.chClient = mockAdapter
+
+	ctx, cancel := context.WithCancel(context.Background())
+	exited := make(chan struct{})
+
+	go func() {
+		hub.routeToCloud(ctx)
+		close(exited)
+	}()
+
+	// Let goroutine start and block on Receive
+	time.Sleep(200 * time.Millisecond)
+
+	cancel()
+	stopMsg := message.BuildMsg(modules.HubGroup, "", modules.EdgeHubModuleName, "", message.OperationStop, nil)
+	beehiveContext.Send(modules.EdgeHubModuleName, *stopMsg)
+
+	select {
+	case <-exited:
+		// Success
+	case <-time.After(2 * time.Second):
+		t.Errorf("routeToCloud did not exit gracefully upon cancellation and stop message")
+	}
+}
+
+// TestRouteToCloudStaleStopMessageDiscarded tests that a healthy routeToCloud discards a stale stop message,
+// does NOT call sendToCloud for the stop message, and remains running for subsequent normal messages.
+func TestRouteToCloudStaleStopMessageDiscarded(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+
+	// Normal message should be sent to cloud, but stop message must NOT be sent to cloud!
+	normalMsg := model.NewMessage("msg-1").BuildHeader("msg-1", "", 1)
+	mockAdapter.EXPECT().Send(gomock.Any()).DoAndReturn(func(msg model.Message) error {
+		if msg.GetOperation() == message.OperationStop {
+			t.Errorf("sendToCloud was called for an internal stop message!")
+		}
+		return nil
+	}).Times(1)
+
+	hub := newEdgeHub(true)
+	hub.chClient = mockAdapter
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	exited := make(chan struct{})
+	go func() {
+		hub.routeToCloud(ctx)
+		close(exited)
+	}()
+
+	// Send a stale stop message followed by a normal message
+	stopMsg := message.BuildMsg(modules.HubGroup, "", modules.EdgeHubModuleName, "", message.OperationStop, nil)
+	beehiveContext.Send(modules.EdgeHubModuleName, *stopMsg)
+	beehiveContext.Send(modules.EdgeHubModuleName, *normalMsg)
+
+	// Wait briefly to allow processing
+	time.Sleep(500 * time.Millisecond)
+
+	// Verify routeToCloud is still running (exited channel is NOT closed)
+	select {
+	case <-exited:
+		t.Errorf("routeToCloud exited unexpectedly on a stale stop message when context was active")
+	default:
+		// Success: routeToCloud is still running and discarded stale stop message
+	}
+
+	// Clean up the goroutine before finishing the test to avoid cross-test contamination
+	cancel()
+	beehiveContext.Send(modules.EdgeHubModuleName, *stopMsg)
+	<-exited
+}
+
+// TestReconnectChanBuffered tests that reconnectChan is buffered and does not block when no receiver is ready.
+func TestReconnectChanBuffered(t *testing.T) {
+	hub := newEdgeHub(true)
+
+	select {
+	case hub.reconnectChan <- struct{}{}:
+		// Success
+	case <-time.After(1 * time.Second):
+		t.Errorf("reconnectChan is not buffered to 1 and blocked unexpectedly")
+	}
+}
+
+// TestRouteToCloudCancelledContextWithNormalMessage tests that a cancelled routeToCloud goroutine
+// correctly exits when woken up by a normal business message, without forwarding it to the cloud.
+func TestRouteToCloudCancelledContextWithNormalMessage(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+
+	// Expect NO messages sent to cloud
+	mockAdapter.EXPECT().Send(gomock.Any()).Times(0)
+
+	hub := newEdgeHub(true)
+	hub.chClient = mockAdapter
+
+	ctx, cancel := context.WithCancel(context.Background())
+	exited := make(chan struct{})
+
+	go func() {
+		hub.routeToCloud(ctx)
+		close(exited)
+	}()
+
+	// Let goroutine start and block on Receive
+	time.Sleep(200 * time.Millisecond)
+
+	cancel()
+	normalMsg := model.NewMessage("msg-1").BuildHeader("msg-1", "", 1)
+	beehiveContext.Send(modules.EdgeHubModuleName, *normalMsg)
+
+	select {
+	case <-exited:
+		// Success
+	case <-time.After(2 * time.Second):
+		t.Errorf("routeToCloud did not exit gracefully upon cancellation and normal message")
 	}
 }
