@@ -39,18 +39,24 @@ func (eh *EdgeHub) dispatch(message model.Message) error {
 	return msghandler.ProcessHandler(message, eh.chClient)
 }
 
-func (eh *EdgeHub) routeToEdge() {
+func (eh *EdgeHub) routeToEdge(ctx context.Context) {
 	for {
 		select {
 		case <-beehiveContext.Done():
 			klog.Warning("EdgeHub RouteToEdge stop")
+			return
+		case <-ctx.Done():
+			klog.Warning("EdgeHub RouteToEdge reconnect stop")
 			return
 		default:
 		}
 		message, err := eh.chClient.Receive()
 		if err != nil {
 			klog.Errorf("websocket read error: %v", err)
-			eh.reconnectChan <- struct{}{}
+			select {
+			case eh.reconnectChan <- struct{}{}:
+			default:
+			}
 			return
 		}
 		klog.V(4).Infof("[edgehub/routeToEdge] receive msg from cloud, msg: %+v", message)
@@ -72,11 +78,14 @@ func (eh *EdgeHub) sendToCloud(message model.Message) error {
 	return nil
 }
 
-func (eh *EdgeHub) routeToCloud() {
+func (eh *EdgeHub) routeToCloud(ctx context.Context) {
 	for {
 		select {
 		case <-beehiveContext.Done():
 			klog.Warning("EdgeHub RouteToCloud stop")
+			return
+		case <-ctx.Done():
+			klog.Warning("EdgeHub RouteToCloud reconnect stop")
 			return
 		default:
 		}
@@ -84,6 +93,18 @@ func (eh *EdgeHub) routeToCloud() {
 		if err != nil {
 			klog.Errorf("failed to receive message from edge: %v", err)
 			time.Sleep(time.Second)
+			continue
+		}
+
+		select {
+		case <-ctx.Done():
+			klog.Warning("EdgeHub RouteToCloud reconnect stop after receive")
+			return
+		default:
+		}
+
+		if message.GetOperation() == messagepkg.OperationStop {
+			klog.Warning("EdgeHub RouteToCloud received stale stop message, discarding")
 			continue
 		}
 
@@ -97,17 +118,30 @@ func (eh *EdgeHub) routeToCloud() {
 		err = eh.sendToCloud(message)
 		if err != nil {
 			klog.Errorf("failed to send message to cloud: %v", err)
-			eh.reconnectChan <- struct{}{}
+			select {
+			case eh.reconnectChan <- struct{}{}:
+			default:
+			}
 			return
+		}
+
+		select {
+		case <-ctx.Done():
+			klog.Warning("EdgeHub RouteToCloud reconnect stop")
+			return
+		default:
 		}
 	}
 }
 
-func (eh *EdgeHub) keepalive() {
+func (eh *EdgeHub) keepalive(ctx context.Context) {
 	for {
 		select {
 		case <-beehiveContext.Done():
 			klog.Warning("EdgeHub KeepAlive stop")
+			return
+		case <-ctx.Done():
+			klog.Warning("EdgeHub KeepAlive reconnect stop")
 			return
 		default:
 		}
@@ -119,11 +153,21 @@ func (eh *EdgeHub) keepalive() {
 		err := eh.sendToCloud(*msg)
 		if err != nil {
 			klog.Errorf("websocket write error: %v", err)
-			eh.reconnectChan <- struct{}{}
+			select {
+			case eh.reconnectChan <- struct{}{}:
+			default:
+			}
 			return
 		}
 
-		time.Sleep(time.Duration(config.Config.Heartbeat) * time.Second)
+		timer := time.NewTimer(time.Duration(config.Config.Heartbeat) * time.Second)
+		select {
+		case <-timer.C:
+		case <-ctx.Done():
+			timer.Stop()
+			klog.Warning("EdgeHub KeepAlive reconnect stop")
+			return
+		}
 	}
 }
 
