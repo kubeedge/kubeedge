@@ -26,6 +26,7 @@ permissions:
 
 jobs:
   image-prepare:
+    if: ${{ github.repository == 'kubeedge/kubeedge' }}
     runs-on: openeuler-linux-arm64
     timeout-minutes: 30
     name: Prepare kubeedge/build-tools image
@@ -43,6 +44,7 @@ jobs:
           path: /home/runner/build-tools
 
   docker_build:
+    if: ${{ github.repository == 'kubeedge/kubeedge' }}
     runs-on: openeuler-linux-arm64
     timeout-minutes: 40
     name: Multiple build
