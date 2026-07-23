@@ -158,7 +158,13 @@ func (e *edged) Start() {
 	defer e.cleanupContainers()
 
 	kubeletReadyChan := make(chan struct{}, 1)
-	go kubeletHealthCheck(e.KubeletServer.ReadOnlyPort, kubeletReadyChan)
+	address := "localhost"
+	if e.KubeletServer.KubeletConfiguration.HealthzBindAddress != "" {
+		address = e.KubeletServer.KubeletConfiguration.HealthzBindAddress
+	} else if e.KubeletServer.KubeletConfiguration.Address != "" {
+		address = e.KubeletServer.KubeletConfiguration.Address
+	}
+	go kubeletHealthCheck(address, e.KubeletServer.ReadOnlyPort, kubeletReadyChan)
 
 	select {
 	case <-beehiveContext.Done():
@@ -640,8 +646,16 @@ func filterPodByNodeName(pod *v1.Pod, nodeName string) bool {
 	return pod.Spec.NodeName == nodeName
 }
 
-func kubeletHealthCheck(port int32, kubeletReadyChan chan struct{}) {
-	url := fmt.Sprintf("http://localhost:%d/healthz/syncloop", port)
+func kubeletHealthCheck(host string, port int32, kubeletReadyChan chan struct{}) {
+	if port == 0 {
+		klog.Warningf("ReadOnlyPort is disabled (0), skipping Kubelet health check. Pod syncing will start immediately.")
+		kubeletReadyChan <- struct{}{}
+		return
+	}
+	if host == "0.0.0.0" || host == "::" || host == "" {
+		host = "localhost"
+	}
+	url := fmt.Sprintf("http://%s:%d/healthz/syncloop", host, port)
 	for {
 		resp, err := http.Get(url)
 		if err != nil {
