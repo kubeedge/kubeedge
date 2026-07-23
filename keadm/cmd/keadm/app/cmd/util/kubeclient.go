@@ -38,7 +38,11 @@ func (co *Common) CleanNameSpace(ns, kubeConfigPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create KubeClient, error: %s", err)
 	}
-	return cli.CoreV1().Namespaces().Delete(context.Background(), ns, metav1.DeleteOptions{})
+
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultK8sAPITimeout)
+	defer cancel()
+
+	return cli.CoreV1().Namespaces().Delete(ctx, ns, metav1.DeleteOptions{})
 }
 
 // IsCloudcoreContainerRunning judge whether cloudcore pod is running
