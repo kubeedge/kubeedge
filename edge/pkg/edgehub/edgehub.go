@@ -1,6 +1,7 @@
 package edgehub
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/certificate"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
@@ -46,7 +48,7 @@ func newEdgeHub(enable bool) *EdgeHub {
 	NewCertSyncChannel()
 	return &EdgeHub{
 		enable:        enable,
-		reconnectChan: make(chan struct{}),
+		reconnectChan: make(chan struct{}, 1),
 		rateLimiter: flowcontrol.NewTokenBucketRateLimiter(
 			float32(config.Config.EdgeHub.MessageQPS),
 			int(config.Config.EdgeHub.MessageBurst)),
@@ -122,13 +124,20 @@ func (eh *EdgeHub) Start() {
 		}
 		// execute hook func after connect
 		eh.pubConnectInfo(true)
-		go eh.routeToEdge()
-		go eh.routeToCloud()
-		go eh.keepalive()
+		ctx, cancel := context.WithCancel(context.Background())
+		go eh.routeToEdge(ctx)
+		go eh.routeToCloud(ctx)
+		go eh.keepalive(ctx)
 
 		// wait the stop signal
 		// stop authinfo manager/websocket connection
 		<-eh.reconnectChan
+		cancel()
+		
+		// Send a stop message to unblock routeToCloud if it's waiting on Receive()
+		stopMsg := messagepkg.BuildMsg(modules.HubGroup, "", modules.EdgeHubModuleName, "", messagepkg.OperationStop, nil)
+		beehiveContext.Send(modules.EdgeHubModuleName, *stopMsg)
+
 		eh.chClient.UnInit()
 
 		// execute hook fun after disconnect
