@@ -62,7 +62,11 @@ func (dc *DownstreamController) syncPod() {
 				klog.Warningf("object type: %T unsupported", e.Object)
 				continue
 			}
-			if !dc.lc.IsEdgeNode(pod.Spec.NodeName) {
+			if pod.Spec.NodeName == "" {
+				continue
+			}
+			isEdgeNode := dc.lc.IsEdgeNode(pod.Spec.NodeName)
+			if !isEdgeNode && (e.Type != watch.Deleted || !dc.lc.IsDeletedEdgeNode(pod.Spec.NodeName)) {
 				continue
 			}
 			resource, err := messagelayer.BuildResource(pod.Spec.NodeName, pod.Namespace, model.ResourceTypePod, pod.Name)
