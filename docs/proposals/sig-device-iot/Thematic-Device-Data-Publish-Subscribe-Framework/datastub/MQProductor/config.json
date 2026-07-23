@@ -1,0 +1,7 @@
+{
+    "cloud_registry_url": "http://192.168.71.91:8080",
+    "device_twin_url": "localhost:8081",
+    "ingest_grpc_addr": "0.0.0.0:18080",
+    "ingest_http_addr": "0.0.0.0:18081",
+    "topics": ["sensor/temperature", "sensor/humidity", "sensor/pressure"]
+}
