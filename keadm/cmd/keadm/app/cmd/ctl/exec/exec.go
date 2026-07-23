@@ -35,6 +35,51 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
+var (
+	edgePodExecShortDescription = `Execute command in edge pod`
+
+	edgePodExecLongDescription = `
+Execute a command inside a container running on an edge pod.
+
+This command communicates with the local MetaService API on the
+edge node to execute arbitrary commands inside containers. It works
+similarly to 'kubectl exec' but operates against the edge node's local
+MetaService API rather than the cloud API server.
+
+Interactive shells (-it flags):
+When both -i (stdin) and -t (tty) are specified, keadm ctl exec opens
+an interactive terminal session with the container. This is useful for
+debugging and interactive shell access.
+
+Command separation:
+If you need to pass flags to the command itself (not to keadm), use --
+to separate keadm flags from command flags:
+  keadm ctl exec <pod> -- command args
+
+Edge autonomy: This command works even when the cloud connection is
+temporarily lost, as it executes directly against the local Edged
+(edge-side kubelet).
+
+Note: This command must be run directly on the edge node where
+EdgeCore is running.`
+
+	edgePodExecExample = `
+  # Execute a command in a container
+  keadm ctl exec <pod-name> -- <command>
+
+  # Execute a command in a specific container of a pod
+  keadm ctl exec <pod-name> -c <container-name> -- <command>
+
+  # Open an interactive shell in a pod
+  keadm ctl exec <pod-name> -it -- /bin/sh
+
+  # Execute a command in a pod in a specific namespace
+  keadm ctl exec <pod-name> -n <namespace> -- <command>
+
+  # Pass command arguments with the -- separator
+  keadm ctl exec <pod-name> -- ls -la /tmp`
+)
+
 // PodExecOptions defines the options for executing command in edge pod
 type PodExecOptions struct {
 	Namespace string
@@ -51,15 +96,14 @@ type PodExecOptions struct {
 	TTY bool
 }
 
-var edgePodExecShortDescription = `Execute command in edge pod`
-
 // NewEdgePodExec returns KubeEdge exec edge pod command.
 func NewEdgePodExec() *cobra.Command {
 	execOpts := NewEdgePodExecOpts()
 	cmd := &cobra.Command{
-		Use:   "exec",
-		Short: edgePodExecShortDescription,
-		Long:  edgePodExecShortDescription,
+		Use:     "exec",
+		Short:   edgePodExecShortDescription,
+		Long:    edgePodExecLongDescription,
+		Example: edgePodExecExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return fmt.Errorf("no pod specified for exec")
