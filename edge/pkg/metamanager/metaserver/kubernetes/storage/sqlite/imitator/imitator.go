@@ -37,10 +37,18 @@ type imitator struct {
 	codec runtime.Codec
 }
 
-// Inject transform the message to watch.event, save internal obj/objs to table meta_v2
-// and trigger the corresponding hook to serve watch. It returns an aggregated error
-// if any event fails to be saved, so the caller can avoid acknowledging the cloud as
-// if the local cache had been updated.
+// Inject transforms the message to watch event(s), saves the internal obj/objs to table
+// meta_v2 and triggers the corresponding hook to serve watch. It returns an aggregated
+// error if any event fails to be saved, so the caller can avoid acknowledging the cloud
+// as if the local cache had been updated.
+//
+// A single message may expand into several events when its payload is a list. Events are
+// applied independently: a successful event is persisted and triggers its watch hook, a
+// failed one is joined into the returned error. This partial application is safe to retry:
+// the writes are idempotent (InsertOrUpdateObj is an upsert keyed by the object key,
+// DeleteObj is a delete-by-key), and when the edge does not acknowledge success the cloud
+// replays the whole object on its next sync reconcile (see synccontroller). Re-applying an
+// already-stored event only re-triggers its watch hook, which watch consumers tolerate.
 func (s *imitator) Inject(msg model.Message) error {
 	var errs []error
 	for _, e := range s.Event(&msg) {

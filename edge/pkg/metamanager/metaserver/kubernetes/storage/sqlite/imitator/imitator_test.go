@@ -27,8 +27,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator/watchhook"
 )
 
 func newTestImitator() *imitator {
@@ -43,6 +45,18 @@ func newObjectMessage(operation string) model.Message {
 	msg := model.NewMessage("")
 	msg.BuildRouter("edgecontroller", "resource", "default/configmap/cm1", operation)
 	msg.Content = []byte(configMap)
+	return *msg
+}
+
+// newListMessage builds a message whose payload is a List of two ConfigMaps (cm1, cm2),
+// so that Inject expands it into two independent events.
+func newListMessage(operation string) model.Message {
+	const list = `{"apiVersion":"v1","kind":"List","items":[` +
+		`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"cm1","namespace":"default","resourceVersion":"10"}},` +
+		`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"cm2","namespace":"default","resourceVersion":"11"}}]}`
+	msg := model.NewMessage("")
+	msg.BuildRouter("edgecontroller", "resource", "default/configmaps", operation)
+	msg.Content = []byte(list)
 	return *msg
 }
 
@@ -85,4 +99,45 @@ func TestInsertOrUpdateObjResourceVersionError(t *testing.T) {
 	err = s.InsertOrUpdateObj(context.TODO(), obj)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "resource version")
+}
+
+// TestInjectPartialApply verifies that when a list message expands into several events
+// and only some fail, Inject applies the successful events (triggering their watch hook)
+// and still returns an aggregated error covering the failed ones. This is the behavior
+// the cloud sync retry relies on: the whole object is replayed and the idempotent writes
+// re-converge the local cache.
+func TestInjectPartialApply(t *testing.T) {
+	s := newTestImitator()
+
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	// cm1 succeeds, cm2 fails.
+	patches.ApplyMethodFunc(reflect.TypeOf(s), "InsertOrUpdateObj",
+		func(_ context.Context, obj runtime.Object) error {
+			u, ok := obj.(*unstructured.Unstructured)
+			require.True(t, ok)
+			if u.GetName() == "cm2" {
+				return errors.New("database is locked")
+			}
+			return nil
+		})
+
+	var triggered []string
+	patches.ApplyFunc(watchhook.Trigger, func(e watch.Event) {
+		u, ok := e.Object.(*unstructured.Unstructured)
+		require.True(t, ok)
+		triggered = append(triggered, u.GetName())
+	})
+
+	err := s.Inject(newListMessage(model.InsertOperation))
+
+	// The failed event is surfaced to the caller so the cloud is not acknowledged.
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cm2")
+	assert.Contains(t, err.Error(), "database is locked")
+	assert.NotContains(t, err.Error(), "cm1")
+
+	// Only the successful event triggers its watch hook.
+	assert.Equal(t, []string{"cm1"}, triggered)
 }

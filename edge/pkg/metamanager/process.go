@@ -248,7 +248,11 @@ func (m *metaManager) processUpdate(message model.Message) {
 		m.processRemote(message)
 		return
 	}
-	if injectErr != nil {
+	// As in processDelete, only cloud-sourced updates must fail when the local meta_v2
+	// cache write fails; edge-sourced updates stay best-effort. In practice status and
+	// node-lease updates produce no meta_v2 event (see imitator.Event), so injectErr is
+	// already nil for them, but the source guard keeps the two paths consistent.
+	if injectErr != nil && msgSource != modules.EdgedModuleName {
 		feedbackError(injectErr, message)
 		return
 	}
@@ -327,7 +331,12 @@ func (m *metaManager) processDelete(message model.Message) {
 		sendToCloud(&message)
 		return
 	}
-	if injectErr != nil {
+	// Only cloud-sourced deletes must not be acknowledged when the local meta_v2 cache
+	// write fails, otherwise the metaserver would keep serving the deleted object as if
+	// it still existed while the cloud believes the delete succeeded. Edge-sourced deletes
+	// (e.g. pod above, volumeattachment) report state up to the cloud, so they are kept
+	// best-effort: a local cache write failure must not block them.
+	if injectErr != nil && message.GetSource() != modules.EdgedModuleName {
 		feedbackError(injectErr, message)
 		return
 	}

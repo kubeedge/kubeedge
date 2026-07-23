@@ -18,6 +18,7 @@ package metamanager
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 	"time"
 
@@ -28,6 +29,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	cloudmodules "github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 	fakeclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator/fake"
 )
@@ -121,4 +123,44 @@ func TestProcessVolumeFeedsBackErrorOnTimeout(t *testing.T) {
 	require.Error(t, gotErr)
 	assert.Contains(t, gotErr.Error(), "sync timeout")
 	assert.False(t, acked, "the cloud must not be acked when the volume operation times out")
+}
+
+// newEdgeMessage builds a message originating from Edged (an edge-sourced path).
+func newEdgeMessage(operation, resource string) model.Message {
+	msg := model.NewMessage("")
+	msg.BuildRouter(modules.EdgedModuleName, "resource", resource, operation)
+	return *msg
+}
+
+// TestProcessDeleteEdgeSourcedStaysBestEffort verifies that an edge-sourced delete other
+// than the special-cased pod delete (here a volumeattachment) is not blocked when the
+// local meta_v2 cache write fails: the inject error is ignored and the message is still
+// processed and forwarded, matching the best-effort behavior of edge-sourced paths.
+func TestProcessDeleteEdgeSourcedStaysBestEffort(t *testing.T) {
+	m := &metaManager{}
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyGlobalVar(&imitator.DefaultV2Client, fakeclient.Client{
+		InjectF: func(_ model.Message) error {
+			return errors.New("cache write failed")
+		},
+	})
+	var fedBack bool
+	patches.ApplyFunc(feedbackError, func(_ error, _ model.Message) {
+		fedBack = true
+	})
+	// handleMessage would reach the (nil) metaService; stub it out so the test exercises
+	// only the injectErr branch.
+	patches.ApplyPrivateMethod(reflect.TypeOf(m), "handleMessage",
+		func(_ *metaManager, _ *model.Message) error { return nil })
+	patches.ApplyFunc(sendToEdged, func(_ *model.Message, _ bool) {})
+	var acked bool
+	patches.ApplyFunc(sendToCloud, func(_ *model.Message) {
+		acked = true
+	})
+
+	m.processDelete(newEdgeMessage(model.DeleteOperation, "default/volumeattachment/va1"))
+	assert.False(t, fedBack, "edge-sourced delete must stay best-effort when the local cache write fails")
+	assert.True(t, acked, "edge-sourced delete should still be forwarded to the cloud")
 }
