@@ -26,6 +26,8 @@ func newRouter(enable bool) *router {
 	}
 }
 
+// Register initializes the router configuration and registers the router
+// module to the core framework.
 func Register(router *v1alpha1.Router) {
 	routerconfig.InitConfigure(router)
 	core.Register(newRouter(router.Enable))
