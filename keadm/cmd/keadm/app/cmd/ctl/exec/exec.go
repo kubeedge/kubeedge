@@ -53,13 +53,27 @@ type PodExecOptions struct {
 
 var edgePodExecShortDescription = `Execute command in edge pod`
 
+var edgePodExecLongDescription = `Execute command in edge pod.
+
+This command is intended to be run on the edge node where EdgeCore is running. It queries the local MetaServer API to execute a command in a pod.
+Please ensure that the MetaServer module is enabled in your edgecore.yaml configuration.
+
+If you want to execute commands in a pod from the cloud side, you should use 'kubectl exec' instead.`
+
+var edgePodExecExample = `  # Execute a command in a pod on the edge node
+  keadm ctl exec <pod-name> -n <namespace> -- <command>
+
+  # Execute an interactive bash shell in a pod
+  keadm ctl exec -it <pod-name> -n <namespace> -- /bin/bash`
+
 // NewEdgePodExec returns KubeEdge exec edge pod command.
 func NewEdgePodExec() *cobra.Command {
 	execOpts := NewEdgePodExecOpts()
 	cmd := &cobra.Command{
-		Use:   "exec",
-		Short: edgePodExecShortDescription,
-		Long:  edgePodExecShortDescription,
+		Use:     "exec <pod-name> -- <command> [args...]",
+		Short:   edgePodExecShortDescription,
+		Long:    edgePodExecLongDescription,
+		Example: edgePodExecExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return fmt.Errorf("no pod specified for exec")

@@ -35,7 +35,7 @@ type PodRestartOptions struct {
 }
 
 var (
-	edgePodRestartShortDescription = `Restart pods in edge node`
+	edgePodRestartShortDescription = `Restart pods on an edge node`
 )
 
 // NewEdgePodRestart returns KubeEdge delete edge pod command.
