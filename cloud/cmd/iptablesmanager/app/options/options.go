@@ -18,12 +18,13 @@ package options
 
 import (
 	cliflag "k8s.io/component-base/cli/flag"
+	"time"
 )
-
 // IptablesManagerOptions config
 type IptablesManagerOptions struct {
 	KubeConfig  string
 	ForwardPort int
+	SyncInterval time.Duration
 }
 
 // NewIptablesManagerOptions returns options object
@@ -31,13 +32,17 @@ func NewIptablesManagerOptions() *IptablesManagerOptions {
 	return &IptablesManagerOptions{
 		KubeConfig:  "",
 		ForwardPort: 10003,
+		SyncInterval: 10 * time.Second,
 	}
 }
 
 // Flags return flag sets
 func (o *IptablesManagerOptions) Flags() (fss cliflag.NamedFlagSets) {
 	fs := fss.FlagSet("IptablesManager")
+
 	fs.StringVar(&o.KubeConfig, "kubeconfig", o.KubeConfig, "The KubeConfig path. Flags override values in this file.")
 	fs.IntVar(&o.ForwardPort, "forwardport", o.ForwardPort, "The forward port, default is the stream port, 10003.")
+	fs.DurationVar(&o.SyncInterval, "sync-interval", o.SyncInterval, "Interval for iptables reconciliation")
+
 	return
 }
