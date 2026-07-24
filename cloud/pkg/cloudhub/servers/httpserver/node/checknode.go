@@ -33,7 +33,7 @@ func CheckNode(request *restful.Request, response *restful.Response) {
 	if nodeName == "" {
 		err := response.WriteErrorString(http.StatusBadRequest, "nodename parameter is required")
 		if err != nil {
-			klog.Errorf("failed to send the task resp to edge , err: %v", err)
+			klog.Errorf("failed to write response to edge, err: %v", err)
 		}
 		return
 	}
@@ -44,7 +44,7 @@ func CheckNode(request *restful.Request, response *restful.Response) {
 			// node not found or query error
 			err = response.WriteErrorString(http.StatusNotFound, "Node not found")
 			if err != nil {
-				klog.Errorf("failed to send the task resp to edge , err: %v", err)
+				klog.Errorf("failed to write response to edge, err: %v", err)
 			}
 			return
 		}
@@ -53,14 +53,14 @@ func CheckNode(request *restful.Request, response *restful.Response) {
 		klog.Errorf("failed to query the node, err: %v", err)
 		err = response.WriteErrorString(http.StatusInternalServerError, "Failed to query node information")
 		if err != nil {
-			klog.Errorf("failed to send the response to edge, err: %v", err)
+			klog.Errorf("failed to write response to edge, err: %v", err)
 		}
 		return
 	}
 
 	// node exists return success
-	err = response.WriteErrorString(http.StatusOK, "Node founded")
+		err = response.WriteErrorString(http.StatusOK, "Node found")
 	if err != nil {
-		klog.Errorf("failed to send the task resp to edge , err: %v", err)
+		klog.Errorf("failed to write response to edge, err: %v", err)
 	}
 }
