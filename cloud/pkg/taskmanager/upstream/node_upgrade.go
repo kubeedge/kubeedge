@@ -104,6 +104,21 @@ func (h *NodeUpgradeJobHandler) UpdateNodeTaskStatus(
 			wg.Done()
 		},
 	}
+	if upmsg.Action == string(operationsv1alpha2.NodeUpgradeJobActionWaitingConfirmation) && upmsg.Succ {
+		opts.JobCondition = &metav1.Condition{
+			Type:    operationsv1alpha2.NodeUpgradeJobConditionWaitingConfirmation,
+			Status:  metav1.ConditionTrue,
+			Reason:  "WaitingConfirmation",
+			Message: "Node upgrade job is waiting for edge-side confirmation.",
+		}
+	} else if upmsg.Action != string(operationsv1alpha2.NodeUpgradeJobActionWaitingConfirmation) {
+		opts.JobCondition = &metav1.Condition{
+			Type:    operationsv1alpha2.NodeUpgradeJobConditionWaitingConfirmation,
+			Status:  metav1.ConditionFalse,
+			Reason:  "ActionProgressed",
+			Message: "Node upgrade job is no longer waiting for edge-side confirmation.",
+		}
+	}
 	status.GetNodeUpgradeJobStatusUpdater().UpdateStatus(opts)
 	wg.Wait()
 	return err
