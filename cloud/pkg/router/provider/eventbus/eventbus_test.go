@@ -263,3 +263,31 @@ func TestBuildAndLogError(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "test-key")
 }
+
+// fakeTarget is a provider.Target that records the data it is given and always
+// succeeds, so any error returned by Forward can only come from extracting the
+// message content.
+type fakeTarget struct {
+	received map[string]interface{}
+}
+
+func (f *fakeTarget) Name() string { return "fake" }
+
+func (f *fakeTarget) GoToTarget(data map[string]interface{}, _ chan struct{}) (interface{}, error) {
+	f.received = data
+	return nil, nil
+}
+
+func TestForwardContentDataError(t *testing.T) {
+	eb := &EventBus{}
+	msg := model.NewMessage("")
+	// A channel value cannot be marshaled to JSON, so GetContentData returns an error.
+	msg.Content = make(chan int)
+
+	target := &fakeTarget{}
+	resp, err := eb.Forward(target, msg)
+
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Nil(t, target.received, "message should not be forwarded when its content cannot be extracted")
+}
