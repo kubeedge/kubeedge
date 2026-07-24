@@ -1,0 +1,1 @@
+{"ignition":{"version":"3.3.0"},"passwd":{"users":[{"groups":["wheel"],"name":"core","passwordHash":"$6z1ZmMqSEeLs","sshAuthorizedKeys":["SSHKEYHERE"],"shell":"/bin/bash"}]}}

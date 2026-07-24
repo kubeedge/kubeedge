@@ -1,0 +1,169 @@
+# Default values for kubeedge.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+appVersion: "1.15.1"
+
+cloudCore:
+  replicaCount: 1
+  hostNetWork: true 
+  image:
+    repository: "kubeedge/cloudcore"
+    tag: "v1.15.1"
+    pullPolicy: "IfNotPresent"
+    pullSecrets: []
+  securityContext:
+    privileged: true
+  labels:
+    k8s-app: kubeedge
+    kubeedge: cloudcore
+  annotations: {}
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: node-role.kubernetes.io/edge
+            operator: DoesNotExist
+  tolerations: []
+  nodeSelector: {}
+  resources:
+    limits:
+      cpu: 200m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 512Mi
+  strategy: {}
+  featureGates:
+    requireAuthorization: true
+  modules:
+    cloudHub:
+      # Caution!: Leave this entry to empty will cause CloudCore to exit abnormally once KubeEdge is enabled.
+      # At least a public IP Address or an IP which can be accessed by edge nodes must be provided!
+      advertiseAddress:
+        - "IP"
+      dnsNames:
+        - ""
+      nodeLimit: "1000"
+      websocket:
+        port: 10000
+        enable: true
+      quic:
+        port: 10001
+        enable: false
+        maxIncomingStreams: "10000"
+      https:
+        enable: true
+    cloudStream:
+      enable: true
+    dynamicController:
+      enable: true
+    router:
+      enable: false
+    taskManager:
+      enable: false
+  service:
+    enable: true
+    type: "NodePort"
+    cloudhubNodePort: "30000"
+    cloudhubQuicNodePort: "30001"
+    cloudhubHttpsNodePort: "30002"
+    cloudstreamNodePort: "30003"
+    tunnelNodePort: "30004"
+    annotations: {}
+
+iptablesManager:
+  enable: true
+  mode: "internal"
+  hostNetWork: true
+  image:
+    repository: "kubeedge/iptables-manager"
+    tag: "v1.12.0"
+    pullPolicy: "IfNotPresent"
+    pullSecrets: []
+  securityContext:
+    capabilities:
+      add:
+        - NET_ADMIN
+        - NET_RAW
+  labels:
+    k8s-app: iptables-manager
+    kubeedge: iptables-manager
+  annotations: {}
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: node-role.kubernetes.io/edge
+            operator: DoesNotExist
+  tolerations: []
+  nodeSelector: {}
+  resources:
+    limits:
+      cpu: 200m
+      memory: 50Mi
+    requests:
+      cpu: 100m
+      memory: 25Mi
+
+controllerManager:
+  enable: false
+  image:
+    repository: "kubeedge/controller-manager"
+    tag: "v1.15.1"
+    pullPolicy: "IfNotPresent"
+    pullSecrets: []
+  labels:
+    k8s-app: controller-manager
+    kubeedge: controller-manager
+  annotations: {}
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/edge
+                operator: DoesNotExist
+  tolerations:
+    - key: "node-role.kubernetes.io/master"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+  nodeSelector: {}
+  resources:
+    limits:
+      cpu: 200m
+      memory: 50Mi
+    requests:
+      cpu: 100m
+      memory: 25Mi
+
+mosquitto:
+  enable: true
+  image:
+    repository: eclipse-mosquitto
+    tag: "1.6.15"
+    pullPolicy: "IfNotPresent"
+    pullSecrets: []
+  labels:
+    k8s-app: eclipse-mosquitto
+    kubeedge: eclipse-mosquitto
+  annotations: {}
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/edge
+                operator: Exists
+  tolerations: []
+  resources:
+    limits:
+      cpu: 200m
+      memory: 100Mi
+    requests:
+      cpu: 100m
+      memory: 50Mi
