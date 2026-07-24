@@ -1,0 +1,146 @@
+## Prometheus Scrape Config Patch — AI PC NPU/GPU Metrics
+## Add this to your prometheus.yml or as a ConfigMap patch if using
+## kube-prometheus-stack helm chart.
+##
+## For helm-based deployments:
+##   helm upgrade kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+##     -f prometheus-scrape-config-patch.yaml
+##
+## Manual patch (if not using operator):
+##   kubectl -n monitoring patch cm prometheus-server \
+##     --patch "$(cat prometheus-scrape-config-patch.yaml)"
+
+## ─── Additional scrape jobs for AI PC nodes ──────────────────────────────
+additionalScrapeConfigs:
+
+## ─── Intel NPU Exporter ───────────────────────────────────────────────────
+- job_name: 'intel-npu-exporter'
+  honor_labels: true
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  metrics_path: /metrics
+  kubernetes_sd_configs:
+  - role: pod
+    namespaces:
+      names:
+      - monitoring
+  relabel_configs:
+  ## Only scrape pods with prometheus.io/scrape: "true"
+  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+    action: keep
+    regex: "true"
+  ## Only scrape our npu-exporter pods
+  - source_labels: [__meta_kubernetes_pod_label_app]
+    action: keep
+    regex: npu-exporter
+  ## Use the annotated port
+  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port,
+                    __meta_kubernetes_pod_ip]
+    action: replace
+    regex: (\d+);(.+)
+    target_label: __address__
+    replacement: $2:$1
+  ## Add node name as label
+  - source_labels: [__meta_kubernetes_pod_node_name]
+    target_label: node
+  ## Add pod name as label
+  - source_labels: [__meta_kubernetes_pod_name]
+    target_label: pod
+  ## Add namespace as label
+  - source_labels: [__meta_kubernetes_namespace]
+    target_label: namespace
+  metric_relabel_configs:
+  ## Drop high-cardinality internal metrics
+  - source_labels: [__name__]
+    regex: 'go_.*|process_.*'
+    action: drop
+
+## ─── NVIDIA DCGM Exporter ────────────────────────────────────────────────
+- job_name: 'nvidia-dcgm-exporter'
+  honor_labels: true
+  scrape_interval: 15s
+  kubernetes_sd_configs:
+  - role: pod
+    namespaces:
+      names:
+      - monitoring
+  relabel_configs:
+  - source_labels: [__meta_kubernetes_pod_label_app]
+    action: keep
+    regex: dcgm-exporter
+  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_port,
+                    __meta_kubernetes_pod_ip]
+    action: replace
+    regex: (\d+);(.+)
+    target_label: __address__
+    replacement: $2:$1
+  - source_labels: [__meta_kubernetes_pod_node_name]
+    target_label: node
+  metric_relabel_configs:
+  ## Only keep essential GPU metrics
+  - source_labels: [__name__]
+    regex: 'DCGM_FI_DEV_GPU_UTIL|DCGM_FI_DEV_MEM_COPY_UTIL|DCGM_FI_DEV_POWER_USAGE|DCGM_FI_DEV_GPU_TEMP|DCGM_FI_DEV_FB_USED|DCGM_FI_DEV_FB_FREE'
+    action: keep
+
+## ─── OpenVINO Model Server Metrics ───────────────────────────────────────
+- job_name: 'ovms-inference-metrics'
+  scrape_interval: 30s
+  kubernetes_sd_configs:
+  - role: pod
+    namespaces:
+      names:
+      - edge-ai
+  relabel_configs:
+  - source_labels: [__meta_kubernetes_pod_label_runtime]
+    action: keep
+    regex: openvino
+  - source_labels: [__meta_kubernetes_pod_ip]
+    target_label: __address__
+    replacement: $1:8080
+  - replacement: /v2/metrics
+    target_label: __metrics_path__
+  - source_labels: [__meta_kubernetes_pod_label_model]
+    target_label: model_name
+  - source_labels: [__meta_kubernetes_pod_node_name]
+    target_label: edge_node
+
+## ─── llama.cpp Server Metrics ────────────────────────────────────────────
+- job_name: 'llama-cpp-metrics'
+  scrape_interval: 30s
+  kubernetes_sd_configs:
+  - role: pod
+    namespaces:
+      names:
+      - edge-ai
+  relabel_configs:
+  - source_labels: [__meta_kubernetes_pod_label_runtime]
+    action: keep
+    regex: llama-cpp
+  - source_labels: [__meta_kubernetes_pod_ip]
+    target_label: __address__
+    replacement: $1:8080
+  - replacement: /metrics
+    target_label: __metrics_path__
+  - source_labels: [__meta_kubernetes_pod_node_name]
+    target_label: edge_node
+
+## ─── Recording Rules (pre-compute for Grafana) ───────────────────────────
+## Add to Prometheus rules ConfigMap or PrometheusRule CRD
+## kubectl apply -f - <<EOF
+## apiVersion: monitoring.coreos.com/v1
+## kind: PrometheusRule
+## metadata:
+##   name: edge-ai-recording-rules
+##   namespace: monitoring
+## spec:
+##   groups:
+##   - name: edge-ai-npu
+##     interval: 30s
+##     rules:
+##     - record: edge:npu_utilization:avg5m
+##       expr: avg_over_time(npu_utilization_percent[5m])
+##     - record: edge:npu_utilization:max
+##       expr: max(npu_utilization_percent) by (node)
+##     - record: edge:inference_latency_p99:5m
+##       expr: histogram_quantile(0.99, rate(ovms_request_time_us_bucket[5m]))
+## EOF
