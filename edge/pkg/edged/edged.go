@@ -28,6 +28,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"reflect"
@@ -158,7 +159,7 @@ func (e *edged) Start() {
 	defer e.cleanupContainers()
 
 	kubeletReadyChan := make(chan struct{}, 1)
-	go kubeletHealthCheck(e.KubeletServer.ReadOnlyPort, kubeletReadyChan)
+	go kubeletHealthCheck(e.KubeletServer.Address, e.KubeletServer.ReadOnlyPort, kubeletReadyChan)
 
 	select {
 	case <-beehiveContext.Done():
@@ -640,10 +641,29 @@ func filterPodByNodeName(pod *v1.Pod, nodeName string) bool {
 	return pod.Spec.NodeName == nodeName
 }
 
-func kubeletHealthCheck(port int32, kubeletReadyChan chan struct{}) {
-	url := fmt.Sprintf("http://localhost:%d/healthz/syncloop", port)
+func kubeletHealthCheckURL(address string, port int32) string {
+	host := address
+	if host == "" || host == "0.0.0.0" {
+		host = "127.0.0.1"
+	} else if host == "::" {
+		host = "::1"
+	}
+	return fmt.Sprintf("http://%s/healthz/syncloop", net.JoinHostPort(host, fmt.Sprintf("%d", port)))
+}
+
+func kubeletHealthCheck(address string, port int32, kubeletReadyChan chan struct{}) {
+	if port == 0 {
+		klog.Warning("ReadOnlyPort is disabled (port=0), skipping kubelet health check")
+		kubeletReadyChan <- struct{}{}
+		return
+	}
+
+	url := kubeletHealthCheckURL(address, port)
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
 	for {
-		resp, err := http.Get(url)
+		resp, err := client.Get(url)
 		if err != nil {
 			klog.Warningf("failed to get kubelet healthz syncloop, err: %v", err)
 			time.Sleep(50 * time.Millisecond)
