@@ -89,6 +89,8 @@ func newSyncController(enable bool) *SyncController {
 	return sctl
 }
 
+// Register initializes the synccontroller configuration and registers the
+// module to the core framework.
 func Register(ec *configv1alpha1.SyncController) {
 	config.InitConfigure(ec)
 	core.Register(newSyncController(ec.Enable))
