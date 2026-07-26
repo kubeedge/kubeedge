@@ -80,7 +80,12 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		return errors.New("msg not Message type")
 	}
 
-	updatedDevice, err := dttype.UnmarshalDeviceUpdate(message.Content.([]byte))
+	content, ok := message.Content.([]byte)
+	if !ok {
+		return errors.New("invalid message content")
+	}
+
+	updatedDevice, err := dttype.UnmarshalDeviceUpdate(content)
 	if err != nil {
 		klog.Errorf("Unmarshal device info failed, err: %#v", err)
 		return err
@@ -158,7 +163,12 @@ func dealDeviceAttrUpdate(context *dtcontext.DTContext, resource string, msg int
 		return errors.New("msg not Message type")
 	}
 
-	updatedDevice, err := dttype.UnmarshalDeviceUpdate(message.Content.([]byte))
+	content, ok := message.Content.([]byte)
+	if !ok {
+		return errors.New("invalid message content")
+	}
+
+	updatedDevice, err := dttype.UnmarshalDeviceUpdate(content)
 	if err != nil {
 		klog.Errorf("Unmarshal device info failed, err: %#v", err)
 		return err
