@@ -412,12 +412,17 @@ type ServiceBus struct {
 	// if set to false (for debugging etc.), skip checking other ServiceBus configs.
 	// default false
 	Enable bool `json:"enable"`
-	// Address indicates address for http server
+	// Address indicates the address for the local HTTPS servicebus listener.
 	Server string `json:"server"`
-	// Port indicates port for http server
+	// Port indicates the port for the local HTTPS servicebus listener.
 	Port int `json:"port"`
 	// Timeout indicates timeout for servicebus receive message
 	Timeout int `json:"timeout"`
+	// TLSCertFile indicates the file containing the dedicated x509 server certificate for ServiceBus HTTPS.
+	// The certificate must support ServerAuth and match the configured ServiceBus address.
+	TLSCertFile string `json:"tlsCertFile,omitempty"`
+	// TLSPrivateKeyFile indicates the file containing the private key matching tlsCertFile.
+	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile,omitempty"`
 }
 
 // DeviceTwin indicates the DeviceTwin module config
