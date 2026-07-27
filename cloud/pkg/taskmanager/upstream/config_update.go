@@ -65,19 +65,19 @@ func (h *ConfigUpdateJobHandler) UpdateNodeTaskStatus(
 	upmsg taskmsg.UpstreamMessage,
 ) error {
 	var (
-		actoinStatus operationsv1alpha2.ConfigUpdateJobActionStatus
+		actionStatus operationsv1alpha2.ConfigUpdateJobActionStatus
 		retErr       error
 		wg           sync.WaitGroup
 	)
 
-	actoinStatus.Action = operationsv1alpha2.ConfigUpdateJobAction(upmsg.Action)
+	actionStatus.Action = operationsv1alpha2.ConfigUpdateJobAction(upmsg.Action)
 	if upmsg.Succ {
-		actoinStatus.Status = metav1.ConditionTrue
+		actionStatus.Status = metav1.ConditionTrue
 	} else {
-		actoinStatus.Status = metav1.ConditionFalse
-		actoinStatus.Reason = upmsg.Reason
+		actionStatus.Status = metav1.ConditionFalse
+		actionStatus.Reason = upmsg.Reason
 	}
-	actoinStatus.Time = upmsg.FinishTime
+	actionStatus.Time = upmsg.FinishTime
 
 	phase := operationsv1alpha2.NodeTaskPhaseInProgress
 	if isFinalAction {
@@ -95,7 +95,7 @@ func (h *ConfigUpdateJobHandler) UpdateNodeTaskStatus(
 			NodeName:     nodeName,
 			Phase:        phase,
 			ExtendInfo:   upmsg.Extend,
-			ActionStatus: &actoinStatus,
+			ActionStatus: &actionStatus,
 		},
 		Callback: func(cbErr error) {
 			if cbErr != nil {
@@ -104,7 +104,7 @@ func (h *ConfigUpdateJobHandler) UpdateNodeTaskStatus(
 			wg.Done()
 		},
 	}
-	status.GetConfigeUpdateJobStatusUpdater().UpdateStatus(opts)
+	status.GetConfigUpdateJobStatusUpdater().UpdateStatus(opts)
 	wg.Wait()
 	return retErr
 }

@@ -32,7 +32,7 @@ import (
 func TestImagePrePullJobUpdateNodeTaskStatus(t *testing.T) {
 	var (
 		jobName  = "test-job"
-		nodeNmae = "node1"
+		nodeName = "node1"
 	)
 	t.Run("final action successful", func(t *testing.T) {
 		patches := gomonkey.NewPatches()
@@ -48,13 +48,13 @@ func TestImagePrePullJobUpdateNodeTaskStatus(t *testing.T) {
 				assert.Equal(t, operationsv1alpha2.ImagePrePullJobActionPull, act.Action)
 				assert.Equal(t, operationsv1alpha2.NodeTaskPhaseSuccessful, opts.Phase)
 				assert.Equal(t, jobName, opts.JobName)
-				assert.Equal(t, nodeNmae, opts.NodeName)
+				assert.Equal(t, nodeName, opts.NodeName)
 				require.NotNil(t, opts.Callback)
 				opts.Callback(nil)
 			})
 
 		handler := &ImagePrePullJobHandler{}
-		err := handler.UpdateNodeTaskStatus(jobName, nodeNmae, true, taskmsg.UpstreamMessage{
+		err := handler.UpdateNodeTaskStatus(jobName, nodeName, true, taskmsg.UpstreamMessage{
 			Action: string(operationsv1alpha2.ImagePrePullJobActionPull),
 			Succ:   true,
 		})
@@ -75,13 +75,13 @@ func TestImagePrePullJobUpdateNodeTaskStatus(t *testing.T) {
 				assert.Equal(t, operationsv1alpha2.ImagePrePullJobActionPull, act.Action)
 				assert.Equal(t, operationsv1alpha2.NodeTaskPhaseFailure, opts.Phase)
 				assert.Equal(t, jobName, opts.JobName)
-				assert.Equal(t, nodeNmae, opts.NodeName)
+				assert.Equal(t, nodeName, opts.NodeName)
 				require.NotNil(t, opts.Callback)
 				opts.Callback(nil)
 			})
 
 		handler := &ImagePrePullJobHandler{}
-		err := handler.UpdateNodeTaskStatus(jobName, nodeNmae, true, taskmsg.UpstreamMessage{
+		err := handler.UpdateNodeTaskStatus(jobName, nodeName, true, taskmsg.UpstreamMessage{
 			Action: string(operationsv1alpha2.ImagePrePullJobActionPull),
 			Succ:   false,
 		})
@@ -102,11 +102,12 @@ func TestImagePrePullJobUpdateNodeTaskStatus(t *testing.T) {
 			})
 
 		handler := &ImagePrePullJobHandler{}
-		err := handler.UpdateNodeTaskStatus(jobName, nodeNmae, true, taskmsg.UpstreamMessage{
+		err := handler.UpdateNodeTaskStatus(jobName, nodeName, true, taskmsg.UpstreamMessage{
 			Action: string(operationsv1alpha2.ImagePrePullJobActionPull),
 			Succ:   true,
 		})
 		require.Error(t, err)
+		require.ErrorIs(t, err, assert.AnError)
 		assert.Contains(t, err.Error(), "failed to update image prepull job status")
 	})
 }
