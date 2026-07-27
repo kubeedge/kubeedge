@@ -16,9 +16,9 @@ limitations under the License.
 package certs
 
 const (
-	CAHandlerTypeX509 = "x509"
+	CAHandlerTypeX509 CAHandlerType = "x509"
 
-	HandlerTypeX509 = "x509"
+	HandlerTypeX509 HandlerType = "x509"
 )
 
 type CAHandlerType string

@@ -18,6 +18,8 @@ package certs
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetCAHandler(t *testing.T) {
@@ -41,8 +43,10 @@ func TestGetCAHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := GetCAHandler(tt.handlerType)
-			if (got == nil) != tt.wantNil {
-				t.Errorf("GetCAHandler() returned nil = %v, wantNil = %v", got == nil, tt.wantNil)
+			if tt.wantNil {
+				assert.Nil(t, got)
+			} else {
+				assert.NotNil(t, got)
 			}
 		})
 	}
@@ -69,8 +73,10 @@ func TestGetHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := GetHandler(tt.handlerType)
-			if (got == nil) != tt.wantNil {
-				t.Errorf("GetHandler() returned nil = %v, wantNil = %v", got == nil, tt.wantNil)
+			if tt.wantNil {
+				assert.Nil(t, got)
+			} else {
+				assert.NotNil(t, got)
 			}
 		})
 	}
