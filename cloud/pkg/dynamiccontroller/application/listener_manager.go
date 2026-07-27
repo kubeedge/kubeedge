@@ -17,6 +17,7 @@ limitations under the License.
 package application
 
 import (
+	"maps"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -92,14 +93,10 @@ func (lm *listenerManager) GetListenersForNode(nodeName string) map[string]*Sele
 		return nil
 	}
 
-	copyMap := make(map[string]*SelectorListener, len(listeners))
-	for k, v := range listeners {
-		copyMap[k] = v
-	}
-	return copyMap
+	return maps.Clone(listeners)
 }
 
-func (lm *listenerManager) GetListenersForGVR(gvr schema.GroupVersionResource) map[string]*SelectorListener {
+func (lm *listenerManager) GetListenersForGVR(gvr schema.GroupVersionResource) []*SelectorListener {
 	lm.lock.RLock()
 	defer lm.lock.RUnlock()
 
@@ -108,9 +105,9 @@ func (lm *listenerManager) GetListenersForGVR(gvr schema.GroupVersionResource) m
 		return nil
 	}
 
-	copyMap := make(map[string]*SelectorListener, len(listeners))
-	for k, v := range listeners {
-		copyMap[k] = v
+	copySlice := make([]*SelectorListener, 0, len(listeners))
+	for _, v := range listeners {
+		copySlice = append(copySlice, v)
 	}
-	return copyMap
+	return copySlice
 }

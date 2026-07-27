@@ -66,12 +66,8 @@ func TestAddListener(t *testing.T) {
 	listenerByGVR := lm.GetListenersForGVR(testGVR)
 	assert.Len(listenerByGVR, 2)
 
-	expected := map[string]*SelectorListener{
-		listener1.id: listener1,
-		listener2.id: listener2,
-	}
-
-	assert.Equal(expected, listenerByGVR)
+	assert.Contains(listenerByGVR, listener1)
+	assert.Contains(listenerByGVR, listener2)
 }
 
 func TestDeleteListener(t *testing.T) {
@@ -140,15 +136,12 @@ func TestGetListenersForGVR(t *testing.T) {
 
 	gvrListeners := lm.GetListenersForGVR(testGVR)
 	assert.Len(gvrListeners, 2)
-	assert.Contains(gvrListeners, listener1.id)
-	assert.Contains(gvrListeners, listener2.id)
-	assert.Equal(listener1, gvrListeners[listener1.id])
-	assert.Equal(listener2, gvrListeners[listener2.id])
+	assert.Contains(gvrListeners, listener1)
+	assert.Contains(gvrListeners, listener2)
 
 	differentGVRListeners := lm.GetListenersForGVR(differentGVR)
 	assert.Len(differentGVRListeners, 1)
-	assert.Contains(differentGVRListeners, listener3.id)
-	assert.Equal(listener3, differentGVRListeners[listener3.id])
+	assert.Contains(differentGVRListeners, listener3)
 
 	// Get listeners for non existent GVR
 	nonExistentGVR := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "nonexistent"}
@@ -176,16 +169,16 @@ func TestGetListenersReturnsCopy(t *testing.T) {
 	assert.Len(nodeListenersOriginal, 1)
 	assert.Contains(nodeListenersOriginal, "testID1")
 
-	// Verify GetListenersForGVR returns a copy
+	// Verify GetListenersForGVR returns a slice copy
 	gvrListeners := lm.GetListenersForGVR(testGVR)
 	assert.Len(gvrListeners, 1)
 
-	// Mutate the returned map
-	delete(gvrListeners, "testID1")
-	assert.Len(gvrListeners, 0)
+	// Mutate the returned slice
+	gvrListeners[0] = nil
 
 	// Verify the original map in manager is unchanged
 	gvrListenersOriginal := lm.GetListenersForGVR(testGVR)
 	assert.Len(gvrListenersOriginal, 1)
-	assert.Contains(gvrListenersOriginal, "testID1")
+	assert.NotNil(gvrListenersOriginal[0])
+	assert.Equal("testID1", gvrListenersOriginal[0].id)
 }

@@ -1,0 +1,1933 @@
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **willardhu** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @willardhu` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["willardhu"]} -->
+--------------------------------------------------------------------------------
+
+This pull request adds a new unit test file `pkg/version/version_test.go` to test the `Get()` function of the `version` package, verifying that all fields in the returned version info match their expected values. There are no review comments, and I have no feedback to provide.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #7069 - Review by DoisLONG: Thanks for adding the version package test. The test itself is straightforward and I do not see any code issue here.
+
+One scope/process question before moving forward: since this is another very small pure-function coverage-only change, could we fold it into the consolidated pure-function test PR (#7067) instead of keeping it as a separate PR?
+
+The goal of #7067 was to reduce review overhead by grouping these small coverage-only tests. This version `Get()` test seems to fit that same category: it does not change production logic, does not mutate global state, and only verifies a simple field mapping.
+
+If there is a reason to keep this separate, please mention it in the PR. Otherwise, I would prefer consolidating it with #7067.
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **doislong** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @doislong` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["doislong"]} -->
+--------------------------------------------------------------------------------
+
+This pull request introduces unit tests for message formatting and parsing functions in `pkg/nodetask/message/extend_conv_test.go`. The review feedback suggests improving the test assertions by returning early when an error is expected (`tt.wantErr` is true) to avoid unnecessary value assertions on invalid or partial results.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #7068 - Review by DoisLONG: Thanks for adding the nodetask extend conversion tests. The scope is good and the PR only covers pure formatting/parsing helpers without touching production logic.
+
+One small test-structure comment before LGTM: for the negative cases where `wantErr` is true, the test should return after verifying the error state and skip value assertions.
+
+For example, in `TestParseNodeUpgradeJobExtend`, once the expected error is observed, we should not also assert `gotFromVer` and `gotToVer`. This keeps the test focused on the error behavior and avoids making the negative case depend on the exact zero-value outputs.
+
+Same idea can be applied to the image pre-pull parse test if needed.
+
+After that small cleanup, this looks good to me.
+--------------------------------------------------------------------------------
+PR #7068 - Review by DoisLONG: Thanks for the update. The negative cases now return after checking the expected error, which keeps the tests focused on the error behavior.
+
+I checked the scope again. This PR only adds tests for the pure formatting/parsing helpers in `pkg/nodetask/message/extend_conv.go` and does not touch production logic or global state. The coverage for both node upgrade extend parsing and image pre-pull extend JSON parsing looks straightforward to me.
+
+No further comments from my side. Please wait for CI / tide to become green.
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **doislong** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @doislong` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["doislong"]} -->
+--------------------------------------------------------------------------------
+
+This pull request introduces several unit tests across different packages to improve test coverage. Specifically, it adds tests for building node task routers, validating database table names for various models (Device, DeviceTwin, DeviceAttr, SubTopics, Meta, MetaV2, TargetUrls), and verifying the behavior of the fake object converter. There are no review comments, so I have no feedback to provide.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #7067 - Review by DoisLONG: Thanks for consolidating these small pure-function tests into a single PR. This is much easier to review than several separate coverage-only PRs.
+
+I checked the scope. The PR only adds tests and does not touch production logic or global state. The added cases for `BuildNodeTaskRouter`, the metamanager model `TableName()` methods, and the fake object convertor all look straightforward to me.
+
+No further comments from my side. Please make sure CI is green.
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **shelley-baoyue** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @shelley-baoyue` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["shelley-baoyue"]} -->
+--------------------------------------------------------------------------------
+
+This pull request introduces a new unit test file `nodetask_test.go` to verify the `BuildNodeTaskRouter` function. The reviewer pointed out a potential compilation issue because `nodetaskmsg.NodeUpgradeJob` may not be defined in the referenced package, and provided a suggestion to construct a mock `nodetaskmsg.Resource` struct instead.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #7059 - Review by DoisLONG: Thanks for the update.
+
+The current version looks self-contained now. It explicitly constructs a nodetaskmsg.Resource and verifies that BuildNodeTaskRouter() sets source, group, resource, and operation correctly.
+
+This is a very small pure-function test, so I do not have much more feedback. Same as other coverage-only changes, I would prefer grouping similar small tests into one PR when possible to reduce review overhead.
+
+No objection to the test itself.
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **gsssc** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @gsssc` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[edge/pkg/metamanager/OWNERS](https://github.com/kubeedge/kubeedge/blob/master/edge/pkg/metamanager/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["gsssc"]} -->
+--------------------------------------------------------------------------------
+
+This pull request introduces a new unit test file, `convertor_test.go`, in the `edge/pkg/metamanager/metaserver/kubernetes/fakers` package. The test, `TestFakeObjectConvertor`, verifies the behavior of the `FakeObjectConvertor`'s `Convert`, `ConvertToVersion`, and `ConvertFieldLabel` methods. There are no review comments, and I have no feedback to provide.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #7058 - Review by DoisLONG: Thanks for the PR.
+
+The test itself is correct as a small pure-function coverage test, and it does not change production behavior.
+
+That said, this is very small coverage-only work. For this kind of simple helper/faker coverage, I would prefer grouping similar tests into one PR instead of opening many separate PRs. It keeps the review overhead lower for the community.
+
+No objection to the test itself.
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **rohitsardesai83** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @rohitsardesai83` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[edge/pkg/metamanager/OWNERS](https://github.com/kubeedge/kubeedge/blob/master/edge/pkg/metamanager/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["rohitsardesai83"]} -->
+--------------------------------------------------------------------------------
+
+This pull request adds unit tests in `device_test.go` to verify that the `TableName()` methods for the `Device`, `DeviceTwin`, and `DeviceAttr` models return their respective constant table names. There are no review comments, and I have no feedback to provide.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **gsssc** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @gsssc` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[edge/pkg/metamanager/OWNERS](https://github.com/kubeedge/kubeedge/blob/master/edge/pkg/metamanager/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["gsssc"]} -->
+--------------------------------------------------------------------------------
+
+This pull request introduces unit tests for the Meta and MetaV2 models in edge/pkg/metamanager/dao/models/meta_test.go to verify that their TableName() methods return the correct table name constants. There are no review comments, and I have no feedback to provide.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **rohitsardesai83** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @rohitsardesai83` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[edge/pkg/metamanager/OWNERS](https://github.com/kubeedge/kubeedge/blob/master/edge/pkg/metamanager/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["rohitsardesai83"]} -->
+--------------------------------------------------------------------------------
+
+This pull request adds a new unit test file `servicebus_test.go` in the `edge/pkg/metamanager/dao/models` package to verify that the `TableName()` method of the `TargetUrls` struct returns the expected `TargetUrlsName` constant. There are no review comments, and I have no feedback to provide.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **rohitsardesai83** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @rohitsardesai83` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[edge/pkg/metamanager/OWNERS](https://github.com/kubeedge/kubeedge/blob/master/edge/pkg/metamanager/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["rohitsardesai83"]} -->
+--------------------------------------------------------------------------------
+
+This pull request adds a new unit test file `eventbus_test.go` to verify that the `TableName` method of the `SubTopics` struct correctly returns the `SubTopicsName` constant. There are no review comments, and we have no feedback to provide.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **doislong** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @doislong` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[edge/pkg/devicetwin/OWNERS](https://github.com/kubeedge/kubeedge/blob/master/edge/pkg/devicetwin/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["doislong"]} -->
+--------------------------------------------------------------------------------
+
+This pull request changes the global `once` variable in `edge/pkg/devicetwin/config/config.go` to be a pointer to `sync.Once` (`new(sync.Once)`). It also adds unit tests in `edge/pkg/devicetwin/config/config_test.go` to test configuration initialization and retrieval, using cleanup functions to reset the global state. There are no review comments, and I have no feedback to provide.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #7033 - Review by DoisLONG: Thanks for the PR.
+
+I left a related comment in #7032, and I think the same concern applies here as well.
+
+This PR adds a small config initialization test, but it also changes the production `once` variable from a value `sync.Once` to a `*sync.Once` so that the test can reset it.
+
+Before reviewing this PR further, I think we should first clarify whether this production-code change is acceptable. If the pointer change is only for test convenience, I would prefer not to spread this pattern across multiple config packages. The existing value-type `sync.Once` is idiomatic and keeps the production state less mutable.
+
+Could you please explain the production-side reason for changing `once` to a pointer here, or otherwise adjust the test to avoid requiring a production implementation change?
+
+Once we agree on the approach in #7032, we can apply the same decision here.
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **doislong** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @doislong` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["doislong"]} -->
+--------------------------------------------------------------------------------
+
+This pull request introduces a new test file `config_test.go` to verify the initialization behavior of the eventbus configuration. The review feedback correctly identifies a critical issue where resetting the global `once` variable via `sync.Once{}` copies an internal lock, which will trigger a `copylocks` analyzer failure. It is recommended to refactor `once` to be a pointer (`*sync.Once`) so it can be safely reallocated in tests.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #7032 - Review by DoisLONG: Thanks for adding the test.
+
+I have one concern before moving this forward. This PR is marked as `/kind test`, but it also changes production code by changing `once` from a value `sync.Once` to a `*sync.Once`.
+
+I understand the reason is to make the singleton state resettable in the test, but I am not sure we should change the production implementation only for test convenience. The original `sync.Once` value is simple and idiomatic for package-level initialization.
+
+Could you please either:
+
+1. explain why changing `once` to a pointer is needed for production behavior, not only for the test, or
+2. keep the production code unchanged and adjust the test scope accordingly?
+
+Also, the PR description says the reset logic “perfectly avoids” interference with other tests, but the test still mutates package-level global state. It is fine for a small package-level test, but I would avoid overclaiming that it is fully isolated or safe for parallel tests.
+
+The test direction is okay, but I think the production-code change needs stronger justification.
+
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **qizha** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @qizha` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["qizha"]} -->
+--------------------------------------------------------------------------------
+
+This pull request adds a new unit test, TestInitConfigure, to verify the initialization of the router configuration and ensure that sync.Once works as expected. The review feedback points out a potential test isolation issue where global state initialized by other tests could cause this test to fail, and suggests resetting the global state at the beginning of the test to prevent flakiness.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **chendave** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @chendave` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[cloud/pkg/devicecontroller/OWNERS](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/devicecontroller/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["chendave"]} -->
+--------------------------------------------------------------------------------
+
+This pull request introduces a new unit test `TestInitConfigure` in `cloud/pkg/devicecontroller/config/config_test.go` to verify the initialization of the device controller configuration. The feedback suggests improving the test by using `t.Cleanup` to restore global state after the test execution to avoid side effects, and strengthening the assertions by verifying that the entire configuration struct remains unchanged after subsequent initialization attempts.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **gsssc** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @gsssc` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[cloud/pkg/dynamiccontroller/OWNERS](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/dynamiccontroller/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["gsssc"]} -->
+--------------------------------------------------------------------------------
+
+This pull request modifies `listener_manager.go` to return a copy of the listeners map instead of the original map in both `GetListenersForNode` and `GetListenersForGVR` functions, preventing external modifications to the internal state. There are no review comments, and I have no feedback to provide.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #7013 - Review by DoisLONG: Thanks for the fix.
+
+The direction looks right to me. If `GetListenersForNode` / `GetListenersForGVR` return the internal listener maps directly, callers can end up iterating over a map that is concurrently modified by the manager, which can lead to data races or `concurrent map iteration and map write` panics.
+
+Returning a copied map under the read lock makes sense here.
+
+What I still want to see is a small regression test for this behavior. For example, it would be good to verify that the returned map is a copy rather than an alias of the internal map, so mutations on the returned value do not affect the manager state.
+
+It would also help to clarify in the PR description whether a shallow map copy is sufficient here because callers only iterate/read the returned listeners, rather than mutating nested state.
+
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **willardhu** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @willardhu` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["willardhu"]} -->
+--------------------------------------------------------------------------------
+
+This pull request updates the TestGetImageDigest function in pkg/image/image_runtime_test.go to use context.Background() instead of context.TODO(). There are no review comments, and I have no additional feedback to provide.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **kevin-wangzefeng** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @kevin-wangzefeng` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[cloud/pkg/dynamiccontroller/OWNERS](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/dynamiccontroller/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["kevin-wangzefeng"]} -->
+--------------------------------------------------------------------------------
+
+This pull request replaces several instances of `assert.NoError` with `require.NoError` across multiple test files to ensure tests fail fast when unexpected errors occur. Feedback on these changes points out that some of these updates were made within commented-out test blocks in `endpointresource_test.go`. It is recommended to clean up or properly skip these dead code blocks rather than maintaining commented-out assertions.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **chendave** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @chendave` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["chendave"]} -->
+--------------------------------------------------------------------------------
+
+This pull request replaces `assert.NoError` with `require.NoError` in several test files to ensure tests fail immediately upon encountering unexpected errors. However, using `require.NoError` inside loops that do not use `t.Run` subtests will abort the entire test function on the first failure, preventing subsequent test cases from executing. It is recommended to handle these errors with an explicit `if err != nil` check, logging the error with `t.Errorf`, and continuing the loop.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **gsssc** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @gsssc` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[cloud/pkg/dynamiccontroller/OWNERS](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/dynamiccontroller/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["gsssc"]} -->
+--------------------------------------------------------------------------------
+
+This pull request replaces several instances of `context.TODO()` with `context.Background()` across the dynamic controller package. While this is a step in the right direction, making synchronous API calls with `context.Background()` in filter and utility functions can block execution indefinitely if the API server is unresponsive. It is recommended to use a context with a timeout (e.g., 5 seconds) for these calls to prevent potential hangs.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **kevin-wangzefeng** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @kevin-wangzefeng` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[cloud/pkg/controllermanager/OWNERS](https://github.com/kubeedge/kubeedge/blob/master/cloud/pkg/controllermanager/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["kevin-wangzefeng"]} -->
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+This pull request updates error formatting in `edgeapplicationcontroller.go` by replacing `%v` and `%s` with `%w` to properly wrap errors. The review feedback highlights critical issues with this approach: wrapping a guaranteed `nil` error in `isSameAsLastApplied`, and using `%s` to format an `*unstructured.Unstructured` object in `updateTemplate` and `update`. Additionally, the reviewer pointed out pre-existing logic errors in `removeResource` where `NotFound` errors are incorrectly returned while other API errors are ignored.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **kevin-wangzefeng** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @kevin-wangzefeng` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[docs/OWNERS](https://github.com/kubeedge/kubeedge/blob/master/docs/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["kevin-wangzefeng"]} -->
+--------------------------------------------------------------------------------
+PR #6998 - Comment by DoisLONG: Thanks for the update.
+
+The new reference looks more accurate to me. `dealMetaDeviceOperation` is only the trigger path, while the actual override logic is in the dmicache path via `GetOverriddenDevice` / `overrideDeviceInstanceConfig`.
+
+The previous wording cleanup has also been addressed.
+
+/lgtm
+--------------------------------------------------------------------------------
+
+This pull request updates the documentation in the DMI compatibility design proposal to accurately reflect the implementation details, specifying that the design is implemented in `overrideDeviceInstanceConfig` and triggered by `dealMetaDeviceOperation`. The reviewer suggested a minor grammatical improvement to remove an unnecessary comma in the updated text.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **doislong** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @doislong` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["doislong"]} -->
+--------------------------------------------------------------------------------
+PR #6993 - Comment by DoisLONG: Thanks for expanding the test coverage around CloudCore port negotiation and ConfigMap updates. The added fake-client reactors are useful, and the new edge-case subtests are a good direction.
+
+I think there are still a few cases that should be covered:
+
+1. `NegotiateTunnelPort()` should handle valid but incomplete tunnel-port records. For example, after unmarshalling `{}`, or a value missing either `ipTunnelPort` or `port`, one or both maps can remain nil. The current code then writes to `record.IPTunnelPort` and `record.Port`, which can panic with `assignment to entry in nil map`. Please add regression cases for these inputs and initialize both maps after unmarshalling when needed.
+
+2. `updateCloudCoreConfigMap()` should handle a CloudCore ConfigMap with `Data == nil`. The current success test initializes `Data` to an empty map, so it does not cover the nil-map case. Please add this case and initialize `cloudCoreCM.Data` in the production code if necessary.
+
+3. The ConfigMap get/update failure tests currently only assert that the function does not panic. Could you also assert the fake client actions, or use a flag in the reactor, to verify that the expected Get/Update path is actually reached? The Get failure case should also verify that no Update is attempted.
+
+A couple of cleanup items as well:
+
+* The success case only checks that the `cloudcore.yaml` key exists. It would be better to use a representative non-empty config and verify the serialized content.
+* The original `TestNegotiateTunnelPort` still shares outer mutable state across subtests. The current test is sequential, so this is not an immediate race, but refactoring it so each subtest owns its fake client and patches would make it much safer.
+* The update-failure path logs `Failed to marshal cloudcore config`, but the error is from updating the ConfigMap. Please correct the log message or track it separately.
+* Please fix the invalid commit message / release-note formatting issue. The release note should be fenced as:
+
+```release-note
+NONE
+```
+
+Once the two nil-map cases and the behavior assertions are addressed, this test coverage will be much more robust.
+
+--------------------------------------------------------------------------------
+PR #6993 - Comment by DoisLONG: Thanks for the updates.
+
+I went through the latest version again. The main concerns look addressed to me now.
+
+`TestNegotiateTunnelPort` no longer shares the outer ConfigMap / patch state across subtests, the incomplete tunnel-port record maps are initialized after unmarshalling, and `updateCloudCoreConfigMap()` now handles a nil `Data` map. The update-failure log message is also clearer now.
+
+The added tests also look more meaningful now: they cover the empty / partial tunnel-port record cases, ConfigMap create/update failures, and the CloudCore ConfigMap update path now checks the client actions and the serialized `cloudcore.yaml` content instead of only checking for no panic.
+
+One small non-blocking cleanup: since this PR now includes production bug fixes, the release note probably does not need to be `NONE`. A short note about fixing the nil map panic / incomplete tunnel-port record handling would be more accurate.
+
+The code changes look good to me.
+
+/lgtm
+
+--------------------------------------------------------------------------------
+
+This pull request introduces comprehensive unit tests in `server_test.go` to cover edge cases for tunnel port negotiation, port negotiation logic, and CloudCore ConfigMap updates. The review feedback highlights several improvement opportunities: refactoring `TestNegotiateTunnelPort` to avoid global patching and shared variables for better test isolation, renaming local variables named `client` to prevent shadowing the imported package, and addressing a potential nil pointer panic in `updateCloudCoreConfigMap` when the ConfigMap's `Data` field is nil.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **shelley-baoyue** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @shelley-baoyue` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["shelley-baoyue"]} -->
+--------------------------------------------------------------------------------
+PR #6991 - Comment by DoisLONG: Thanks for submitting this fix. The issue itself looks valid, and the PR is pointing at the right area.
+
+Before going deeper into the code review, I’d like to clarify the coordination around #6916 so we avoid duplicate work.
+
+#6916 was originally opened by @g-k-s-03, and it is currently assigned to @Anshumancanrock. Since this PR is opened by another contributor, could you please confirm whether you have coordinated with them before working on this fix?
+
+@g-k-s-03 @Anshumancanrock, could you also confirm whether you are still working on this issue, and whether you are okay with continuing the fix through this PR?
+
+Once the ownership is clear, we can continue reviewing the implementation details.
+--------------------------------------------------------------------------------
+
+This pull request resolves variable shadowing issues in the `UpdateNodeTaskStatus` method across `config_update.go`, `image_prepull.go`, and `node_upgrade.go` by renaming the returned error variable to `retErr` and the callback error parameter to `cbErr`, ensuring callback errors are correctly propagated and returned. It also adds corresponding unit tests to verify this error propagation. The feedback suggests adopting idiomatic Go error wrapping by using `%w` instead of `%v` and formatting the error messages with `: %w` instead of `, err: %v` to allow callers to inspect the underlying errors.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #6991 - Review by DoisLONG: Thanks for working on this.
+
+The issue itself is valid, and the direction of fixing the callback error shadowing is correct.
+
+However, I noticed that #6938 was opened earlier for the same issue, and it is already linked to #6916. Since #6916 was originally opened by @g-k-s-03 and #6938 is from the same author, I think it would be better to continue the fix there to avoid duplicate PRs.
+
+I left a review on #6938 asking for failure-path regression tests, which is also the useful part this PR is adding.
+
+Could you please coordinate with the author of #6938 and the issue assignee? If #6938 continues, this PR can probably be closed, or the test ideas here can be moved into #6938.
+
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **kevin-wangzefeng** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @kevin-wangzefeng` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["kevin-wangzefeng"]} -->
+--------------------------------------------------------------------------------
+PR #6988 - Comment by DoisLONG: Thanks for adding coverage for the servicebus config package.
+
+One thing I think should be adjusted: `InitConfigure()` mutates package-level state through both `Config` and `once`. Since `once.Do()` only allows the initialization to run once, this test can affect later tests in the same package, and later tests may also affect this one depending on test order.
+
+Could you reset and restore the package-level state in the test? For example, save the old `Config` and `once`, set `once = sync.Once{}` before calling `InitConfigure`, and restore both in a deferred cleanup.
+
+The existing inline suggestion to compare the whole `ServiceBus` struct also looks reasonable, since it would make the test cover future fields automatically.
+
+Also, please fix the PR description release-note block; it looks like the closing triple backticks are missing.
+
+--------------------------------------------------------------------------------
+
+This pull request adds a new unit test, TestInitConfigure, to verify the initialization of the ServiceBus configuration. The review feedback suggests improving the test's maintainability by asserting the entire ServiceBus struct at once instead of asserting each field individually.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #6982 - Comment by DoisLONG: Thanks for adding the initial dmiserver coverage. This PR needs a clean branch and stronger behavioral assertions before it is ready.
+
+### 1. Rebase directly onto `master`
+
+This branch is stacked on #6981, which is itself stacked on #6969. As a result, this PR contains seven changed files across three unrelated test scopes.
+
+Please create a clean branch from the latest `master` and cherry-pick only the commit that adds the four dmiserver test files. The `common/message` and certificate utility changes must remain in their own PRs.
+
+### 2. Verify the emitted messages in the Report tests
+
+`TestReportDeviceStatusSuccess` and `TestReportDeviceStatesSuccess` currently verify only that the RPC returns a non-nil response.
+
+The main behavior of these methods is sending a message to `modules.TwinGroup`. If that group is not registered, Beehive logs the error and drops the message, while the RPC still returns success. The current tests therefore pass even when no message is delivered.
+
+Please capture or mock `beehiveContext.SendToGroup` and verify:
+
+* the destination group;
+* source and message group;
+* operation;
+* decoded device topic;
+* exact payload;
+* the number of messages emitted for multiple twins.
+
+Initializing the channel context alone is not sufficient; it does not prove delivery.
+
+### 3. Strengthen the handler tests
+
+The handler tests currently call `assert.NotNil` on a value-type `model.Message` and do not inspect any message fields.
+
+Please verify the complete route and payload, including:
+
+* source `bus`;
+* group `user`;
+* operation `response`;
+* Base64-decoded resource topic;
+* exact string content.
+
+Also avoid an unbounded `Receive` call. Use a bounded timeout or mock the send operation so a regression fails promptly instead of hanging until the package timeout.
+
+### 4. Cover nil and malformed gRPC requests
+
+The production handlers currently dereference request fields before validating them.
+
+Please add tests and production guards for:
+
+* nil `MapperRegisterRequest`;
+* nil `MapperRegisterRequest.Mapper`;
+* empty mapper name;
+* empty mapper protocol;
+* nil `ReportDeviceStatusRequest`;
+* nil `ReportDeviceStatesRequest`;
+* rate-limited nil requests;
+* nil entries in `ReportedDevice.Twins`;
+* nil `ObservedDesired`;
+* nil `Reported`;
+* nil input to `CreateMessageTwinUpdate`;
+* nil input to `CreateMessageStateUpdate`.
+
+These cases currently can panic the DMI server instead of returning a gRPC error.
+
+### 5. Assert the exact state-update wire format
+
+`DeviceStateUpdate.State` has no JSON tag, so the current implementation marshals the field as `"State"`.
+
+The test unmarshals the payload back into the same Go struct, which accepts case-insensitive field names and therefore cannot detect the wire-format difference.
+
+Please inspect the raw JSON object and assert the exact expected key. If the protocol expects the conventional lowercase key, add:
+
+```go
+State string `json:"state"`
+```
+
+and assert that `"state"` exists while `"State"` does not.
+
+Please also assert the timestamp and the complete set of expected JSON fields.
+
+### 6. Improve the message-construction assertions
+
+For the twin update, please verify:
+
+* a non-zero timestamp;
+* the exact property set;
+* the exact JSON structure;
+* nil-input behavior;
+* missing desired/reported behavior;
+* no mutation of the input object.
+
+Please also safely check that the map entry exists before dereferencing it, as noted in the existing review.
+
+### 7. Make validation tests specific
+
+The MapperRegister tests currently assert only that some error occurred.
+
+Please assert the expected error category/message and verify that validation or rate-limit failures do not call the database, modify the DMI cache, or continue into mapper registration.
+
+### 8. Repository cleanup
+
+Please:
+
+* add the standard KubeEdge Apache 2.0 license header to all four new files;
+* remove the empty `Fixes #` placeholder;
+* use a scope-specific title such as `test: add dmiserver unit coverage`;
+* provide isolated, repeated, and race-enabled test results after rebasing.
+
+The current tests increase line coverage, but several of them can pass while the actual message-delivery behavior is broken.
+
+--------------------------------------------------------------------------------
+PR #6982 - Comment by DoisLONG: Thanks for working on this. The dmiserver test coverage improvement looks useful.
+
+I noticed that some inline comments have already pointed out a few test robustness issues, so I won’t repeat those details here.
+
+One small suggestion from my side: the PR description mainly mentions `edge/pkg/devicetwin/dmiserver`, but the diff also touches `edge/pkg/common/message`, `edge/pkg/common/util`, and a small production code change in `event_type.go`. Could you update the PR description a bit to make the full scope clearer, especially why the `json:"state"` tag is needed?
+
+After the description is updated and the existing inline comments are addressed, this PR should be easier for reviewers to follow.
+
+--------------------------------------------------------------------------------
+PR #6982 - Comment by DoisLONG: Thanks for the update. I checked the latest version again.
+
+Some of the previous issues have been improved. For example, the beehive context initialization was added for the report tests, the twin nil-check in `server_message_test.go` was improved, and the new `server_handle_test.go` assertions cover route, resource, operation, and payload more explicitly.
+
+There are still a few issues in the current version that need to be addressed before LGTM:
+
+1. `server_report_test.go` still does not actually assert the delivered message.
+
+   `receiveWithTimeout()` calls `beehiveContext.Receive(moduleName)` but ignores the returned message and error. If no message is delivered within the timeout, it only logs with `t.Logf`, so the test still passes.
+
+   Since `TestReportDeviceStatesSuccess` and `TestReportDeviceStatusSuccess` are meant to verify message delivery, please make this a real assertion. The test should fail if no message is received, and it should assert the expected route/resource/operation/content or at least the expected message count.
+
+2. The nil-input tests currently pass even if the production code panics.
+
+   In `TestCreateMessageTwinUpdateNilInput` and `TestCreateMessageStateUpdateNilInput`, the deferred `recover()` only logs the panic. This means the tests document the panic but do not enforce safe behavior.
+
+   If the intended behavior is to harden the production code, the tests should assert that nil input returns an error and does not panic. If nil input is not part of this PR, I suggest removing these tests from this PR instead of adding tests that pass on panic.
+
+3. The `json:"state"` change is still a production behavior change inside a `/kind test` PR.
+
+   I agree that the lowercase `state` wire format may be the correct behavior, but this should either be split into a small bugfix PR with a focused regression test, or the PR metadata/release note should clearly reflect that this PR includes a production behavior change.
+
+4. This PR still overlaps with #6969 in `edge/pkg/common/message` and `edge/pkg/common/util`.
+
+   Since #6969 is already covering the common/message package, please remove the overlapping common/message and common/util changes from this PR, or clearly explain why they must stay here. Otherwise the review and merge path remains unclear.
+
+Once these current-version issues are addressed, the remaining dmiserver test coverage will be much easier to review.
+
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **rohitsardesai83** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @rohitsardesai83` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[edge/pkg/devicetwin/OWNERS](https://github.com/kubeedge/kubeedge/blob/master/edge/pkg/devicetwin/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["rohitsardesai83"]} -->
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+
+This pull request introduces several new unit tests and refactors existing ones to improve test coverage across multiple packages, including message, util, and dmiserver. Feedback is provided regarding potential nil pointer dereference panics in the newly added tests: one due to uninitialized beehive context in `server_report_test.go` when run in isolation, and another due to unsafe map access in `server_message_test.go`.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #6982 - Review by DoisLONG: Thanks for the updates.
+
+I checked the latest version again. The PR scope looks much cleaner now: the common/message and common/util changes are gone, and the current changes are focused on dmiserver.
+
+The previous test concerns also look addressed. server_report_test.go now initializes the beehive channel context and fails the test if no message is delivered, and server_message_test.go now checks the twin entry before dereferencing it.
+
+The nil-input cases are also clearer now since the production code returns explicit errors instead of relying on tests that pass on panic/recover.
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **chendave** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @chendave` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["chendave"]} -->
+--------------------------------------------------------------------------------
+PR #6981 - Comment by DoisLONG: Thanks for adding coverage for the certificate utility functions. The current PR needs to be cleaned up and strengthened before it is ready.
+
+### 1. Rebase this PR directly onto `master`
+
+This branch contains all changes from the still-open #6969:
+
+* `edge/pkg/common/message/message_test.go`
+* `edge/pkg/common/message/nodetask_test.go`
+
+and then adds `config_test.go` as a second commit.
+
+Those message-package changes are unrelated to the stated scope of this PR and are already being reviewed separately in #6969. Please create a clean branch from the latest `master` and cherry-pick only the certificate-test commit.
+
+This is important because the carried changes also remove an existing license header, weaken existing error-message assertions, and include unresolved behavioral issues from #6969.
+
+### 2. Test the documented directory-path behavior
+
+The success test currently calls:
+
+```go id="x5rk4i"
+GenerateTestCertificate(tmp+"/", "cert", "key")
+```
+
+This hides a defect in the implementation, which concatenates the directory and filename as strings.
+
+According to the function documentation, callers should be able to pass a directory path without manually adding a trailing separator.
+
+Please change the test to call:
+
+```go id="qm4g9w"
+GenerateTestCertificate(tmp, "cert", "key")
+```
+
+and verify the files at:
+
+```go id="u03o0s"
+filepath.Join(tmp, "cert.crt")
+filepath.Join(tmp, "key.key")
+```
+
+The production implementation should use `filepath.Join` when constructing both paths.
+
+### 3. Verify the generated certificate and key, not only file size
+
+A non-empty file does not prove that the output is a valid or matching certificate/key pair.
+
+Please extend the success test to:
+
+* decode both PEM files;
+* parse the certificate with `x509.ParseCertificate`;
+* parse the private key with `x509.ParsePKCS1PrivateKey`;
+* verify that the certificate public key matches the private key;
+* load the pair with `tls.LoadX509KeyPair`;
+* verify the expected certificate properties, such as `IsCA`, DNS names, usages, and validity period.
+
+### 4. Verify the exact PEM block
+
+`TestCreatePEMFileSuccess` should read the generated file, call `pem.Decode`, and assert:
+
+* no trailing undecoded data;
+* the expected block type;
+* the exact original bytes.
+
+Checking only that the file size is greater than zero would still pass for malformed or incorrect output.
+
+### 5. Use an appropriate private-key file mode
+
+`createPEMfile` currently uses `os.Create`, so the RSA private-key file may be created as `0644` depending on the process umask.
+
+Please avoid making private keys world-readable. The key should be created with `0600`; certificate files may use a less restrictive mode if needed. Add permission assertions to the tests.
+
+### 6. Repository cleanup
+
+Please also:
+
+* add the standard KubeEdge Apache 2.0 license header to the new test file;
+* remove the `Fixes #<issue-number>` placeholder;
+* consider a scope-specific title such as `test: add certificate utility coverage`;
+* provide the focused test command and result after rebasing.
+
+The `common/message` changes should continue only in #6969. For reference, its current `nodetask` tests call the functions without asserting the emitted messages, and `InitContext` alone does not register the EdgeHub module, so `beehiveContext.Send` can return without delivering anything.
+
+--------------------------------------------------------------------------------
+
+This pull request refactors existing tests in message_test.go to use the testify assertion library and introduces new unit tests in nodetask_test.go and config_test.go to improve test coverage. Feedback highlights a potential operator precedence bug in ParseResourceEdge that could lead to an out-of-bounds panic when parsing short resource strings, and recommends adding assertions to the newly introduced tests in nodetask_test.go rather than just executing the functions for coverage.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **doislong** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @doislong` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["doislong"]} -->
+--------------------------------------------------------------------------------
+PR #6969 - Comment by DoisLONG: Thanks for adding coverage for this package.
+
+I noticed the existing inline comment about the assertion-free tests in `nodetask_test.go`, and I agree with that point. Could you update `TestReportTaskResult` and `TestReportNodeTaskStatus` to assert the message sent to EdgeHub, such as the resource, operation, and content, rather than only executing the functions for coverage?
+
+A couple of small cleanup items as well:
+
+1. Please restore the license header in `message_test.go`.
+2. Please remove the placeholder `Fixes # (...)` if there is no related issue.
+
+
+--------------------------------------------------------------------------------
+PR #6969 - Comment by DoisLONG: Thanks for the update. The new assertions in `nodetask_test.go` address the main concern around assertion-free coverage tests.
+
+There are still a couple of cleanup items before LGTM:
+
+1. This PR is titled and described as coverage for `edge/pkg/common/message`, but it now also changes `edge/pkg/common/util/config_test.go`. Could you either keep this PR focused on the message package, or update the PR scope clearly? Since #6982 also touches `edge/pkg/common/message` and `edge/pkg/common/util`, it would be better to avoid overlapping changes between the two PRs.
+
+2. The new tests initialize and mutate the global beehive context. Could you make sure the module registration is isolated or cleaned up so the tests can run repeatedly and independently without leaking state into other tests?
+
+3. The release-note block in the PR description still seems to be missing the closing triple backticks.
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+This pull request refactors existing message tests to use the testify/assert library and adds a new test file, nodetask_test.go, to cover task reporting functions. The review feedback points out that the newly added tests are assertion-free and only serve to increase code coverage. It is recommended to update these tests to register the edgehub module and assert that the messages are sent with the correct routing, resource, operation, and content.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #6969 - Review by DoisLONG: Thanks for the update.
+
+The assertion-free concern looks addressed now. The node task tests now receive the messages from the registered EdgeHub module and check the source, group, resource, operation, and content.
+
+The ParseResourceEdge precedence fix also looks correct, and the new regression cases cover the invalid 2-part operation and the query-with-wrong-length path.
+
+One small non-blocking note: since this also fixes a production bug in ParseResourceEdge, the PR metadata / release note could mention that instead of being purely test coverage.
+--------------------------------------------------------------------------------
+PR #6954 - Comment by DoisLONG: Thanks for addressing the transient `NotFound` window during StatefulSet pod recreation. Treating `IsNotFound` as a retryable result in this polling loop is the correct direction.
+
+However, the current branch needs to be cleaned up before the intended change can be reviewed.
+
+### 1. Remove unrelated changes
+
+The PR description only discusses the StatefulSet E2E test, but the current diff also contains changes to:
+
+```text
+pkg/image/image_runtime.go
+pkg/image/image_runtime_test.go
+pkg/util/files/files_test.go
+```
+
+These changes overlap with the separate work in #6921 and #6941 and are unrelated to this PR.
+
+Please create a clean branch from the latest master and retain only the StatefulSet polling change in:
+
+```text
+tests/e2e/apps/deployment.go
+```
+
+### 2. Do not rename `deployment.go` to `deployment_test.go`
+
+The PR description says that `deployment.go` is being renamed to `deployment_test.go`, although that rename is not present in the current diff.
+
+More importantly, this file should remain a regular `.go` file.
+
+The main E2E suite imports the apps package for side effects:
+
+```go
+_ "github.com/kubeedge/kubeedge/tests/e2e/apps"
+```
+
+The Ginkgo specs in `deployment.go` are registered when that imported package is initialized. Test files from an imported package are not compiled as part of the dependency package, so renaming this file to `_test.go` would prevent these application deployment specs from being registered in the main E2E suite.
+
+Please remove the rename and coverage-increase claims from the PR description.
+
+### 3. Format the intended change
+
+The new polling block currently contains excessive blank lines. Please run:
+
+```bash
+gofmt -w tests/e2e/apps/deployment.go
+```
+
+The intended logic itself looks reasonable:
+
+* retry when the recreated StatefulSet pod temporarily does not exist;
+* return other API errors;
+* finish only after the pod is running.
+
+### 4. Update the PR metadata and validation
+
+Please update the title to something scoped, for example:
+
+```text
+test(e2e): tolerate transient NotFound when recreating StatefulSet pod
+```
+
+Also remove or replace the empty `Fixes #` placeholder.
+
+After cleaning the branch, please provide the command and text output showing that the E2E packages compile, together with the focused StatefulSet E2E result if available.
+
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **kevin-wangzefeng** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @kevin-wangzefeng` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[tests/e2e/OWNERS](https://github.com/kubeedge/kubeedge/blob/master/tests/e2e/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["kevin-wangzefeng"]} -->
+--------------------------------------------------------------------------------
+
+This pull request refactors image digest retrieval to handle independent RepoTags and RepoDigests fields safely, improves file utility tests with additional coverage (including race conditions), and updates E2E deployment tests to handle missing pods gracefully. Feedback focuses on addressing potential test flakiness by awaiting the background goroutine in the race test, skipping the permission test on Windows due to os.Chmod limitations, and removing excessive blank lines in several files to comply with standard Go formatting guidelines.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **kadisi** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @kadisi` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["kadisi"]} -->
+--------------------------------------------------------------------------------
+
+This pull request refactors image digest retrieval to decouple RepoTags and RepoDigests matching, updates the corresponding tests to a table-driven format, and adds test coverage for file utility functions. The feedback suggests using the `github.com/distribution/reference` package instead of fragile manual string manipulation to extract repository names, which would also allow removing the `godigest` import. Additionally, the reviewer recommends refactoring `GetSubDirs` to pre-stat subdirectories once before sorting, thereby eliminating a TOCTOU race condition and making the fragile concurrent stress test obsolete.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **sids-b** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @sids-b` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["sids-b"]} -->
+--------------------------------------------------------------------------------
+PR #6921 - Comment by DoisLONG: Thanks for fixing the missing @sha256: handling. The current check addresses one invalid case, but the digest lookup still needs to be made more robust.
+
+1. Please do not assume that RepoTags and RepoDigests have matching indexes.
+
+   The current code iterates over RepoTags and then accesses:
+
+   repoDigest := resp.Image.RepoDigests[i]
+
+   These are independent CRI fields and are not guaranteed to have the same length or ordering. This can return the wrong digest or panic when RepoTags is longer than RepoDigests.
+
+   After confirming that the requested tag exists, please inspect RepoDigests independently and select a digest corresponding to the same repository name.
+
+2. Checking only for the presence of @sha256: is not sufficient.
+
+   Values such as the following still pass the current condition:
+
+   image@sha256:
+   image@sha256:123
+   image@sha256:not-hex
+
+   Please parse and validate the complete digest. The repository already depends on github.com/opencontainers/go-digest, which can be used instead of duplicating digest parsing. If this function specifically requires SHA-256, please also verify the parsed algorithm.
+
+3. Please add regression tests covering at least:
+
+   - a valid SHA-256 digest;
+   - a matching tag with no digest separator;
+   - an empty digest after @sha256:;
+   - a truncated digest;
+   - non-hex digest content;
+   - RepoTags longer than RepoDigests, verifying that no panic occurs;
+   - multiple tags and digests with different ordering;
+   - no matching tag.
+
+4. The current commit is also marked with do-not-merge/invalid-commit-message, apparently because the commit subject contains @sha256:.
+
+   Please rename the commit subject to satisfy the repository commit-message validation and remove the do-not-merge label.
+
+The direction of the fix is correct, but the implementation should avoid index assumptions and validate the complete digest before returning it.
+--------------------------------------------------------------------------------
+
+This pull request introduces a check in `GetImageDigest` to handle cases where the `@sha256:` separator is missing from the repository digest. The reviewer suggested extending this validation to verify the length of the extracted digest to prevent malformed digests, and recommended adding a bounds check on `RepoDigests` to avoid potential out-of-bounds panics.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **fisherxu** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @fisherxu` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["fisherxu"]} -->
+--------------------------------------------------------------------------------
+PR #6915 - Comment by DoisLONG: Thanks for splitting the feature gate tests into a focused PR.
+
+The current revision fixes the previous contradictory condition in `TestInitRegistersAllFeatures` and now directly checks that the registered feature gates are disabled by default.
+
+I do not see a blocking code issue in the current change set.
+
+One non-blocking maintainability suggestion: the three registration tests repeat the same checks for map membership, default value, and prerelease stage. A table-driven test would make the file easier to extend when additional feature gates are introduced.
+
+Please also provide the test command and result in the PR description or a comment, for example:
+
+```bash
+go test ./pkg/features -count=1
+--------------------------------------------------------------------------------
+
+This pull request introduces unit tests for feature gates in `pkg/features/features_test.go`. The feedback highlights a logical contradiction in `TestInitRegistersAllFeatures` where the assertion `!A && A` is always false, rendering it dead code. Additionally, it is recommended to refactor the individual feature gate tests into a single table-driven test to improve maintainability and follow Go idioms.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **kadisi** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @kadisi` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["kadisi"]} -->
+--------------------------------------------------------------------------------
+PR #6914 - Comment by DoisLONG: Thanks for the contribution.
+
+This PR currently overlaps with both #6913 and #6915:
+
+* the Windows exec and container runtime tests are already proposed in #6913;
+* the feature gate tests are already proposed separately in #6915.
+
+The PR title and description only describe `pkg/features`, while the actual change set contains all three test areas.
+
+Since the work has already been split into two focused PRs, I suggest closing this combined PR in favor of #6913 and #6915. This avoids duplicate review and keeps each change set focused.
+
+The contradictory condition in `TestInitRegistersAllFeatures` is also still present in this branch:
+
+```go
+if !DefaultMutableFeatureGate.Enabled(f) &&
+    DefaultMutableFeatureGate.Enabled(f) {
+```
+
+The corrected implementation is already present in #6915.
+
+--------------------------------------------------------------------------------
+
+This pull request introduces comprehensive unit tests across several packages, including container runtime failure scenarios, feature gate registrations, and Windows-specific command execution utilities. A critical logical contradiction was identified in the feature gate tests where a condition always evaluates to false, making the error assertion unreachable.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **skdwriting** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @skdwriting` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["skdwriting"]} -->
+--------------------------------------------------------------------------------
+PR #6913 - Comment by DoisLONG: Thanks for adding the test coverage.
+
+The scope of this PR is clear and useful: it adds coverage for Windows exec helpers and several `CopyResources` error paths in the container runtime. The container runtime tests are generally aligned with the current implementation flow:
+
+`RunPodSandbox -> CreateContainer -> StartContainer -> ExecSync -> deferred cleanup`
+
+Before this can be merged, please address the following details:
+
+1. `TestNewContainerRuntime_BadEndpoint` currently uses `unix:///nonexistent/cri.sock`. Since `NewContainerRuntime` uses a 10-second CRI connection timeout, this can make the test wait for the gRPC dial timeout before failing.
+
+   Since this test only needs to verify invalid endpoint handling, please use an invalid scheme such as `invalid://endpoint` so it fails immediately and remains stable in CI.
+
+2. The test names:
+
+   * `RemovePodSandbox defer error is logged not returned`
+   * `RemoveContainer defer error is logged not returned`
+
+   state that the cleanup errors are logged, but the tests only verify that the deferred errors are not returned. They do not verify any log output.
+
+   Please either rename these cases to describe what is actually asserted, for example `cleanup error does not override successful result`, or explicitly capture and verify the expected log output.
+
+3. Since `exec_windows_test.go` is guarded by the Windows build tag, please state whether the Windows package tests were actually run on a Windows environment. If they were run, please provide the command and result, for example:
+
+   `go test ./pkg/util/execs -count=1`
+
+   If they were only reviewed or cross-compiled but not executed on Windows, please state that clearly.
+
+Please keep this PR test-only and avoid unrelated runtime behavior changes.
+
+--------------------------------------------------------------------------------
+
+This pull request introduces comprehensive unit tests for container runtime operations and Windows execution utilities. Specifically, it adds tests for container creation, execution failures, and deferred cleanup errors in `container_runtime_test.go`, as well as encoding conversion and standard output/error handling tests in `exec_windows_test.go`. Feedback on the changes suggests optimizing `TestNewContainerRuntime_BadEndpoint` by using an invalid scheme (`invalid://endpoint`) instead of a nonexistent Unix socket path to prevent gRPC connection timeouts and speed up test execution.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **fisherxu** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @fisherxu` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["fisherxu"]} -->
+--------------------------------------------------------------------------------
+PR #6910 - Comment by DoisLONG: Thanks for adding the missing Windows-specific test coverage.
+
+The tests for `NewCommand`, `GetStdOut`, and `GetStdErr` are relevant to the stated purpose of this PR. However, the current branch contains several unrelated changes that need to be removed before the Windows test changes can be reviewed and merged.
+
+The PR description only mentions Windows exec tests, but the current diff also modifies:
+
+* `cloud/pkg/cloudhub/servers/httpserver/pre_server.go`
+* `pkg/security/token/token.go`
+* `pkg/security/token/token_test.go`
+
+These are token-expiration changes from a separate topic and should not be included in this PR.
+
+There is also overlap with #6908. Both PRs add `TestConvertByte2String` in `exec_windows_test.go`. Please clarify the intended relationship between the two PRs and avoid maintaining duplicate test changes.
+
+A clean approach would be one of the following:
+
+1. keep #6908 focused on `ConvertByte2String`, then rebase this PR after #6908 is merged and include only the additional `NewCommand`, `GetStdOut`, and `GetStdErr` tests; or
+2. consolidate all Windows exec tests into this PR and close #6908 as superseded.
+
+In either case, please recreate or rebase the branch so that the final diff contains only the intended Windows exec test changes.
+
+Minor cleanup items:
+
+* `Fixes #` is currently incomplete and should be replaced with `NONE` if there is no related issue;
+* the new file uses copyright year 2025, while the contribution was created in 2026.
+
+The Windows tests themselves look useful, but the PR scope needs to be cleaned up first.
+
+--------------------------------------------------------------------------------
+
+This pull request corrects a bug in token expiration calculation by ensuring `time.Duration` is handled properly without redundant multiplication by `time.Hour`, and updates the CloudHub token generation to scale the refresh duration to hours. Additionally, it adds unit tests for token expiration verification and introduces a new test suite for Windows-specific execution utilities. There are no review comments, and I have no feedback to provide.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **shelley-baoyue** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @shelley-baoyue` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["shelley-baoyue"]} -->
+--------------------------------------------------------------------------------
+PR #6908 - Comment by DoisLONG: Thanks for adding the Windows-specific coverage for `ConvertByte2String`.
+
+This test is now also included in #6910, which extends the same `exec_windows_test.go` file with additional coverage for `NewCommand`, `GetStdOut`, and `GetStdErr`.
+
+To avoid maintaining two overlapping PRs from the same branch of work, I suggest continuing with #6910 and closing this PR as superseded.
+
+Please clean the unrelated token-expiration changes from #6910 so that its final diff contains only the intended Windows exec tests.
+
+Closing this PR in favor of #6910.
+
+--------------------------------------------------------------------------------
+PR #6908 - Comment by DoisLONG: /close
+--------------------------------------------------------------------------------
+
+<details>
+
+In response to [this](https://github.com/kubeedge/kubeedge/pull/6908#issuecomment-4797469022):
+
+>/close
+
+
+Instructions for interacting with me using PR comments are available [here](https://git.k8s.io/community/contributors/guide/pull-requests.md).  If you have questions or suggestions related to my behavior, please file an issue against the [kubernetes/test-infra](https://github.com/kubernetes/test-infra/issues/new?title=Prow%20issue:) repository.
+</details>
+--------------------------------------------------------------------------------
+
+This pull request corrects a duration calculation bug in token creation by properly handling the `time.Duration` type, updating callers and tests to pass explicit durations, and adding a new test for token expiration. Additionally, it introduces unit tests for byte-to-string conversion on Windows. The review feedback highlights a potential nil pointer dereference in the new token expiration test where `claims.ExpiresAt` is accessed without a nil check.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #6897 - Comment by DoisLONG: Thanks for working on this issue. I reviewed the current diff and noticed a few points that may need to be addressed before the token-duration change can be evaluated clearly.
+
+First, the PR currently contains changes that appear unrelated to token expiry:
+
+* `pkg/security/certs/factory.go` changes `HanndlerType` / `HandlerType`;
+* `pkg/viaduct/pkg/conn/quic.go` changes error handling in `WriteMessageSync`.
+
+Since the stated purpose of this PR is to fix token expiry duration handling, could these unrelated changes be removed or submitted separately? Keeping this PR limited to the token-related files would make the behavior and regression risk much easier to review.
+
+Second, the current token test changes the input from `1` to `time.Hour`, but it only verifies that a non-empty token is returned. It does not verify the behavior being changed here. It would be useful to decode the generated JWT claims and assert that `ExpiresAt` is approximately:
+
+```go
+startTime.Add(2 * interval)
+```
+
+This would provide a direct regression test for the expiration calculation.
+
+I also think the expected unit of `TokenRefreshDuration` needs to be clarified before moving the `time.Hour` multiplication to the call site. If the configuration accepts a standard duration value such as `12h`, multiplying it by `time.Hour` again would be incorrect. Rather than inferring the unit from the duration's magnitude, it may be safer to define one canonical configuration format, normalize it once at the configuration boundary, and use the resulting `time.Duration` consistently for both the refresh ticker and `token.Create`.
+
+Minor PR metadata items:
+
+* `Fixes #` is currently incomplete;
+* the `release-note` code block appears to be missing its closing triple backticks.
+
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **shelley-baoyue** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @shelley-baoyue` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["shelley-baoyue"]} -->
+--------------------------------------------------------------------------------
+
+This pull request corrects token expiration duration handling, fixes a typo in HanndlerType by renaming it to HandlerType (while keeping a deprecated alias), and adds missing error handling in QuicConnection.WriteMessageSync. The review feedback highlights a potential integer overflow issue when multiplying TokenRefreshDuration by time.Hour if it is already parsed as a standard duration, and suggests checking its magnitude before multiplication.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #6886 - Comment by DoisLONG: Thanks for adding test coverage and fixing the exported type name.
+
+One compatibility concern: although `HanndlerType` is misspelled, it is already an exported API. Removing it and changing the `GetHandler` parameter type can break downstream code that currently declares or passes `certs.HanndlerType`.
+
+Could we preserve source compatibility with a deprecated alias?
+
+```go
+type HandlerType string
+
+// Deprecated: use HandlerType.
+type HanndlerType = HandlerType
+```
+
+This would allow new callers to use the corrected name while keeping existing callers compiling.
+
+There is a similar compatibility consideration for changing the existing exported constants from untyped string constants to named typed constants. For example, downstream code that currently assigns `HandlerTypeX509` directly to a `string` variable would no longer compile. Unless this source incompatibility is intentional, it may be safer to keep the existing constants untyped or introduce separately named typed constants.
+
+The runtime tests look useful, but they do not cover these downstream source-compatibility implications.
+
+Please also clean up the incomplete `Fixes #` placeholder and close the release-note fenced code block in the PR description.
+
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **willardhu** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @willardhu` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["willardhu"]} -->
+--------------------------------------------------------------------------------
+PR #6886 - Comment by DoisLONG: Thanks for the follow-up.
+
+I checked the latest head again, but it looks like the compatibility changes mentioned in your comment are not reflected in the current diff yet.
+
+`HanndlerType` is still removed, `GetHandler` now takes `HandlerType`, and `CAHandlerTypeX509` / `HandlerTypeX509` are still changed from untyped string constants to named typed constants.
+
+That means the source compatibility concern is still present: downstream code using `certs.HanndlerType` will no longer compile, and code assigning the exported constants directly to string-typed variables may also be affected.
+
+Could you push the intended compatibility update? I think we should keep the corrected `HandlerType`, but also preserve the old exported typo as a deprecated alias, for example `type HanndlerType = HandlerType`. For the exported constants, please either keep them untyped as before, or clearly explain why the source-incompatible type change is intentional.
+
+The runtime tests are fine, but they do not cover this API compatibility issue.
+
+--------------------------------------------------------------------------------
+
+This pull request fixes a typo by renaming `HanndlerType` to `HandlerType` and explicitly defines types for the `CAHandlerTypeX509` and `HandlerTypeX509` constants. It also adds a new test file `factory_test.go` containing unit tests for `GetCAHandler` and `GetHandler`. There are no review comments, and I have no additional feedback to provide.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #6881 - Comment by DoisLONG: Returning an empty key does not appear to be a safe no-op in the current storage path.
+
+`genericregistry.Store` passes the result of `KeyRootFunc(ctx)` directly to `Storage.GetList` and `Storage.Watch`. In the SQLite imitator, an empty key is parsed into an empty GVR, namespace, and name. `RawMetaByGVRNN` then applies no filters, so a malformed list request may read records across all cached resource types. An empty watch key may similarly create a hook that matches all events.
+
+Could we avoid returning an empty root key here? A safer approach would be to validate the request context before delegating to the generic store and return an explicit request error, or otherwise ensure that the failure path cannot broaden the query/watch scope.
+
+Please also add regression coverage at the storage List/Watch level, since testing `KeyRootFunc` alone would not catch this behavior.
+
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **qizha** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @qizha` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["qizha"]} -->
+--------------------------------------------------------------------------------
+
+This pull request replaces a panic in `KeyRootFunc` with error logging and an empty string return when `KeyFuncReq` fails, and adds a corresponding unit test. The reviewer suggests adding a nil context check in `KeyRootFunc` to prevent potential nil pointer dereferences, and updating the unit test to use `testify/assert` and cover the nil context scenario.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #6879 - Comment by DoisLONG: Thanks for the PR.
+
+The intended fix for KeyRootFunc looks useful: avoiding a panic in the storage/list/watch path and returning an empty key with an error log is easier to handle than crashing the process.
+
+However, this PR currently includes many unrelated changes outside the KeyRootFunc fix, such as controller/taskmanager changes, container runtime cleanup, stream changes, and metaserver application changes. These make the PR much harder to review and increase the risk of introducing unrelated behavior changes.
+
+Could you please rebase or cherry-pick this PR so that it only contains the minimal changes for the KeyRootFunc panic issue, ideally:
+
+- pkg/metaserver/key.go;
+- the related unit test in pkg/metaserver/key_test.go;
+- any directly required supporting change.
+
+If the metaserver Application.Identifier() concurrency changes are intended, I suggest moving them to a separate PR. Also, the current atomic state logic still appears to write a.ID without synchronization, so it may not fully avoid data races under concurrent calls. If that behavior needs to be made concurrency-safe, a sync.Once or a mutex-based approach may be safer and easier to reason about.
+
+For the KeyRootFunc behavior itself, it may also be useful to add a short comment explaining why returning an empty string is safe for the callers.
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **shelley-baoyue** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @shelley-baoyue` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["shelley-baoyue"]} -->
+--------------------------------------------------------------------------------
+
+This pull request removes the deprecated v1alpha1 task manager and the DisableNodeTaskV1alpha2 feature gate, always enabling the v1alpha2 controllers. It also optimizes the metaserver package by passing Application as a pointer, improves container runtime cleanup, and replaces panics with error logging. However, several critical issues were identified in the review: a data race in Application.Identifier() due to unsafe concurrent writes, a potential deadlock in edgedattachconnection.go caused by non-blocking sends on an unbuffered channel, and cross-platform path compatibility issues in container_runtime.go where filepath.Join should be replaced with path.Join.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #6873 - Comment by WillardHu: If there's no necessary correlation between commits, you can develop based on the master branch.
+Otherwise, when the first PR is merged, all your other PRs will need to be rebased.
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **shelley-baoyue** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @shelley-baoyue` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["shelley-baoyue"]} -->
+--------------------------------------------------------------------------------
+
+This pull request removes the deprecated `v1alpha1` task manager and the `DisableNodeTaskV1alpha2` feature gate, standardizing on `v1alpha2` task management. It also updates several components to use pointers for `metaserver.Application`, adds documentation for Flannel on edge nodes, and improves container runtime cleanup. Feedback on these changes highlights several critical issues: a data race in `Identifier()` due to unguarded concurrent initialization, a potential command injection vulnerability in the container copy command, and potential goroutine leaks or deadlocks in both the stream connection handling and the task manager's message dispatching loop.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #6868 - Comment by DoisLONG: Thanks for the fix.
+
+Checking the error returned by CreateCSR in TestSignX509Certs is useful. Without this check, a failed CSR generation could lead to a nil or misleading test failure later.
+
+However, the PR currently contains many unrelated changes, including documentation, taskmanager, metaserver, container runtime, and dynamic controller changes. Since the PR title and description describe a single test error-check fix, the scope should be much smaller.
+
+Could you please rebase or cherry-pick the branch so that this PR only contains the intended change in:
+
+pkg/security/certs/x509_ca_certs_test.go
+
+After the branch is cleaned up, this should be much easier to review and merge.
+--------------------------------------------------------------------------------
+PR #6868 - Comment by DoisLONG: Thanks for cleaning up the branch.
+
+The PR is now focused on the intended `CreateCSR` error check in `x509_ca_certs_test.go`, which makes the change much easier to review.
+
+One small metadata cleanup: if there is no related issue, please remove the incomplete `Fixes #` placeholder.
+
+Other than that, the change looks good from my side, pending CI and maintainer review.
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **skdwriting** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @skdwriting` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["skdwriting"]} -->
+--------------------------------------------------------------------------------
+
+This pull request removes the deprecated v1alpha1 task manager and the DisableNodeTaskV1alpha2 feature gate, fully transitioning to v1alpha2. It also adds documentation for Flannel on edge nodes, ensures containers and sandboxes are stopped before removal in CopyResources, and introduces thread-safe lazy initialization for Application.ID. Feedback from the review highlights that using sync.Once in Application makes the struct non-copyable and triggers copylocks warnings; using atomic operations with a uint32 state is suggested instead. Additionally, the reviewer recommends using filepath.ToSlash on filepath.Join results to prevent path separator issues when running commands inside Linux containers on Windows hosts.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **sids-b** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @sids-b` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["sids-b"]} -->
+--------------------------------------------------------------------------------
+
+This pull request removes the deprecated v1alpha1 node task implementation and the DisableNodeTaskV1alpha2 feature gate, fully transitioning to v1alpha2. It also adds documentation for Flannel on edge nodes, improves container runtime cleanup by stopping containers and sandboxes before removal, and updates the Application identifier computation to be thread-safe using sync.Once. The review feedback highlights a critical command injection vulnerability in the container runtime path-copying command, recommending single-quote escaping instead of double quotes. Additionally, it warns that adding sync.Once to the Application struct makes it non-copyable, which may trigger linter errors where the struct is still copied by value.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **willardhu** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @willardhu` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["willardhu"]} -->
+--------------------------------------------------------------------------------
+
+This pull request removes the deprecated v1alpha1 task manager and the `DisableNodeTaskV1alpha2` feature gate, making v1alpha2 the only supported version. It also improves container runtime utilities by ensuring pod sandboxes and containers are stopped before removal, quoting paths in copy commands to handle special characters, and adding documentation. Additionally, it updates the Kubernetes deployment guide with details on running Flannel on edge nodes. There are no review comments, so I have no feedback to provide.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **kadisi** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @kadisi` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["kadisi"]} -->
+--------------------------------------------------------------------------------
+
+This pull request documents Flannel limitations on edge nodes, adds package and type documentation, and ensures pod sandboxes and containers are stopped before removal. It also attempts to quote file paths in the copy command. However, a critical security feedback points out that using `%q` with `fmt.Sprintf` is insufficient to prevent command injection when passed to `/bin/sh -c`, as the shell still performs command substitution and variable expansion inside double quotes. A robust single-quote escaping mechanism is suggested to fully secure the command.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **kadisi** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @kadisi` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["kadisi"]} -->
+--------------------------------------------------------------------------------
+
+This pull request simplifies the action flow search logic in `pkg/nodetask/actionflow/action_flow.go` by refactoring `doFind` to recursively search both successful and failure branches, and adds corresponding unit tests in `pkg/nodetask/actionflow/action_flow_test.go`. Feedback was provided to add a nil check for the `Flow` receiver `sf` in the `Find` method to prevent potential nil pointer dereferences.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #6849 - Review by DoisLONG: Thanks for the update.
+
+The nil receiver guard in `Find()` and the nil `act` guard in `doFind()` look reasonable to me.
+
+One thing I am not fully convinced about is the “incomplete DFS traversal” part. From the old code in this diff, `doFind()` already searched `NextSuccessful` first and then searched `NextFailure` if the successful branch did not contain the target. So the new `ConfigUpdateJobActionRollBack` case looks like it may already pass with the old implementation.
+
+Could you clarify the exact traversal case that was broken, or adjust the PR description/title to focus on the nil receiver / nil action safety improvement?
+
+It would also be useful to add tests for the actual new behavior, for example `var f *Flow; f.Find(...)` and `(&Flow{}).Find(...)`, since those are the cases fixed by the new nil guards.
+
+Also, please run gofmt on `action_flow.go`; there seems to be whitespace on the blank line after the nil receiver check.
+
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **chendave** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @chendave` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["chendave"]} -->
+--------------------------------------------------------------------------------
+
+This pull request updates the `kubeedge` subproject to commit `de82fd3ed95c5ee687e3365d4bab6f52d92dd38b`. There are no review comments, and I have no feedback to provide.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **fisherxu** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @fisherxu` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["fisherxu"]} -->
+--------------------------------------------------------------------------------
+
+This pull request refactors key parsing in `pkg/metaserver/key.go` to improve validation and error handling. Specifically, it ensures that required segments (group, version, and resource) are present by updating `IndexCheck` to return a boolean instead of silently clamping out-of-bounds indexes to 0. It also adds a regression test for keys missing a leading slash. The review feedback suggests simplifying the `IndexCheck` function signature and its calls by passing `int` values directly instead of `*int` pointers, as the function no longer needs to modify the index values.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **skdwriting** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @skdwriting` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["skdwriting"]} -->
+--------------------------------------------------------------------------------
+
+This pull request introduces synchronization to the `Reset` method of `Application` using `countLock` to prevent data races, and updates the corresponding test. However, the review feedback highlights that this lock is insufficient because concurrent reader methods like `Wait` and `Cancel` still access the context fields without locking, which can lead to data races. Additionally, the reviewer suggests removing a leftover inline comment in the test file and recommends changing `countLock` from a pointer to a value type to avoid nil pointer dereferences.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #6844 - Review by DoisLONG: Thanks for cleaning up the PR scope.
+
+Changing `countLock` from `*sync.Mutex` to `sync.Mutex` looks good, and adding locking in `Wait()` / `Cancel()` is the right direction.
+
+However, I do not think the data race is fully fixed yet. In the current version, `Reset()` still writes to `a.ctx` and `a.cancel` without holding `countLock`, while `Wait()` and `Cancel()` read those fields under the lock. Since the writer side is still unlocked, concurrent `Reset()` with `Wait()` / `Cancel()` can still race.
+
+Could you also protect the `Reset()` updates to `ctx` / `cancel` with the same lock? One possible pattern is to copy the old cancel func, create and assign the new context under the lock, then call the old cancel func after releasing the lock.
+
+It would also be useful to add a small regression test that exercises concurrent `Reset()` with `Wait()` / `Cancel()` under the race detector, since this PR is specifically fixing a data race.
+
+--------------------------------------------------------------------------------
+PR #6844 - Review by DoisLONG: Thanks for the update.
+
+The production code looks much better now. `Reset()` now updates `ctx` / `cancel` under the same `countLock`, and calling the old cancel function after releasing the lock avoids holding the mutex while invoking the callback. That addresses the main race concern from my previous comment.
+
+One issue remains in the new regression test: `TestConcurrentResetWaitCancel` can potentially hang. Since `Reset()`, `Wait()`, and `Cancel()` run independently, it is possible for the `Cancel()` goroutine to finish before the last `Reset()` creates a new context. In that case, a later `Wait()` call may read the final uncancelled context and block forever.
+
+Could you make the test deterministic, for example by ensuring there is a final cancel after the reset loop, or by structuring the test so every context that `Wait()` can observe is guaranteed to be cancelled?
+
+Also, please run gofmt on `application_test.go`; the import order currently looks off.
+
+After that, this should be close.
+
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **sids-b** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @sids-b` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["sids-b"]} -->
+--------------------------------------------------------------------------------
+
+This pull request introduces several improvements and test additions across the codebase, including stopping containers before removal in the container runtime, refactoring the task event reporter, and adding unit tests for dummy device creation. The review feedback highlights two critical issues: first, using a potentially cancelled context in the container runtime's cleanup defer block can cause container leaks, so a non-cancelled context with a timeout should be used instead; second, the task event reporter fails to check the HTTP response status code after posting results and incorrectly logs successful responses at the Error level.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **willardhu** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @willardhu` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["willardhu"]} -->
+--------------------------------------------------------------------------------
+
+This pull request ensures that containers are stopped before removal in CopyResources to prevent resource leaks, supported by new unit tests. It also refactors ReportTaskResult to clean up imports, format HTTP requests, and safely close response bodies. However, the review highlights three key issues: ignoring the error from tls.LoadX509KeyPair is unsafe and should be handled properly, which in turn requires updating the unit tests to generate valid client certificates instead of using empty dummy files. Additionally, using the potentially cancelled main context in the deferred cleanup block for StopContainer is risky and should be replaced with a detached context.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
+PR #6842 - Review by DoisLONG: Thanks for cleaning this up. The PR is much more focused now, and moving the unrelated `StopContainer` change out of this branch makes sense.
+
+The test cleanup looks good to me: using `require` for setup failures and generating a real client certificate/key is much better than using empty dummy files. The `NewRequestWithContext` change also looks fine.
+
+One thing I think still needs to be fixed before this can move forward: `tls.LoadX509KeyPair` now checks the error, but it only logs a warning and continues without a client certificate.
+
+If `TLSCertFile` and `TLSPrivateKeyFile` are configured but invalid, that should probably be treated as a configuration error and returned immediately. Otherwise the request may be sent without a client certificate, and in environments where the server does not require client auth, this misconfiguration could be silently hidden.
+
+Could you change this so invalid configured client cert/key files return an error? If client certificates are intended to be optional, we can skip loading only when both paths are empty. It would also be good to add a small regression test for the invalid cert/key path.
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **qizha** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @qizha` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["qizha"]} -->
+--------------------------------------------------------------------------------
+
+This pull-request has been approved by:
+To complete the [pull request process](https://git.k8s.io/community/contributors/guide/owners.md#the-code-review-process), please assign **qizha** after the PR has been reviewed.
+You can assign the PR to them by writing `/assign @qizha` in a comment when ready.
+
+The full list of commands accepted by this bot can be found [here](https://go.k8s.io/bot-commands?repo=kubeedge%2Fkubeedge).
+
+<details open>
+Needs approval from an approver in each of these files:
+
+- **[OWNERS](https://github.com/kubeedge/kubeedge/blob/master/OWNERS)**
+
+Approvers can indicate their approval by writing `/approve` in a comment
+Approvers can cancel approval by writing `/approve cancel` in a comment
+</details>
+<!-- META={"approvers":["qizha"]} -->
+--------------------------------------------------------------------------------
+
+This pull request updates the container runtime implementation to ensure containers are stopped before they are removed during resource copying, and adds comprehensive unit tests to verify this behavior. The reviewer identified a high-severity issue where using the parent context in the defer block for cleanup could lead to leaked containers if the context is cancelled or times out. They recommended using a detached context with a timeout instead.
+
+> [!IMPORTANT]
+--------------------------------------------------------------------------------
