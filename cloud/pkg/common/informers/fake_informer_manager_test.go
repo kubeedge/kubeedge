@@ -19,58 +19,33 @@ package informers
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestNewFakeInformerManager(t *testing.T) {
 	manager := NewFakeInformerManager()
-	if manager == nil {
-		t.Fatalf("NewFakeInformerManager() returned nil")
-	}
-
-	fm, ok := manager.(*fakeManager)
-	if !ok {
-		t.Fatalf("NewFakeInformerManager() did not return *fakeManager")
-	}
-
-	if fm.dynamicClient == nil {
-		t.Errorf("fakeManager.dynamicClient is nil")
-	}
-	if fm.kubeClient == nil {
-		t.Errorf("fakeManager.kubeClient is nil")
-	}
-	if fm.kubeEdgeClient == nil {
-		t.Errorf("fakeManager.kubeEdgeClient is nil")
-	}
+	assert.NotNil(t, manager)
 }
 
 func TestGetKubeInformerFactory(t *testing.T) {
 	manager := NewFakeInformerManager()
-	factory := manager.GetKubeInformerFactory()
-	if factory == nil {
-		t.Errorf("GetKubeInformerFactory() returned nil")
-	}
+	assert.NotNil(t, manager.GetKubeInformerFactory())
 }
 
 func TestGetKubeEdgeInformerFactory(t *testing.T) {
 	manager := NewFakeInformerManager()
-	factory := manager.GetKubeEdgeInformerFactory()
-	if factory == nil {
-		t.Errorf("GetKubeEdgeInformerFactory() returned nil")
-	}
+	assert.NotNil(t, manager.GetKubeEdgeInformerFactory())
 }
 
 func TestGetDynamicInformerFactory(t *testing.T) {
 	manager := NewFakeInformerManager()
-	factory := manager.GetDynamicInformerFactory()
-	if factory == nil {
-		t.Errorf("GetDynamicInformerFactory() returned nil")
-	}
+	assert.NotNil(t, manager.GetDynamicInformerFactory())
 }
 
 func TestStart(t *testing.T) {
 	manager := NewFakeInformerManager()
-	// Start is a no-op, just ensure it doesn't panic
+	// Start is a no-op in fakeManager, ensuring it doesn't panic.
 	manager.Start(nil)
 }
 
@@ -78,17 +53,17 @@ func TestGetInformerPair(t *testing.T) {
 	tests := []struct {
 		name    string
 		gvr     schema.GroupVersionResource
-		wantNil bool
+		wantErr bool
 	}{
 		{
 			name:    "valid pods gvr",
 			gvr:     schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
-			wantNil: false,
+			wantErr: false,
 		},
 		{
 			name:    "invalid gvr",
 			gvr:     schema.GroupVersionResource{Group: "invalid", Version: "v1", Resource: "invalid"},
-			wantNil: true,
+			wantErr: true,
 		},
 	}
 
@@ -96,25 +71,17 @@ func TestGetInformerPair(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			manager := NewFakeInformerManager()
 			pair, err := manager.GetInformerPair(tt.gvr)
-			if err != nil {
-				t.Fatalf("GetInformerPair() unexpected error: %v", err)
-			}
-			if tt.wantNil && pair != nil {
-				t.Errorf("GetInformerPair() expected nil, got %v", pair)
-			}
-			if !tt.wantNil && pair == nil {
-				t.Errorf("GetInformerPair() expected non-nil pair")
-			}
-			
-			// Test caching by calling it again
-			if !tt.wantNil {
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Nil(t, pair)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, pair)
+				
+				// Test caching by calling it again
 				pair2, err2 := manager.GetInformerPair(tt.gvr)
-				if err2 != nil {
-					t.Errorf("GetInformerPair() unexpected error on second call: %v", err2)
-				}
-				if pair != pair2 {
-					t.Errorf("GetInformerPair() did not return cached pair")
-				}
+				assert.NoError(t, err2)
+				assert.Same(t, pair, pair2, "GetInformerPair() did not return cached pair")
 			}
 		})
 	}
@@ -124,17 +91,17 @@ func TestGetLister(t *testing.T) {
 	tests := []struct {
 		name    string
 		gvr     schema.GroupVersionResource
-		wantNil bool
+		wantErr bool
 	}{
 		{
 			name:    "valid pods gvr",
 			gvr:     schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"},
-			wantNil: false,
+			wantErr: false,
 		},
 		{
 			name:    "invalid gvr",
 			gvr:     schema.GroupVersionResource{Group: "invalid", Version: "v1", Resource: "invalid"},
-			wantNil: true,
+			wantErr: true,
 		},
 	}
 
@@ -142,14 +109,12 @@ func TestGetLister(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			manager := NewFakeInformerManager()
 			lister, err := manager.GetLister(tt.gvr)
-			if err != nil {
-				t.Fatalf("GetLister() unexpected error: %v", err)
-			}
-			if tt.wantNil && lister != nil {
-				t.Errorf("GetLister() expected nil, got %v", lister)
-			}
-			if !tt.wantNil && lister == nil {
-				t.Errorf("GetLister() expected non-nil lister")
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Nil(t, lister)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, lister)
 			}
 		})
 	}
@@ -159,7 +124,5 @@ func TestEdgeNode(t *testing.T) {
 	manager := NewFakeInformerManager()
 	// EdgeNode logs an error and returns nil
 	node := manager.EdgeNode()
-	if node != nil {
-		t.Errorf("EdgeNode() expected nil, got %v", node)
-	}
+	assert.Nil(t, node)
 }

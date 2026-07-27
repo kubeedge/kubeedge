@@ -20,6 +20,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	authenticationv1 "k8s.io/api/authentication/v1"
 	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
 
@@ -33,14 +34,10 @@ func TestWithEdgeNode(t *testing.T) {
 	newCtx := WithEdgeNode(ctx, nodeID)
 
 	userVal := newCtx.Value(authenticationv1.ImpersonateUserHeader)
-	if userVal != constants.NodesUserPrefix+nodeID {
-		t.Errorf("WithEdgeNode() user = %v, want %v", userVal, constants.NodesUserPrefix+nodeID)
-	}
+	assert.Equal(t, constants.NodesUserPrefix+nodeID, userVal)
 
 	groupVal := newCtx.Value(authenticationv1.ImpersonateGroupHeader)
-	if groupVal != constants.NodesGroup {
-		t.Errorf("WithEdgeNode() group = %v, want %v", groupVal, constants.NodesGroup)
-	}
+	assert.Equal(t, constants.NodesGroup, groupVal)
 }
 
 func TestFromMessage(t *testing.T) {
@@ -85,13 +82,9 @@ func TestFromMessage(t *testing.T) {
 
 			userVal := newCtx.Value(authenticationv1.ImpersonateUserHeader)
 			if tt.wantNode {
-				if userVal != constants.NodesUserPrefix+tt.nodeID {
-					t.Errorf("FromMessage() user = %v, want %v", userVal, constants.NodesUserPrefix+tt.nodeID)
-				}
+				assert.Equal(t, constants.NodesUserPrefix+tt.nodeID, userVal)
 			} else {
-				if userVal != nil {
-					t.Errorf("FromMessage() expected no node injection, got user = %v", userVal)
-				}
+				assert.Nil(t, userVal)
 			}
 		})
 	}

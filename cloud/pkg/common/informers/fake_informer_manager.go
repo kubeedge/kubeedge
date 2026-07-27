@@ -17,6 +17,7 @@ limitations under the License.
 package informers
 
 import (
+	"fmt"
 	"sync"
 
 	v1 "k8s.io/api/core/v1"
@@ -106,7 +107,7 @@ func (fm *fakeManager) GetInformerPair(gvr schema.GroupVersionResource) (*Inform
 		return fm.informersByGVR[gvr], nil
 
 	default:
-		return nil, nil
+		return nil, fmt.Errorf("no fake informer for %v", gvr)
 	}
 }
 
@@ -115,9 +116,6 @@ func (fm *fakeManager) GetLister(gvr schema.GroupVersionResource) (cache.Generic
 	informerPair, err := fm.GetInformerPair(gvr)
 	if err != nil {
 		return nil, err
-	}
-	if informerPair == nil {
-		return nil, nil
 	}
 	return informerPair.Lister, nil
 }
