@@ -240,6 +240,12 @@ func (md *messageDispatcher) enqueueAckMessage(nodeID string, msg *beehivemodel.
 
 	nodeMessagePool := md.getActiveNodeMessagePool(nodeID)
 	if nodeMessagePool == nil {
+		// A controller and the target edge session can be hosted by different
+		// CloudCore replicas. Persist the resource sync point so the replica
+		// with the active session can deliver it through syncController.
+		if !isDeleteMessage(msg) && msg.GetOperation() != beehivemodel.ResponseOperation {
+			md.shouldEnqueueResource(nodeID, msg)
+		}
 		return
 	}
 	nodeQueue := nodeMessagePool.AckMessageQueue
@@ -285,12 +291,15 @@ func (md *messageDispatcher) enqueueAckMessage(nodeID string, msg *beehivemodel.
 
 	// If the message doesn't exist in the store, then compare it with
 	// the version stored in the objectSync or clusterObjectSync.
+	shouldEnqueue = md.shouldEnqueueResource(nodeID, msg)
+}
+
+func (md *messageDispatcher) shouldEnqueueResource(nodeID string, msg *beehivemodel.Message) bool {
 	resourceNamespace, _ := messagelayer.GetNamespace(*msg)
 	if resourceNamespace == models.NullNamespace {
-		shouldEnqueue = md.enqueueNonNamespacedResource(nodeID, msg)
-	} else {
-		shouldEnqueue = md.enqueueNamespacedResource(nodeID, msg)
+		return md.enqueueNonNamespacedResource(nodeID, msg)
 	}
+	return md.enqueueNamespacedResource(nodeID, msg)
 }
 
 func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *beehivemodel.Message) bool {
@@ -597,7 +606,7 @@ func (md *messageDispatcher) GetNodeMessagePool(nodeID string) *common.NodeMessa
 func (md *messageDispatcher) getActiveNodeMessagePool(nodeID string) *common.NodeMessagePool {
 	if md.SessionManager != nil {
 		if _, exist := md.SessionManager.GetSession(nodeID); !exist {
-			klog.V(4).Infof("skip message for node %s because this CloudHub instance has no active session", nodeID)
+			klog.V(4).Infof("skip local enqueue for node %s because this CloudHub instance has no active session", nodeID)
 			return nil
 		}
 	}
