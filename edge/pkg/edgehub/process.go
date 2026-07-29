@@ -123,7 +123,7 @@ func (eh *EdgeHub) keepalive() {
 			return
 		}
 
-		time.Sleep(time.Duration(config.Config.Heartbeat) * time.Second)
+		time.Sleep(time.Duration(config.GetHeartbeat()) * time.Second)
 	}
 }
 

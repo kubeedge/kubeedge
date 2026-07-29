@@ -112,7 +112,7 @@ func (eh *EdgeHub) Start() {
 			return
 		}
 
-		waitTime := time.Duration(config.Config.Heartbeat) * time.Second * 2
+		waitTime := time.Duration(config.GetHeartbeat()) * time.Second * 2
 
 		err = eh.chClient.Init()
 		if err != nil {

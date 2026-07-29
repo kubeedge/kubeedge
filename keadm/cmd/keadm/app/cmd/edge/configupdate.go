@@ -111,6 +111,23 @@ func (executor *configUpdateExecutor) configUpdate(opts ConfigUpdateOptions) err
 		return err
 	}
 
+	if isHotReloadable(opts.Sets) {
+		reloadErr := hotReload()
+		if reloadErr == nil {
+			klog.Infof("edgecore configuration updated without a restart")
+			return nil
+		}
+
+		klog.Warningf("edgecore did not stay healthy after the hot reload, rolling back: %v", reloadErr)
+		if werr := writeFile(opts.Config, data); werr != nil {
+			klog.Errorf("failed to restore the previous edgecore config: %v", werr)
+		}
+		if rerr := execs.NewCommand("sudo systemctl restart edgecore.service").Exec(); rerr != nil {
+			return fmt.Errorf("edgecore did not stay healthy after the hot reload and failed to restart during rollback: %v", rerr)
+		}
+		return fmt.Errorf("edgecore did not stay healthy after the hot reload; rolled back to the previous configuration: %v", reloadErr)
+	}
+
 	cmd := execs.NewCommand("sudo systemctl restart edgecore.service")
 	err = cmd.Exec()
 	if err != nil {
