@@ -23,13 +23,28 @@ import (
 	"time"
 )
 
-const (
-	edgeCoreService = "edgecore.service"
+const edgeCoreService = "edgecore.service"
 
-	// hotReloadHealthWindow is how long we watch edgecore after a hot reload
-	// signal before declaring the new configuration healthy.
+// hotReloadHealthWindow is how long we watch edgecore after a hot reload
+// signal before declaring the new configuration healthy, and
+// hotReloadHealthPoll is how often we check during that window. Both are
+// vars, rather than consts, so tests can shrink them.
+var (
 	hotReloadHealthWindow = 10 * time.Second
 	hotReloadHealthPoll   = time.Second
+)
+
+// signalEdgeCoreReload and edgeCoreServiceState are indirections over the
+// systemctl calls hotReload makes, so tests can exercise its retry and
+// rollback logic without spawning real processes.
+var (
+	signalEdgeCoreReload = func() error {
+		return exec.Command("sudo", "systemctl", "kill", "-s", "HUP", edgeCoreService).Run()
+	}
+	edgeCoreServiceState = func() (string, error) {
+		out, err := exec.Command("systemctl", "is-active", edgeCoreService).Output()
+		return strings.TrimSpace(string(out)), err
+	}
 )
 
 // hotReloadableFields lists the dotted config keys, matched case
@@ -72,7 +87,7 @@ func isHotReloadable(sets string) bool {
 // stayed healthy. The caller is expected to roll back and fall back to a
 // full restart when hotReload returns an error.
 func hotReload() error {
-	if err := exec.Command("sudo", "systemctl", "kill", "-s", "HUP", edgeCoreService).Run(); err != nil {
+	if err := signalEdgeCoreReload(); err != nil {
 		return fmt.Errorf("failed to signal edgecore to reload configuration: %v", err)
 	}
 
@@ -88,9 +103,9 @@ func hotReload() error {
 
 // edgeCoreActive reports whether edgecore.service is currently active.
 func edgeCoreActive() bool {
-	out, err := exec.Command("systemctl", "is-active", edgeCoreService).Output()
+	state, err := edgeCoreServiceState()
 	if err != nil {
 		return false
 	}
-	return strings.TrimSpace(string(out)) == "active"
+	return state == "active"
 }

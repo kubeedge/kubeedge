@@ -16,7 +16,98 @@ limitations under the License.
 
 package edge
 
-import "testing"
+import (
+	"errors"
+	"testing"
+	"time"
+)
+
+func withHotReloadStubs(t *testing.T, signal func() error, state func() (string, error)) {
+	t.Helper()
+
+	origSignal, origState := signalEdgeCoreReload, edgeCoreServiceState
+	origWindow, origPoll := hotReloadHealthWindow, hotReloadHealthPoll
+	t.Cleanup(func() {
+		signalEdgeCoreReload, edgeCoreServiceState = origSignal, origState
+		hotReloadHealthWindow, hotReloadHealthPoll = origWindow, origPoll
+	})
+
+	signalEdgeCoreReload = signal
+	edgeCoreServiceState = state
+	hotReloadHealthWindow = 3 * time.Millisecond
+	hotReloadHealthPoll = time.Millisecond
+}
+
+func TestHotReload(t *testing.T) {
+	t.Run("signal failure is returned without polling", func(t *testing.T) {
+		withHotReloadStubs(t,
+			func() error { return errors.New("kill: no such process") },
+			func() (string, error) { return "", errors.New("edgeCoreServiceState should not be called") },
+		)
+
+		if err := hotReload(); err == nil {
+			t.Fatal("hotReload() = nil, want an error when signaling edgecore fails")
+		}
+	})
+
+	t.Run("service stays active for the whole window", func(t *testing.T) {
+		withHotReloadStubs(t,
+			func() error { return nil },
+			func() (string, error) { return "active", nil },
+		)
+
+		if err := hotReload(); err != nil {
+			t.Fatalf("hotReload() = %v, want nil when edgecore stays active", err)
+		}
+	})
+
+	t.Run("service becomes inactive during the window", func(t *testing.T) {
+		withHotReloadStubs(t,
+			func() error { return nil },
+			func() (string, error) { return "failed", nil },
+		)
+
+		if err := hotReload(); err == nil {
+			t.Fatal("hotReload() = nil, want an error when edgecore stops being active")
+		}
+	})
+}
+
+func TestEdgeCoreActive(t *testing.T) {
+	cases := []struct {
+		name  string
+		state func() (string, error)
+		want  bool
+	}{
+		{
+			name:  "active",
+			state: func() (string, error) { return "active", nil },
+			want:  true,
+		},
+		{
+			name:  "inactive",
+			state: func() (string, error) { return "inactive", nil },
+			want:  false,
+		},
+		{
+			name:  "query error",
+			state: func() (string, error) { return "", errors.New("systemctl not found") },
+			want:  false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			orig := edgeCoreServiceState
+			defer func() { edgeCoreServiceState = orig }()
+			edgeCoreServiceState = tc.state
+
+			if got := edgeCoreActive(); got != tc.want {
+				t.Errorf("edgeCoreActive() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
 
 func TestIsHotReloadable(t *testing.T) {
 	cases := []struct {
