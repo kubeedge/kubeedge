@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   {{- with .Values.admission.annotations }}
-  anntations: {{- toYaml . | nindent 4 }}
+  annotations: {{- toYaml . | nindent 4 }}
   {{- end }}
   {{- with .Values.admission.labels }}
   labels: {{- toYaml . | nindent 4 }}
