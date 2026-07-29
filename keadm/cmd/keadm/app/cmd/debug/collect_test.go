@@ -19,6 +19,7 @@ package debug
 import (
 	"bytes"
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -27,6 +28,7 @@ import (
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
+	klog "k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -73,23 +75,27 @@ func setupCopyFilePatch(shouldSucceed bool) *gomonkey.Patches {
 
 func TestPrintDetail(t *testing.T) {
 	assert := assert.New(t)
-	oldStdout := os.Stdout
-	r, w, err := os.Pipe()
-	assert.NoError(err)
-	os.Stdout = w
 
-	printDeatilFlag = false
+	// Redirect klog output to a buffer for testing
+	var buf bytes.Buffer
+	fs := flag.NewFlagSet("test", flag.ContinueOnError)
+	klog.InitFlags(fs)
+	_ = fs.Set("v", "4")
+	_ = fs.Set("logtostderr", "false")
+	klog.SetOutput(&buf)
+	defer func() {
+		klog.SetOutput(os.Stderr)
+		_ = fs.Set("v", "0")
+		_ = fs.Set("logtostderr", "true")
+	}()
+
+	printDetailFlag = false
 	printDetail("This should not be printed")
 
-	printDeatilFlag = true
+	printDetailFlag = true
 	printDetail("This should be printed")
 
-	w.Close()
-	os.Stdout = oldStdout
-
-	var buf bytes.Buffer
-	_, err = buf.ReadFrom(r)
-	assert.NoError(err)
+	klog.Flush()
 
 	assert.NotContains(buf.String(), "This should not be printed")
 	assert.Contains(buf.String(), "This should be printed")
@@ -232,9 +238,9 @@ func TestVerificationParameters(t *testing.T) {
 	opts.Detail = true
 	err = VerificationParameters(opts)
 	assert.NoError(err)
-	assert.True(printDeatilFlag)
+	assert.True(printDetailFlag)
 
-	printDeatilFlag = false
+	printDetailFlag = false
 }
 
 func TestCollectSystemData(t *testing.T) {
@@ -484,23 +490,24 @@ func TestExecuteCollect(t *testing.T) {
 	})
 	defer removeAllPatch.Reset()
 
-	oldStdout := os.Stdout
-	r, w, err := os.Pipe()
+	// Redirect klog output to a buffer to verify logging
+	var klogBuf bytes.Buffer
+	fs := flag.NewFlagSet("test-exec", flag.ContinueOnError)
+	klog.InitFlags(fs)
+	_ = fs.Set("logtostderr", "false")
+	klog.SetOutput(&klogBuf)
+	defer func() {
+		klog.SetOutput(os.Stderr)
+		_ = fs.Set("logtostderr", "true")
+	}()
+
+	err := ExecuteCollect(opts)
 	assert.NoError(err)
-	os.Stdout = w
 
-	err = ExecuteCollect(opts)
-	assert.NoError(err)
+	klog.Flush()
 
-	w.Close()
-	os.Stdout = oldStdout
-
-	var buf bytes.Buffer
-	_, err = buf.ReadFrom(r)
-	assert.NoError(err)
-
-	assert.Contains(buf.String(), "Start collecting data")
-	assert.Contains(buf.String(), "Data collected successfully")
+	assert.Contains(klogBuf.String(), "Start collecting data")
+	assert.Contains(klogBuf.String(), "Data collected successfully")
 
 	verifyPatch.Reset()
 	verifyErrorPatch := gomonkey.ApplyFunc(VerificationParameters, func(collectOptions *common.CollectOptions) error {
@@ -540,21 +547,14 @@ func TestExecuteCollect(t *testing.T) {
 	})
 	defer collectSystemErrorPatch.Reset()
 
-	r, w, err = os.Pipe()
-	assert.NoError(err)
-	os.Stdout = w
+	klogBuf.Reset()
 
 	err = ExecuteCollect(opts)
 	assert.NoError(err)
 
-	w.Close()
-	os.Stdout = oldStdout
+	klog.Flush()
 
-	buf.Reset()
-	_, err = buf.ReadFrom(r)
-	assert.NoError(err)
-
-	assert.Contains(buf.String(), "collect System data failed")
+	assert.Contains(klogBuf.String(), "collect System data failed")
 
 	collectSystemErrorPatch.Reset()
 	collectSystemSuccessPatch := gomonkey.ApplyFunc(collectSystemData, func(tmpPath string) error {
