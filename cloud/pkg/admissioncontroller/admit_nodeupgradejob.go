@@ -27,7 +27,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/api/apis/operations/v1alpha1"
+	operationsv1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
+	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 
@@ -42,32 +43,29 @@ func serveMutatingNodeUpgradeJob(w http.ResponseWriter, r *http.Request) {
 func admitNodeUpgradeJob(review admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 	switch review.Request.Operation {
 	case admissionv1.Create:
-		raw := review.Request.Object.Raw
-		upgrade := v1alpha1.NodeUpgradeJob{}
-		deserializer := codecs.UniversalDeserializer()
-		if _, _, err := deserializer.Decode(raw, nil, &upgrade); err != nil {
+		upgrade, err := decodeNodeUpgradeJob(review.Request.Object.Raw)
+		if err != nil {
 			return admissionResponse(fmt.Errorf("validation failed with error: %v", err))
 		}
-		return admissionResponse(validateNodeUpgradeJob(&upgrade))
+		return admissionResponse(validateNodeUpgradeJob(upgrade))
 
 	case admissionv1.Update:
-		newUpgrade := v1alpha1.NodeUpgradeJob{}
-		deserializer := codecs.UniversalDeserializer()
-		if _, _, err := deserializer.Decode(review.Request.Object.Raw, nil, &newUpgrade); err != nil {
+		newUpgrade, err := decodeNodeUpgradeJob(review.Request.Object.Raw)
+		if err != nil {
 			return admissionResponse(fmt.Errorf("validation failed with error: %v", err))
 		}
-		oldUpgrade := v1alpha1.NodeUpgradeJob{}
-		if _, _, err := deserializer.Decode(review.Request.OldObject.Raw, nil, &oldUpgrade); err != nil {
+		oldUpgrade, err := decodeNodeUpgradeJob(review.Request.OldObject.Raw)
+		if err != nil {
 			return admissionResponse(fmt.Errorf("validation failed with error: %v", err))
 		}
 
 		// For update, we don't allow update spec fields once an Upgrade is created.
-		if !reflect.DeepEqual(oldUpgrade.Spec, newUpgrade.Spec) {
+		if !reflect.DeepEqual(oldUpgrade, newUpgrade) {
 			err := errors.New("spec fields are not allowed to update once it's created")
 			return admissionResponse(err)
 		}
 
-		return admissionResponse(validateNodeUpgradeJob(&newUpgrade))
+		return admissionResponse(validateNodeUpgradeJob(newUpgrade))
 
 	case admissionv1.Delete:
 		//no rule defined for above operations, greenlight for all of above.
@@ -78,19 +76,75 @@ func admitNodeUpgradeJob(review admissionv1.AdmissionReview) *admissionv1.Admiss
 	}
 }
 
-func validateNodeUpgradeJob(upgrade *v1alpha1.NodeUpgradeJob) error {
-	if !validation.ValidateVersion(upgrade.Spec.Version) {
-		return fmt.Errorf("invalid version %s", upgrade.Spec.Version)
+type nodeUpgradeJobSpec struct {
+	Version        string
+	TimeoutSeconds *uint32
+	NodeNames      []string
+	LabelSelector  *metav1.LabelSelector
+	Image          string
+	Concurrency    int32
+}
+
+func decodeNodeUpgradeJob(raw []byte) (*nodeUpgradeJobSpec, error) {
+	deserializer := codecs.UniversalDeserializer()
+	obj, gvk, err := deserializer.Decode(raw, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case gvk.Group == operationsv1alpha1.GroupName && gvk.Version == operationsv1alpha1.Version && gvk.Kind == "NodeUpgradeJob":
+		upgrade, ok := obj.(*operationsv1alpha1.NodeUpgradeJob)
+		if !ok {
+			return nil, fmt.Errorf("decoded object is %T, want *v1alpha1.NodeUpgradeJob", obj)
+		}
+		return nodeUpgradeJobSpecFromV1Alpha1(upgrade.Spec), nil
+	case gvk.Group == operationsv1alpha2.GroupName && gvk.Version == operationsv1alpha2.Version && gvk.Kind == "NodeUpgradeJob":
+		upgrade, ok := obj.(*operationsv1alpha2.NodeUpgradeJob)
+		if !ok {
+			return nil, fmt.Errorf("decoded object is %T, want *v1alpha2.NodeUpgradeJob", obj)
+		}
+		return nodeUpgradeJobSpecFromV1Alpha2(upgrade.Spec), nil
+	default:
+		return nil, fmt.Errorf("unsupported NodeUpgradeJob GVK %s", gvk.String())
+	}
+}
+
+func nodeUpgradeJobSpecFromV1Alpha1(spec operationsv1alpha1.NodeUpgradeJobSpec) *nodeUpgradeJobSpec {
+	return &nodeUpgradeJobSpec{
+		Version:        spec.Version,
+		TimeoutSeconds: spec.TimeoutSeconds,
+		NodeNames:      spec.NodeNames,
+		LabelSelector:  spec.LabelSelector,
+		Image:          spec.Image,
+		Concurrency:    spec.Concurrency,
+	}
+}
+
+func nodeUpgradeJobSpecFromV1Alpha2(spec operationsv1alpha2.NodeUpgradeJobSpec) *nodeUpgradeJobSpec {
+	return &nodeUpgradeJobSpec{
+		Version:        spec.Version,
+		TimeoutSeconds: spec.TimeoutSeconds,
+		NodeNames:      spec.NodeNames,
+		LabelSelector:  spec.LabelSelector,
+		Image:          spec.Image,
+		Concurrency:    spec.Concurrency,
+	}
+}
+
+func validateNodeUpgradeJob(upgrade *nodeUpgradeJobSpec) error {
+	if !validation.ValidateVersion(upgrade.Version) {
+		return fmt.Errorf("invalid version %s", upgrade.Version)
 	}
 	// Image is a optional field.
-	if upgrade.Spec.Image != "" && !validation.ValidateImageRepo(upgrade.Spec.Image) {
-		return fmt.Errorf("invalid image repo %s", upgrade.Spec.Image)
+	if upgrade.Image != "" && !validation.ValidateImageRepo(upgrade.Image) {
+		return fmt.Errorf("invalid image repo %s", upgrade.Image)
 	}
 	// we must specify NodeNames or LabelSelector, and we can only specify only one
-	if len(upgrade.Spec.NodeNames) == 0 && upgrade.Spec.LabelSelector == nil {
+	if len(upgrade.NodeNames) == 0 && upgrade.LabelSelector == nil {
 		return fmt.Errorf("both NodeNames and LabelSelector are NOT specified")
 	}
-	if len(upgrade.Spec.NodeNames) != 0 && upgrade.Spec.LabelSelector != nil {
+	if len(upgrade.NodeNames) != 0 && upgrade.LabelSelector != nil {
 		return fmt.Errorf("both NodeNames and LabelSelector are specified")
 	}
 
@@ -117,13 +171,13 @@ func mutatingNodeUpgradeJob(review admissionv1.AdmissionReview) *admissionv1.Adm
 		Allowed: true,
 	}
 
-	var upgrade v1alpha1.NodeUpgradeJob
-	if err := json.Unmarshal(review.Request.Object.Raw, &upgrade); err != nil {
-		klog.Errorf("Could not unmarshal raw object: %v", err)
+	upgrade, err := decodeNodeUpgradeJob(review.Request.Object.Raw)
+	if err != nil {
+		klog.Errorf("Could not decode raw object: %v", err)
 		return toAdmissionResponse(err)
 	}
 
-	payload := generateNodeUpgradeJobPatch(upgrade.Spec)
+	payload := generateNodeUpgradeJobPatch(upgrade)
 	if len(payload) == 0 {
 		return &reviewResponse
 	}
@@ -139,7 +193,7 @@ func mutatingNodeUpgradeJob(review admissionv1.AdmissionReview) *admissionv1.Adm
 	return &reviewResponse
 }
 
-func generateNodeUpgradeJobPatch(spec v1alpha1.NodeUpgradeJobSpec) []patchValue {
+func generateNodeUpgradeJobPatch(spec *nodeUpgradeJobSpec) []patchValue {
 	patch := make([]patchValue, 0)
 
 	// mutate .spec.concurrency to default value 1 if not specified

@@ -26,7 +26,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/kubeedge/api/apis/operations/v1alpha1"
+	operationsv1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
+	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 )
 
 func TestAdmitNodeUpgradeJob(t *testing.T) {
@@ -35,16 +36,20 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 	testCases := []struct {
 		name            string
 		operation       admissionv1.Operation
-		upgrade         *v1alpha1.NodeUpgradeJob
-		oldUpgrade      *v1alpha1.NodeUpgradeJob
+		upgrade         runtime.Object
+		oldUpgrade      runtime.Object
 		expectedAllowed bool
 		expectedError   string
 	}{
 		{
 			name:      "Valid Create",
 			operation: admissionv1.Create,
-			upgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
+			upgrade: &operationsv1alpha1.NodeUpgradeJob{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operations.kubeedge.io/v1alpha1",
+					Kind:       "NodeUpgradeJob",
+				},
+				Spec: operationsv1alpha1.NodeUpgradeJobSpec{
 					Version:   "v1.0.0",
 					NodeNames: []string{"node1", "node2"},
 				},
@@ -54,8 +59,12 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 		{
 			name:      "Invalid Version",
 			operation: admissionv1.Create,
-			upgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
+			upgrade: &operationsv1alpha1.NodeUpgradeJob{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operations.kubeedge.io/v1alpha1",
+					Kind:       "NodeUpgradeJob",
+				},
+				Spec: operationsv1alpha1.NodeUpgradeJobSpec{
 					Version:   "1.0.0",
 					NodeNames: []string{"node1"},
 				},
@@ -66,8 +75,12 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 		{
 			name:      "Invalid Semver",
 			operation: admissionv1.Create,
-			upgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
+			upgrade: &operationsv1alpha1.NodeUpgradeJob{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operations.kubeedge.io/v1alpha1",
+					Kind:       "NodeUpgradeJob",
+				},
+				Spec: operationsv1alpha1.NodeUpgradeJobSpec{
 					Version:   "v1.0",
 					NodeNames: []string{"node1"},
 				},
@@ -78,8 +91,12 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 		{
 			name:      "Invalid image",
 			operation: admissionv1.Create,
-			upgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
+			upgrade: &operationsv1alpha1.NodeUpgradeJob{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operations.kubeedge.io/v1alpha1",
+					Kind:       "NodeUpgradeJob",
+				},
+				Spec: operationsv1alpha1.NodeUpgradeJobSpec{
 					Version: "v1.0.0",
 					Image:   "invalid-image",
 				},
@@ -90,8 +107,12 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 		{
 			name:      "No NodeNames and LabelSelector",
 			operation: admissionv1.Create,
-			upgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
+			upgrade: &operationsv1alpha1.NodeUpgradeJob{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operations.kubeedge.io/v1alpha1",
+					Kind:       "NodeUpgradeJob",
+				},
+				Spec: operationsv1alpha1.NodeUpgradeJobSpec{
 					Version: "v1.0.0",
 				},
 			},
@@ -101,8 +122,12 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 		{
 			name:      "Both NodeNames and LabelSelector",
 			operation: admissionv1.Create,
-			upgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
+			upgrade: &operationsv1alpha1.NodeUpgradeJob{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operations.kubeedge.io/v1alpha1",
+					Kind:       "NodeUpgradeJob",
+				},
+				Spec: operationsv1alpha1.NodeUpgradeJobSpec{
 					Version:       "v1.0.0",
 					NodeNames:     []string{"node1"},
 					LabelSelector: &metav1.LabelSelector{},
@@ -112,16 +137,39 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 			expectedError:   "both NodeNames and LabelSelector are specified",
 		},
 		{
-			name:      "Valid Update",
-			operation: admissionv1.Update,
-			upgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
+			name:      "Valid Create v1alpha2",
+			operation: admissionv1.Create,
+			upgrade: &operationsv1alpha2.NodeUpgradeJob{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operations.kubeedge.io/v1alpha2",
+					Kind:       "NodeUpgradeJob",
+				},
+				Spec: operationsv1alpha2.NodeUpgradeJobSpec{
 					Version:   "v1.0.0",
 					NodeNames: []string{"node1", "node2"},
 				},
 			},
-			oldUpgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
+			expectedAllowed: true,
+		},
+		{
+			name:      "Valid Update",
+			operation: admissionv1.Update,
+			upgrade: &operationsv1alpha1.NodeUpgradeJob{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operations.kubeedge.io/v1alpha1",
+					Kind:       "NodeUpgradeJob",
+				},
+				Spec: operationsv1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.0.0",
+					NodeNames: []string{"node1", "node2"},
+				},
+			},
+			oldUpgrade: &operationsv1alpha1.NodeUpgradeJob{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operations.kubeedge.io/v1alpha1",
+					Kind:       "NodeUpgradeJob",
+				},
+				Spec: operationsv1alpha1.NodeUpgradeJobSpec{
 					Version:   "v1.0.0",
 					NodeNames: []string{"node1", "node2"},
 				},
@@ -131,14 +179,48 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 		{
 			name:      "Invalid Update - Spec Change",
 			operation: admissionv1.Update,
-			upgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
+			upgrade: &operationsv1alpha1.NodeUpgradeJob{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operations.kubeedge.io/v1alpha1",
+					Kind:       "NodeUpgradeJob",
+				},
+				Spec: operationsv1alpha1.NodeUpgradeJobSpec{
 					Version:   "v1.0.1",
 					NodeNames: []string{"node1", "node2"},
 				},
 			},
-			oldUpgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
+			oldUpgrade: &operationsv1alpha1.NodeUpgradeJob{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operations.kubeedge.io/v1alpha1",
+					Kind:       "NodeUpgradeJob",
+				},
+				Spec: operationsv1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.0.0",
+					NodeNames: []string{"node1", "node2"},
+				},
+			},
+			expectedAllowed: false,
+			expectedError:   "spec fields are not allowed to update once it's created",
+		},
+		{
+			name:      "Invalid Update - Spec Change v1alpha2",
+			operation: admissionv1.Update,
+			upgrade: &operationsv1alpha2.NodeUpgradeJob{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operations.kubeedge.io/v1alpha2",
+					Kind:       "NodeUpgradeJob",
+				},
+				Spec: operationsv1alpha2.NodeUpgradeJobSpec{
+					Version:   "v1.0.1",
+					NodeNames: []string{"node1", "node2"},
+				},
+			},
+			oldUpgrade: &operationsv1alpha2.NodeUpgradeJob{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operations.kubeedge.io/v1alpha2",
+					Kind:       "NodeUpgradeJob",
+				},
+				Spec: operationsv1alpha2.NodeUpgradeJobSpec{
 					Version:   "v1.0.0",
 					NodeNames: []string{"node1", "node2"},
 				},
@@ -188,76 +270,62 @@ func TestValidateNodeUpgradeJob(t *testing.T) {
 
 	testCases := []struct {
 		name        string
-		upgrade     *v1alpha1.NodeUpgradeJob
+		upgrade     *nodeUpgradeJobSpec
 		expectedErr string
 	}{
 		{
 			name: "Valid upgrade job",
-			upgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
-					Version:   "v1.0.0",
-					NodeNames: []string{"node1", "node2"},
-				},
+			upgrade: &nodeUpgradeJobSpec{
+				Version:   "v1.0.0",
+				NodeNames: []string{"node1", "node2"},
 			},
 			expectedErr: "",
 		},
 		{
 			name: "Invalid version",
-			upgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
-					Version:   "1.0.0",
-					NodeNames: []string{"node1"},
-				},
+			upgrade: &nodeUpgradeJobSpec{
+				Version:   "1.0.0",
+				NodeNames: []string{"node1"},
 			},
 			expectedErr: "invalid version 1.0.0",
 		},
 		{
 			name: "Invalid image",
-			upgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
-					Version: "v1.0.0",
-					Image:   "invalid-image",
-				},
+			upgrade: &nodeUpgradeJobSpec{
+				Version: "v1.0.0",
+				Image:   "invalid-image",
 			},
 			expectedErr: "invalid image repo invalid-image",
 		},
 		{
 			name: "Invalid version (not semver compatible)",
-			upgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
-					Version:   "v1.0",
-					NodeNames: []string{"node1"},
-				},
+			upgrade: &nodeUpgradeJobSpec{
+				Version:   "v1.0",
+				NodeNames: []string{"node1"},
 			},
 			expectedErr: "invalid version v1.0",
 		},
 		{
 			name: "Missing both NodeNames and LabelSelector",
-			upgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
-					Version: "v1.0.0",
-				},
+			upgrade: &nodeUpgradeJobSpec{
+				Version: "v1.0.0",
 			},
 			expectedErr: "both NodeNames and LabelSelector are NOT specified",
 		},
 		{
 			name: "Both NodeNames and LabelSelector specified",
-			upgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
-					Version:       "v1.0.0",
-					NodeNames:     []string{"node1"},
-					LabelSelector: &metav1.LabelSelector{},
-				},
+			upgrade: &nodeUpgradeJobSpec{
+				Version:       "v1.0.0",
+				NodeNames:     []string{"node1"},
+				LabelSelector: &metav1.LabelSelector{},
 			},
 			expectedErr: "both NodeNames and LabelSelector are specified",
 		},
 		{
-			name: "Valid upgrade job",
-			upgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
-					Version:       "v1.0.0",
-					LabelSelector: &metav1.LabelSelector{},
-				},
+			name: "Valid upgrade job with label selector",
+			upgrade: &nodeUpgradeJobSpec{
+				Version:       "v1.0.0",
+				LabelSelector: &metav1.LabelSelector{},
 			},
 			expectedErr: "",
 		},
@@ -319,8 +387,12 @@ func TestAdmissionResponse(t *testing.T) {
 func TestMutatingNodeUpgradeJob(t *testing.T) {
 	assert := assert.New(t)
 
-	upgrade := &v1alpha1.NodeUpgradeJob{
-		Spec: v1alpha1.NodeUpgradeJobSpec{
+	upgrade := &operationsv1alpha1.NodeUpgradeJob{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "operations.kubeedge.io/v1alpha1",
+			Kind:       "NodeUpgradeJob",
+		},
+		Spec: operationsv1alpha1.NodeUpgradeJobSpec{
 			Version:   "v1.0.0",
 			NodeNames: []string{"node1", "node2"},
 		},
@@ -339,7 +411,6 @@ func TestMutatingNodeUpgradeJob(t *testing.T) {
 	assert.NotNil(response.Patch)
 	assert.Equal(admissionv1.PatchTypeJSONPatch, *response.PatchType)
 
-	// Unmarshal and check the patch
 	var patch []map[string]interface{}
 	err = json.Unmarshal(response.Patch, &patch)
 	assert.NoError(err)
@@ -352,17 +423,45 @@ func TestMutatingNodeUpgradeJob(t *testing.T) {
 	assert.Equal(float64(300), patch[1]["value"])
 }
 
+func TestMutatingNodeUpgradeJobSupportsV1Alpha2(t *testing.T) {
+	assert := assert.New(t)
+
+	upgrade := &operationsv1alpha2.NodeUpgradeJob{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "operations.kubeedge.io/v1alpha2",
+			Kind:       "NodeUpgradeJob",
+		},
+		Spec: operationsv1alpha2.NodeUpgradeJobSpec{
+			Version:   "v1.0.0",
+			NodeNames: []string{"node1"},
+		},
+	}
+	raw, err := json.Marshal(upgrade)
+	assert.NoError(err)
+
+	review := admissionv1.AdmissionReview{
+		Request: &admissionv1.AdmissionRequest{
+			Object: runtime.RawExtension{Raw: raw},
+		},
+	}
+	response := mutatingNodeUpgradeJob(review)
+
+	assert.True(response.Allowed)
+	assert.NotNil(response.Patch)
+	assert.Equal(admissionv1.PatchTypeJSONPatch, *response.PatchType)
+}
+
 func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 	assert := assert.New(t)
 
 	testCases := []struct {
 		name          string
-		spec          v1alpha1.NodeUpgradeJobSpec
+		spec          *nodeUpgradeJobSpec
 		expectedPatch []patchValue
 	}{
 		{
 			name: "Concurrency and TimeoutSeconds both specified",
-			spec: v1alpha1.NodeUpgradeJobSpec{
+			spec: &nodeUpgradeJobSpec{
 				Version:        "v1.0.0",
 				NodeNames:      []string{"node1"},
 				Concurrency:    2,
@@ -372,7 +471,7 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 		},
 		{
 			name: "None specified",
-			spec: v1alpha1.NodeUpgradeJobSpec{
+			spec: &nodeUpgradeJobSpec{
 				Version:   "v1.0.0",
 				NodeNames: []string{"node1"},
 			},
@@ -391,7 +490,7 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 		},
 		{
 			name: "Concurrency specified",
-			spec: v1alpha1.NodeUpgradeJobSpec{
+			spec: &nodeUpgradeJobSpec{
 				Version:        "v1.0.0",
 				NodeNames:      []string{"node1"},
 				TimeoutSeconds: func() *uint32 { v := uint32(600); return &v }(),
@@ -406,7 +505,7 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 		},
 		{
 			name: "TimeoutSeconds specified",
-			spec: v1alpha1.NodeUpgradeJobSpec{
+			spec: &nodeUpgradeJobSpec{
 				Version:     "v1.0.0",
 				NodeNames:   []string{"node1"},
 				Concurrency: 2,
@@ -432,25 +531,21 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 func TestValidateNodeUpgradeJobAllowsOptionalAndValidImage(t *testing.T) {
 	cases := []struct {
 		name    string
-		upgrade *v1alpha1.NodeUpgradeJob
+		upgrade *nodeUpgradeJobSpec
 	}{
 		{
 			name: "empty image is allowed",
-			upgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
-					Version:   "v1.0.0",
-					NodeNames: []string{"node1"},
-				},
+			upgrade: &nodeUpgradeJobSpec{
+				Version:   "v1.0.0",
+				NodeNames: []string{"node1"},
 			},
 		},
 		{
 			name: "valid image repo is allowed",
-			upgrade: &v1alpha1.NodeUpgradeJob{
-				Spec: v1alpha1.NodeUpgradeJobSpec{
-					Version:   "v1.0.0",
-					Image:     "kubeedge/installation-package:v1.23.1",
-					NodeNames: []string{"node1"},
-				},
+			upgrade: &nodeUpgradeJobSpec{
+				Version:   "v1.0.0",
+				Image:     "kubeedge/installation-package:v1.23.1",
+				NodeNames: []string{"node1"},
 			},
 		},
 	}
@@ -466,7 +561,7 @@ func TestValidateNodeUpgradeJobAllowsOptionalAndValidImage(t *testing.T) {
 
 func TestGenerateNodeUpgradeJobPatchReturnsEmptyWhenDefaultsSpecified(t *testing.T) {
 	timeoutSeconds := uint32(600)
-	patch := generateNodeUpgradeJobPatch(v1alpha1.NodeUpgradeJobSpec{
+	patch := generateNodeUpgradeJobPatch(&nodeUpgradeJobSpec{
 		Version:        "v1.0.0",
 		NodeNames:      []string{"node1"},
 		Concurrency:    2,
@@ -475,5 +570,57 @@ func TestGenerateNodeUpgradeJobPatchReturnsEmptyWhenDefaultsSpecified(t *testing
 
 	if len(patch) != 0 {
 		t.Fatalf("expected empty patch, got %#v", patch)
+	}
+}
+
+func TestDecodeNodeUpgradeJobSupportsServedVersions(t *testing.T) {
+	testCases := []struct {
+		name string
+		obj  runtime.Object
+	}{
+		{
+			name: "v1alpha1",
+			obj: &operationsv1alpha1.NodeUpgradeJob{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operations.kubeedge.io/v1alpha1",
+					Kind:       "NodeUpgradeJob",
+				},
+				Spec: operationsv1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.0.0",
+					NodeNames: []string{"node1"},
+				},
+			},
+		},
+		{
+			name: "v1alpha2",
+			obj: &operationsv1alpha2.NodeUpgradeJob{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operations.kubeedge.io/v1alpha2",
+					Kind:       "NodeUpgradeJob",
+				},
+				Spec: operationsv1alpha2.NodeUpgradeJobSpec{
+					Version:   "v1.0.0",
+					NodeNames: []string{"node1"},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			raw, err := json.Marshal(tc.obj)
+			if err != nil {
+				t.Fatalf("marshal object: %v", err)
+			}
+
+			spec, err := decodeNodeUpgradeJob(raw)
+			if err != nil {
+				t.Fatalf("decode object: %v", err)
+			}
+
+			if spec.Version != "v1.0.0" || len(spec.NodeNames) != 1 || spec.NodeNames[0] != "node1" {
+				t.Fatalf("unexpected decoded spec: %#v", spec)
+			}
+		})
 	}
 }
