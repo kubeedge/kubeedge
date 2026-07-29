@@ -53,7 +53,7 @@ func TestHotReload(t *testing.T) {
 	t.Run("service stays active for the whole window", func(t *testing.T) {
 		withHotReloadStubs(t,
 			func() error { return nil },
-			func() (string, error) { return "active", nil },
+			func() (string, error) { return systemctlActiveState, nil },
 		)
 
 		if err := hotReload(); err != nil {
@@ -80,8 +80,8 @@ func TestEdgeCoreActive(t *testing.T) {
 		want  bool
 	}{
 		{
-			name:  "active",
-			state: func() (string, error) { return "active", nil },
+			name:  systemctlActiveState,
+			state: func() (string, error) { return systemctlActiveState, nil },
 			want:  true,
 		},
 		{

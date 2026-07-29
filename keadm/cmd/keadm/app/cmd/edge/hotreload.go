@@ -23,7 +23,13 @@ import (
 	"time"
 )
 
-const edgeCoreService = "edgecore.service"
+const (
+	edgeCoreService = "edgecore.service"
+
+	// systemctlActiveState is the "systemctl is-active" output for a running
+	// service.
+	systemctlActiveState = "active"
+)
 
 // hotReloadHealthWindow is how long we watch edgecore after a hot reload
 // signal before declaring the new configuration healthy, and
@@ -107,5 +113,5 @@ func edgeCoreActive() bool {
 	if err != nil {
 		return false
 	}
-	return state == "active"
+	return state == systemctlActiveState
 }

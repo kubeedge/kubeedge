@@ -29,8 +29,14 @@ import (
 func writeTestEdgeCoreConfig(t *testing.T) string {
 	t.Helper()
 
-	configFile := filepath.Join(t.TempDir(), "edgecore.yaml")
-	if err := v1alpha2.NewDefaultEdgeCoreConfig().WriteTo(configFile); err != nil {
+	dir := t.TempDir()
+	configFile := filepath.Join(dir, "edgecore.yaml")
+	cfg := v1alpha2.NewDefaultEdgeCoreConfig()
+	// Point DataSource at a writable temp path: validation creates this
+	// directory if it doesn't exist, and the default /var/lib/kubeedge is
+	// not writable in a CI container.
+	cfg.DataBase.DataSource = filepath.Join(dir, "edgecore.db")
+	if err := cfg.WriteTo(configFile); err != nil {
 		t.Fatalf("failed to write test edgecore config: %v", err)
 	}
 	return configFile
@@ -94,7 +100,7 @@ func TestConfigUpdate(t *testing.T) {
 			hotReloadHealthWindow, hotReloadHealthPoll = origWindow, origPoll
 		})
 		signalEdgeCoreReload = func() error { return nil }
-		edgeCoreServiceState = func() (string, error) { return "active", nil }
+		edgeCoreServiceState = func() (string, error) { return systemctlActiveState, nil }
 		hotReloadHealthWindow = 3 * time.Millisecond
 		hotReloadHealthPoll = time.Millisecond
 
