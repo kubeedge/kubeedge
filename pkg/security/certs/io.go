@@ -36,13 +36,23 @@ func ReadPEMFile(file string) (*pem.Block, error) {
 
 func WriteDERToPEMFile(file, t string, der []byte) (*pem.Block, error) {
 	dir := filepath.Dir(file)
-	if err := os.MkdirAll(dir, 0722); err != nil {
+	if err := os.MkdirAll(dir, 0700); err != nil {
 		return nil, fmt.Errorf("failed to create dir %s, err: %v", dir, err)
+	}
+	// MkdirAll does not change the mode of a directory that already exists,
+	// so an existing dir created with permissive bits would otherwise stay that way.
+	if err := os.Chmod(dir, 0700); err != nil {
+		return nil, fmt.Errorf("failed to chmod dir %s, err: %v", dir, err)
 	}
 	block := &pem.Block{Type: t, Bytes: der}
 	bff := pem.EncodeToMemory(block)
-	if err := os.WriteFile(file, bff, 0622); err != nil {
+	if err := os.WriteFile(file, bff, 0600); err != nil {
 		return nil, fmt.Errorf("failed to write file %s, err: %v", file, err)
+	}
+	// WriteFile only applies the mode when creating a new file, so an existing
+	// file with permissive bits needs an explicit chmod to be corrected.
+	if err := os.Chmod(file, 0600); err != nil {
+		return nil, fmt.Errorf("failed to chmod file %s, err: %v", file, err)
 	}
 	return block, nil
 }
