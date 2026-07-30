@@ -5,7 +5,7 @@ metadata:
   {{- with .Values.admission.labels }}
   labels: {{- toYaml . | nindent 4 }}
   {{- end }}
-  name: kubeedge-admission-service
+  name: {{ .Values.admission.serviceName | default "kubeedge-admission-service" }}
 spec:
   ports:
     - port: 443

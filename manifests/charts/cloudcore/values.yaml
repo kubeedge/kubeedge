@@ -147,6 +147,7 @@ admission:
   enable: false
   replicaCount: 1
   certsSecretName: ""
+  serviceName: "kubeedge-admission-service"
   image:
     repository: "kubeedge/admission"
     tag: "v1.23.0"
