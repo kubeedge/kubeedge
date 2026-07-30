@@ -14,11 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package nodetopology determines whether kube-apiserver is reachable via a
-// node-local iptables DNAT rule installed on a given node, i.e. whether that
-// node and kube-apiserver are "colocated". It is shared by every CloudCore
-// module that needs to gate EdgeTunnelIP on real cluster topology instead of
-// static configuration, so there is exactly one implementation of the check.
+// Package nodetopology determines whether kube-apiserver is colocated with
+// a given node, shared by every CloudCore module that gates EdgeTunnelIP on
+// real cluster topology.
 package nodetopology
 
 import (
@@ -36,20 +34,13 @@ import (
 const NodeNameEnvVar = "NODE_NAME"
 
 // IsAPIServerColocated reports whether every reachable kube-apiserver
-// endpoint resolves to an address of nodeName, i.e. whether a node-local
-// iptables DNAT rule installed on that node would actually intercept the API
-// server's outbound traffic.
+// endpoint (read from the default/kubernetes Endpoints object, which works
+// for both self-hosted and managed control planes) resolves to an address
+// of nodeName.
 //
-// The real, routable API server address(es) are read from the well-known
-// default/kubernetes Endpoints object rather than by inspecting Node or Pod
-// objects: that Endpoints object is populated by the API server itself, so
-// it is accurate for both self-hosted (kubeadm/static-pod) control planes
-// and managed control planes (EKS/GKE/AKS/...) where the API server is not a
-// node in the cluster at all.
-//
-// determined reports whether a definitive answer was possible. Callers must
-// not treat (false, false) as "not colocated" -- it means unknown, e.g.
-// nodeName is empty, or the lookups failed.
+// determined reports whether a definitive answer was possible; (false,
+// false) means unknown (e.g. nodeName empty or a lookup failed), not "not
+// colocated".
 func IsAPIServerColocated(ctx context.Context, kubeClient v1.CoreV1Interface, nodeName string) (sameNode bool, determined bool) {
 	if kubeClient == nil || nodeName == "" {
 		return false, false

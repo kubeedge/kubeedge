@@ -1046,30 +1046,17 @@ func (uc *UpstreamController) patchNode() {
 	}
 }
 
-// shouldUseEdgeTunnelIP returns true only when iptablesManager is in internal
-// mode AND kube-apiserver is not colocated with cloudcore -- i.e. the API
-// server cannot reach edge nodes via the iptables DNAT rule installed on
-// cloudcore's own node. Colocation is determined by nodetopology.IsAPIServerColocated,
-// not inferred from configuration presence: advertiseAddress is mandatory
-// and auto-defaulted by cloudcore, so checking whether it is set can never
-// distinguish colocated from separated deployments. This mirrors
-// cloudstream.TunnelServer.shouldUseEdgeTunnelIP exactly, since both control
-// whether the same node ends up with an EdgeTunnelIP address: cloudstream's
-// copy gates the initial connect-time write, this one gates every
-// subsequent heartbeat patch, and they must not disagree.
-//
-// The result is cached for the process lifetime: node placement cannot
-// change without a cloudcore restart.
+// shouldUseEdgeTunnelIP mirrors cloudstream.TunnelServer.shouldUseEdgeTunnelIP:
+// this gates every heartbeat patch, that gates the initial connect-time
+// write, and the two must not disagree.
 func (uc *UpstreamController) shouldUseEdgeTunnelIP() bool {
 	if uc.iptablesMgrMode != v1alpha1.InternalMode {
 		return false
 	}
 	uc.edgeTunnelIPOnce.Do(func() {
 		sameNode, determined := nodetopology.IsAPIServerColocated(context.Background(), uc.kubeClient.CoreV1(), os.Getenv(nodetopology.NodeNameEnvVar))
-		// Cannot verify placement -- assume separated nodes. A redundant
-		// EdgeTunnelIP is harmless when nodes are actually colocated; a
-		// missing one silently breaks kubectl exec/logs/attach when they
-		// are not.
+		// Undetermined -- assume separated: a redundant EdgeTunnelIP is
+		// harmless, a missing one breaks kubectl exec/logs/attach.
 		uc.edgeTunnelIPDecision = !determined || !sameNode
 	})
 	return uc.edgeTunnelIPDecision

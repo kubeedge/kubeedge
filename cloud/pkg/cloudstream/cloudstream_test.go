@@ -32,10 +32,11 @@ func TestNewCloudStream(t *testing.T) {
 	enable := true
 	tunnelPort := 8000
 
-	cs := newCloudStream(true, 8000, v1alpha1.InternalMode)
+	cs := newCloudStream(true, 8000, v1alpha1.ExternalMode)
 
 	assert.Equal(cs.enable, enable)
 	assert.Equal(cs.tunnelPort, tunnelPort)
+	assert.Equal(cs.iptablesMgrMode, v1alpha1.ExternalMode)
 }
 
 func TestRegister(t *testing.T) {
@@ -64,6 +65,33 @@ func TestRegister(t *testing.T) {
 	assert.True(ok)
 	assert.Equal(cs.enable, controller.Enable)
 	assert.Equal(cs.tunnelPort, commonConfig.TunnelPort)
+	// nil IptablesManager (e.g. component not configured) must default to InternalMode.
+	assert.Equal(cs.iptablesMgrMode, v1alpha1.InternalMode)
+}
+
+func TestRegister_WithIptablesManager(t *testing.T) {
+	assert := assert.New(t)
+
+	controller := &v1alpha1.CloudStream{
+		Enable:                  true,
+		TLSTunnelCAFile:         "/path/to/ca/file",
+		TLSTunnelCertFile:       "/path/to/cert/file",
+		TLSTunnelPrivateKeyFile: "/path/to/key/file",
+	}
+	commonConfig := &v1alpha1.CommonConfig{
+		TunnelPort: 8000,
+	}
+	config.InitConfigure(controller)
+
+	Register(controller, commonConfig, &v1alpha1.IptablesManager{Mode: v1alpha1.ExternalMode})
+
+	Coremodules := core.GetModules()
+	mod, exists := Coremodules[modules.CloudStreamModuleName]
+	assert.True(exists)
+
+	cs, ok := mod.GetModule().(*cloudStream)
+	assert.True(ok)
+	assert.Equal(cs.iptablesMgrMode, v1alpha1.ExternalMode)
 }
 
 func TestName(t *testing.T) {

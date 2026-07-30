@@ -1198,14 +1198,8 @@ func cloudCoreNode(name string, ips ...string) *corev1.Node {
 	}
 }
 
-// TestUpstreamShouldUseEdgeTunnelIP exercises UpstreamController's own copy
-// of shouldUseEdgeTunnelIP, used to gate the heartbeat patchNode() path. This
-// used to be a static heuristic (len(AdvertiseAddress) > 0, always true) with
-// no same-node check at all, so patchNode() re-injected EdgeTunnelIP on every
-// heartbeat regardless of topology -- silently overriding whatever
-// cloudstream.TunnelServer's connect()-time decision had correctly computed.
-// These cases mirror cloudstream's TestShouldUseEdgeTunnelIP so the two
-// copies cannot silently diverge again.
+// TestUpstreamShouldUseEdgeTunnelIP mirrors cloudstream's
+// TestShouldUseEdgeTunnelIP so the two copies cannot silently diverge again.
 func TestUpstreamShouldUseEdgeTunnelIP(t *testing.T) {
 	const cloudCoreNodeName = "cloudcore-node"
 
