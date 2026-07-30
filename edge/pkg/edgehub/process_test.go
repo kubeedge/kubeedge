@@ -510,3 +510,190 @@ func TestRouteToCloudCancelledContextWithNormalMessage(t *testing.T) {
 		t.Errorf("routeToCloud did not exit gracefully upon cancellation and normal message")
 	}
 }
+
+// TestRouteToCloudContextDoneInitially tests that routeToCloud exits immediately if context is already done.
+func TestRouteToCloudContextDoneInitially(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+	hub := newEdgeHub(true)
+	hub.chClient = mockAdapter
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	exited := make(chan struct{})
+	go func() {
+		hub.routeToCloud(ctx)
+		close(exited)
+	}()
+
+	select {
+	case <-exited:
+		// Success
+	case <-time.After(1 * time.Second):
+		t.Errorf("routeToCloud did not exit on initially cancelled context")
+	}
+}
+
+// TestKeepaliveContextDoneInitially tests that keepalive exits immediately if context is already done.
+func TestKeepaliveContextDoneInitially(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+	hub := newEdgeHub(true)
+	hub.chClient = mockAdapter
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	exited := make(chan struct{})
+	go func() {
+		hub.keepalive(ctx)
+		close(exited)
+	}()
+
+	select {
+	case <-exited:
+		// Success
+	case <-time.After(1 * time.Second):
+		t.Errorf("keepalive did not exit on initially cancelled context")
+	}
+}
+
+// TestKeepaliveGracefulExit tests that keepalive exits gracefully if context is cancelled during sleep.
+func TestKeepaliveGracefulExit(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+
+	// Send one keepalive successfully
+	mockAdapter.EXPECT().Send(gomock.Any()).Return(nil).Times(1)
+
+	hub := newEdgeHub(true)
+	hub.chClient = mockAdapter
+
+	ctx, cancel := context.WithCancel(context.Background())
+	exited := make(chan struct{})
+	
+	// Temporarily override heartbeat
+	oldHeartbeat := config.Config.Heartbeat
+	config.Config.Heartbeat = 10 
+	defer func() { config.Config.Heartbeat = oldHeartbeat }()
+
+	go func() {
+		hub.keepalive(ctx)
+		close(exited)
+	}()
+
+	time.Sleep(200 * time.Millisecond)
+	cancel()
+
+	select {
+	case <-exited:
+		// Success
+	case <-time.After(1 * time.Second):
+		t.Errorf("keepalive did not exit on cancelled context during timer")
+	}
+}
+
+// TestRouteToCloudReconnectChanFull tests the default branch when reconnectChan is full.
+func TestRouteToCloudReconnectChanFull(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+	mockAdapter.EXPECT().Send(gomock.Any()).Return(errors.New("Send Error")).Times(1)
+
+	hub := newEdgeHub(true)
+	hub.chClient = mockAdapter
+	// fill the buffered channel
+	hub.reconnectChan <- struct{}{}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	exited := make(chan struct{})
+	go func() {
+		hub.routeToCloud(ctx)
+		close(exited)
+	}()
+	
+	time.Sleep(200 * time.Millisecond)
+
+	normalMsg := model.NewMessage("msg-1").BuildHeader("msg-1", "", 1)
+	beehiveContext.Send(modules.EdgeHubModuleName, *normalMsg)
+
+	select {
+	case <-exited:
+		// Success
+	case <-time.After(2 * time.Second):
+		t.Errorf("routeToCloud blocked on full reconnectChan")
+	}
+	
+	cancel()
+}
+
+// TestKeepaliveReconnectChanFull tests the default branch when reconnectChan is full.
+func TestKeepaliveReconnectChanFull(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+	mockAdapter.EXPECT().Send(gomock.Any()).Return(errors.New("Send Error")).Times(1)
+
+	hub := newEdgeHub(true)
+	hub.chClient = mockAdapter
+	// fill the buffered channel
+	hub.reconnectChan <- struct{}{}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	exited := make(chan struct{})
+	go func() {
+		hub.keepalive(ctx)
+		close(exited)
+	}()
+
+	select {
+	case <-exited:
+		// Success
+	case <-time.After(2 * time.Second):
+		t.Errorf("keepalive blocked on full reconnectChan")
+	}
+}
+
+// TestRouteToCloudContextDoneAfterSend tests that routeToCloud gracefully handles context cancellation right after sendToCloud.
+func TestRouteToCloudContextDoneAfterSend(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	mockAdapter.EXPECT().Send(gomock.Any()).DoAndReturn(func(msg model.Message) error {
+		cancel() // Cancel the context right inside Send!
+		return nil
+	}).Times(1)
+
+	hub := newEdgeHub(true)
+	hub.chClient = mockAdapter
+
+	exited := make(chan struct{})
+	go func() {
+		hub.routeToCloud(ctx)
+		close(exited)
+	}()
+	
+	time.Sleep(200 * time.Millisecond)
+
+	normalMsg := model.NewMessage("msg-1").BuildHeader("msg-1", "", 1)
+	beehiveContext.Send(modules.EdgeHubModuleName, *normalMsg)
+
+	select {
+	case <-exited:
+		// Success
+	case <-time.After(2 * time.Second):
+		t.Errorf("routeToCloud did not exit gracefully upon cancellation after send")
+	}
+}
