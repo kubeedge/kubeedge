@@ -233,7 +233,7 @@ func TestRouteToEdge(t *testing.T) {
 			mockAdapter.EXPECT().Receive().
 				Return(*model.NewMessage(""), errors.New("Connection Refused")).
 				Times(1)
-			go tt.hub.routeToEdge()
+			go tt.hub.routeToEdge(make(chan struct{}))
 			stop := <-tt.hub.reconnectChan
 			if stop != struct{}{} {
 				t.Errorf("TestRouteToEdge error got: %v want: %v", stop, struct{}{})
@@ -328,7 +328,7 @@ func TestRouteToCloud(t *testing.T) {
 
 			core.Register(&EdgeHub{enable: true})
 
-			go tt.hub.routeToCloud()
+			go tt.hub.routeToCloud(make(chan struct{}))
 			time.Sleep(2 * time.Second)
 
 			msg := model.NewMessage("").BuildHeader("test_id", "", 1)
@@ -356,8 +356,12 @@ func TestKeepalive(t *testing.T) {
 		{
 			name: "Heartbeat failure Case",
 			hub: &EdgeHub{
-				chClient:      mockAdapter,
-				reconnectChan: make(chan struct{}),
+				chClient: mockAdapter,
+				// buffered(1) is the production invariant established by
+				// newEdgeHub; triggerReconnect's non-blocking send relies
+				// on it (an unbuffered channel would race with the
+				// receiver parking and could drop the signal).
+				reconnectChan: make(chan struct{}, 1),
 			},
 		},
 	}
@@ -369,11 +373,58 @@ func TestKeepalive(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(nil).Times(1)
 			mockAdapter.EXPECT().Send(gomock.Any()).Return(errors.New("Connection Refused")).Times(1)
-			go tt.hub.keepalive()
+			go tt.hub.keepalive(make(chan struct{}))
 			got := <-tt.hub.reconnectChan
 			if got != struct{}{} {
 				t.Errorf("TestKeepalive() StopChan = %v, want %v", got, struct{}{})
 			}
 		})
+	}
+}
+
+// TestKeepaliveStopsOnConnectionTeardown verifies that closing the
+// connection's stop channel ends the keepalive goroutine while it waits for
+// the next heartbeat, so it cannot outlive its connection and keep pinging on
+// the next one.
+func TestKeepaliveStopsOnConnectionTeardown(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+	hub := &EdgeHub{
+		chClient:      mockAdapter,
+		reconnectChan: make(chan struct{}, 1),
+	}
+	heartbeat := config.Config.Heartbeat
+	config.Config.Heartbeat = 3600
+	defer func() { config.Config.Heartbeat = heartbeat }()
+
+	sent := make(chan struct{}, 1)
+	mockAdapter.EXPECT().Send(gomock.Any()).DoAndReturn(func(model.Message) error {
+		sent <- struct{}{}
+		return nil
+	}).Times(1)
+
+	stop := make(chan struct{})
+	exited := make(chan struct{})
+	go func() {
+		hub.keepalive(stop)
+		close(exited)
+	}()
+
+	select {
+	case <-sent:
+	case <-time.After(time.Second):
+		t.Fatal("keepalive did not send the first heartbeat")
+	}
+	close(stop)
+	select {
+	case <-exited:
+	case <-time.After(time.Second):
+		t.Fatal("keepalive did not exit after stop was closed")
+	}
+	select {
+	case <-hub.reconnectChan:
+		t.Fatal("stopping keepalive must not request a reconnect")
+	default:
 	}
 }

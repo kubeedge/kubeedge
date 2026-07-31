@@ -12,7 +12,6 @@ import (
 	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/clients"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 	msghandler "github.com/kubeedge/kubeedge/edge/pkg/edgehub/messagehandler"
 )
@@ -25,32 +24,36 @@ var (
 )
 
 func (eh *EdgeHub) initial() (err error) {
-	cloudHubClient, err := clients.GetClient()
+	cloudHubClient, err := eh.newClient()
 	if err != nil {
 		return err
 	}
 
+	eh.clientLock.Lock()
 	eh.chClient = cloudHubClient
+	eh.clientLock.Unlock()
 
 	return nil
 }
 
 func (eh *EdgeHub) dispatch(message model.Message) error {
-	return msghandler.ProcessHandler(message, eh.chClient)
+	return msghandler.ProcessHandler(message, eh.client())
 }
 
-func (eh *EdgeHub) routeToEdge() {
+func (eh *EdgeHub) routeToEdge(stop <-chan struct{}) {
 	for {
 		select {
 		case <-beehiveContext.Done():
 			klog.Warning("EdgeHub RouteToEdge stop")
 			return
+		case <-stop:
+			return
 		default:
 		}
-		message, err := eh.chClient.Receive()
+		message, err := eh.client().Receive()
 		if err != nil {
 			klog.Errorf("websocket read error: %v", err)
-			eh.reconnectChan <- struct{}{}
+			eh.triggerReconnect()
 			return
 		}
 		klog.V(4).Infof("[edgehub/routeToEdge] receive msg from cloud, msg: %+v", message)
@@ -63,7 +66,7 @@ func (eh *EdgeHub) routeToEdge() {
 func (eh *EdgeHub) sendToCloud(message model.Message) error {
 	eh.keeperLock.Lock()
 	klog.V(4).Infof("[edgehub/sendToCloud] send msg to cloud, msg: %+v", message)
-	err := eh.chClient.Send(message)
+	err := eh.client().Send(message)
 	eh.keeperLock.Unlock()
 	if err != nil {
 		return fmt.Errorf("failed to send message, error: %v", err)
@@ -72,11 +75,13 @@ func (eh *EdgeHub) sendToCloud(message model.Message) error {
 	return nil
 }
 
-func (eh *EdgeHub) routeToCloud() {
+func (eh *EdgeHub) routeToCloud(stop <-chan struct{}) {
 	for {
 		select {
 		case <-beehiveContext.Done():
 			klog.Warning("EdgeHub RouteToCloud stop")
+			return
+		case <-stop:
 			return
 		default:
 		}
@@ -97,17 +102,19 @@ func (eh *EdgeHub) routeToCloud() {
 		err = eh.sendToCloud(message)
 		if err != nil {
 			klog.Errorf("failed to send message to cloud: %v", err)
-			eh.reconnectChan <- struct{}{}
+			eh.triggerReconnect()
 			return
 		}
 	}
 }
 
-func (eh *EdgeHub) keepalive() {
+func (eh *EdgeHub) keepalive(stop <-chan struct{}) {
 	for {
 		select {
 		case <-beehiveContext.Done():
 			klog.Warning("EdgeHub KeepAlive stop")
+			return
+		case <-stop:
 			return
 		default:
 		}
@@ -119,11 +126,15 @@ func (eh *EdgeHub) keepalive() {
 		err := eh.sendToCloud(*msg)
 		if err != nil {
 			klog.Errorf("websocket write error: %v", err)
-			eh.reconnectChan <- struct{}{}
+			eh.triggerReconnect()
 			return
 		}
 
-		time.Sleep(time.Duration(config.Config.Heartbeat) * time.Second)
+		select {
+		case <-stop:
+			return
+		case <-time.After(time.Duration(config.Config.Heartbeat) * time.Second):
+		}
 	}
 }
 
@@ -146,11 +157,28 @@ func (eh *EdgeHub) pubConnectInfo(isConnected bool) {
 	}
 }
 
-func (eh *EdgeHub) ifRotationDone() {
+func (eh *EdgeHub) ifRotationDone(done <-chan struct{}) {
 	if eh.certManager.RotateCertificates {
 		for {
-			<-eh.certManager.Done
-			eh.reconnectChan <- struct{}{}
+			select {
+			case <-done:
+				return
+			case <-eh.certManager.Done:
+				// Send on the dedicated rotation channel so the signal
+				// cannot be coalesced away with transport reconnects:
+				// unlike reconnectChan, rotateChan is not touched by the
+				// post-connect drain; it is consumed by the reconnect wait
+				// in Start, and dropped only while disconnected, right
+				// before an Init() that reads the newest certificate
+				// anyway. Buffered(1) + non-blocking keeps this loop from
+				// blocking when a signal is already pending — one pending
+				// rotation reconnect is enough, the newest certificate is
+				// always read from disk.
+				select {
+				case eh.rotateChan <- struct{}{}:
+				default:
+				}
+			}
 		}
 	}
 }
