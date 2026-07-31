@@ -134,10 +134,12 @@ func NewDefaultEdgeCoreConfig() (config *EdgeCoreConfig) {
 				},
 			},
 			ServiceBus: &ServiceBus{
-				Enable:  false,
-				Server:  "127.0.0.1",
-				Port:    9060,
-				Timeout: 60,
+				Enable:            false,
+				Server:            "127.0.0.1",
+				Port:              9060,
+				Timeout:           60,
+				TLSCertFile:       "",
+				TLSPrivateKeyFile: "",
 			},
 			DeviceTwin: &DeviceTwin{
 				Enable:      true,
