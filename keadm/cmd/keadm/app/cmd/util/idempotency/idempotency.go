@@ -36,8 +36,12 @@ func Occupy() (bool, error) {
 	if IsOccupied() {
 		return true, nil
 	}
-	if _, err := os.Create(idempotencyRecord); err != nil {
+	f, err := os.Create(idempotencyRecord)
+	if err != nil {
 		return true, fmt.Errorf("failed to create idempotency_record file, err: %v", err)
+	}
+	if err := f.Close(); err != nil {
+		return true, fmt.Errorf("failed to close idempotency_record file, err: %v", err)
 	}
 	return false, nil
 }

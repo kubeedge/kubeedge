@@ -269,7 +269,9 @@ func DecompressTarGz(gzFilePath, dest string) error {
 				writer.Close() // Close the file explicitly here in case of an error
 				return err
 			}
-			writer.Close() // Close the file explicitly after successful write
+			if err := writer.Close(); err != nil {
+				return fmt.Errorf("failed to close destination file %s: %v", target, err)
+			}
 		}
 	}
 }
@@ -279,10 +281,10 @@ func Compress(tarName string, paths []string) error {
 	if err != nil {
 		return err
 	}
+	closed := false
 	defer func() {
-		err := tarFile.Close()
-		if err != nil {
-			fmt.Printf("failed to close tar file, path: %v, error: %v \n", tarName, err)
+		if !closed {
+			tarFile.Close()
 		}
 	}()
 
@@ -292,13 +294,23 @@ func Compress(tarName string, paths []string) error {
 	}
 
 	// enable compression if file ends in .gz
-	tw := tar.NewWriter(tarFile)
+	var tw *tar.Writer
+	var gz *gzip.Writer
 	if strings.HasSuffix(tarName, ".gz") || strings.HasSuffix(tarName, ".gzip") {
-		gz := gzip.NewWriter(tarFile)
-		defer gz.Close()
+		gz = gzip.NewWriter(tarFile)
 		tw = tar.NewWriter(gz)
+	} else {
+		tw = tar.NewWriter(tarFile)
 	}
-	defer tw.Close()
+
+	defer func() {
+		if !closed {
+			tw.Close()
+			if gz != nil {
+				gz.Close()
+			}
+		}
+	}()
 
 	// walk each specified path and add encountered file to tar
 	for _, path := range paths {
@@ -353,12 +365,7 @@ func Compress(tarName string, paths []string) error {
 				return err
 			}
 
-			defer func() {
-				err := srcFile.Close()
-				if err != nil {
-					fmt.Printf("failed to close file, path: %v, error: %v \n", file, err)
-				}
-			}()
+			defer srcFile.Close()
 
 			_, err = io.Copy(tw, srcFile)
 			if err != nil {
@@ -369,10 +376,26 @@ func Compress(tarName string, paths []string) error {
 
 		// build tar
 		if err := filepath.Walk(path, walker); err != nil {
-			fmt.Printf("failed to add %s to tar: %s\n", path, err)
+			return fmt.Errorf("failed to add %s to tar: %v", path, err)
 		}
 	}
-	return nil
+
+	closed = true
+
+	var firstErr error
+	if err := tw.Close(); err != nil && firstErr == nil {
+		firstErr = fmt.Errorf("failed to close tar writer: %v", err)
+	}
+	if gz != nil {
+		if err := gz.Close(); err != nil && firstErr == nil {
+			firstErr = fmt.Errorf("failed to close gzip writer: %v", err)
+		}
+	}
+	if err := tarFile.Close(); err != nil && firstErr == nil {
+		firstErr = fmt.Errorf("failed to close tar file %s: %v", tarName, err)
+	}
+
+	return firstErr
 }
 
 // keadmVersion returns the version of the client without metadata.
