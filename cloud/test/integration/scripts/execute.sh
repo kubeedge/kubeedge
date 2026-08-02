@@ -17,21 +17,33 @@
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd -P)"
 TEST_DIR=$(dirname $(dirname "${BASH_SOURCE[0]}"))
 APPS_CRD_DIR="${ROOT_DIR}/build/crds/apps"
-ENVTEST_DOWNLOAD_DIR="/tmp/envtest/bin"
+TOOL_CACHE_DIR="${ROOT_DIR}/.cache/tools"
 ENVTEST_BIN_DIR=""
 
+SETUP_ENVTEST_VERSION="release-0.19"
+GINKGO_VERSION="v2.21.0"
+
+# Bin dirs are keyed by tool version so bumping SETUP_ENVTEST_VERSION or
+# GINKGO_VERSION always triggers a fresh install instead of silently
+# reusing a stale cached binary from a previous version.
+SETUP_ENVTEST_BIN_DIR="${TOOL_CACHE_DIR}/bin/setup-envtest-${SETUP_ENVTEST_VERSION}"
+GINKGO_BIN_DIR="${TOOL_CACHE_DIR}/bin/ginkgo-${GINKGO_VERSION}"
+ENVTEST_DOWNLOAD_DIR="${TOOL_CACHE_DIR}/envtest/${SETUP_ENVTEST_VERSION}/bin"
+
 function do_preparation() {
-    which setup-envtest &> /dev/null || {
-        go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
-        sudo cp $GOPATH/bin/setup-envtest /usr/bin/
+    mkdir -p "${SETUP_ENVTEST_BIN_DIR}" "${GINKGO_BIN_DIR}"
+
+    [ -x "${SETUP_ENVTEST_BIN_DIR}/setup-envtest" ] || {
+        GOBIN="${SETUP_ENVTEST_BIN_DIR}" go install sigs.k8s.io/controller-runtime/tools/setup-envtest@${SETUP_ENVTEST_VERSION}
     }
 
-    ENVTEST_BIN_DIR=$(setup-envtest use 1.29.0 --bin-dir=${ENVTEST_DOWNLOAD_DIR} -p path)
+    ENVTEST_BIN_DIR=$("${SETUP_ENVTEST_BIN_DIR}/setup-envtest" use 1.29.0 --bin-dir=${ENVTEST_DOWNLOAD_DIR} -p path)
 
-    which ginkgo &>/dev/null || {
-        go install github.com/onsi/ginkgo/v2/ginkgo@latest
-        sudo cp $GOPATH/bin/ginkgo /usr/bin/
+    [ -x "${GINKGO_BIN_DIR}/ginkgo" ] || {
+        GOBIN="${GINKGO_BIN_DIR}" go install github.com/onsi/ginkgo/v2/ginkgo@${GINKGO_VERSION}
     }
+
+    export PATH="${GINKGO_BIN_DIR}:${SETUP_ENVTEST_BIN_DIR}:${PATH}"
 }
 
 function run_test() {
