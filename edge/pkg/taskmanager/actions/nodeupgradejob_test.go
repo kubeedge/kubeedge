@@ -19,6 +19,8 @@ package actions
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -35,6 +37,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/pkg/containers"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
+	"github.com/kubeedge/kubeedge/pkg/nodetask/tasklog"
 	upgradeedge "github.com/kubeedge/kubeedge/pkg/upgrade/edge"
 	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
@@ -313,17 +316,33 @@ func TestNodeUpgradeJobRollback(t *testing.T) {
 		logger: klog.Background(),
 	}
 
-	patches := gomonkey.NewPatches()
-	defer patches.Reset()
+	binDir := t.TempDir()
+	logDir := t.TempDir()
+	keadmPath := filepath.Join(binDir, "keadm")
+	if err := os.WriteFile(keadmPath, []byte("#!/bin/sh\necho \"$@\"\n"), 0755); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+	t.Setenv("PATH", binDir)
 
-	patches.ApplyMethod(reflect.TypeOf((*execs.Command)(nil)), "Exec",
-		func(cmd *execs.Command) error {
-			assert.Equal(t, "bash -c keadm rollback edge >> /tmp/keadm.log 2>&1", cmd.GetCommand())
-			return nil
-		})
+	oldOpenLog := openNodeUpgradeJobLog
+	t.Cleanup(func() {
+		openNodeUpgradeJobLog = oldOpenLog
+	})
+	openNodeUpgradeJobLog = func(name string, flag int) (*os.File, error) {
+		return tasklog.OpenKeadmLogAt(logDir, name, flag)
+	}
 
-	resp := h.rollback(ctx, "", "", specser)
+	resp := h.rollback(ctx, "job-1", "node-1", specser)
 	require.NoError(t, resp.Error())
+
+	got, err := os.ReadFile(filepath.Join(logDir, "keadm-rollback-job-1-node-1.log"))
+	require.NoError(t, err)
+	assert.Equal(t, "rollback edge\n", string(got))
+}
+
+func TestNodeUpgradeJobLogName(t *testing.T) {
+	assert.Equal(t, "keadm-upgrade-job_1-node_1.log", nodeUpgradeJobLogName("upgrade", "job 1", "node/1"))
+	assert.Equal(t, "keadm-rollback-unknown-unknown.log", nodeUpgradeJobLogName("rollback", "", ""))
 }
 
 func TestNodeUpgradeJobReportActionStatus(t *testing.T) {

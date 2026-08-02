@@ -34,6 +34,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/pkg/containers"
+	"github.com/kubeedge/kubeedge/pkg/nodetask/tasklog"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -45,6 +46,8 @@ const (
 type Upgrade struct {
 	*BaseExecutor
 }
+
+var openKeadmTaskLog = tasklog.OpenKeadmLog
 
 func (u *Upgrade) Name() string {
 	return u.name
@@ -193,11 +196,10 @@ func upgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 func keadmUpgrade(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) error {
 	klog.Infof("Begin to run upgrade command")
 
-	logFile, err := os.OpenFile("/tmp/keadm.log", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+	logFile, err := openKeadmTaskLog(v1alpha1KeadmLogName("upgrade", upgradeReq.UpgradeID, upgradeReq.HistoryID), os.O_TRUNC)
 	if err != nil {
-		return fmt.Errorf("failed to open keadm log file: %w", err)
+		return err
 	}
-	defer logFile.Close()
 
 	args := buildKeadmUpgradeArgs(upgradeReq, opts)
 
@@ -206,14 +208,42 @@ func keadmUpgrade(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.Ed
 	cmd.Stderr = logFile
 
 	if err := cmd.Start(); err != nil {
+		if cerr := logFile.Close(); cerr != nil {
+			klog.Warningf("failed to close keadm upgrade log file %s: %v", logFile.Name(), cerr)
+		}
 		return fmt.Errorf("failed to start keadm upgrade command: %w", err)
 	}
-	if err := cmd.Process.Release(); err != nil {
-		return fmt.Errorf("failed to release keadm upgrade process: %w", err)
-	}
+	go waitKeadmTaskCommand(cmd, logFile)
 
 	klog.Infof("Started keadm upgrade from Version %s to %s ...", version.Get().String(), upgradeReq.Version)
 	return nil
+}
+
+// waitKeadmTaskCommand reaps a detached keadm task process so it does not
+// linger as a zombie, and closes the log file once the process exits.
+func waitKeadmTaskCommand(cmd *exec.Cmd, logFile *os.File) {
+	defer func() {
+		if cerr := logFile.Close(); cerr != nil {
+			klog.Warningf("failed to close keadm task log file %s: %v", logFile.Name(), cerr)
+		}
+	}()
+	if err := cmd.Wait(); err != nil {
+		klog.Errorf("keadm task command %v failed: %v", cmd.Args, err)
+	}
+}
+
+func v1alpha1KeadmLogName(action, upgradeID, historyID string) string {
+	return fmt.Sprintf("keadm-%s-%s-%s.log",
+		tasklog.SafeName(action),
+		tasklog.SafeName(defaultKeadmLogNamePart(upgradeID)),
+		tasklog.SafeName(defaultKeadmLogNamePart(historyID)))
+}
+
+func defaultKeadmLogNamePart(part string) string {
+	if part == "" {
+		return "unknown"
+	}
+	return part
 }
 
 func buildKeadmUpgradeArgs(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) []string {

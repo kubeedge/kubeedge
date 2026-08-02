@@ -17,12 +17,15 @@ limitations under the License.
 package taskexecutor
 
 import (
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
+	"github.com/kubeedge/kubeedge/pkg/nodetask/tasklog"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
 
@@ -56,6 +59,14 @@ func TestBuildKeadmUpgradeArgsDoesNotUseShell(t *testing.T) {
 
 func TestKeadmUpgradeReturnsErrorWhenCommandMissing(t *testing.T) {
 	t.Setenv("PATH", t.TempDir())
+	logDir := t.TempDir()
+	oldOpenLog := openKeadmTaskLog
+	t.Cleanup(func() {
+		openKeadmTaskLog = oldOpenLog
+	})
+	openKeadmTaskLog = func(name string, flag int) (*os.File, error) {
+		return tasklog.OpenKeadmLogAt(logDir, name, flag)
+	}
 
 	err := keadmUpgrade(commontypes.NodeUpgradeJobRequest{
 		UpgradeID: "upgrade-1",
@@ -71,5 +82,53 @@ func TestKeadmUpgradeReturnsErrorWhenCommandMissing(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "failed to start keadm upgrade command") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestV1alpha1KeadmLogName(t *testing.T) {
+	got := v1alpha1KeadmLogName("upgrade", "upgrade 1", "history/1")
+	want := "keadm-upgrade-upgrade_1-history_1.log"
+	if got != want {
+		t.Fatalf("v1alpha1KeadmLogName() = %q, want %q", got, want)
+	}
+}
+
+func TestKeadmUpgradeWritesPrivateTaskLog(t *testing.T) {
+	binDir := t.TempDir()
+	logDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(binDir, "nohup"), []byte("#!/bin/sh\n\"$@\"\n"), 0755); err != nil {
+		t.Fatalf("WriteFile(nohup) error = %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(binDir, "keadm"), []byte("#!/bin/sh\necho \"$@\"\n"), 0755); err != nil {
+		t.Fatalf("WriteFile(keadm) error = %v", err)
+	}
+	t.Setenv("PATH", binDir)
+
+	oldOpenLog := openKeadmTaskLog
+	t.Cleanup(func() {
+		openKeadmTaskLog = oldOpenLog
+	})
+	openKeadmTaskLog = func(name string, flag int) (*os.File, error) {
+		return tasklog.OpenKeadmLogAt(logDir, name, flag)
+	}
+
+	err := keadmUpgrade(commontypes.NodeUpgradeJobRequest{
+		UpgradeID: "upgrade-1",
+		HistoryID: "history-1",
+		Version:   "v1.23.1",
+		Image:     "kubeedge/installation-package:v1.23.1",
+	}, &options.EdgeCoreOptions{
+		ConfigFile: "/etc/kubeedge/config/edgecore.yaml",
+	})
+	if err != nil {
+		t.Fatalf("keadmUpgrade() error = %v", err)
+	}
+
+	info, err := os.Stat(filepath.Join(logDir, "keadm-upgrade-upgrade-1-history-1.log"))
+	if err != nil {
+		t.Fatalf("Stat() error = %v", err)
+	}
+	if got := info.Mode().Perm(); got != 0600 {
+		t.Fatalf("log mode = %o, want 0600", got)
 	}
 }
