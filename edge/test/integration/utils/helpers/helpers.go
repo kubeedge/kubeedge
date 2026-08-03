@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"time"
 
+	retry "github.com/avast/retry-go"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
@@ -247,20 +248,27 @@ func HandleAddAndDeleteDevice(operation, testMgrEndPoint string, device dttype.D
 		return false
 	}
 
-	req, err := http.NewRequest(httpMethod, testMgrEndPoint, bytes.NewBuffer(respbytes))
-	if err != nil {
-		// handle error
-		common.Fatalf("Frame HTTP request failed: %v", err)
-		return false
-	}
-
 	client := &http.Client{}
-	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	t := time.Now()
-	resp, err := client.Do(req)
 
+	var req *http.Request
+	var resp *http.Response
+	err = retry.Do(
+		func() error {
+			var reqErr error
+			req, reqErr = http.NewRequest(httpMethod, testMgrEndPoint, bytes.NewBuffer(respbytes))
+			if reqErr != nil {
+				common.Fatalf("Frame HTTP request failed: %v", reqErr)
+				return reqErr
+			}
+			req.Header.Set("Content-Type", "application/json; charset=utf-8")
+			resp, reqErr = client.Do(req)
+			return reqErr
+		},
+		retry.Attempts(3),
+		retry.Delay(100*time.Millisecond),
+	)
 	if err != nil {
-		// handle error
 		common.Fatalf("HTTP request is failed :%v", err)
 		return false
 	}

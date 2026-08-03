@@ -76,3 +76,10 @@ const (
 	EdgeNodeRoleKey   = "node-role.kubernetes.io/edge"
 	EdgeNodeRoleValue = ""
 )
+
+// Node address types defined by KubeEdge (extensible, no upstream Kubernetes changes needed).
+const (
+	// NodeEdgeTunnelIP is a custom node address type carrying the CloudCore IP for
+	// API server kubelet request routing without iptables DNAT.
+	NodeEdgeTunnelIP v1.NodeAddressType = "EdgeTunnelIP"
+)

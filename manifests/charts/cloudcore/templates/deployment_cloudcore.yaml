@@ -45,6 +45,11 @@ spec:
       - name: cloudcore
         image: {{ .Values.cloudCore.image.repository }}:{{ .Values.cloudCore.image.tag }}
         imagePullPolicy: {{ .Values.cloudCore.image.pullPolicy }}
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
         ports:
         - containerPort: 10000
           name: cloudhub
