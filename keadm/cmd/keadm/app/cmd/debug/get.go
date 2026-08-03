@@ -451,8 +451,7 @@ func isAvailableResources(rsT string) bool {
 // IsFileExist check file is exist
 func isFileExist(path string) bool {
 	_, err := os.Stat(path)
-
-	return err == nil || os.IsExist(err)
+	return !os.IsNotExist(err)
 }
 
 // InitDB Init DB info
