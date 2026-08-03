@@ -1049,6 +1049,20 @@ type ServiceBus struct {
 	Port int `json:"port"`
 	// Timeout indicates timeout for servicebus receive mseeage
 	Timeout int `json:"timeout"`
+	// TLSCertFile is the path to the PEM-encoded server certificate for the
+	// ServiceBus embedded HTTPS server.  The certificate must have
+	// ExtKeyUsageServerAuth and an IP/DNS SAN matching ServiceBus.Server
+	// (e.g. 127.0.0.1).  Leave empty for the default plain-HTTP behaviour.
+	// The EdgeHub client certificate CANNOT be reused: it carries only
+	// ExtKeyUsageClientAuth and has no ServiceBus SANs.
+	// default ""
+	// +optional
+	TLSCertFile string `json:"tlsCertFile,omitempty"`
+	// TLSPrivateKeyFile is the path to the PEM-encoded private key matching
+	// TLSCertFile.  Required when TLSCertFile is non-empty.
+	// default ""
+	// +optional
+	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile,omitempty"`
 }
 
 // DeviceTwin indicates the DeviceTwin module config
