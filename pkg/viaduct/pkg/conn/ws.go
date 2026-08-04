@@ -102,13 +102,25 @@ func (conn *WSConnection) handleRawData() {
 func (conn *WSConnection) handleMessage() {
 	for {
 		msg := &model.Message{}
-		err := lane.NewLane(api.ProtocolTypeWS, conn.wsConn).ReadMessage(msg)
+		wsLane := lane.NewLane(api.ProtocolTypeWS, conn.wsConn)
+
+		conn.locker.Lock()
+		readDeadline := conn.ReadDeadline
+		conn.locker.Unlock()
+		if !readDeadline.IsZero() {
+			_ = wsLane.SetReadDeadline(readDeadline)
+		}
+
+		err := wsLane.ReadMessage(msg)
 		if err != nil {
 			if !errors.Is(err, io.EOF) {
 				klog.Errorf("failed to read message, error: %+v", err)
 			}
 			conn.state.State = api.StatDisconnected
 			_ = conn.wsConn.Close()
+			// close the message fifo to unblock the blocked readers,
+			// so that the caller can be aware of the connection error
+			conn.messageFifo.Close()
 
 			if conn.OnReadTransportErr != nil {
 				conn.OnReadTransportErr(conn.state.Headers.Get("node_id"),
@@ -150,6 +162,8 @@ func (conn *WSConnection) handleMessage() {
 }
 
 func (conn *WSConnection) SetReadDeadline(t time.Time) error {
+	conn.locker.Lock()
+	defer conn.locker.Unlock()
 	conn.ReadDeadline = t
 	return nil
 }

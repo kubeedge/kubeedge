@@ -20,6 +20,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 
@@ -35,6 +36,8 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/server"
 )
 
+var serverOnce sync.Once
+
 func handleServer(container *mux.MessageContainer, writer mux.ResponseWriter) {
 	klog.Infof("receive message: %s", container.Message.GetContent())
 	writer.WriteResponse(&model.Message{}, container.Message.GetContent())
@@ -46,6 +49,14 @@ func connNotify(conn.Connection) {
 
 // newTestServer() starts a fake server for testing
 func newTestServer() error {
+	var err error
+	serverOnce.Do(func() {
+		err = startTestServer()
+	})
+	return err
+}
+
+func startTestServer() error {
 	if err := util.GenerateTestCertificate("/tmp/", "edge", "edge"); err != nil {
 		return err
 	}
@@ -201,6 +212,39 @@ func TestSend(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestReceiveTimeout checks that Receive() returns an error when the cloud
+// server does not respond within the configured read deadline, instead of
+// blocking forever. This verifies the read timeout is enforced.
+func TestReceiveTimeout(t *testing.T) {
+	if err := newTestServer(); err != nil {
+		t.Errorf("failed to start server, err: %v", err)
+	}
+
+	wcc := newTestWebSocketClient("timeout", "/tmp/edge.crt", "/tmp/edge.key")
+	wcc.config.ReadDeadline = 1 * time.Second
+
+	if err := wcc.Init(); err != nil {
+		t.Fatalf("failed to init, err: %v", err)
+	}
+
+	errCh := make(chan error, 1)
+	go func() {
+		_, err := wcc.Receive()
+		errCh <- err
+	}()
+
+	select {
+	case err := <-errCh:
+		if err == nil {
+			t.Errorf("WebSocketClient.Receive() should return error after read timeout, got nil")
+		}
+	case <-time.After(5 * time.Second):
+		t.Errorf("WebSocketClient.Receive() did not time out within the expected period")
+	}
+
+	wcc.UnInit()
 }
 
 // TestReceive sends the message through send function then calls receive function to see same message is received or not
