@@ -88,10 +88,10 @@ func TestHandleRawDataDoesNotPanic(t *testing.T) {
 	consumer := &bytes.Buffer{}
 
 	wsConn := &WSConnection{
-		wsConn:   serverConn,
-		consumer: consumer,
+		wsConn:    serverConn,
+		consumer:  consumer,
 		autoRoute: true,
-		state:    &ConnectionState{State: api.StatConnected},
+		state:     &ConnectionState{State: api.StatConnected},
 	}
 
 	// Run handleRawData in a goroutine — it blocks on io.Copy.
