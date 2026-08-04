@@ -1254,5 +1254,3 @@ func TestUnmarshalPodStatusMessage(t *testing.T) {
 		t.Errorf("expected nil podStatuses on single pod unmarshal error, got %v", resSingleInvalid)
 	}
 }
-
-
