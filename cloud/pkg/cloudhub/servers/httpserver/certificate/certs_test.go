@@ -118,3 +118,67 @@ func TestVerifyAuthorization(t *testing.T) {
 		})
 	}
 }
+
+func TestVerifyCertSubject(t *testing.T) {
+	cases := []struct {
+		name          string
+		cert          *x509.Certificate
+		nodeName      string
+		containsError string
+	}{
+		{
+			name: "valid cert subject",
+			cert: &x509.Certificate{
+				Subject: pkix.Name{
+					Organization: []string{"system:nodes"},
+					CommonName:   "system:node:testnode",
+				},
+			},
+			nodeName: "testnode",
+		},
+		{
+			name: "empty organization panics prevention",
+			cert: &x509.Certificate{
+				Subject: pkix.Name{
+					CommonName: "system:node:testnode",
+				},
+			},
+			nodeName:      "testnode",
+			containsError: "certificate has no Organization in subject",
+		},
+		{
+			name: "mismatched node name",
+			cert: &x509.Certificate{
+				Subject: pkix.Name{
+					Organization: []string{"system:nodes"},
+					CommonName:   "system:node:othernode",
+				},
+			},
+			nodeName:      "testnode",
+			containsError: "request node name does not match the certificate subject",
+		},
+		{
+			name: "invalid organization",
+			cert: &x509.Certificate{
+				Subject: pkix.Name{
+					Organization: []string{"KubeEdge"},
+					CommonName:   "kubeedge.io",
+				},
+			},
+			nodeName:      "testnode",
+			containsError: "request node name does not match the certificate subject",
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := verifyCertSubject(c.cert, c.nodeName)
+			if c.containsError != "" {
+				require.Error(t, err)
+				require.ErrorContains(t, err, c.containsError)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
