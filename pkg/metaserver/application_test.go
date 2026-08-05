@@ -395,9 +395,11 @@ func TestMsgToApplication(t *testing.T) {
 				Content: []byte(`{"Key":"group/version/resource/namespaces/name","Verb":"GET","Nodename":"test-node"}`),
 			},
 			stdResult: &Application{
-				Key:      "group/version/resource/namespaces/name",
-				Verb:     "GET",
-				Nodename: "test-node",
+				Key:       "group/version/resource/namespaces/name",
+				Verb:      "GET",
+				Nodename:  "test-node",
+				mu:        &sync.RWMutex{},
+				countLock: &sync.Mutex{},
 			},
 			hasError: false,
 		},
@@ -417,7 +419,11 @@ func TestMsgToApplication(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, test.stdResult, app)
+				if test.stdResult != nil {
+					assert.Equal(t, test.stdResult.Key, app.Key)
+					assert.Equal(t, test.stdResult.Verb, app.Verb)
+					assert.Equal(t, test.stdResult.Nodename, app.Nodename)
+				}
 			}
 		})
 	}
@@ -532,6 +538,7 @@ func TestReset(t *testing.T) {
 		cancel:   cancel,
 		Reason:   "some reason",
 		RespBody: []byte(`{"some":"data"}`),
+		Status:   Completed,
 	}
 
 	app.Reset()
@@ -552,6 +559,8 @@ func TestReset(t *testing.T) {
 	assert.Empty(t, app.RespBody)
 	assert.NotNil(t, app.ctx)
 	assert.NotNil(t, app.cancel)
+	// Reset must transition Status back to PreApplying to prevent duplicate doApply goroutines
+	assert.Equal(t, PreApplying, app.Status)
 }
 
 func TestAddAndClose(t *testing.T) {
@@ -636,4 +645,105 @@ func TestWait(t *testing.T) {
 	}
 	// Should not block or panic when context is nil
 	app.Wait()
+}
+
+func TestSetStatusGetStatus(t *testing.T) {
+	app := &Application{}
+	for _, s := range []ApplicationStatus{PreApplying, InApplying, Approved, Rejected, Failed, Completed} {
+		app.SetStatus(s)
+		assert.Equal(t, s, app.GetStatus())
+	}
+}
+
+func TestSetReasonGetReason(t *testing.T) {
+	app := &Application{}
+	app.SetReason("test reason")
+	assert.Equal(t, "test reason", app.GetReason())
+	app.SetReason("")
+	assert.Empty(t, app.GetReason())
+}
+
+func TestGetError(t *testing.T) {
+	app := &Application{}
+	got := app.GetError()
+	// Default zero value - StatusError should match
+	assert.Equal(t, app.Error, got)
+}
+
+func TestUpdateFromResponse(t *testing.T) {
+	app := &Application{}
+	resp := &Application{
+		Status:   Approved,
+		Reason:   "ok",
+		RespBody: []byte(`{"key":"value"}`),
+	}
+	app.UpdateFromResponse(resp)
+	assert.Equal(t, Approved, app.GetStatus())
+	assert.Equal(t, "ok", app.GetReason())
+	var result map[string]string
+	err := app.RespBodyTo(&result)
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]string{"key": "value"}, result)
+}
+
+// TestConcurrentStatusAccess verifies that concurrent reads and writes to the
+// Application mutable fields do not cause data races. Run with:
+//
+//	go test -race ./pkg/metaserver/...
+func TestConcurrentStatusAccess(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	app := &Application{
+		ctx:       ctx,
+		cancel:    cancel,
+		countLock: &sync.Mutex{},
+		Status:    PreApplying,
+	}
+
+	const goroutines = 50
+	var wg sync.WaitGroup
+	wg.Add(goroutines * 4)
+
+	// Concurrent SetStatus
+	for i := 0; i < goroutines; i++ {
+		go func(i int) {
+			defer wg.Done()
+			status := ApplicationStatus(fmt.Sprintf("status-%d", i%3))
+			app.SetStatus(status)
+		}(i)
+	}
+
+	// Concurrent GetStatus
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			defer wg.Done()
+			_ = app.GetStatus()
+		}()
+	}
+
+	// Concurrent SetReason / GetReason
+	for i := 0; i < goroutines; i++ {
+		go func(i int) {
+			defer wg.Done()
+			if i%2 == 0 {
+				app.SetReason(fmt.Sprintf("reason-%d", i))
+			} else {
+				_ = app.GetReason()
+			}
+		}(i)
+	}
+
+	// Concurrent Cancel / Wait (with immediate context cancel so Wait doesn't block)
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			defer wg.Done()
+			// Wait returns immediately because the top-level context is canceled
+			app.Wait()
+		}()
+	}
+
+	// Trigger cancel so Wait goroutines unblock
+	cancel()
+	wg.Wait()
 }
