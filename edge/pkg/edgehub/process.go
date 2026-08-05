@@ -97,6 +97,9 @@ func (eh *EdgeHub) routeToCloud() {
 		err = eh.sendToCloud(message)
 		if err != nil {
 			klog.Errorf("failed to send message to cloud: %v", err)
+			// Requeue the message so it is sent again after reconnection.
+			// Otherwise the message is lost when the connection drops.
+			beehiveContext.Send(modules.EdgeHubModuleName, message)
 			eh.reconnectChan <- struct{}{}
 			return
 		}
