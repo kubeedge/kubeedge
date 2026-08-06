@@ -237,7 +237,10 @@ func addDevice(context *dtcontext.DTContext, toAdd []dttype.Device, baseMessage 
 		if err != nil {
 			klog.Errorf("Add device %s failed due to some error ,err: %#v", device.ID, err)
 			context.DeviceList.Delete(device.ID)
-			context.Unlock(device.ID)
+			if delta {
+				context.Unlock(device.ID)
+			}
+			context.DeviceMutex.Delete(device.ID)
 			continue
 			//todo
 		}
@@ -309,10 +312,10 @@ func removeDevice(context *dtcontext.DTContext, toRemove []dttype.Device, baseMe
 		}
 		//todo
 		context.DeviceList.Delete(device.ID)
-		context.DeviceMutex.Delete(device.ID)
 		if delta {
 			context.Unlock(device.ID)
 		}
+		context.DeviceMutex.Delete(device.ID)
 		topic := dtcommon.MemETPrefix + context.NodeName + dtcommon.MemETUpdateSuffix
 		baseMessage := dttype.BuildBaseMessage()
 		RemoveDevices := make([]dttype.Device, 0)
