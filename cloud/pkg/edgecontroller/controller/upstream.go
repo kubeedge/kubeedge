@@ -572,6 +572,24 @@ func (uc *UpstreamController) createNode(nodeID, name string, node *v1.Node) (*v
 	return node, err
 }
 
+// marshalGPUStatus marshals GPU status entries to JSON. It is a package-level
+// variable, rather than a direct call to json.Marshal, so tests can substitute
+// a failing implementation: []types.NvidiaGPUStatus only has string/bool
+// fields and can never actually fail to marshal.
+var marshalGPUStatus = json.Marshal
+
+// setGPUStatusAnnotation marshals gpuStatus and stores it under
+// constants.NvidiaGPUStatusAnnotationKey on node. If marshalling fails, it
+// logs a warning and leaves the existing annotation value untouched.
+func setGPUStatusAnnotation(node *v1.Node, msgID string, gpuStatus []types.NvidiaGPUStatus) {
+	data, err := marshalGPUStatus(gpuStatus)
+	if err != nil {
+		klog.Warningf("message: %s, marshal GPU status failed: %v", msgID, err)
+		return
+	}
+	node.Annotations[constants.NvidiaGPUStatusAnnotationKey] = string(data)
+}
+
 // updateNodeStatus update node status
 // Deprecated: updateNodeStatus will be deleted in subsequent versions, use patchNode instead.
 func (uc *UpstreamController) updateNodeStatus() {
@@ -676,8 +694,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 							gpuStatus = append(gpuStatus, types.NvidiaGPUStatus{ID: er.Name, Healthy: true})
 						}
 						if len(gpuStatus) > 0 {
-							data, _ := json.Marshal(gpuStatus)
-							getNode.Annotations[constants.NvidiaGPUStatusAnnotationKey] = string(data)
+							setGPUStatusAnnotation(getNode, msg.GetID(), gpuStatus)
 						}
 					}
 					data, err := json.Marshal(v)
