@@ -21,7 +21,8 @@ import (
 
 var (
 	//memActionCallBack map for action to callback
-	memActionCallBack map[string]CallBack
+	memActionCallBack         map[string]CallBack
+	initMemActionCallBackOnce sync.Once
 
 	// MembershipServiceFactory is a function variable that can be mocked in tests
 	MembershipServiceFactory = func() interface {
@@ -73,10 +74,12 @@ func (mw MemWorker) Start() {
 }
 
 func initMemActionCallBack() {
-	memActionCallBack = make(map[string]CallBack)
-	memActionCallBack[dtcommon.MemGet] = dealMembershipGet
-	memActionCallBack[dtcommon.MemUpdated] = dealMembershipUpdate
-	memActionCallBack[dtcommon.MemDetailResult] = dealMembershipDetail
+	initMemActionCallBackOnce.Do(func() {
+		memActionCallBack = make(map[string]CallBack)
+		memActionCallBack[dtcommon.MemGet] = dealMembershipGet
+		memActionCallBack[dtcommon.MemUpdated] = dealMembershipUpdate
+		memActionCallBack[dtcommon.MemDetailResult] = dealMembershipDetail
+	})
 }
 func getRemoveList(context *dtcontext.DTContext, devices []dttype.Device) []dttype.Device {
 	var toRemove []dttype.Device

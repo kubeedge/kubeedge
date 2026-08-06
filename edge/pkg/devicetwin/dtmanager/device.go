@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"k8s.io/klog/v2"
@@ -21,7 +22,8 @@ import (
 
 var (
 	//deviceActionCallBack map for action to callback
-	deviceActionCallBack map[string]CallBack
+	deviceActionCallBack         map[string]CallBack
+	initDeviceActionCallBackOnce sync.Once
 
 	// DeviceServiceFactory is a function variable that can be mocked in tests
 	DeviceServiceFactory = func() interface {
@@ -69,9 +71,11 @@ func (dw DeviceWorker) Start() {
 }
 
 func initDeviceActionCallBack() {
-	deviceActionCallBack = make(map[string]CallBack)
-	deviceActionCallBack[dtcommon.DeviceUpdated] = dealDeviceAttrUpdate
-	deviceActionCallBack[dtcommon.DeviceStateUpdate] = dealDeviceStateUpdate
+	initDeviceActionCallBackOnce.Do(func() {
+		deviceActionCallBack = make(map[string]CallBack)
+		deviceActionCallBack[dtcommon.DeviceUpdated] = dealDeviceAttrUpdate
+		deviceActionCallBack[dtcommon.DeviceStateUpdate] = dealDeviceStateUpdate
+	})
 }
 
 func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg interface{}) error {
