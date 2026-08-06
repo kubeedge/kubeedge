@@ -5,12 +5,15 @@ import (
 	"sync"
 
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // LocationCache cache the map of node, pod, configmap, secret
 type LocationCache struct {
 	// EdgeNodes is a set, key is nodeName
 	EdgeNodes sync.Map
+	// podNode is a map, key is pod UID, value is nodeName
+	podNode sync.Map
 	// configMapNode is a map, key is namespace/configMapName, value is nodeName
 	configMapNode sync.Map
 	// secretNode is a map, key is namespace/secretName, value is nodeName
@@ -77,6 +80,8 @@ func (lc *LocationCache) newNodes(oldNodes []string, node string) []string {
 
 // AddOrUpdatePod add pod to node, pod to configmap, configmap to pod, pod to secret, secret to pod relation
 func (lc *LocationCache) AddOrUpdatePod(pod v1.Pod) {
+	lc.podNode.Store(pod.UID, pod.Spec.NodeName)
+
 	configMaps, secrets := lc.PodConfigMapsAndSecrets(pod)
 	for _, c := range configMaps {
 		configMapKey := fmt.Sprintf("%s/%s", pod.Namespace, c)
@@ -137,9 +142,20 @@ func (lc *LocationCache) IsEdgeNode(nodeName string) bool {
 	return ok
 }
 
+// IsPodOnNode checks whether a pod was located on a node
+func (lc *LocationCache) IsPodOnNode(podUID types.UID, nodeName string) bool {
+	value, ok := lc.podNode.Load(podUID)
+	return ok && value == nodeName
+}
+
 // UpdateEdgeNode is to maintain edge nodes name upto-date by querying kubernetes client
 func (lc *LocationCache) UpdateEdgeNode(nodeName string) {
 	lc.EdgeNodes.Store(nodeName, struct{}{})
+}
+
+// DeletePod from cache
+func (lc *LocationCache) DeletePod(podUID types.UID) {
+	lc.podNode.Delete(podUID)
 }
 
 // DeleteConfigMap from cache
