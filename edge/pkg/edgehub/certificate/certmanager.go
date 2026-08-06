@@ -74,12 +74,12 @@ func NewCertManager(edgehub v1alpha2.EdgeHub, nodename string) CertManager {
 }
 
 // Start starts the CertManager
-func (cm *CertManager) Start() {
+func (cm *CertManager) Start() error {
 	if _, err := cm.getCurrent(); err != nil {
 		klog.Warningf("unable to get the current edge certs, reason: %v", err)
 		klog.Info("Reuse the token to obtain the certificate")
 		if err = cm.applyCerts(); err != nil {
-			panic(fmt.Errorf("failed to apply the edge certs, err: %v", err))
+			return fmt.Errorf("failed to apply the edge certs, err: %v", err)
 		}
 		// inform to cleanup token in configuration edgecore.yaml
 		CleanupTokenChan <- struct{}{}
@@ -87,6 +87,7 @@ func (cm *CertManager) Start() {
 	if cm.RotateCertificates {
 		cm.rotate()
 	}
+	return nil
 }
 
 // getCurrent returns current edge certificate

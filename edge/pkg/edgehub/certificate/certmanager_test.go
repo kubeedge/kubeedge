@@ -135,6 +135,26 @@ func TestGetEdgeCert(t *testing.T) {
 	})
 }
 
+func TestStart(t *testing.T) {
+	t.Run("returns error instead of panicking when cert provisioning fails", func(t *testing.T) {
+		cm := &CertManager{
+			NodeName: "testnode",
+			caFile:   filepath.Join(fakeCertsDir, "missing-ca.crt"),
+			certFile: filepath.Join(fakeCertsDir, "missing-server.crt"),
+			keyFile:  filepath.Join(fakeCertsDir, "missing-server.key"),
+			caURL:    "http://127.0.0.1:0/ca.crt",
+			certURL:  "http://127.0.0.1:0/edge.crt",
+		}
+
+		var err error
+		require.NotPanics(t, func() {
+			err = cm.Start()
+		})
+		require.Error(t, err)
+		require.ErrorContains(t, err, "failed to apply the edge certs")
+	})
+}
+
 const (
 	fakeCertsDir = "fake-certs"
 )
