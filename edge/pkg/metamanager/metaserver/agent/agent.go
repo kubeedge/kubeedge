@@ -102,9 +102,10 @@ func (a *Agent) Apply(app *metaserver.Application) error {
 		app.Reset()
 		go a.doApply(app)
 	case metaserver.Rejected:
-		return &app.Error
+		appErr := app.GetError()
+		return &appErr
 	case metaserver.Failed:
-		return errors.New(app.Reason)
+		return errors.New(app.GetReason())
 	case metaserver.Approved:
 		return nil
 	case metaserver.InApplying:
@@ -112,10 +113,11 @@ func (a *Agent) Apply(app *metaserver.Application) error {
 	}
 	app.Wait()
 	if app.GetStatus() == metaserver.Rejected {
-		return &app.Error
+		appErr := app.GetError()
+		return &appErr
 	}
 	if app.GetStatus() != metaserver.Approved {
-		return errors.New(app.Reason)
+		return errors.New(app.GetReason())
 	}
 	return nil
 }
@@ -123,32 +125,33 @@ func (a *Agent) Apply(app *metaserver.Application) error {
 func (a *Agent) doApply(app *metaserver.Application) {
 	defer app.Cancel()
 	// encapsulate as a message
-	app.Status = metaserver.InApplying
+	app.SetStatus(metaserver.InApplying)
 	msg := model.NewMessage("").SetRoute(metaserver.MetaServerSource, modules.DynamicControllerModuleGroup).FillBody(app)
 	msg.SetResourceOperation("null", "null")
 	resp, err := beehiveContext.SendSync(edgemodule.EdgeHubModuleName, *msg, 10*time.Second)
 	if err != nil {
-		app.Status = metaserver.Failed
-		app.Reason = fmt.Sprintf("failed to access cloud Application center: %v", err)
+		app.SetStatus(metaserver.Failed)
+		app.SetReason(fmt.Sprintf("failed to access cloud Application center: %v", err))
 		return
 	}
 
 	retApp, err := metaserver.MsgToApplication(resp)
 	if err != nil {
-		app.Status = metaserver.Failed
-		app.Reason = fmt.Sprintf("failed to get Application from resp msg: %v", err)
+		app.SetStatus(metaserver.Failed)
+		app.SetReason(fmt.Sprintf("failed to get Application from resp msg: %v", err))
 		return
 	}
 
-	//merge returned application to local application
-	app.Status = retApp.Status
-	app.Reason = retApp.Reason
-	app.Error = retApp.Error
-	app.RespBody = retApp.RespBody
+	// merge returned application to local application under a single lock
+	app.UpdateFromResponse(retApp)
 }
 
 func (a *Agent) CloseApplication(appID string) {
-	a.Applications.Delete(appID)
+	if v, ok := a.Applications.LoadAndDelete(appID); ok {
+		// Cancel the application context to release any goroutines blocked in Wait()
+		app := v.(*metaserver.Application)
+		app.Cancel()
+	}
 	a.SyncWatchAppOnConnected()
 }
 
@@ -207,7 +210,9 @@ func (a *Agent) syncWatchApplications() error {
 		return err
 	}
 
-	klog.Errorf("failed to process watch apps: %+v", failedWatchApps)
+	if len(failedWatchApps) > 0 {
+		klog.Warningf("failed to process watch apps: %+v", failedWatchApps)
+	}
 
 	return nil
 }
