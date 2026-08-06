@@ -91,7 +91,10 @@ func (eh *EdgeHub) RestartPolicy() *core.ModuleRestartPolicy {
 // Start sets context and starts the controller
 func (eh *EdgeHub) Start() {
 	eh.certManager = certificate.NewCertManager(config.Config.EdgeHub, config.Config.NodeName)
-	eh.certManager.Start()
+	if err := eh.certManager.Start(); err != nil {
+		klog.Exitf("failed to start cert manager: %v", err)
+		return
+	}
 	for _, v := range GetCertSyncChannel() {
 		v <- true
 		close(v)
