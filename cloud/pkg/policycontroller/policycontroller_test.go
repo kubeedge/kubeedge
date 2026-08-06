@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The KubeEdge Authors.
+Copyright 2026 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,10 +21,12 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/agiledragon/gomonkey/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core"
@@ -34,9 +36,10 @@ import (
 )
 
 const (
-	contextTypeStr = "context.Context"
-	managerTypeStr = "manager.Manager"
-	errorTypeStr   = "error"
+	contextTypeStr    = "context.Context"
+	managerTypeStr    = "manager.Manager"
+	errorTypeStr      = "error"
+	restConfigTypeStr = "*rest.Config"
 )
 
 func TestName(t *testing.T) {
@@ -77,6 +80,13 @@ func TestEnable(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Capture original value so we restore it regardless of test outcome.
+			original := features.DefaultFeatureGate.Enabled(features.RequireAuthorization)
+			t.Cleanup(func() {
+				_ = features.DefaultMutableFeatureGate.SetFromMap(
+					map[string]bool{string(features.RequireAuthorization): original})
+			})
+
 			if err := features.DefaultMutableFeatureGate.SetFromMap(
 				map[string]bool{string(features.RequireAuthorization): tt.featureEnabled}); err != nil {
 				t.Fatalf("Failed to set feature gate: %v", err)
@@ -155,6 +165,12 @@ func TestInitFunction(t *testing.T) {
 }
 
 func TestRegister(t *testing.T) {
+	original := features.DefaultFeatureGate.Enabled(features.RequireAuthorization)
+	t.Cleanup(func() {
+		_ = features.DefaultMutableFeatureGate.SetFromMap(
+			map[string]bool{string(features.RequireAuthorization): original})
+	})
+
 	if err := features.DefaultMutableFeatureGate.SetFromMap(
 		map[string]bool{string(features.RequireAuthorization): true}); err != nil {
 		t.Fatalf("Failed to set feature gate: %v", err)
@@ -170,14 +186,25 @@ func TestRegister(t *testing.T) {
 		t.Errorf("Expected Register to take 1 argument, got %d", regType.NumIn())
 	}
 
-	if regType.In(0).String() != "*rest.Config" {
+	if regType.In(0).String() != restConfigTypeStr {
 		t.Errorf("Expected Register argument to be *rest.Config, got %s", regType.In(0).String())
 	}
 
-	cfg := &rest.Config{Host: "https://localhost:8080"}
+	cfg := &rest.Config{Host: "https://fake-host:6443"}
+	Register(cfg)
 
-	pc := &policyController{
-		ctx: context.Background(),
+	info, ok := core.GetModules()[modules.PolicyControllerModuleName]
+	if !ok {
+		t.Fatal("expected Register to register the policy controller module")
+	}
+
+	pc, ok := info.GetModule().(*policyController)
+	if !ok {
+		t.Fatalf("expected registered module to be *policyController, got %T", info.GetModule())
+	}
+
+	if pc.kubeCfg != cfg {
+		t.Error("expected Register to store the given kubeCfg")
 	}
 
 	if pc.Name() != modules.PolicyControllerModuleName {
@@ -192,11 +219,32 @@ func TestRegister(t *testing.T) {
 		t.Error("Expected Enable() to return true")
 	}
 
-	_, _ = NewAccessRoleControllerManager(pc.ctx, cfg)
-
 	moduleType := reflect.TypeOf((*core.Module)(nil)).Elem()
 	if !reflect.TypeOf(pc).Implements(moduleType) {
 		t.Error("policyController should implement core.Module")
+	}
+}
+
+// TestRegisterDoesNotConstructManager verifies that Register() does NOT call
+// NewAccessRoleControllerManager eagerly. The manager is only built inside
+// Start(), which Beehive calls only when Enable() returns true — this keeps
+// Register() side-effect-free for keadm / standalone deployments and for
+// replicas where the RequireAuthorization feature gate is disabled.
+func TestRegisterDoesNotConstructManager(t *testing.T) {
+	cfg := &rest.Config{Host: "https://fake-host:6443"}
+	pc := &policyController{
+		kubeCfg: cfg,
+		ctx:     context.Background(),
+	}
+
+	pcType := reflect.TypeOf(pc).Elem()
+	_, hasManager := pcType.FieldByName("manager")
+	_, hasKubeCfg := pcType.FieldByName("kubeCfg")
+	if !hasKubeCfg {
+		t.Error("policyController should store kubeCfg for deferred manager construction")
+	}
+	if hasManager {
+		t.Error("policyController should not carry a pre-built manager field; manager construction is deferred to Start()")
 	}
 }
 
@@ -220,6 +268,56 @@ func TestStartMethod(t *testing.T) {
 	}
 }
 
+func TestRestartPolicy(t *testing.T) {
+	pc := &policyController{}
+	if got := pc.RestartPolicy(); got != nil {
+		t.Errorf("RestartPolicy() = %v, want nil (use the default restart policy)", got)
+	}
+}
+
+// fakeManager is a minimal manager.Manager stand-in used to test
+// policyController.Start() without dialling a real (or fake) API server.
+// It embeds the manager.Manager interface so it satisfies the type without
+// implementing every method; Start() is the only method policyController.Start()
+// calls on the returned manager, so that is the only one overridden here.
+type fakeManager struct {
+	manager.Manager
+	startErr error
+}
+
+func (f *fakeManager) Start(_ context.Context) error {
+	return f.startErr
+}
+
+// TestStartHappyPath verifies that policyController.Start() obtains a manager
+// through NewAccessRoleControllerManager and runs it via mgr.Start(), without
+// hitting the klog.Fatalf branch. NewAccessRoleControllerManager is
+// monkey-patched (via gomonkey, already used elsewhere in this codebase, e.g.
+// cloud/cmd/cloudcore/app/server_test.go) to return a fakeManager so the test
+// does not depend on real API-server connectivity and returns immediately.
+func TestStartHappyPath(t *testing.T) {
+	var gotCfg *rest.Config
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+	patches.ApplyFunc(NewAccessRoleControllerManager,
+		func(_ context.Context, cfg *rest.Config) (manager.Manager, error) {
+			gotCfg = cfg
+			return &fakeManager{}, nil
+		})
+
+	cfg := &rest.Config{Host: "https://fake-host:6443"}
+	pc := &policyController{
+		kubeCfg: cfg,
+		ctx:     context.Background(),
+	}
+
+	pc.Start()
+
+	if gotCfg != cfg {
+		t.Errorf("Start() passed kubeCfg=%+v, want %+v", gotCfg, cfg)
+	}
+}
+
 func TestNewAccessRoleControllerManager(t *testing.T) {
 	managerFunc := reflect.ValueOf(NewAccessRoleControllerManager)
 	if !managerFunc.IsValid() {
@@ -235,7 +333,7 @@ func TestNewAccessRoleControllerManager(t *testing.T) {
 		t.Errorf("Expected first argument to be %s, got %s", contextTypeStr, funcType.In(0).String())
 	}
 
-	if funcType.In(1).String() != "*rest.Config" {
+	if funcType.In(1).String() != restConfigTypeStr {
 		t.Errorf("Expected second argument to be *rest.Config, got %s", funcType.In(1).String())
 	}
 
@@ -249,6 +347,93 @@ func TestNewAccessRoleControllerManager(t *testing.T) {
 
 	if funcType.Out(1).String() != errorTypeStr {
 		t.Errorf("Expected second return value to be %s, got %s", errorTypeStr, funcType.Out(1).String())
+	}
+}
+
+// TestNewAccessRoleControllerManagerOutOfCluster verifies that newManager
+// does not fail when called with a non-empty REST config host (simulating an
+// out-of-cluster connection). There is no leader election involved anymore,
+// so out-of-cluster / keadm deployments never hit controller-runtime's
+// "not running in-cluster, please specify LeaderElectionNamespace" error.
+// We call newManager rather than NewAccessRoleControllerManager because the
+// latter also runs setupControllers, which triggers API-server discovery
+// against the fake host.
+//
+// This test never starts the returned manager, so its health-probe listener
+// is bound but never released for the rest of the test binary's lifetime.
+// Using ":0" (an OS-assigned ephemeral port) instead of the real ":9002"
+// avoids colliding with other tests in this file that also construct a
+// manager without starting it.
+func TestNewAccessRoleControllerManagerOutOfCluster(t *testing.T) {
+	original := healthProbeBindAddress
+	healthProbeBindAddress = ":0"
+	t.Cleanup(func() { healthProbeBindAddress = original })
+
+	cfg := &rest.Config{Host: "https://fake-apiserver:6443"}
+
+	_, err := newManager(cfg)
+	if err != nil {
+		t.Errorf("newManager() should not fail for out-of-cluster config, got: %v", err)
+	}
+}
+
+// TestNewManagerBindError verifies that newManager, and in turn
+// NewAccessRoleControllerManager, propagate the error controller-runtime
+// returns when the health-probe address is invalid, instead of panicking or
+// silently ignoring it.
+func TestNewManagerBindError(t *testing.T) {
+	original := healthProbeBindAddress
+	healthProbeBindAddress = "not-a-valid-address"
+	t.Cleanup(func() { healthProbeBindAddress = original })
+
+	cfg := &rest.Config{Host: "https://fake-apiserver:6443"}
+
+	mgr, err := newManager(cfg)
+	if err == nil {
+		t.Fatal("expected newManager() to return an error for an invalid health-probe address")
+	}
+	if mgr != nil {
+		t.Error("expected nil manager when newManager fails")
+	}
+
+	mgr, err = NewAccessRoleControllerManager(context.Background(), cfg)
+	if err == nil {
+		t.Fatal("expected NewAccessRoleControllerManager() to propagate the newManager error")
+	}
+	if mgr != nil {
+		t.Error("expected nil manager when NewAccessRoleControllerManager fails in newManager")
+	}
+}
+
+// TestPolicyControllerDisabled verifies that when the RequireAuthorization
+// feature gate is disabled, Enable() returns false, so Beehive never calls
+// Start() and the manager (and its health-probe listener) is never
+// constructed.
+func TestPolicyControllerDisabled(t *testing.T) {
+	// Capture original value so we restore it exactly, not hardcode false.
+	original := features.DefaultFeatureGate.Enabled(features.RequireAuthorization)
+	t.Cleanup(func() {
+		_ = features.DefaultMutableFeatureGate.SetFromMap(
+			map[string]bool{string(features.RequireAuthorization): original})
+	})
+
+	if err := features.DefaultMutableFeatureGate.SetFromMap(
+		map[string]bool{string(features.RequireAuthorization): false}); err != nil {
+		t.Fatalf("Failed to set feature gate: %v", err)
+	}
+
+	cfg := &rest.Config{Host: "https://fake-host:6443"}
+	pc := &policyController{
+		kubeCfg: cfg,
+		ctx:     context.Background(),
+	}
+
+	if pc.Enable() {
+		t.Error("Enable() should return false when RequireAuthorization feature gate is disabled")
+	}
+
+	if pc.kubeCfg == nil {
+		t.Error("kubeCfg should be stored on the policyController")
 	}
 }
 
@@ -318,11 +503,11 @@ func TestCompleteControllerCoverage(t *testing.T) {
 
 	pcType := reflect.TypeOf(pc).Elem()
 
-	managerField, exists := pcType.FieldByName("manager")
+	kubeCfgField, exists := pcType.FieldByName("kubeCfg")
 	if !exists {
-		t.Error("Expected policyController to have manager field")
-	} else if managerField.Type.String() != managerTypeStr {
-		t.Errorf("Expected manager field to be %s, got %s", managerTypeStr, managerField.Type.String())
+		t.Error("Expected policyController to have kubeCfg field")
+	} else if kubeCfgField.Type.String() != restConfigTypeStr {
+		t.Errorf("Expected kubeCfg field to be *rest.Config, got %s", kubeCfgField.Type.String())
 	}
 
 	ctxField, exists := pcType.FieldByName("ctx")
@@ -373,6 +558,34 @@ func TestPolicyControllerPackageIntegration(t *testing.T) {
 
 	if _, ok := obj.(*policyv1alpha1.ServiceAccountAccess); !ok {
 		t.Errorf("Expected *policyv1alpha1.ServiceAccountAccess, got %T", obj)
+	}
+}
+
+// TestNewAccessRoleControllerManagerSetupError verifies that
+// NewAccessRoleControllerManager propagates an error returned by
+// setupControllers instead of returning a manager. We use an unreachable
+// loopback address (rather than a DNS name) so the dial fails immediately
+// with "connection refused" instead of blocking on a timeout, keeping the
+// test fast and deterministic regardless of network access in the test
+// environment.
+//
+// Uses ":0" for the health-probe port for the same reason as
+// TestNewAccessRoleControllerManagerOutOfCluster: this manager is never
+// started, so its listener would otherwise hold :9002 for the rest of the
+// test binary and make sibling tests fail to bind it.
+func TestNewAccessRoleControllerManagerSetupError(t *testing.T) {
+	original := healthProbeBindAddress
+	healthProbeBindAddress = ":0"
+	t.Cleanup(func() { healthProbeBindAddress = original })
+
+	cfg := &rest.Config{Host: "http://127.0.0.1:1"}
+
+	mgr, err := NewAccessRoleControllerManager(context.Background(), cfg)
+	if err == nil {
+		t.Fatal("expected NewAccessRoleControllerManager to return an error when setupControllers fails")
+	}
+	if mgr != nil {
+		t.Error("expected nil manager when setupControllers fails")
 	}
 }
 
