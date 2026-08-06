@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -110,10 +111,13 @@ func twinWorkerFunc(receiverChannel chan interface{}, confirmChannel chan interf
 
 // contextFunc returns a new DTContext
 func contextFunc(deviceID string) dtcontext.DTContext {
+	commChan := make(map[string]chan interface{})
+	commChan[dtcommon.CommModule] = make(chan interface{}, 128)
 	context := dtcontext.DTContext{
 		DeviceList:  &sync.Map{},
 		DeviceMutex: &sync.Map{},
 		Mutex:       &sync.RWMutex{},
+		CommChan:    commChan,
 	}
 	var testMutex sync.Mutex
 	context.DeviceMutex.Store(deviceID, &testMutex)
@@ -342,14 +346,16 @@ func TestDealTwinUpdate(t *testing.T) {
 			context:  &context,
 			resource: deviceB,
 			msg:      msgTypeFunc(content),
-			wantErr:  nil,
+			// Updated() now returns the unmarshal error instead of discarding it
+			wantErr: dttype.ErrorUpdate,
 		},
 		{
 			name:     "TestDealTwinUpdate(): Case 4: Success; Begin to update twin of the device in Updated()",
 			context:  &context,
 			resource: deviceA,
 			msg:      msgTypeFunc(contentKeyTwin),
-			wantErr:  nil,
+			// DealDeviceTwin returns device-not-found error which is now propagated
+			wantErr: errors.New("update rejected due to the device is not existed"),
 		},
 	}
 	for _, test := range tests {
@@ -670,6 +676,143 @@ func TestDealDeviceTwinTrans(t *testing.T) {
 
 			if err := DealDeviceTwin(test.context, test.deviceID, test.eventID, test.msgTwin, test.dealType); !reflect.DeepEqual(err, test.err) {
 				t.Errorf("DTManager.TestDealDeviceTwinTrans() case failed: got = %v, Want = %v", err, test.err)
+			}
+		})
+	}
+}
+
+// TestDealDeviceTwinTransSyncDealType tests that SyncDealType persistence failures are returned
+// instead of being silently swallowed (Issue #6904, reviewer issue 1).
+func TestDealDeviceTwinTransSyncDealType(t *testing.T) {
+	defer func() {
+		TwinServiceFactory = originalTwinServiceFactory
+		MembershipServiceFactory = originalMembershipSvcFactory
+	}()
+
+	str := typeString
+	optionTrue := true
+	errDBPersist := errors.New("failed DB persist")
+
+	// Build a context with a device that has an existing twin key
+	contextDeviceB := contextFunc(deviceB)
+	twinDeviceB := make(map[string]*dttype.MsgTwin)
+	twinDeviceB[deviceB] = &dttype.MsgTwin{
+		Expected: &dttype.TwinValue{
+			Value: &str,
+		},
+		Optional: &optionTrue,
+	}
+	deviceBTwin := dttype.Device{Twin: twinDeviceB}
+	contextDeviceB.DeviceList.Store(deviceB, &deviceBTwin)
+
+	// Message twin that triggers a change (add new key).
+	// For SyncDealType, ExpectedVersion must be set (dealVersion requires it),
+	// and Metadata.Type must not be TypeDeleted to produce a valid add.
+	msgTwin := make(map[string]*dttype.MsgTwin)
+	msgTwin[key1] = &dttype.MsgTwin{
+		Expected: twinValueFunc(),
+		Metadata: &dttype.TypeMetadata{
+			Type: typeString,
+		},
+		ExpectedVersion: &dttype.TwinVersion{CloudVersion: 1, EdgeVersion: 1},
+	}
+
+	tests := []struct {
+		name             string
+		context          *dtcontext.DTContext
+		deviceID         string
+		msgTwin          map[string]*dttype.MsgTwin
+		dealType         int
+		setupTwinMock    func(*mocks.MockDeviceService)
+		setupMemberMock  func(*mocks.MockDeviceService)
+		wantErrSentinel  error
+		wantErrSubstring string
+	}{
+		{
+			name:     "SyncDealType: DeviceTwinTrans error is returned",
+			context:  &contextDeviceB,
+			deviceID: deviceB,
+			msgTwin:  msgTwin,
+			dealType: SyncDealType,
+			setupTwinMock: func(m *mocks.MockDeviceService) {
+				m.DeviceTwinTransFunc = func(adds []models.DeviceTwin, deletes []models.DeviceDelete, updates []models.DeviceTwinUpdate) error {
+					return errDBPersist
+				}
+			},
+			setupMemberMock: func(m *mocks.MockDeviceService) {
+				// Recovery succeeds — returns a valid device
+				m.QueryDeviceFunc = func(key, condition string) ([]models.Device, error) {
+					return []models.Device{{ID: deviceB, Name: deviceB}}, nil
+				}
+				m.QueryDeviceAttrFunc = func(key, condition string) (*[]models.DeviceAttr, error) {
+					return &[]models.DeviceAttr{}, nil
+				}
+				m.QueryDeviceTwinFunc = func(key, condition string) (*[]models.DeviceTwin, error) {
+					return &[]models.DeviceTwin{}, nil
+				}
+			},
+			wantErrSentinel:  errDBPersist,
+			wantErrSubstring: "persist twin update",
+		},
+		{
+			name:     "SyncDealType: recovery failure after persistence failure",
+			context:  &contextDeviceB,
+			deviceID: deviceB,
+			msgTwin:  msgTwin,
+			dealType: SyncDealType,
+			setupTwinMock: func(m *mocks.MockDeviceService) {
+				m.DeviceTwinTransFunc = func(adds []models.DeviceTwin, deletes []models.DeviceDelete, updates []models.DeviceTwinUpdate) error {
+					return errDBPersist
+				}
+			},
+			setupMemberMock: func(m *mocks.MockDeviceService) {
+				// Recovery also fails — QueryDevice returns error
+				m.QueryDeviceFunc = func(key, condition string) ([]models.Device, error) {
+					return nil, errors.New("recovery DB error")
+				}
+			},
+			// The persistence error should still be the returned error
+			wantErrSentinel:  errDBPersist,
+			wantErrSubstring: "persist twin update",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			mockTwinService := mocks.NewMockDeviceService()
+			test.setupTwinMock(mockTwinService)
+
+			TwinServiceFactory = func() interface {
+				DeviceTwinTrans(adds []models.DeviceTwin, deletes []models.DeviceDelete, updates []models.DeviceTwinUpdate) error
+				QueryDevice(key string, condition string) ([]models.Device, error)
+				QueryDeviceAttr(key, condition string) (*[]models.DeviceAttr, error)
+				QueryDeviceTwin(key, condition string) (*[]models.DeviceTwin, error)
+			} {
+				return mockTwinService
+			}
+
+			mockMembershipService := mocks.NewMockDeviceService()
+			test.setupMemberMock(mockMembershipService)
+
+			MembershipServiceFactory = func() interface {
+				AddDeviceTrans(adds []models.Device, addAttrs []models.DeviceAttr, addTwins []models.DeviceTwin) error
+				DeleteDeviceTrans(deletes []string) error
+				QueryDevice(key string, condition string) ([]models.Device, error)
+				QueryDeviceAttr(key, condition string) (*[]models.DeviceAttr, error)
+				QueryDeviceTwin(key, condition string) (*[]models.DeviceTwin, error)
+			} {
+				return mockMembershipService
+			}
+
+			err := DealDeviceTwin(test.context, test.deviceID, "", test.msgTwin, test.dealType)
+			if err == nil {
+				t.Fatalf("DealDeviceTwin() returned nil, want error wrapping %v", test.wantErrSentinel)
+			}
+			if !errors.Is(err, test.wantErrSentinel) {
+				t.Errorf("DealDeviceTwin() error = %v, want error wrapping %v", err, test.wantErrSentinel)
+			}
+			if !strings.Contains(err.Error(), test.wantErrSubstring) {
+				t.Errorf("DealDeviceTwin() error = %q, want substring %q", err.Error(), test.wantErrSubstring)
 			}
 		})
 	}
