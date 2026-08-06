@@ -32,7 +32,6 @@ spec:
             - --webhook-service-name=kubeedge-admission-service
             - --port=443
             - -v=4
-            - 2>&1
           image: kubeedge/admission:latest
           imagePullPolicy: IfNotPresent
           name: admission

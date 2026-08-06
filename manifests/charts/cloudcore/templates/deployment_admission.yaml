@@ -45,7 +45,6 @@ spec:
             - --webhook-service-name=kubeedge-admission-service
             - --port=443
             - -v=4
-            - 2>&1
           image: {{ .Values.admission.image.repository }}:{{ .Values.admission.image.tag }}
           imagePullPolicy:  {{ .Values.admission.image.pullPolicy }}
           name: admission
