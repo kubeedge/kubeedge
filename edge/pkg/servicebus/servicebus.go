@@ -25,6 +25,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	servicebusConfig "github.com/kubeedge/kubeedge/edge/pkg/servicebus/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus/util"
 	"github.com/kubeedge/kubeedge/pkg/features"
@@ -109,6 +110,11 @@ type serverResponse struct {
 	Code int    `json:"code"`
 	Msg  string `json:"msg"`
 	Body string `json:"body"`
+}
+
+type basicHandlerDeps struct {
+	getURLByKey func(string) (*models.TargetUrls, error)
+	sendSync    func(string, beehiveModel.Message, time.Duration) (beehiveModel.Message, error)
 }
 
 var htc = new(http.Client)
@@ -442,8 +448,14 @@ func server(stopChan <-chan struct{}, tlsOpts TLSOptions) {
 		utilruntime.HandleError(s.ListenAndServe())
 	}
 }
-
 func buildBasicHandler(timeout time.Duration) http.Handler {
+	return buildBasicHandlerWithDeps(timeout, basicHandlerDeps{
+		getURLByKey: dbclient.NewServiceBusService().GetUrlsByKey,
+		sendSync:    beehiveContext.SendSync,
+	})
+}
+
+func buildBasicHandlerWithDeps(timeout time.Duration, deps basicHandlerDeps) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		sReq := &serverRequest{}
 		sResp := &serverResponse{}
@@ -467,7 +479,7 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 			}
 			return
 		}
-		if targetURL, _ := dbclient.NewServiceBusService().GetUrlsByKey(sReq.TargetURL); targetURL == nil {
+		if targetURL, _ := deps.getURLByKey(sReq.TargetURL); targetURL == nil {
 			sResp.Code = http.StatusBadRequest
 			sResp.Msg = fmt.Sprintf("url %s is not allowed and please make a rule for this url in the cloud", sReq.TargetURL)
 			if _, err := w.Write(marshalResult(sResp)); err != nil {
@@ -478,7 +490,7 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 		}
 		msg := beehiveModel.NewMessage("").BuildRouter(modules.ServiceBusModuleName, modules.UserGroup,
 			sReq.TargetURL, beehiveModel.UploadOperation).FillBody(byteData)
-		responseMessage, err := beehiveContext.SendSync(modules.EdgeHubModuleName, *msg, timeout)
+		responseMessage, err := deps.sendSync(modules.EdgeHubModuleName, *msg, timeout)
 		if err != nil {
 			sResp.Code = http.StatusBadRequest
 			sResp.Msg = err.Error()
