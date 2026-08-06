@@ -44,26 +44,46 @@ func TestCompareResourceVersion(t *testing.T) {
 		name       string
 		testNumber []string
 		want       int
+		wantErr    bool
 	}{
 		{
 			name:       "test greater than",
 			testNumber: []string{"123", "124"},
 			want:       -1,
+			wantErr:    false,
 		},
 		{
 			name:       "test less than",
 			testNumber: []string{"124", "123"},
 			want:       1,
+			wantErr:    false,
 		},
 		{
 			name:       "test equal",
 			testNumber: []string{"123", "123"},
 			want:       0,
+			wantErr:    false,
+		},
+		{
+			name:       "test invalid string",
+			testNumber: []string{"123", "abc"},
+			want:       -1,
+			wantErr:    true,
+		},
+		{
+			name:       "test empty string",
+			testNumber: []string{"", "123"},
+			want:       -1,
+			wantErr:    true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := CompareResourceVersion(tt.testNumber[0], tt.testNumber[1])
+			got, err := CompareResourceVersion(tt.testNumber[0], tt.testNumber[1])
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CompareResourceVersion() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
 			if !reflect.DeepEqual(tt.want, got) {
 				t.Errorf("CompareResourceVersion() = %v, want %v", got, tt.want)
 			}
@@ -174,6 +194,14 @@ func TestSendEvents(t *testing.T) {
 			}
 		})
 	}
+
+	// Test error path for CompareResourceVersion
+	t.Run("test sendEvents compare error", func(t *testing.T) {
+		sync := tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod")
+		// synchronous call, if it doesn't return early due to error, it might block on send or panic.
+		// Since it has an invalid version "abc", it will error and return immediately.
+		sendEvents(tf.TestNodeID, sync, "pod", "abc", sync.DeepCopy())
+	})
 }
 func newUnstructured(apiVersion, kind, namespace, name string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
