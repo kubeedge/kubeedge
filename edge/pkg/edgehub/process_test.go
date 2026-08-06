@@ -34,6 +34,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/mocks/edgehub"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/certificate"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 	msghandler "github.com/kubeedge/kubeedge/edge/pkg/edgehub/messagehandler"
 )
@@ -376,4 +377,65 @@ func TestKeepalive(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIfRotationDone(t *testing.T) {
+	t.Run("RotateCertificates disabled", func(t *testing.T) {
+		hub := &EdgeHub{
+			certManager: certificate.CertManager{
+				RotateCertificates: false,
+			},
+		}
+		hub.ifRotationDone()
+	})
+
+	t.Run("Successful send to reconnectChan when receiver ready", func(t *testing.T) {
+		hub := &EdgeHub{
+			certManager: certificate.CertManager{
+				RotateCertificates: true,
+				Done:               make(chan struct{}),
+			},
+			reconnectChan: make(chan struct{}),
+		}
+
+		go hub.ifRotationDone()
+
+		recChan := make(chan struct{})
+		go func() {
+			<-hub.reconnectChan
+			close(recChan)
+		}()
+
+		time.Sleep(20 * time.Millisecond)
+		hub.certManager.Done <- struct{}{}
+
+		select {
+		case <-recChan:
+			// Success: reconnectChan received signal
+		case <-time.After(2 * time.Second):
+			t.Fatal("expected signal on reconnectChan")
+		}
+	})
+
+	t.Run("Sends to reconnectChan when receiver becomes ready", func(t *testing.T) {
+		hub := &EdgeHub{
+			certManager: certificate.CertManager{
+				RotateCertificates: true,
+				Done:               make(chan struct{}, 1),
+			},
+			reconnectChan: make(chan struct{}),
+		}
+
+		go hub.ifRotationDone()
+
+		hub.certManager.Done <- struct{}{}
+
+		select {
+		case <-hub.reconnectChan:
+			// Success: reconnectChan received signal when receiver read from it
+		case <-time.After(2 * time.Second):
+			t.Fatal("expected signal on reconnectChan")
+		}
+	})
+
 }
