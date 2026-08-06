@@ -2,8 +2,8 @@ package main
 
 import (
 	"bufio"
-	"crypto/tls"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 
@@ -18,7 +18,7 @@ import (
 )
 
 func handleClient(container *mux.MessageContainer, writer mux.ResponseWriter) {
-	fmt.Printf("receive message: %s", container.Message.GetContent())
+	klog.Infof("receive message: %s", container.Message.GetContent())
 	if container.Message.IsSync() {
 		writer.WriteResponse(container.Message, "ack")
 	}
@@ -29,15 +29,14 @@ func initClientEntries() {
 }
 
 func StartClient(cfg *config.Config) error {
-	//tls, err := GetTlsConfig(cfg)
-	//if err != nil {
-	//	return err
-	//}
+	tlsConfig, err := GetTlsConfig(cfg)
+	if err != nil {
+		return err
+	}
+	// Ensure the CA pool is used for server verification
+	tlsConfig.RootCAs = tlsConfig.ClientCAs
 
 	initClientEntries()
-
-	// just for testing
-	tls := &tls.Config{InsecureSkipVerify: true}
 
 	var exOpts interface{}
 
@@ -52,20 +51,22 @@ func StartClient(cfg *config.Config) error {
 		exOpts = api.WSClientOption{
 			Header: header,
 		}
+	default:
+		return fmt.Errorf("unsupported protocol type: %v", cfg.Type)
 	}
 
-	client := client.Client{
+	c := client.Client{
 		Options: client.Options{
 			Type:      cfg.Type,
 			Addr:      cfg.Addr,
-			TLSConfig: tls,
+			TLSConfig: tlsConfig,
 			AutoRoute: true,
 			ConnUse:   api.UseTypeMessage,
 		},
 		ExOpts: exOpts,
 	}
 
-	connClient, err := client.Connect()
+	connClient, err := c.Connect()
 	if err != nil {
 		return err
 	}
@@ -81,15 +82,29 @@ func SendStdin(conns []conn.Connection, source string) error {
 		fmt.Print("send message: ")
 		inputData, err := input.ReadString('\n')
 		if err != nil {
+			if err == io.EOF {
+				klog.Info("stdin closed, exiting")
+				for _, c := range conns {
+					if err := c.Close(); err != nil {
+						klog.Errorf("failed to close connection, error: %+v", err)
+					}
+				}
+				return nil
+			}
 			klog.Errorf("failed to read input, error: %+v", err)
+			for _, c := range conns {
+				if err := c.Close(); err != nil {
+					klog.Errorf("failed to close connection, error: %+v", err)
+				}
+			}
 			return err
 		}
 		message := model.NewMessage("").
 			BuildRouter(source, "", "viaduct_message", "update").
 			FillBody(inputData)
 
-		for _, conn := range conns {
-			err = conn.WriteMessageAsync(message)
+		for _, c := range conns {
+			err = c.WriteMessageAsync(message)
 			if err != nil {
 				klog.Errorf("failed to write message async, error:%+v", err)
 			}
