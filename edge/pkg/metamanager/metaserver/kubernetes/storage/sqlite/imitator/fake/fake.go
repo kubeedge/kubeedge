@@ -12,7 +12,7 @@ import (
 
 // Client fake
 type Client struct {
-	InjectF                       func(msg model.Message)
+	InjectF                       func(msg model.Message) error
 	InsertOrUpdateObjF            func(ctx context.Context, obj runtime.Object) error
 	DeleteObjF                    func(ctx context.Context, obj runtime.Object) error
 	InsertOrUpdatePassThroughObjF func(ctx context.Context, obj []byte, key string) error
@@ -25,8 +25,8 @@ type Client struct {
 }
 
 // Inject fake
-func (c Client) Inject(msg model.Message) {
-	c.InjectF(msg)
+func (c Client) Inject(msg model.Message) error {
+	return c.InjectF(msg)
 }
 
 // InsertOrUpdateObj fake
