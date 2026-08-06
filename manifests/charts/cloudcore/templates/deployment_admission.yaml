@@ -41,8 +41,8 @@ spec:
             - --tls-private-key-file=/admission.local.config/certificates/tls.key
             - --ca-cert-file=/admission.local.config/certificates/ca.crt
             {{- end }}
-            - --webhook-namespace=kubeedge
-            - --webhook-service-name=kubeedge-admission-service
+            - --webhook-namespace={{ .Release.Namespace }}
+            - --webhook-service-name={{ .Values.admission.serviceName | default "kubeedge-admission-service" }}
             - --port=443
             - -v=4
             - 2>&1
