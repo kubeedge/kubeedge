@@ -37,7 +37,7 @@ func TestNewCloudReset(t *testing.T) {
 	cmd := NewCloudReset()
 
 	assert.Equal("cloud", cmd.Use)
-	assert.Equal("Teardowns CloudCore component", cmd.Short)
+	assert.Equal("Tears down CloudCore component", cmd.Short)
 	assert.Equal(resetLongDescription, cmd.Long)
 	assert.Equal(resetExample, cmd.Example)
 
