@@ -104,7 +104,7 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 
 	configFilePath := filepath.Join(apiconsts.KubeEdgePath, "config/edgecore.yaml")
 	_, err = os.Stat(configFilePath)
-	if err == nil || os.IsExist(err) {
+	if !os.IsNotExist(err) {
 		klog.Infoln("Read existing configuration file")
 		b, err := os.ReadFile(configFilePath)
 		if err != nil {
