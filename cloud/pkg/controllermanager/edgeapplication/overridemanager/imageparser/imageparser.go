@@ -71,15 +71,20 @@ func (c *Components) FullRepository() string {
 	return c.hostname + "/" + c.repository
 }
 
-// String returns the full name of the image, including repository and tag(or digest).
+// String returns the full name of the image, including repository, tag and digest.
+// A reference may carry both a tag and a digest (ie: nginx:1.19.1@sha256:...), in
+// which case both are emitted, the tag first, as in the reference itself.
 func (c Components) String() string {
-	if c.tag != "" {
+	switch {
+	case c.tag != "" && c.digest != "":
+		return c.FullRepository() + ":" + c.tag + "@" + c.digest
+	case c.tag != "":
 		return c.FullRepository() + ":" + c.tag
-	} else if c.digest != "" {
+	case c.digest != "":
 		return c.FullRepository() + "@" + c.digest
+	default:
+		return c.FullRepository()
 	}
-
-	return c.FullRepository()
 }
 
 // Tag returns the tag.
@@ -135,14 +140,19 @@ func (c *Components) SetTagOrDigest(input string) {
 	}
 }
 
-// RemoveTagOrDigest removes tag or digest.
-// Since tag and digest don't co-exist, so remove tag if tag not empty, otherwise remove digest.
+// RemoveTagOrDigest removes the tag and the digest.
+// A reference may carry either or both (ie: nginx:1.19.1@sha256:...), so clear each of them.
 func (c *Components) RemoveTagOrDigest() {
-	if c.tag != "" {
-		c.tag = ""
-	} else if c.digest != "" {
-		c.digest = ""
-	}
+	c.tag = ""
+	c.digest = ""
+}
+
+// taggedAndDigested is satisfied by a reference carrying both a tag and a digest,
+// ie: nginx:1.19.1@sha256:.... Such a reference also satisfies reference.Tagged and
+// reference.Digested on its own, so it has to be matched ahead of both of them.
+type taggedAndDigested interface {
+	reference.Tagged
+	reference.Digested
 }
 
 // Parse returns a Components of the given image.
@@ -158,6 +168,9 @@ func Parse(image string) (*Components, error) {
 	}
 
 	switch taggedOrDigested := ref.(type) {
+	case taggedAndDigested:
+		comp.tag = taggedOrDigested.Tag()
+		comp.digest = taggedOrDigested.Digest().String()
 	case reference.Tagged:
 		comp.tag = taggedOrDigested.Tag()
 	case reference.Digested:
