@@ -158,7 +158,7 @@ func TestVerifyCertSubject(t *testing.T) {
 			containsError: "request node name does not match the certificate subject",
 		},
 		{
-			name: "invalid organization",
+			name: "KubeEdge backward compatibility",
 			cert: &x509.Certificate{
 				Subject: pkix.Name{
 					Organization: []string{"KubeEdge"},
@@ -166,7 +166,7 @@ func TestVerifyCertSubject(t *testing.T) {
 				},
 			},
 			nodeName:      "testnode",
-			containsError: "request node name does not match the certificate subject",
+			containsError: "",
 		},
 	}
 
