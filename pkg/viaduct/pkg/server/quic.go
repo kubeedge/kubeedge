@@ -1,12 +1,13 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync"
 
-	"github.com/lucas-clemente/quic-go"
+	"github.com/quic-go/quic-go"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -19,7 +20,7 @@ import (
 type QuicServer struct {
 	options      Options
 	exOpts       api.QuicServerOption
-	listener     quic.Listener
+	listener     *quic.Listener
 	listenerLock sync.Mutex
 }
 
@@ -50,7 +51,7 @@ func (srv *QuicServer) serveTLS(quicConfig *quic.Config) error {
 	srv.listenerLock.Unlock()
 
 	for {
-		session, err := listener.Accept()
+		session, err := listener.Accept(context.Background())
 		if err != nil {
 			return err
 		}
@@ -60,8 +61,8 @@ func (srv *QuicServer) serveTLS(quicConfig *quic.Config) error {
 }
 
 // accept control stream
-func (srv *QuicServer) acceptControlStream(session quic.Session) quic.Stream {
-	stream, err := session.AcceptStream()
+func (srv *QuicServer) acceptControlStream(session quic.Connection) quic.Stream {
+	stream, err := session.AcceptStream(context.Background())
 	if err != nil {
 		klog.Errorf("failed to accept stream, error:%+v", err)
 		return nil
@@ -103,7 +104,7 @@ func (srv *QuicServer) receiveHeader(lane lane.Lane) (http.Header, error) {
 // 2) notify connection event
 // 3) add connection into manager
 // 4) auto route to entries
-func (srv *QuicServer) handleSession(session quic.Session) {
+func (srv *QuicServer) handleSession(session quic.Connection) {
 	ctrlStream := srv.acceptControlStream(session)
 	if ctrlStream == nil {
 		klog.Error("failed to accept control stream")
@@ -127,7 +128,7 @@ func (srv *QuicServer) handleSession(session quic.Session) {
 		State: &conn.ConnectionState{
 			State:            api.StatConnected,
 			Headers:          header,
-			PeerCertificates: session.ConnectionState().PeerCertificates,
+			PeerCertificates: session.ConnectionState().TLS.PeerCertificates,
 		},
 		AutoRoute:          srv.options.AutoRoute,
 		OnReadTransportErr: srv.options.OnReadTransportErr,
@@ -149,9 +150,9 @@ func (srv *QuicServer) handleSession(session quic.Session) {
 
 func (srv *QuicServer) getQuicConfig() *quic.Config {
 	return &quic.Config{
-		HandshakeTimeout:   srv.options.HandshakeTimeout,
-		KeepAlive:          true,
-		MaxIncomingStreams: srv.exOpts.MaxIncomingStreams,
+		HandshakeIdleTimeout: srv.options.HandshakeTimeout,
+		MaxIdleTimeout:       srv.options.HandshakeTimeout,
+		MaxIncomingStreams:   int64(srv.exOpts.MaxIncomingStreams),
 	}
 }
 

@@ -1,9 +1,10 @@
 package smgr
 
 import (
+	"context"
 	"io"
 
-	"github.com/lucas-clemente/quic-go"
+	"github.com/quic-go/quic-go"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
@@ -18,11 +19,11 @@ type Stream struct {
 }
 
 type Session struct {
-	Sess quic.Session
+	Sess quic.Connection
 }
 
 func (s *Session) OpenStreamSync(streamUse api.UseType) (*Stream, error) {
-	stream, err := s.Sess.OpenStreamSync()
+	stream, err := s.Sess.OpenStreamSync(context.Background())
 	if err != nil {
 		klog.Errorf("failed to open stream, error: %+v", err)
 		return nil, err
@@ -42,7 +43,7 @@ func (s *Session) OpenStreamSync(streamUse api.UseType) (*Stream, error) {
 }
 
 func (s *Session) AcceptStream() (*Stream, error) {
-	stream, err := s.Sess.AcceptStream()
+	stream, err := s.Sess.AcceptStream(context.Background())
 	if err != nil {
 		klog.Errorf("failed to accept stream, error: %+v", err)
 		return nil, err
@@ -65,5 +66,9 @@ func (s *Session) AcceptStream() (*Stream, error) {
 }
 
 func (s *Session) Close() error {
-	return s.Sess.Close()
+	if s.Sess != nil {
+		return s.Sess.CloseWithError(0, "")
+	}
+	return nil
 }
+
