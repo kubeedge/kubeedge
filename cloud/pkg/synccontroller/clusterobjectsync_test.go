@@ -38,6 +38,8 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 )
 
+const testNodeName = "node1"
+
 type testFuncBackup struct {
 	originalSendToEdge                     func(string, model.Message)
 	originalBuildEdgeControllerMessageFunc func(string, string, string, string, string, interface{}) *model.Message
@@ -77,7 +79,7 @@ func (b *testFuncBackup) restore() {
 }
 
 func mockGetNodeName(syncName string) string {
-	return "node1"
+	return testNodeName
 }
 
 func mockGetObjectUID(syncName string) string {
@@ -417,7 +419,7 @@ func TestSendClusterObjectSyncEventDirect(t *testing.T) {
 			return &model.Message{}
 		}
 
-		nodeName := "node1"
+		nodeName := testNodeName
 		resourceType := "pod"
 		objectResourceVersion := "1000"
 		obj := createTestPod("test-pod", "12345", "1000")
@@ -436,7 +438,7 @@ func TestSendClusterObjectSyncEventDirect(t *testing.T) {
 			return nil
 		}
 
-		nodeName := "node1"
+		nodeName := testNodeName
 		resourceType := "pod"
 		objectResourceVersion := "1000"
 		obj := createTestPod("test-pod", "12345", "1000")
@@ -553,7 +555,7 @@ func TestGcOrphanedClusterObjectSyncFuncIntegration(t *testing.T) {
 			deleteCalled := false
 
 			buildEdgeControllerMessageFunc = func(nodeID, namespace, resource, resourceID string, operation string, content interface{}) *model.Message {
-				assert.Equal(t, "node1", nodeID)
+				assert.Equal(t, testNodeName, nodeID)
 				assert.Equal(t, "pod", resource)
 				assert.Equal(t, "test-pod", resourceID)
 
