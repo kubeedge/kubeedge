@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lucas-clemente/quic-go"
+	"github.com/quic-go/quic-go"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -48,7 +48,7 @@ type QuicConnection struct {
 
 // NewQuicConn new quic connection
 func NewQuicConn(options *ConnectionOptions) *QuicConnection {
-	quicSession := options.Base.(quic.Session)
+	quicSession := options.Base.(quic.Connection)
 	return &QuicConnection{
 		session:            smgr.Session{Sess: quicSession},
 		handler:            options.Handler,
