@@ -3,6 +3,7 @@ package policycontroller
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -19,7 +20,13 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	pm "github.com/kubeedge/kubeedge/cloud/pkg/policycontroller/manager"
+	"github.com/kubeedge/kubeedge/common/constants"
 	kefeatures "github.com/kubeedge/kubeedge/pkg/features"
+)
+
+const (
+	podNamespaceEnv                  = "POD_NAMESPACE"
+	policyControllerLeaderElectionID = "kubeedge-policycontroller"
 )
 
 // policyController use beehive context message layer
@@ -37,16 +44,29 @@ func init() {
 	utilruntime.Must(policyv1alpha1.AddToScheme(accessScheme))
 }
 
-func NewAccessRoleControllerManager(ctx context.Context, kubeCfg *rest.Config) (manager.Manager, error) {
-	controllerManager, err := controllerruntime.NewManager(kubeCfg, controllerruntime.Options{
+func policyControllerLeaderElectionNamespace() string {
+	if namespace := os.Getenv(podNamespaceEnv); namespace != "" {
+		return namespace
+	}
+	return constants.SystemNamespace
+}
+
+func newAccessRoleControllerManagerOptions() controllerruntime.Options {
+	return controllerruntime.Options{
 		Scheme: accessScheme,
 		Metrics: controllerruntimemetrics.Options{
 			SecureServing: false,
 			BindAddress:   "0",
 		}, // disable metrics
-		// TODO: leader election
+		LeaderElection:          true,
+		LeaderElectionID:        policyControllerLeaderElectionID,
+		LeaderElectionNamespace: policyControllerLeaderElectionNamespace(),
 		// TODO: /healthz
-	})
+	}
+}
+
+func NewAccessRoleControllerManager(ctx context.Context, kubeCfg *rest.Config) (manager.Manager, error) {
+	controllerManager, err := controllerruntime.NewManager(kubeCfg, newAccessRoleControllerManagerOptions())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create controller manager: %w", err)
 	}
