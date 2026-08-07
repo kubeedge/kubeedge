@@ -34,6 +34,7 @@ import (
 	devicesv1alpha2 "github.com/kubeedge/api/apis/devices/v1alpha2"
 	devicesv1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
 	operationsv1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
+	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	reliablesyncsv1alpha1 "github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
@@ -47,9 +48,9 @@ func main() {
 	utilruntime.Must(devicesv1alpha2.AddToScheme(Scheme))
 	utilruntime.Must(devicesv1beta1.AddToScheme(Scheme))
 	utilruntime.Must(operationsv1alpha1.AddToScheme(Scheme))
+	utilruntime.Must(operationsv1alpha2.AddToScheme(Scheme))
 	utilruntime.Must(policyv1alpha1.AddToScheme(Scheme))
 	utilruntime.Must(reliablesyncsv1alpha1.AddToScheme(Scheme))
-	utilruntime.Must(policyv1alpha1.AddToScheme(Scheme))
 	utilruntime.Must(rulesv1.AddToScheme(Scheme))
 
 	// Create a default REST mapper
@@ -87,6 +88,18 @@ func main() {
 	mapper.AddSpecific(operationsv1alpha1.SchemeGroupVersion.WithKind("NodeUpgradeJob"),
 		operationsv1alpha1.SchemeGroupVersion.WithResource("nodeupgradejobs"),
 		operationsv1alpha1.SchemeGroupVersion.WithResource("nodeupgradejob"), meta.RESTScopeNamespace)
+
+	mapper.AddSpecific(operationsv1alpha2.SchemeGroupVersion.WithKind("ConfigUpdateJob"),
+		operationsv1alpha2.SchemeGroupVersion.WithResource("configupdatejobs"),
+		operationsv1alpha2.SchemeGroupVersion.WithResource("configupdatejob"), meta.RESTScopeRoot)
+
+	mapper.AddSpecific(operationsv1alpha2.SchemeGroupVersion.WithKind("ImagePrePullJob"),
+		operationsv1alpha2.SchemeGroupVersion.WithResource("imageprepulljobs"),
+		operationsv1alpha2.SchemeGroupVersion.WithResource("imageprepulljob"), meta.RESTScopeRoot)
+
+	mapper.AddSpecific(operationsv1alpha2.SchemeGroupVersion.WithKind("NodeUpgradeJob"),
+		operationsv1alpha2.SchemeGroupVersion.WithResource("nodeupgradejobs"),
+		operationsv1alpha2.SchemeGroupVersion.WithResource("nodeupgradejob"), meta.RESTScopeRoot)
 
 	mapper.AddSpecific(policyv1alpha1.SchemeGroupVersion.WithKind("ServiceAccountAccess"),
 		policyv1alpha1.SchemeGroupVersion.WithResource("serviceaccountaccesses"),
@@ -130,6 +143,9 @@ func main() {
 			{GVR: devicesv1alpha2.SchemeGroupVersion.WithResource("devicemodels"), NamespaceScoped: true},
 			{GVR: operationsv1alpha1.SchemeGroupVersion.WithResource("imageprepulljobs"), NamespaceScoped: false},
 			{GVR: operationsv1alpha1.SchemeGroupVersion.WithResource("nodeupgradejobs"), NamespaceScoped: false},
+			{GVR: operationsv1alpha2.SchemeGroupVersion.WithResource("configupdatejobs"), NamespaceScoped: false},
+			{GVR: operationsv1alpha2.SchemeGroupVersion.WithResource("imageprepulljobs"), NamespaceScoped: false},
+			{GVR: operationsv1alpha2.SchemeGroupVersion.WithResource("nodeupgradejobs"), NamespaceScoped: false},
 			{GVR: policyv1alpha1.SchemeGroupVersion.WithResource("serviceaccountaccesses"), NamespaceScoped: true},
 			{GVR: reliablesyncsv1alpha1.SchemeGroupVersion.WithResource("clusterobjectsyncs"), NamespaceScoped: false},
 			{GVR: reliablesyncsv1alpha1.SchemeGroupVersion.WithResource("objectsyncs"), NamespaceScoped: true},
