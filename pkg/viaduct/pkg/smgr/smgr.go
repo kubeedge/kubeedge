@@ -203,7 +203,7 @@ func NewStreamManager(streamMax int, autoFree bool, session quic.Session) *Strea
 
 	streamMgr := &StreamManager{
 		NumStreamsMax: streamMax,
-		Session:       &Session{session},
+		Session:       &Session{Sess: session},
 		messagePool: PoolManager{
 			idlePool: streamPool{
 				streamMap: make(map[quic.StreamID]*Stream),
