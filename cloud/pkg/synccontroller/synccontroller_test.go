@@ -23,9 +23,13 @@ import (
 	"time"
 
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
+	k8stesting "k8s.io/client-go/testing"
 
 	configv1alpha1 "github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
@@ -220,5 +224,36 @@ func TestDeleteObjectSyncs(t *testing.T) {
 				t.Errorf("deleteObjectSyncs() list returned unexpected result. got = %v, want = %v", len(got.Items), tt.ExpectedSyncs)
 			}
 		})
+	}
+}
+
+func TestDeleteObjectSyncsIgnoresAlreadyDeletedObjectSync(t *testing.T) {
+	objectSync := tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod")
+	crdClient := crdfake.NewSimpleClientset()
+	crdInformers := crdinformers.NewSharedInformerFactory(crdClient, 0)
+	if err := crdInformers.Reliablesyncs().V1alpha1().ObjectSyncs().Informer().GetIndexer().Add(objectSync); err != nil {
+		t.Fatalf("failed to seed objectSync informer: %v", err)
+	}
+
+	deleteCalls := 0
+	crdClient.Fake.PrependReactor("delete", "objectsyncs", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		deleteCalls++
+		return true, nil, apierrors.NewNotFound(
+			schema.GroupResource{Group: "reliablesyncs.kubeedge.io", Resource: "objectsyncs"},
+			action.(k8stesting.DeleteAction).GetName(),
+		)
+	})
+
+	client := fake.NewSimpleClientset()
+	informers := informers.NewSharedInformerFactory(client, 0)
+	testController := &SyncController{}
+	testController.nodeLister = informers.Core().V1().Nodes().Lister()
+	testController.crdclient = crdClient
+	testController.objectSyncLister = crdInformers.Reliablesyncs().V1alpha1().ObjectSyncs().Lister()
+
+	testController.deleteObjectSyncs()
+
+	if deleteCalls != 1 {
+		t.Fatalf("expected one delete attempt for already deleted objectSync, got %d", deleteCalls)
 	}
 }

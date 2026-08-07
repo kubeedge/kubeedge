@@ -174,7 +174,7 @@ func (sctl *SyncController) deleteObjectSyncs() {
 				if isGarbage {
 					klog.Infof("ObjectSync %s will be deleted since node %s has been deleted", sync.Name, nodeName)
 					err = sctl.crdclient.ReliablesyncsV1alpha1().ObjectSyncs(sync.Namespace).Delete(context.Background(), sync.Name, *metav1.NewDeleteOptions(0))
-					if err != nil {
+					if err != nil && !errors.IsNotFound(err) {
 						klog.Warningf("failed to delete objectSync %s for edgenode %s, err: %v", sync.Name, nodeName, err)
 						return err
 					}
@@ -208,7 +208,7 @@ func (sctl *SyncController) deleteClusterObjectSyncs() {
 				if isGarbage {
 					klog.Infof("ClusterObjectSync %s will be deleted since node %s has been deleted", sync.Name, nodeName)
 					err = sctl.crdclient.ReliablesyncsV1alpha1().ClusterObjectSyncs().Delete(context.Background(), sync.Name, *metav1.NewDeleteOptions(0))
-					if err != nil {
+					if err != nil && !errors.IsNotFound(err) {
 						klog.Warningf("failed to delete ClusterObjectSync %s for edgenode %s, err: %v", sync.Name, nodeName, err)
 						return err
 					}

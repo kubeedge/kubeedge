@@ -89,14 +89,15 @@ func (sctl *SyncController) gcOrphanedObjectSync(sync *v1alpha1.ObjectSync) {
 
 func sendEvents(nodeName string, sync *v1alpha1.ObjectSync, resourceType string,
 	objectResourceVersion string, obj interface{}) {
-	if sync.Status.ObjectResourceVersion == "" {
-		klog.Errorf("The ObjectResourceVersion is empty in status of objectsync: %s", sync.Name)
-		return
+	syncedResourceVersion := sync.Status.ObjectResourceVersion
+	if syncedResourceVersion == "" {
+		klog.Warningf("The ObjectResourceVersion is empty in status of objectsync: %s, treat it as 0", sync.Name)
+		syncedResourceVersion = "0"
 	}
 
-	if CompareResourceVersion(objectResourceVersion, sync.Status.ObjectResourceVersion) > 0 {
+	if CompareResourceVersion(objectResourceVersion, syncedResourceVersion) > 0 {
 		// trigger the update event
-		klog.V(4).Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event", objectResourceVersion, resourceType, sync.Status.ObjectResourceVersion)
+		klog.V(4).Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event", objectResourceVersion, resourceType, syncedResourceVersion)
 		msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)
 		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
 	}
