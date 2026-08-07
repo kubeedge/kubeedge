@@ -81,9 +81,21 @@ func createCAToSecret(ctx context.Context) error {
 			}
 			caDER = caPem.Bytes
 			keyDER = pk.DER()
+			
+			// Log CA certificate expiration
+			if cert, err := x509.ParseCertificate(caDER); err == nil {
+				klog.Infof("CA certificate generated successfully, valid from %s to %s", 
+					cert.NotBefore.Format(time.RFC3339), cert.NotAfter.Format(time.RFC3339))
+			}
 		} else {
 			caDER = caSecret.Data[CaDataName]
 			keyDER = caSecret.Data[CaKeyDataName]
+			
+			// Log existing CA certificate expiration
+			if cert, err := x509.ParseCertificate(caDER); err == nil {
+				klog.Infof("Using existing CA certificate, valid from %s to %s", 
+					cert.NotBefore.Format(time.RFC3339), cert.NotAfter.Format(time.RFC3339))
+			}
 		}
 
 		hubconfig.Config.UpdateCA(caDER, keyDER)
@@ -147,9 +159,21 @@ func createCertsToSecret(ctx context.Context) error {
 			}
 			keyDER = keywrap.DER()
 			certDER = certPEM.Bytes
+			
+			// Log CloudCore certificate expiration
+			if cert, err := x509.ParseCertificate(certDER); err == nil {
+				klog.Infof("CloudCore certificate generated successfully, valid from %s to %s", 
+					cert.NotBefore.Format(time.RFC3339), cert.NotAfter.Format(time.RFC3339))
+			}
 		} else {
 			certDER = cloudSecret.Data[CloudCoreCertName]
 			keyDER = cloudSecret.Data[CloudCoreKeyDataName]
+			
+			// Log existing CloudCore certificate expiration
+			if cert, err := x509.ParseCertificate(certDER); err == nil {
+				klog.Infof("Using existing CloudCore certificate, valid from %s to %s", 
+					cert.NotBefore.Format(time.RFC3339), cert.NotAfter.Format(time.RFC3339))
+			}
 		}
 
 		hubconfig.Config.UpdateCerts(certDER, keyDER)
