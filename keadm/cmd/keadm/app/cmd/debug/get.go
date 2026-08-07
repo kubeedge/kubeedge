@@ -227,7 +227,8 @@ func (g *GetOptions) Validate(args []string) error {
 		return fmt.Errorf("unrecognized resource type: %v. ", args[0])
 	}
 	if len(g.DataPath) == 0 {
-		fmt.Printf("not specified the EdgeCore database path, use the default path: %v. ", g.DataPath)
+		g.DataPath = edgecoreCfg.DataBaseDataSource
+		fmt.Printf("not specified the EdgeCore database path, use the default path: %v.\n", g.DataPath)
 	}
 	if !isFileExist(g.DataPath) {
 		return fmt.Errorf("edgeCore database file %v not exist. ", g.DataPath)
