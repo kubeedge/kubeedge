@@ -503,6 +503,14 @@ func findFieldByTag(obj interface{}, k int, tagName []string, fieldNames []strin
 			fieldNames[k] = field.Name
 			findFieldByTag(v.Field(i).Interface(), k+1, tagName, fieldNames)
 		}
+		// Support embedded/anonymous struct fields (Fix #6721)
+		if field.Anonymous {
+			f := v.Field(i)
+			if f.Kind() == reflect.Ptr && f.IsNil() {
+				continue
+			}
+			findFieldByTag(f.Interface(), k, tagName, fieldNames)
+		}
 	}
 }
 
