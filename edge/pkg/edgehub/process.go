@@ -50,7 +50,7 @@ func (eh *EdgeHub) routeToEdge() {
 		message, err := eh.chClient.Receive()
 		if err != nil {
 			klog.Errorf("websocket read error: %v", err)
-			eh.reconnectChan <- struct{}{}
+			eh.triggerReconnect()
 			return
 		}
 		klog.V(4).Infof("[edgehub/routeToEdge] receive msg from cloud, msg: %+v", message)
@@ -97,7 +97,7 @@ func (eh *EdgeHub) routeToCloud() {
 		err = eh.sendToCloud(message)
 		if err != nil {
 			klog.Errorf("failed to send message to cloud: %v", err)
-			eh.reconnectChan <- struct{}{}
+			eh.triggerReconnect()
 			return
 		}
 	}
@@ -119,7 +119,7 @@ func (eh *EdgeHub) keepalive() {
 		err := eh.sendToCloud(*msg)
 		if err != nil {
 			klog.Errorf("websocket write error: %v", err)
-			eh.reconnectChan <- struct{}{}
+			eh.triggerReconnect()
 			return
 		}
 
@@ -149,8 +149,25 @@ func (eh *EdgeHub) pubConnectInfo(isConnected bool) {
 func (eh *EdgeHub) ifRotationDone() {
 	if eh.certManager.RotateCertificates {
 		for {
-			<-eh.certManager.Done
-			eh.reconnectChan <- struct{}{}
+			select {
+			case <-beehiveContext.Done():
+				return
+			case <-eh.certManager.Done:
+				// Send on the dedicated rotation channel so the signal
+				// cannot be coalesced away with transport reconnects:
+				// unlike reconnectChan, rotateChan is not touched by the
+				// post-connect drain; it is consumed by the reconnect wait
+				// in Start, and dropped only while disconnected, right
+				// before an Init() that reads the newest certificate
+				// anyway. Buffered(1) + non-blocking keeps this loop from
+				// blocking when a signal is already pending — one pending
+				// rotation reconnect is enough, the newest certificate is
+				// always read from disk.
+				select {
+				case eh.rotateChan <- struct{}{}:
+				default:
+				}
+			}
 		}
 	}
 }
