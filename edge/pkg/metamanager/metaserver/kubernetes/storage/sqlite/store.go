@@ -63,7 +63,7 @@ func (s *store) watch(ctx context.Context, key string, opts storage.ListOptions,
 func (s *store) Get(ctx context.Context, key string, _ storage.GetOptions, objPtr runtime.Object) error {
 	resp, err := s.client.Get(context.TODO(), key)
 	if err != nil || len(*resp.Kvs) == 0 {
-		klog.Error(err)
+		klog.ErrorS(err, "Failed to get object from sqlite", "key", key)
 		return err
 	}
 	unstrObj := objPtr.(*unstructured.Unstructured)
@@ -93,7 +93,7 @@ func (s *store) GetList(ctx context.Context, key string, opts storage.ListOption
 	resp, err := s.client.List(context.TODO(), key)
 
 	if err != nil || len(*resp.Kvs) == 0 {
-		klog.Error(err)
+		klog.ErrorS(err, "Failed to list objects from sqlite", "key", key)
 		return err
 	}
 	unstrList := listObj.(*unstructured.UnstructuredList)
