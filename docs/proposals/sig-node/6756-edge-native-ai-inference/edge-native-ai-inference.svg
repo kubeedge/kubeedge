@@ -1,0 +1,176 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-labelledby="title desc">
+  <title id="title">KubeEdge edge-native AI inference validation matrix</title>
+  <desc id="desc">A validation framework diagram showing that KubeEdge manages edge AI workloads while the validation matrix varies model family, runtime, node architecture, KubeEdge version, service access, lifecycle, and benchmark metrics.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="11" markerHeight="11" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,7 L10,3.5 z" fill="#2f4858"/>
+    </marker>
+    <style>
+      .bg { fill: #ffffff; }
+      .title { font-family: Arial, Helvetica, sans-serif; fill: #111827; font-size: 28px; font-weight: 700; }
+      .subtitle { font-family: Arial, Helvetica, sans-serif; fill: #526170; font-size: 15px; }
+      .label { font-family: Arial, Helvetica, sans-serif; fill: #1f2937; font-size: 17px; font-weight: 700; }
+      .text { font-family: Arial, Helvetica, sans-serif; fill: #16202a; font-size: 15px; }
+      .small { font-family: Arial, Helvetica, sans-serif; fill: #526170; font-size: 12px; }
+      .tiny { font-family: Arial, Helvetica, sans-serif; fill: #64748b; font-size: 11px; }
+      .panel { fill: #f8fafc; stroke: #d5dbe3; stroke-width: 1.5; rx: 10; }
+      .blue { fill: #eef6ff; stroke: #4f7eb8; stroke-width: 2; rx: 8; }
+      .green { fill: #eefaf0; stroke: #4e965f; stroke-width: 2; rx: 8; }
+      .gold { fill: #fff8e8; stroke: #c48a22; stroke-width: 2; rx: 8; }
+      .purple { fill: #f5efff; stroke: #7c5cc4; stroke-width: 2; rx: 8; }
+      .cyan { fill: #f0fbff; stroke: #3994aa; stroke-width: 2; rx: 8; }
+      .red { fill: #fff1f2; stroke: #e05260; stroke-width: 2; rx: 8; }
+      .core { fill: #eaf2ff; stroke: #1267e8; stroke-width: 2.6; rx: 10; }
+      .arrow { stroke: #2f4858; stroke-width: 2.3; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #526170; stroke-width: 2; fill: none; stroke-dasharray: 6 6; marker-end: url(#arrow); }
+      .matrix-line { stroke: #cbd5e1; stroke-width: 1; }
+      .header { fill: #1267e8; }
+      .header-text { font-family: Arial, Helvetica, sans-serif; fill: #ffffff; font-size: 13px; font-weight: 700; }
+      .cell-text { font-family: Arial, Helvetica, sans-serif; fill: #334155; font-size: 12px; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1280" height="760"/>
+  <text class="title" x="48" y="48">Edge-Native AI Inference Validation Matrix on KubeEdge</text>
+  <text class="subtitle" x="48" y="74">The proposal validates model compatibility, node architecture, runtime choices, lifecycle behavior, service access, and benchmark metrics.</text>
+
+  <rect class="panel" x="42" y="102" width="1196" height="184"/>
+  <text class="label" x="68" y="132">1. Variables to validate</text>
+
+  <rect class="blue" x="68" y="154" width="170" height="90"/>
+  <text class="text" x="104" y="184">Model Family</text>
+  <text class="small" x="92" y="208">LLM / anomaly</text>
+  <text class="small" x="96" y="226">vision / audio</text>
+
+  <rect class="green" x="270" y="154" width="170" height="90"/>
+  <text class="text" x="316" y="184">Runtime</text>
+  <text class="small" x="294" y="208">Ollama / llama.cpp</text>
+  <text class="small" x="302" y="226">ONNX / OpenVINO</text>
+
+  <rect class="gold" x="472" y="154" width="170" height="90"/>
+  <text class="text" x="514" y="184">Node Profile</text>
+  <text class="small" x="500" y="208">x86_64 / arm64</text>
+  <text class="small" x="496" y="226">CPU / GPU / NPU</text>
+
+  <rect class="purple" x="674" y="154" width="170" height="90"/>
+  <text class="text" x="718" y="184">Version</text>
+  <text class="small" x="706" y="208">KubeEdge release</text>
+  <text class="small" x="710" y="226">K8s / OS / CRI</text>
+
+  <rect class="cyan" x="876" y="154" width="170" height="90"/>
+  <text class="text" x="918" y="184">Access</text>
+  <text class="small" x="902" y="208">exec / NodePort</text>
+  <text class="small" x="908" y="226">local / EdgeMesh</text>
+
+  <rect class="red" x="1078" y="154" width="132" height="90"/>
+  <text class="text" x="1111" y="184">Failure</text>
+  <text class="small" x="1095" y="208">restart</text>
+  <text class="small" x="1095" y="226">disconnect</text>
+
+  <path class="arrow" d="M238 199 L270 199"/>
+  <path class="arrow" d="M440 199 L472 199"/>
+  <path class="arrow" d="M642 199 L674 199"/>
+  <path class="arrow" d="M844 199 L876 199"/>
+  <path class="arrow" d="M1046 199 L1078 199"/>
+
+  <rect class="panel" x="42" y="318" width="580" height="318"/>
+  <text class="label" x="68" y="348">2. KubeEdge-managed experiment loop</text>
+
+  <rect class="core" x="82" y="388" width="180" height="74"/>
+  <text class="text" x="116" y="418">Kubernetes API</text>
+  <text class="small" x="112" y="440">Deployment / Service</text>
+
+  <rect class="core" x="338" y="388" width="180" height="74"/>
+  <text class="text" x="383" y="418">CloudCore</text>
+  <text class="small" x="378" y="440">workload and status</text>
+
+  <rect class="core" x="338" y="520" width="180" height="74"/>
+  <text class="text" x="385" y="550">EdgeCore</text>
+  <text class="small" x="378" y="572">edge lifecycle sync</text>
+
+  <rect class="core" x="82" y="520" width="180" height="74"/>
+  <text class="text" x="118" y="550">AI Workload</text>
+  <text class="small" x="112" y="572">runtime + model pod</text>
+
+  <path class="arrow" d="M262 425 L338 425"/>
+  <path class="arrow" d="M428 462 L428 520"/>
+  <path class="arrow" d="M338 557 L262 557"/>
+  <path class="dash" d="M172 520 L172 462"/>
+
+  <rect class="gold" x="82" y="648" width="180" height="58"/>
+  <text class="text" x="117" y="672">Model/Data Path</text>
+  <text class="small" x="105" y="692">registry / cache / media</text>
+
+  <rect class="purple" x="338" y="648" width="180" height="58"/>
+  <text class="text" x="373" y="672">Metrics Report</text>
+  <text class="small" x="362" y="692">latency / CPU / memory</text>
+
+  <path class="dash" d="M172 648 L172 594"/>
+  <path class="dash" d="M428 594 L428 648"/>
+
+  <rect class="panel" x="658" y="318" width="580" height="318"/>
+  <text class="label" x="684" y="348">3. Compatibility report output</text>
+
+  <rect class="header" x="684" y="382" width="512" height="34"/>
+  <text class="header-text" x="702" y="404">Node</text>
+  <text class="header-text" x="812" y="404">Arch</text>
+  <text class="header-text" x="906" y="404">Runtime</text>
+  <text class="header-text" x="1018" y="404">Model</text>
+  <text class="header-text" x="1118" y="404">Metrics</text>
+
+  <line class="matrix-line" x1="684" y1="416" x2="1196" y2="416"/>
+  <line class="matrix-line" x1="684" y1="456" x2="1196" y2="456"/>
+  <line class="matrix-line" x1="684" y1="496" x2="1196" y2="496"/>
+  <line class="matrix-line" x1="684" y1="536" x2="1196" y2="536"/>
+  <line class="matrix-line" x1="684" y1="576" x2="1196" y2="576"/>
+  <line class="matrix-line" x1="794" y1="382" x2="794" y2="616"/>
+  <line class="matrix-line" x1="888" y1="382" x2="888" y2="616"/>
+  <line class="matrix-line" x1="1000" y1="382" x2="1000" y2="616"/>
+  <line class="matrix-line" x1="1100" y1="382" x2="1100" y2="616"/>
+  <rect x="684" y="382" width="512" height="234" fill="none" stroke="#cbd5e1" stroke-width="1"/>
+
+  <text class="cell-text" x="702" y="442">WSL MVP</text>
+  <text class="cell-text" x="812" y="442">x86_64</text>
+  <text class="cell-text" x="906" y="442">Ollama</text>
+  <text class="cell-text" x="1018" y="442">LLM</text>
+  <text class="cell-text" x="1118" y="442">p50/p95</text>
+
+  <text class="cell-text" x="702" y="482">Gateway</text>
+  <text class="cell-text" x="812" y="482">x86_64</text>
+  <text class="cell-text" x="906" y="482">llama.cpp</text>
+  <text class="cell-text" x="1018" y="482">LLM</text>
+  <text class="cell-text" x="1118" y="482">CPU/Mem</text>
+
+  <text class="cell-text" x="702" y="522">ARM Edge</text>
+  <text class="cell-text" x="812" y="522">arm64</text>
+  <text class="cell-text" x="906" y="522">ONNX</text>
+  <text class="cell-text" x="1018" y="522">Anomaly</text>
+  <text class="cell-text" x="1118" y="522">startup</text>
+
+  <text class="cell-text" x="702" y="562">AI PC</text>
+  <text class="cell-text" x="812" y="562">x86/arm</text>
+  <text class="cell-text" x="906" y="562">OpenVINO</text>
+  <text class="cell-text" x="1018" y="562">Vision</text>
+  <text class="cell-text" x="1118" y="562">accel</text>
+
+  <text class="cell-text" x="702" y="602">Low-resource</text>
+  <text class="cell-text" x="812" y="602">arm64</text>
+  <text class="cell-text" x="906" y="602">custom</text>
+  <text class="cell-text" x="1018" y="602">Audio</text>
+  <text class="cell-text" x="1118" y="602">stability</text>
+
+  <rect class="green" x="684" y="648" width="150" height="58"/>
+  <text class="text" x="720" y="672">Lifecycle</text>
+  <text class="small" x="704" y="692">create / restart / update</text>
+
+  <rect class="cyan" x="864" y="648" width="150" height="58"/>
+  <text class="text" x="912" y="672">Access</text>
+  <text class="small" x="886" y="692">NodePort / EdgeMesh</text>
+
+  <rect class="red" x="1044" y="648" width="150" height="58"/>
+  <text class="text" x="1088" y="672">Recovery</text>
+  <text class="small" x="1064" y="692">disconnect / reconnect</text>
+
+  <path class="arrow" d="M622 476 L658 476"/>
+  <text class="tiny" x="48" y="738">KubeEdge manages the workload lifecycle and status synchronization; model artifacts and high-volume input data use dedicated data paths.</text>
+</svg>
