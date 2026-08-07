@@ -408,25 +408,45 @@ func TestSendClusterObjectSyncEventDirect(t *testing.T) {
 		return 0
 	}
 
-	sendCalled := false
+	t.Run("Send message when buildEdgeControllerMessageFunc returns valid message", func(t *testing.T) {
+		sendCalled := false
+		sendToEdge = func(module string, msg model.Message) {
+			sendCalled = true
+		}
+		buildEdgeControllerMessageFunc = func(nodeID, namespace, resource, resourceID string, operation string, content interface{}) *model.Message {
+			return &model.Message{}
+		}
 
-	sendToEdge = func(module string, msg model.Message) {
-		sendCalled = true
-	}
+		nodeName := "node1"
+		resourceType := "pod"
+		objectResourceVersion := "1000"
+		obj := createTestPod("test-pod", "12345", "1000")
+		sync := createTestSync("node1-pod-12345", "test-pod", "Pod", "v1", "500")
 
-	buildEdgeControllerMessageFunc = func(nodeID, namespace, resource, resourceID string, operation string, content interface{}) *model.Message {
-		return &model.Message{}
-	}
+		sendClusterObjectSyncEvent(nodeName, sync, resourceType, objectResourceVersion, obj)
+		assert.True(t, sendCalled, "Send should have been called")
+	})
 
-	nodeName := "node1"
-	resourceType := "pod"
-	objectResourceVersion := "1000"
-	obj := createTestPod("test-pod", "12345", "1000")
-	sync := createTestSync("node1-pod-12345", "test-pod", "Pod", "v1", "500")
+	t.Run("Do not send message and do not panic when buildEdgeControllerMessageFunc returns nil", func(t *testing.T) {
+		sendCalled := false
+		sendToEdge = func(module string, msg model.Message) {
+			sendCalled = true
+		}
+		buildEdgeControllerMessageFunc = func(nodeID, namespace, resource, resourceID string, operation string, content interface{}) *model.Message {
+			return nil
+		}
 
-	sendClusterObjectSyncEvent(nodeName, sync, resourceType, objectResourceVersion, obj)
+		nodeName := "node1"
+		resourceType := "pod"
+		objectResourceVersion := "1000"
+		obj := createTestPod("test-pod", "12345", "1000")
+		sync := createTestSync("node1-pod-12345", "test-pod", "Pod", "v1", "500")
 
-	assert.True(t, sendCalled, "Send should have been called")
+		assert.NotPanics(t, func() {
+			sendClusterObjectSyncEvent(nodeName, sync, resourceType, objectResourceVersion, obj)
+		})
+		assert.False(t, sendCalled, "Send should not have been called")
+	})
 }
 
 func TestDeleteClusterObjectSyncFunc(t *testing.T) {
