@@ -471,9 +471,9 @@ kubeedge::golang::run_test() {
 
   local profile=${PROFILE:-""}
   if [[ $profile ]]; then
-    go test -gcflags "all=-N -l" "-coverprofile=${profile}" ${testdirs[@]}
+    KUBEEDGE_TEST_NOINLINE=1 go test -gcflags "all=-N -l" "-coverprofile=${profile}" ${testdirs[@]}
   else
-    go test -gcflags "all=-N -l" ${testdirs[@]}
+    KUBEEDGE_TEST_NOINLINE=1 go test -gcflags "all=-N -l" ${testdirs[@]}
   fi
 }
 

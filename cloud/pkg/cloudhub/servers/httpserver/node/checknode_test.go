@@ -38,9 +38,11 @@ import (
 	k8stesting "k8s.io/client-go/testing"
 
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
+	"github.com/kubeedge/kubeedge/hack/testtools"
 )
 
 func TestCheckNode(t *testing.T) {
+	testtools.RequireNoInline(t)
 	tests := []struct {
 		name           string
 		nodeName       string
@@ -112,6 +114,7 @@ func TestCheckNode_EmptyNodeName(t *testing.T) {
 }
 
 func TestCheckNode_InternalServerError(t *testing.T) {
+	testtools.RequireNoInline(t)
 	fakeClient := fake.NewSimpleClientset()
 	fakeClient.Fake.PrependReactor("get", "nodes",
 		func(action k8stesting.Action) (bool, runtime.Object, error) {
