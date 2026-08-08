@@ -59,13 +59,14 @@ var cloudModuleArray = []string{
 	modules.SyncControllerModuleName,
 }
 
-// HubInfo saves identifier information for edge hub
+// HubInfo stores identifier information for an edge hub.
 type HubInfo struct {
 	ProjectID string
 	NodeID    string
 }
 
-// NewResource constructs a resource field using resource type and ID
+// NewResource constructs a full resource string using resource type and ID.
+// If HubInfo is provided, the resource path will be prefixed with the node information.
 func NewResource(resType, resID string, info *HubInfo) string {
 	var prefix string
 	if info != nil {
@@ -77,20 +78,13 @@ func NewResource(resType, resID string, info *HubInfo) string {
 	return fmt.Sprintf("%s%s/%s", prefix, resType, resID)
 }
 
-// IsNodeStopped indicates if the node is stopped or running
+// IsNodeStopped returns true if the message indicates that a node has been stopped (deleted).
 func IsNodeStopped(msg *model.Message) bool {
 	resourceType, _ := messagelayer.GetResourceType(*msg)
-	if resourceType != model.ResourceTypeNode {
-		return false
-	}
-
-	if msg.Router.Operation == model.DeleteOperation {
-		return true
-	}
-	return false
+	return resourceType == model.ResourceTypeNode && msg.Router.Operation == model.DeleteOperation
 }
 
-// IsFromEdge judges if the event is sent from edge
+// IsFromEdge returns true if the message was sent from an edge component.
 func IsFromEdge(msg *model.Message) bool {
 	source := msg.Router.Source
 	for _, item := range cloudModuleArray {
@@ -101,11 +95,13 @@ func IsFromEdge(msg *model.Message) bool {
 	return true
 }
 
-// IsToEdge judges if the vent should be sent to edge
+// IsToEdge returns true if the message should be delivered to edge nodes.
+// Some messages from the edge manager are internal and should not be sent to the edge.
 func IsToEdge(msg *model.Message) bool {
 	if msg.Router.Source != SrcManager {
 		return true
 	}
+
 	resource := msg.Router.Resource
 	if strings.HasPrefix(resource, ResNode) {
 		tokens := strings.Split(resource, "/")
@@ -114,13 +110,14 @@ func IsToEdge(msg *model.Message) bool {
 		}
 	}
 
-	// apply special check for edge manager
+	// apply special check for edge manager messages
 	resOpMap := map[string][]string{
 		ResMember: {OpGet},
 		ResTwin:   {OpDelta, OpDoc, OpGet},
 		ResAuth:   {OpGet},
 		ResNode:   {OpDelete},
 	}
+
 	for res, ops := range resOpMap {
 		for _, op := range ops {
 			if msg.Router.Operation == op && strings.Contains(resource, res) {
@@ -128,5 +125,6 @@ func IsToEdge(msg *model.Message) bool {
 			}
 		}
 	}
+
 	return true
 }
