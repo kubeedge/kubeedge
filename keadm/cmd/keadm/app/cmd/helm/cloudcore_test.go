@@ -18,6 +18,7 @@ package helm
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"reflect"
 	"strings"
 	"testing"
@@ -26,13 +27,17 @@ import (
 	"github.com/blang/semver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/release"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+	commonfake "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common/fake"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
@@ -1441,3 +1446,115 @@ func TestUpgradeBasicScenarios(t *testing.T) {
 		assert.Contains(t, err.Error(), "failed to get cloudcore history config")
 	})
 }
+
+func TestInstall_CleanupOnFailure(t *testing.T) {
+	type mockOSInstaller struct {
+		*commonfake.MockOSTypeInstaller
+	}
+
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	// Mock util.GetCurrentVersion
+	patches.ApplyFunc(util.GetCurrentVersion, func(version string) (string, error) {
+		return version, nil
+	})
+
+	// Mock GetOSInterface to avoid OS-specific test panic on Windows
+	mockOS := &mockOSInstaller{
+		MockOSTypeInstaller: &commonfake.MockOSTypeInstaller{},
+	}
+	patches.ApplyFunc(util.GetOSInterface, func() types.OSTypeInstaller {
+		return mockOS
+	})
+
+	// Mock methods of mockOSInstaller
+	patches.ApplyMethod(reflect.TypeOf(mockOS), "SetKubeEdgeVersion",
+		func(_ *mockOSInstaller, _ semver.Version) {
+		})
+	patches.ApplyMethod(reflect.TypeOf(mockOS), "IsKubeEdgeProcessRunning",
+		func(_ *mockOSInstaller, _ string) (bool, error) {
+			return false, nil
+		})
+	patches.ApplyMethod(reflect.TypeOf(mockOS), "IsK8SComponentInstalled",
+		func(_ *mockOSInstaller, _, _ string) error {
+			return nil
+		})
+
+	tool := NewCloudCoreHelmTool("/path/to/kubeconfig", "v1.16.0")
+
+	// Mock KubeClient and pre-flight functions to bypass checks cleanly
+	patches.ApplyFunc(util.KubeClient, func(_ string) (*kubernetes.Clientset, error) {
+		return &kubernetes.Clientset{}, nil
+	})
+	patches.ApplyFunc(checkNodeReadiness, func(_ kubernetes.Interface) error {
+		return nil
+	})
+	patches.ApplyFunc(checkCoreDNS, func(_ kubernetes.Interface) error {
+		return nil
+	})
+	patches.ApplyFunc(checkCloudCorePermissions, func(_ kubernetes.Interface) error {
+		return nil
+	})
+
+	// Mock GenericRenderer and LoadChart
+	patches.ApplyFunc(NewGenericRenderer, func(files fs.FS, dir, componentName, namespace string, profileValsMap map[string]interface{}, skipCRDs bool) *Renderer {
+		return &Renderer{}
+	})
+	patches.ApplyMethod(reflect.TypeOf(&Renderer{}), "LoadChart", func(_ *Renderer) error {
+		return nil
+	})
+
+	// Mock Helper
+	patches.ApplyFunc(NewHelper, func(kubeconfig, namespace string) (*Helper, error) {
+		return &Helper{
+			cfg: &action.Configuration{},
+		}, nil
+	})
+	patches.ApplyMethod(reflect.TypeOf(&Helper{}), "GetRelease", func(_ *Helper, _ string) (*release.Release, error) {
+		return nil, nil
+	})
+	patches.ApplyMethod(reflect.TypeOf(&Helper{}), "GetConfig", func(_ *Helper) *action.Configuration {
+		return &action.Configuration{}
+	})
+
+	// Mock action.NewInstall
+	patches.ApplyFunc(action.NewInstall, func(_ *action.Configuration) *action.Install {
+		return &action.Install{}
+	})
+
+	// Mock action.Install and its Run method to return failure with a partial release
+	patches.ApplyMethod(reflect.TypeOf(&action.Install{}), "Run", func(_ *action.Install, _ *chart.Chart, _ map[string]interface{}) (*release.Release, error) {
+		return &release.Release{
+			Name: "cloudcore",
+		}, fmt.Errorf("mock helm install error")
+	})
+
+	// Mock action.NewUninstall
+	patches.ApplyFunc(action.NewUninstall, func(_ *action.Configuration) *action.Uninstall {
+		return &action.Uninstall{}
+	})
+
+	// Mock action.Uninstall and assert that it is triggered on failure
+	var uninstallCalled bool
+	patches.ApplyMethod(reflect.TypeOf(&action.Uninstall{}), "Run", func(_ *action.Uninstall, name string) (*release.UninstallReleaseResponse, error) {
+		if name == "cloudcore" {
+			uninstallCalled = true
+		}
+		return &release.UninstallReleaseResponse{}, nil
+	})
+
+	opts := &types.InitOptions{
+		CloudInitUpdateBase: types.CloudInitUpdateBase{
+			KubeEdgeVersion:  "v1.16.0",
+			AdvertiseAddress: "127.0.0.1",
+			KubeConfig:       "/path/to/kubeconfig",
+		},
+	}
+
+	err := tool.Install(opts)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "mock helm install error")
+	assert.True(t, uninstallCalled, "Expected action.Uninstall to be called on failure")
+}
+
