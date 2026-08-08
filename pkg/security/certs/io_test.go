@@ -24,6 +24,62 @@ func TestReadWrite(t *testing.T) {
 	}
 }
 
+func TestWriteDERToPEMFilePermissions(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "certs")
+	file := filepath.Join(dir, "edge.key")
+	if _, err := WriteDERToPEMFile(file, "test data", []byte("test")); err != nil {
+		t.Fatal(err)
+	}
+
+	dirInfo, err := os.Stat(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if perm := dirInfo.Mode().Perm(); perm != 0700 {
+		t.Fatalf("want dir permissions %o, actual %o", 0700, perm)
+	}
+
+	fileInfo, err := os.Stat(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if perm := fileInfo.Mode().Perm(); perm != 0600 {
+		t.Fatalf("want file permissions %o, actual %o", 0600, perm)
+	}
+}
+
+func TestWriteDERToPEMFileTightensExistingPermissions(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "certs")
+	file := filepath.Join(dir, "edge.key")
+
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(file, []byte("stale"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := WriteDERToPEMFile(file, "test data", []byte("test")); err != nil {
+		t.Fatal(err)
+	}
+
+	dirInfo, err := os.Stat(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if perm := dirInfo.Mode().Perm(); perm != 0700 {
+		t.Fatalf("want dir permissions %o, actual %o", 0700, perm)
+	}
+
+	fileInfo, err := os.Stat(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if perm := fileInfo.Mode().Perm(); perm != 0600 {
+		t.Fatalf("want file permissions %o, actual %o", 0600, perm)
+	}
+}
+
 func TestReadPEMFileNoBlock(t *testing.T) {
 	file := filepath.Join(t.TempDir(), "invalid.crt")
 	if err := os.WriteFile(file, []byte("not a pem block"), 0600); err != nil {
