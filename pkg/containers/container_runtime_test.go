@@ -58,6 +58,7 @@ func TestCopyResources(t *testing.T) {
 						}
 					}).Return([]byte("stdout"), []byte(""), nil)
 
+				m.EXPECT().StopContainer(gomock.Any(), "cnt-123", int64(0)).Return(nil)
 				m.EXPECT().RemoveContainer(gomock.Any(), "cnt-123").Return(nil)
 				m.EXPECT().RemovePodSandbox(gomock.Any(), "sb-123").Return(nil)
 			},
@@ -80,6 +81,7 @@ func TestCopyResources(t *testing.T) {
 				m.EXPECT().CreateContainer(gomock.Any(), "sb-systemd", gomock.Any(), gomock.Any()).Return("cnt-systemd", nil)
 				m.EXPECT().StartContainer(gomock.Any(), "cnt-systemd").Return(nil)
 				m.EXPECT().ExecSync(gomock.Any(), "cnt-systemd", gomock.Any(), gomock.Any()).Return(nil, nil, nil)
+				m.EXPECT().StopContainer(gomock.Any(), "cnt-systemd", int64(0)).Return(nil)
 				m.EXPECT().RemoveContainer(gomock.Any(), "cnt-systemd").Return(nil)
 				m.EXPECT().RemovePodSandbox(gomock.Any(), "sb-systemd").Return(nil)
 			},
@@ -101,6 +103,7 @@ func TestCopyResources(t *testing.T) {
 				m.EXPECT().RunPodSandbox(gomock.Any(), gomock.Any(), gomock.Any()).Return("sb-fail", nil)
 				m.EXPECT().CreateContainer(gomock.Any(), "sb-fail", gomock.Any(), gomock.Any()).Return("cnt-fail", nil)
 				m.EXPECT().StartContainer(gomock.Any(), "cnt-fail").Return(fmt.Errorf("internal error"))
+				m.EXPECT().StopContainer(gomock.Any(), "cnt-fail", int64(0)).Return(nil)
 				m.EXPECT().RemoveContainer(gomock.Any(), "cnt-fail").Return(nil)
 				m.EXPECT().RemovePodSandbox(gomock.Any(), "sb-fail").Return(nil)
 			},
