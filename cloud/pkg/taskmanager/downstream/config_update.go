@@ -93,7 +93,7 @@ func (h *ConfigUpdateJobHandler) InterruptExecutor(obj any) {
 	}
 	if exec != nil {
 		exec.Interrupt()
-		executor.RemoveExecutor(operationsv1alpha2.ResourceConfigUpdateJob, job.Name)
+		executor.RemoveExecutor(operationsv1alpha2.ResourceConfigUpdateJob, job.Name, exec)
 	}
 }
 
