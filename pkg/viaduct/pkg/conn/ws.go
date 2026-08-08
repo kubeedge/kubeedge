@@ -2,6 +2,7 @@ package conn
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"sync"
@@ -109,6 +110,7 @@ func (conn *WSConnection) handleMessage() {
 			}
 			conn.state.State = api.StatDisconnected
 			_ = conn.wsConn.Close()
+			conn.messageFifo.Close()
 
 			if conn.OnReadTransportErr != nil {
 				conn.OnReadTransportErr(conn.state.Headers.Get("node_id"),
@@ -151,12 +153,18 @@ func (conn *WSConnection) handleMessage() {
 
 func (conn *WSConnection) SetReadDeadline(t time.Time) error {
 	conn.ReadDeadline = t
-	return nil
+	if conn.wsConn == nil {
+		return fmt.Errorf("connection not established")
+	}
+	return conn.wsConn.SetReadDeadline(t)
 }
 
 func (conn *WSConnection) SetWriteDeadline(t time.Time) error {
 	conn.WriteDeadline = t
-	return nil
+	if conn.wsConn == nil {
+		return fmt.Errorf("connection not established")
+	}
+	return conn.wsConn.SetWriteDeadline(t)
 }
 
 func (conn *WSConnection) Read(raw []byte) (int, error) {
