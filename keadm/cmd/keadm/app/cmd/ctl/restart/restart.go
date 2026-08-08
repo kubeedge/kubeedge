@@ -20,14 +20,44 @@ import "github.com/spf13/cobra"
 
 var (
 	edgeRestartShortDescription = `Restart resources in edge node`
+
+	edgeRestartLongDescription = `
+Restart resources (such as pods) running on an edge node.
+
+This command communicates with the local MetaService API on the
+edge node to trigger a restart of the specified resource. It does
+NOT restart EdgeCore itself or affect the cloud-side state.
+
+Restart behaviour for pods:
+  - The pod is deleted and recreated by Edged (the edge-side kubelet).
+  - If the pod is managed by a Deployment or DaemonSet, a new pod
+    is scheduled automatically after deletion.
+  - Workloads continue running on the edge even if the cloud connection
+    is temporarily lost (edge autonomy is preserved).
+
+Subcommands:
+  pod    Restart one or more pods by name in the edge node.
+
+Note: This command must be run directly on the edge node.`
+
+	edgeRestartExample = `
+  # Restart a specific pod in the default namespace
+  keadm ctl restart pod <pod-name>
+
+  # Restart a pod in a specific namespace
+  keadm ctl restart pod <pod-name> -n <namespace>
+
+  # Restart multiple pods at once
+  keadm ctl restart pod <pod1> <pod2> <pod3>`
 )
 
 // NewEdgeRestart returns KubeEdge restart edge resources command.
 func NewEdgeRestart() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "restart",
-		Short: edgeRestartShortDescription,
-		Long:  edgeRestartShortDescription,
+		Use:     "restart",
+		Short:   edgeRestartShortDescription,
+		Long:    edgeRestartLongDescription,
+		Example: edgeRestartExample,
 	}
 	cmd.AddCommand(NewEdgePodRestart())
 	return cmd
