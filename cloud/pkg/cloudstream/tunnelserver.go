@@ -22,6 +22,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -129,7 +130,7 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 	hostNameOverride := r.HeaderParameter(stream.SessionKeyHostNameOverride)
 	internalIP := r.HeaderParameter(stream.SessionKeyInternalIP)
 	if internalIP == "" {
-		internalIP = strings.Split(r.Request.RemoteAddr, ":")[0]
+		internalIP = getAddressHost(r.Request.RemoteAddr)
 	}
 	con, err := s.upgrader.Upgrade(w, r.Request, nil)
 	if err != nil {
@@ -238,4 +239,17 @@ func (s *TunnelServer) updateNodeKubeletEndpoint(nodeName string) error {
 	}
 	klog.V(4).Infof("Update node KubeletEndpoint Port successfully, node: %s, tunnelPort: %d", nodeName, s.tunnelPort)
 	return nil
+}
+
+func getAddressHost(addr string) string {
+	host, _, err := net.SplitHostPort(addr)
+	if err == nil {
+		return host
+	}
+
+	if strings.HasPrefix(addr, "[") && strings.HasSuffix(addr, "]") {
+		return strings.TrimSuffix(strings.TrimPrefix(addr, "["), "]")
+	}
+
+	return addr
 }
