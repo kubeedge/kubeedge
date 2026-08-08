@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"sort"
 
 	"k8s.io/klog/v2"
@@ -65,33 +64,45 @@ func FileExists(path string) bool {
 // GetSubDirs returns the subdirectories of the given directory.
 // If sorted is true, the subdirectories are sorted by modification time.
 func GetSubDirs(dir string, sorted bool) ([]string, error) {
-	var subdirs []string
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read directory %s: %v", dir, err)
 	}
-	for _, entry := range entries {
-		if entry.IsDir() {
-			subdirs = append(subdirs, entry.Name())
-		}
-	}
+
 	if !sorted {
+		var subdirs []string
+		for _, entry := range entries {
+			if entry.IsDir() {
+				subdirs = append(subdirs, entry.Name())
+			}
+		}
 		return subdirs, nil
 	}
 
-	sort.SliceStable(subdirs, func(i, j int) bool {
-		infoI, err := os.Stat(filepath.Join(dir, subdirs[i]))
-		if err != nil {
-			klog.Errorf("failed to get file info of %s, err: %v", subdirs[i], err)
-			return false
+	type dirInfo struct {
+		name    string
+		modTime int64
+	}
+	var dirs []dirInfo
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
 		}
-		infoJ, err := os.Stat(filepath.Join(dir, subdirs[j]))
+		info, err := entry.Info()
 		if err != nil {
-			klog.Errorf("failed to get file info of %s, err: %v", subdirs[j], err)
-			return true
+			klog.Errorf("failed to get file info of %s, err: %v", entry.Name(), err)
+			continue
 		}
-		return infoI.ModTime().After(infoJ.ModTime())
+		dirs = append(dirs, dirInfo{name: entry.Name(), modTime: info.ModTime().UnixNano()})
+	}
+
+	sort.SliceStable(dirs, func(i, j int) bool {
+		return dirs[i].modTime > dirs[j].modTime
 	})
 
+	var subdirs []string
+	for _, d := range dirs {
+		subdirs = append(subdirs, d.name)
+	}
 	return subdirs, nil
 }
