@@ -156,3 +156,16 @@ func (lc *LocationCache) DeleteSecret(namespace, name string) {
 func (lc *LocationCache) DeleteNode(nodeName string) {
 	lc.EdgeNodes.Delete(nodeName)
 }
+
+// GetAllNodes returns a snapshot of all registered edge node names.
+// Used when broadcasting cluster-scoped resource changes (e.g. RuntimeClass).
+func (lc *LocationCache) GetAllNodes() []string {
+	var nodes []string
+	lc.EdgeNodes.Range(func(key, _ any) bool {
+		if nodeName, ok := key.(string); ok {
+			nodes = append(nodes, nodeName)
+		}
+		return true
+	})
+	return nodes
+}
