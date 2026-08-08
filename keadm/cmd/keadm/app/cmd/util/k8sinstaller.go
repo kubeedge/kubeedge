@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/blang/semver"
 	corev1 "k8s.io/api/core/v1"
@@ -35,6 +36,8 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
+
+const DefaultK8sAPITimeout = 30 * time.Second
 
 // K8SInstTool embeds Common struct and contains the default K8S version and
 // a flag depicting if host is an edge or cloud node
@@ -91,13 +94,18 @@ func createKubeEdgeNs(kubeConfig, master string) error {
 		},
 	}
 
-	_, err = client.CoreV1().Namespaces().Get(context.Background(), ns.Name, metav1.GetOptions{})
+	ctxGet, cancelGet := context.WithTimeout(context.Background(), DefaultK8sAPITimeout)
+	defer cancelGet()
+
+	_, err = client.CoreV1().Namespaces().Get(ctxGet, ns.Name, metav1.GetOptions{})
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			return err
 		}
+		ctxCreate, cancelCreate := context.WithTimeout(context.Background(), DefaultK8sAPITimeout)
+		defer cancelCreate()
 		if _, err = client.CoreV1().Namespaces().Create(
-			context.Background(), ns, metav1.CreateOptions{}); err != nil {
+			ctxCreate, ns, metav1.CreateOptions{}); err != nil {
 			return err
 		}
 	}
@@ -194,7 +202,10 @@ func createKubeEdgeV1CRD(dynamicClient dynamic.Interface, crdFile string) error 
 	gvk := kubeEdgeCRD.GetObjectKind().GroupVersionKind()
 	gvr, _ := meta.UnsafeGuessKindToResource(gvk)
 
-	_, err = dynamicClient.Resource(gvr).Create(context.Background(), kubeEdgeCRD, metav1.CreateOptions{})
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultK8sAPITimeout)
+	defer cancel()
+
+	_, err = dynamicClient.Resource(gvr).Create(ctx, kubeEdgeCRD, metav1.CreateOptions{})
 
 	return err
 }
