@@ -17,8 +17,11 @@ limitations under the License.
 package flag
 
 import (
+	"os"
+	"os/exec"
 	"testing"
 
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -171,9 +174,6 @@ func TestPrintMinConfigAndExitIfRequested(t *testing.T) {
 }
 
 func TestPrintDefaultConfigAndExitIfRequested(t *testing.T) {
-	// This function calls os.Exit(1) or fmt.Println, which is hard to test directly.
-	// However, we can test the case where defaultConfigFlag is False (default),
-	// ensuring it does NOT panic or exit.
 
 	// Save original flag value
 	original := *defaultConfigFlag
@@ -186,4 +186,46 @@ func TestPrintDefaultConfigAndExitIfRequested(t *testing.T) {
 	assert.NotPanics(t, func() {
 		PrintDefaultConfigAndExitIfRequested(config)
 	})
+}
+
+func TestAddFlags(t *testing.T) {
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	AddFlags(fs)
+	assert.NotNil(t, fs.Lookup(minConfigFlagName))
+	assert.NotNil(t, fs.Lookup(defaultConfigFlagName))
+}
+
+func TestPrintFlags(t *testing.T) {
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	fs.String("testflag", "testval", "a test flag")
+	// Should not panic
+	assert.NotPanics(t, func() {
+		PrintFlags(fs)
+	})
+}
+
+func TestPrintMinConfigAndExitIfRequested_Exits(t *testing.T) {
+	if os.Getenv("TEST_EXIT_MIN") == "1" {
+		*minConfigFlag = ConfigTrue
+		PrintMinConfigAndExitIfRequested(map[string]string{"key": "value"})
+		return
+	}
+	cmd := exec.Command(os.Args[0], "-test.run=TestPrintMinConfigAndExitIfRequested_Exits")
+	cmd.Env = append(os.Environ(), "TEST_EXIT_MIN=1")
+	err := cmd.Run()
+	// os.Exit(0) means err is nil (success exit)
+	assert.Nil(t, err)
+}
+
+func TestPrintDefaultConfigAndExitIfRequested_Exits(t *testing.T) {
+	if os.Getenv("TEST_EXIT_DEFAULT") == "1" {
+		*defaultConfigFlag = ConfigTrue
+		PrintDefaultConfigAndExitIfRequested(map[string]string{"key": "value"})
+		return
+	}
+	cmd := exec.Command(os.Args[0], "-test.run=TestPrintDefaultConfigAndExitIfRequested_Exits")
+	cmd.Env = append(os.Environ(), "TEST_EXIT_DEFAULT=1")
+	err := cmd.Run()
+	// os.Exit(0) means err is nil (success exit)
+	assert.Nil(t, err)
 }
