@@ -24,6 +24,7 @@ import (
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -299,7 +300,7 @@ func TestHandlerCenter(t *testing.T) {
 
 		err := center.AddListener(listener)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.True(t, handlerCreated, "Handler should have been created")
 	})
 }
