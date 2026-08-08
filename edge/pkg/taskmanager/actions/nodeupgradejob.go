@@ -37,6 +37,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/containers"
 	"github.com/kubeedge/kubeedge/pkg/nodetask/actionflow"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
+	"github.com/kubeedge/kubeedge/pkg/nodetask/tasklog"
 	upgradeedge "github.com/kubeedge/kubeedge/pkg/upgrade/edge"
 	"github.com/kubeedge/kubeedge/pkg/util/execs"
 	"github.com/kubeedge/kubeedge/pkg/util/validation"
@@ -81,6 +82,8 @@ type nodeUpgradeJobActionHandler struct {
 	backupFiles []string
 	logger      logr.Logger
 }
+
+var openNodeUpgradeJobLog = tasklog.OpenKeadmLog
 
 func (nodeUpgradeJobActionHandler) preRun(
 	_ctx context.Context,
@@ -242,7 +245,7 @@ func (h *nodeUpgradeJobActionHandler) backup(
 
 func (h *nodeUpgradeJobActionHandler) upgrade(
 	_ctx context.Context,
-	_jobname, _nodename string,
+	jobname, nodename string,
 	specser SpecSerializer,
 ) ActionResponse {
 	resp := new(nodeUpgradeJobActionResponse)
@@ -263,9 +266,9 @@ func (h *nodeUpgradeJobActionHandler) upgrade(
 		return resp
 	}
 
-	logFile, err := os.OpenFile("/tmp/keadm.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	logFile, err := openNodeUpgradeJobLog(nodeUpgradeJobLogName("upgrade", jobname, nodename), os.O_APPEND)
 	if err != nil {
-		resp.err = fmt.Errorf("failed to open keadm log file: %w", err)
+		resp.err = err
 		resp.interrupt = true // No upgrade yet, no need to roll back.
 		return resp
 	}
@@ -291,16 +294,38 @@ func buildNodeUpgradeJobCommandArgs(spec *operationsv1alpha2.NodeUpgradeJobSpec)
 
 func (h *nodeUpgradeJobActionHandler) rollback(
 	_ctx context.Context,
-	_jobname, _nodename string,
+	jobname, nodename string,
 	specser SpecSerializer,
 ) ActionResponse {
 	resp := new(nodeUpgradeJobActionResponse)
-	// Roll back to the previous version
-	cmdline := "keadm rollback edge >> /tmp/keadm.log 2>&1"
-	cmd := execs.NewCommand(cmdline)
-	h.logger.V(2).Info("run rollback cmd", "cmd", cmdline)
-	resp.err = cmd.Exec()
+	logFile, err := openNodeUpgradeJobLog(nodeUpgradeJobLogName("rollback", jobname, nodename), os.O_APPEND)
+	if err != nil {
+		resp.err = err
+		return resp
+	}
+	defer logFile.Close()
+
+	args := []string{"rollback", "edge"}
+	cmd := exec.Command("keadm", args...)
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+	h.logger.V(2).Info("run rollback cmd", "cmd", "keadm", "args", args)
+	resp.err = cmd.Run()
 	return resp
+}
+
+func nodeUpgradeJobLogName(action, jobname, nodename string) string {
+	return fmt.Sprintf("keadm-%s-%s-%s.log",
+		tasklog.SafeName(action),
+		tasklog.SafeName(defaultLogNamePart(jobname)),
+		tasklog.SafeName(defaultLogNamePart(nodename)))
+}
+
+func defaultLogNamePart(part string) string {
+	if part == "" {
+		return "unknown"
+	}
+	return part
 }
 
 func (nodeUpgradeJobActionHandler) getSpecSerializer(specData []byte) (SpecSerializer, error) {

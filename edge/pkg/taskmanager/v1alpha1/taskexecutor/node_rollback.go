@@ -18,6 +18,7 @@ package taskexecutor
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 
 	"k8s.io/klog/v2"
@@ -56,17 +57,24 @@ func rollbackNode(taskReq commontypes.NodeTaskRequest) (event fsm.Event) {
 
 func rollback(upgradeReq *commontypes.NodeUpgradeJobRequest) error {
 	klog.Infof("Begin to run rollback command")
-	rollBackCmd := fmt.Sprintf("keadm rollback edge --name %s --history %s >> /tmp/keadm.log 2>&1",
-		upgradeReq.UpgradeID, version.Get())
+	logFile, err := openKeadmTaskLog(v1alpha1KeadmLogName("rollback", upgradeReq.UpgradeID, version.Get().String()), os.O_APPEND)
+	if err != nil {
+		return err
+	}
 
 	// run upgrade cmd to upgrade edge node
 	// use nohup command to start a child progress
-	command := fmt.Sprintf("nohup %s &", rollBackCmd)
-	cmd := exec.Command("bash", "-c", command)
-	s, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("run rollback command %s failed: %v, %s", command, err, s)
+	args := []string{"keadm", "rollback", "edge", "--name", upgradeReq.UpgradeID, "--history", version.Get().String()}
+	cmd := exec.Command("nohup", args...)
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+	if err := cmd.Start(); err != nil {
+		if cerr := logFile.Close(); cerr != nil {
+			klog.Warningf("failed to close keadm rollback log file %s: %v", logFile.Name(), cerr)
+		}
+		return fmt.Errorf("failed to start keadm rollback command: %w", err)
 	}
+	go waitKeadmTaskCommand(cmd, logFile)
 	klog.Infof("!!! Finish rollback ")
 	return nil
 }
