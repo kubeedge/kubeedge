@@ -34,6 +34,16 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
+// CheckRootPrivileges verifies the current process is running as root, since keadm
+// writes to system directories (/etc/kubeedge, /var/lib/kubeedge) and manages host
+// services that a regular user cannot access.
+func CheckRootPrivileges() error {
+	if os.Geteuid() != 0 {
+		return fmt.Errorf("this command must be run as root, please use sudo")
+	}
+	return nil
+}
+
 // IsKubeEdgeProcessRunning checks if the given process is running or not
 func IsKubeEdgeProcessRunning(proc string) (bool, error) {
 	procRunning := fmt.Sprintf("pidof %s 2>&1", proc)
