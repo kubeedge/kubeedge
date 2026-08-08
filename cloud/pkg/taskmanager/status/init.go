@@ -47,6 +47,6 @@ func GetNodeUpgradeJobStatusUpdater() *StatusUpdater {
 	return nodeUpgradeJobStatusUpdater
 }
 
-func GetConfigeUpdateJobStatusUpdater() *StatusUpdater {
+func GetConfigUpdateJobStatusUpdater() *StatusUpdater {
 	return configUpdateJobStatusUpdater
 }
