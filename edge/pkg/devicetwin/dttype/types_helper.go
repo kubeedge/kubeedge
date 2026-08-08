@@ -74,10 +74,10 @@ func DeviceTwinToMsgTwin(deviceTwins []models.DeviceTwin) map[string]*MsgTwin {
 			expectedValue := &TwinValue{Value: &expected}
 			if twin.ExpectedMeta != "" {
 				if err := json.Unmarshal([]byte(twin.ExpectedMeta), &expectedMeta); err != nil {
-					// TODO: handle error
-					klog.Error(err)
+					klog.Warningf("skip invalid ExpectedMeta for twin %q: %v", twin.Name, err)
+				} else {
+					expectedValue.Metadata = &expectedMeta
 				}
-				expectedValue.Metadata = &expectedMeta
 			}
 			msgTwin.Expected = expectedValue
 		}
@@ -85,27 +85,27 @@ func DeviceTwinToMsgTwin(deviceTwins []models.DeviceTwin) map[string]*MsgTwin {
 			actualValue := &TwinValue{Value: &actual}
 			if twin.ActualMeta != "" {
 				if err := json.Unmarshal([]byte(twin.ActualMeta), &actualMeta); err != nil {
-					// TODO: handle error
-					klog.Error(err)
+					klog.Warningf("skip invalid ActualMeta for twin %q: %v", twin.Name, err)
+				} else {
+					actualValue.Metadata = &actualMeta
 				}
-				actualValue.Metadata = &actualMeta
 			}
 			msgTwin.Actual = actualValue
 		}
 
 		if twin.ExpectedVersion != "" {
 			if err := json.Unmarshal([]byte(twin.ExpectedVersion), &expectedVersion); err != nil {
-				// TODO: handle error
-				klog.Error(err)
+				klog.Warningf("skip invalid ExpectedVersion for twin %q: %v", twin.Name, err)
+			} else {
+				msgTwin.ExpectedVersion = &expectedVersion
 			}
-			msgTwin.ExpectedVersion = &expectedVersion
 		}
 		if twin.ActualVersion != "" {
 			if err := json.Unmarshal([]byte(twin.ActualVersion), &actualVersion); err != nil {
-				// TODO: handle error
-				klog.Error(err)
+				klog.Warningf("skip invalid ActualVersion for twin %q: %v", twin.Name, err)
+			} else {
+				msgTwin.ActualVersion = &actualVersion
 			}
-			msgTwin.ActualVersion = &actualVersion
 		}
 		msgTwins[twin.Name] = msgTwin
 	}
