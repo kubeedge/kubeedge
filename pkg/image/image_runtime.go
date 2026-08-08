@@ -82,13 +82,48 @@ func (runtime *RuntimeImpl) GetImageDigest(ctx context.Context, image string) (s
 	if resp.Image == nil {
 		return "", nil
 	}
-	for i := range resp.Image.RepoTags {
-		tag := resp.Image.RepoTags[i]
+
+	// Confirm the requested tag exists in RepoTags.
+	tagFound := false
+	for _, tag := range resp.Image.RepoTags {
 		if tag == image {
-			repoDigest := resp.Image.RepoDigests[i]
-			digestIndex := strings.LastIndex(repoDigest, "@sha256:")
-			return repoDigest[digestIndex+1:], nil
+			tagFound = true
+			break
 		}
+	}
+	if !tagFound {
+		return "", nil
+	}
+
+	// Extract repository name.
+	ref, err := reference.ParseAnyReference(image)
+	if err != nil {
+		return "", fmt.Errorf("invalid image reference %s: %w", image, err)
+	}
+	named, ok := ref.(reference.Named)
+	if !ok {
+		return "", fmt.Errorf("invalid image reference %s: not a named reference", image)
+	}
+	repo := named.Name()
+
+	// RepoTags and RepoDigests are independent fields with no guaranteed index
+	// alignment. Iterate RepoDigests separately and match by repository name.
+	for _, repoDigest := range resp.Image.RepoDigests {
+		if !strings.Contains(repoDigest, "@") {
+			continue
+		}
+		parsed, err := reference.ParseAnyReference(repoDigest)
+		if err != nil {
+			return "", fmt.Errorf("invalid digest for image %s: %w", image, err)
+		}
+		canonical, ok := parsed.(reference.Canonical)
+		if !ok {
+			continue
+		}
+		if canonical.Name() != repo {
+			continue
+		}
+		return canonical.Digest().String(), nil
 	}
 	return "", nil
 }
