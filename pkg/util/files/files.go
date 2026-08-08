@@ -48,10 +48,23 @@ func FileCopy(src, dst string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open or create destination file %s, err: %v", dst, err)
 	}
-	defer destination.Close()
+	closed := false
+	defer func() {
+		if !closed {
+			destination.Close()
+		}
+	}()
 
-	_, err = io.Copy(destination, source)
-	return err
+	if _, err = io.Copy(destination, source); err != nil {
+		return err
+	}
+
+	closed = true
+	if err := destination.Close(); err != nil {
+		return fmt.Errorf("failed to close destination file %s, err: %v", dst, err)
+	}
+
+	return nil
 }
 
 func FileExists(path string) bool {
