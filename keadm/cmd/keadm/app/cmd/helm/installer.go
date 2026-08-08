@@ -15,6 +15,7 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"helm.sh/helm/v3/pkg/strvals"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -298,6 +299,14 @@ func (cu *KubeCloudHelmInstTool) runHelmInstall(r *Renderer) (*release.Release, 
 
 		rel, err := helmInstall.Run(r.chart, r.profileValsMap)
 		if err != nil {
+			if rel != nil {
+				klog.Warningf("installation failed, attempting Helm cleanup")
+				uninstaller := action.NewUninstall(cfg)
+				uninstaller.KeepHistory = false
+				if _, uninstallErr := uninstaller.Run(rel.Name); uninstallErr != nil {
+					klog.Warningf("cleanup failed: %v", uninstallErr)
+				}
+			}
 			return nil, err
 		}
 		return rel, nil
