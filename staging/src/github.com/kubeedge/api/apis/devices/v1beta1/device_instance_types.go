@@ -188,6 +188,8 @@ type DBMethodConfig struct {
 	TDEngine *DBMethodTDEngine `json:"TDEngine,omitempty"`
 	// +optional
 	Mysql *DBMethodMySQL `json:"mysql,omitempty"`
+	// +optional
+	Kwdb *DBMethodKwdb `json:"Kwdb,omitempty"`
 }
 
 type DBMethodInfluxdb2 struct {
@@ -269,6 +271,21 @@ type MySQLClientConfig struct {
 	Database string `protobuf:"bytes,2,opt,name=database,proto3" json:"database,omitempty"`
 	// user name
 	UserName string `protobuf:"bytes,3,opt,name=userName,proto3" json:"userName,omitempty"`
+}
+
+type DBMethodKwdb struct {
+	// kwdbClientConfig of Kaiwudb database
+	// +optional
+	KWDBClientConfig *KWDBClientConfig `json:"KWDBClientConfig,omitempty"`
+}
+
+type KWDBClientConfig struct {
+	// addr of Kaiwudb database
+	// +optional
+	Addr string `json:"addr,omitempty"`
+	// dbname of Kaiwudb database
+	// +optional
+	DBName string `json:"dbName,omitempty"`
 }
 
 type VisitorConfig struct {
