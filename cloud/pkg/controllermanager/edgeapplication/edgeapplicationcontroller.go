@@ -108,7 +108,7 @@ func (c *Controller) SetupWithManager(_ctx context.Context, mgr controllerruntim
 	c.StatusManager.SetReconcileTriggerChan(c.ReconcileTriggerChan)
 	// start the StatusManager
 	if err := c.StatusManager.Start(); err != nil {
-		return fmt.Errorf("fail to start StatusManager, %v", err)
+		return fmt.Errorf("fail to start StatusManager, %w", err)
 	}
 	return controllerruntime.NewControllerManagedBy(mgr).
 		For(&appsv1alpha1.EdgeApplication{}).
@@ -316,7 +316,7 @@ func (c *Controller) ifObjExists(ctx context.Context, obj *unstructured.Unstruct
 		if apierrors.IsNotFound(err) {
 			return false, nil, nil
 		}
-		return false, nil, fmt.Errorf("failed to get obj %s/%s of gvk %s, %v", ns, name, gvk, err)
+		return false, nil, fmt.Errorf("failed to get obj %s/%s of gvk %s, %w", ns, name, gvk, err)
 	}
 	return true, unstructuredObj, nil
 }
@@ -326,7 +326,7 @@ func (c *Controller) updateTemplate(ctx context.Context, tmpl *unstructured.Unst
 		klog.Warningf("cannot find LastAppliedTemplateAnnotation on obj %s/%s of gvk %s, update it with new template",
 			curObj.GetNamespace(), curObj.GetName(), curObj.GroupVersionKind())
 		if err := c.Client.Update(ctx, tmpl); err != nil {
-			return fmt.Errorf("failed to update object with template %s, %v", tmpl, err)
+			return fmt.Errorf("failed to update object with template %v, %w", tmpl, err)
 		}
 		return nil
 	}
@@ -428,12 +428,18 @@ func (c *Controller) removeResource(ctx context.Context, info utils.ResourceInfo
 		Kind:    info.Kind,
 	}
 	unstructuredObj.SetGroupVersionKind(gvk)
-	if err := c.Client.Get(ctx, types.NamespacedName{Namespace: info.Namespace, Name: info.Name}, unstructuredObj); err != nil && apierrors.IsNotFound(err) {
-		return fmt.Errorf("failed to get obj %s/%s of gvk %s, %v", info.Namespace, info.Name, gvk, err)
+	if err := c.Client.Get(ctx, types.NamespacedName{Namespace: info.Namespace, Name: info.Name}, unstructuredObj); err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("failed to get obj %s/%s of gvk %s, %w", info.Namespace, info.Name, gvk, err)
 	}
 
-	if err := c.Client.Delete(ctx, unstructuredObj); err != nil && apierrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete obj %s/%s of gvk %s, %v", info.Namespace, info.Name, gvk, err)
+	if err := c.Client.Delete(ctx, unstructuredObj); err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("failed to delete obj %s/%s of gvk %s, %w", info.Namespace, info.Name, gvk, err)
 	}
 	return nil
 }
@@ -470,7 +476,7 @@ func (c *Controller) addOrUpdateLastContainedResourcesAnnotation(ctx context.Con
 	sort.Slice(resourceInfos, func(i, j int) bool { return resourceInfos[i].String() < resourceInfos[j].String() })
 	infosJSON, err := json.Marshal(resourceInfos)
 	if err != nil {
-		return fmt.Errorf("failed to marshal infos %v, %v", resourceInfos, err)
+		return fmt.Errorf("failed to marshal infos %v, %w", resourceInfos, err)
 	}
 
 	oldAnno := newEdgeApp.Annotations[constants.LastContainedResourcesAnnotationKey]
@@ -485,7 +491,7 @@ func (c *Controller) addOrUpdateLastContainedResourcesAnnotation(ctx context.Con
 func (c *Controller) update(ctx context.Context, tmpl *unstructured.Unstructured, curObj *unstructured.Unstructured) error {
 	if c.UseServerSideApply {
 		if err := c.Client.Update(ctx, tmpl); err != nil {
-			return fmt.Errorf("failed to update object with template %s, %v", tmpl, err)
+			return fmt.Errorf("failed to update object with template %v, %w", tmpl, err)
 		}
 		return nil
 	}
@@ -500,11 +506,11 @@ func (c *Controller) update(ctx context.Context, tmpl *unstructured.Unstructured
 	}
 	oldJSON = []byte(anno)
 	if newJSON, err = tmpl.MarshalJSON(); err != nil {
-		return fmt.Errorf("failed to serialize template as json %v, %s", tmpl, err)
+		return fmt.Errorf("failed to serialize template as json %v, %w", tmpl, err)
 	}
 	mergePatch, err := jsonpatch.CreateMergePatch(oldJSON, newJSON)
 	if err != nil {
-		return fmt.Errorf("cannot get merge patch for error %v, old json: %s, new json: %s", err, oldJSON, newJSON)
+		return fmt.Errorf("cannot get merge patch for error %w, old json: %s, new json: %s", err, oldJSON, newJSON)
 	}
 
 	if curObjectJSON, err = curObj.MarshalJSON(); err != nil {
@@ -517,11 +523,11 @@ func (c *Controller) update(ctx context.Context, tmpl *unstructured.Unstructured
 	}
 	newObj := &unstructured.Unstructured{}
 	if _, _, err = c.Serializer.Decode(newObjectJSON, nil, newObj); err != nil {
-		return fmt.Errorf("failed to decode json of new object as new object for error: %v, json: %s", err, string(newObjectJSON))
+		return fmt.Errorf("failed to decode json of new object as new object for error: %w, json: %s", err, string(newObjectJSON))
 	}
 
 	if err := c.Client.Patch(ctx, newObj, client.MergeFrom(curObj)); err != nil {
-		return fmt.Errorf("failed to update obj as %v, %v", newObj, err)
+		return fmt.Errorf("failed to update obj as %v, %w", newObj, err)
 	}
 	return nil
 }
@@ -587,7 +593,7 @@ func isSameAsLastApplied(objInEdgeApp *unstructured.Unstructured, curObj runtime
 	accessor := meta.NewAccessor()
 	annots, err := accessor.Annotations(curObj)
 	if err != nil {
-		return false, fmt.Errorf("failed to get annotations of object, %v", err)
+		return false, fmt.Errorf("failed to get annotations of object, %w", err)
 	}
 
 	objJSON, err := objInEdgeApp.MarshalJSON()
@@ -603,7 +609,7 @@ func isSameAsLastApplied(objInEdgeApp *unstructured.Unstructured, curObj runtime
 		return false, nil
 	}
 
-	return false, fmt.Errorf("cannot find last applied template in annotation, %v, possibly it is not created by EdgeApplication Controller", err)
+	return false, fmt.Errorf("cannot find last applied template in annotation, possibly it is not created by EdgeApplication Controller")
 }
 
 // needOverride determines if a obj needs override, according to its gvk.
