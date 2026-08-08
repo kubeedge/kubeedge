@@ -16,13 +16,16 @@ limitations under the License.
 package certs
 
 const (
-	CAHandlerTypeX509 = "x509"
+	CAHandlerTypeX509 CAHandlerType = "x509"
 
-	HandlerTypeX509 = "x509"
+	HandlerTypeX509 HandlerType = "x509"
 )
 
 type CAHandlerType string
-type HanndlerType string
+type HandlerType string
+
+// Deprecated: use HandlerType.
+type HanndlerType = HandlerType
 
 func GetCAHandler(t CAHandlerType) CAHandler {
 	switch t {
@@ -32,7 +35,7 @@ func GetCAHandler(t CAHandlerType) CAHandler {
 	return nil
 }
 
-func GetHandler(t HanndlerType) Handler {
+func GetHandler(t HandlerType) Handler {
 	switch t {
 	case HandlerTypeX509:
 		return &x509CertsHandler{}
