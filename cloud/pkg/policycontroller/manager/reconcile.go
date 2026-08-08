@@ -12,7 +12,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/authentication/serviceaccount"
 	"k8s.io/apiserver/pkg/authentication/user"
@@ -20,6 +19,7 @@ import (
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
@@ -246,12 +246,6 @@ func (c *Controller) filterObject(ctx context.Context, object client.Object) boo
 
 // SetupWithManager creates a controller and register to controller manager.
 func (c *Controller) SetupWithManager(ctx context.Context, mgr controllerruntime.Manager) error {
-	if err := mgr.GetFieldIndexer().IndexField(ctx, &corev1.Pod{}, "spec.serviceAccountName", func(o client.Object) []string {
-		pod := o.(*corev1.Pod)
-		return []string{pod.Spec.ServiceAccountName}
-	}); err != nil {
-		return fmt.Errorf("failed to set ServiceAccountName field selector for manager, %v", err)
-	}
 	return controllerruntime.NewControllerManagedBy(mgr).
 		For(&policyv1alpha1.ServiceAccountAccess{}).
 		Watches(&rbacv1.ClusterRoleBinding{}, handler.EnqueueRequestsFromMapFunc(c.mapRolesFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
@@ -269,26 +263,50 @@ func (c *Controller) SetupWithManager(ctx context.Context, mgr controllerruntime
 		Watches(&corev1.ServiceAccount{}, handler.EnqueueRequestsFromMapFunc(c.mapObjectFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
 			return c.filterObject(ctx, object)
 		}))).
-		Watches(&corev1.Pod{}, handler.EnqueueRequestsFromMapFunc(c.mapObjectFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
-			return c.filterObject(ctx, object)
-		}))).
+		Watches(&corev1.Pod{}, handler.EnqueueRequestsFromMapFunc(c.mapObjectFunc), builder.WithPredicates(predicate.Funcs{
+			CreateFunc: func(e event.CreateEvent) bool {
+				return c.filterObject(ctx, e.Object)
+			},
+			UpdateFunc: func(e event.UpdateEvent) bool {
+				return c.podUpdateFilter(ctx, e)
+			},
+			DeleteFunc: func(e event.DeleteEvent) bool {
+				return c.filterObject(ctx, e.Object)
+			},
+			GenericFunc: func(e event.GenericEvent) bool {
+				return false
+			},
+		})).
 		Complete(c)
 }
 
-func isEdgeNode(ctx context.Context, reader client.Reader, name string) bool {
-	set := labels.Set{commonconstants.EdgeNodeRoleKey: commonconstants.EdgeNodeRoleValue}
-	selector := labels.SelectorFromSet(set)
-	var edgeNodeList = &corev1.NodeList{}
-	if err := reader.List(ctx, edgeNodeList, &client.ListOptions{LabelSelector: selector}); err != nil {
-		klog.Errorf("failed to list edge nodes, %v", err)
+// podUpdateFilter returns true for pod update events that may require an SAA
+// reconcile: NodeName first being assigned (DaemonSet scheduling) or deletion
+// beginning. Status-only updates are dropped to avoid high API-server churn.
+func (c *Controller) podUpdateFilter(ctx context.Context, e event.UpdateEvent) bool {
+	oldPod, ok := e.ObjectOld.(*corev1.Pod)
+	if !ok {
 		return false
 	}
-	for _, node := range edgeNodeList.Items {
-		if node.Name == name {
-			return true
-		}
+	newPod := e.ObjectNew.(*corev1.Pod)
+	if oldPod.Spec.NodeName == newPod.Spec.NodeName && newPod.DeletionTimestamp == nil {
+		return false
 	}
-	return false
+	return c.filterObject(ctx, e.ObjectNew)
+}
+
+func isEdgeNode(ctx context.Context, reader client.Reader, name string) bool {
+	node := &corev1.Node{}
+	if err := reader.Get(ctx, types.NamespacedName{Name: name}, node); err != nil {
+		if !apierrors.IsNotFound(err) {
+			klog.Errorf("failed to get node %s: %v", name, err)
+		}
+		return false
+	}
+	// EdgeNodeRoleValue is "", so check key presence, not value equality —
+	// a missing key also returns "" from map lookup.
+	_, ok := node.Labels[commonconstants.EdgeNodeRoleKey]
+	return ok
 }
 
 func getNodeListOfServiceAccountAccess(ctx context.Context, reader client.Reader, acc *policyv1alpha1.ServiceAccountAccess) ([]string, error) {
