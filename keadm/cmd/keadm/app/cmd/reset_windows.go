@@ -54,7 +54,7 @@ func NewKubeEdgeReset() *cobra.Command {
 
 	var cmd = &cobra.Command{
 		Use:     "reset",
-		Short:   "Teardowns KubeEdge edge component in windows server",
+		Short:   "Tears down KubeEdge edge component in windows server",
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {

@@ -54,7 +54,7 @@ func NewOtherEdgeReset() *cobra.Command {
 	step := common.NewStep()
 	var cmd = &cobra.Command{
 		Use:     "edge",
-		Short:   "Teardowns EdgeCore component",
+		Short:   "Tears down EdgeCore component",
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(_ *cobra.Command, _ []string) error {
