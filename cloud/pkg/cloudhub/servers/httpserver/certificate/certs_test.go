@@ -50,6 +50,42 @@ func TestVerifyCert(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestVerifyCert_ExpiredCertificate(t *testing.T) {
+	cahandler := certs.GetCAHandler(certs.CAHandlerTypeX509)
+	pk, err := cahandler.GenPrivateKey()
+	require.NoError(t, err)
+
+	caPem, err := cahandler.NewSelfSigned(pk)
+	require.NoError(t, err)
+
+	certshandler := certs.GetHandler(certs.HandlerTypeX509)
+	csrPem, err := certshandler.CreateCSR(pkix.Name{
+		Country:      []string{"CN"},
+		Organization: []string{"system:nodes"},
+		Locality:     []string{"Hangzhou"},
+		Province:     []string{"Zhejiang"},
+		CommonName:   "system:node:testnode",
+	}, pk, nil)
+	require.NoError(t, err)
+
+	// Create an expired certificate by using negative duration
+	certPrm, err := certshandler.SignCerts(certs.SignCertsOptionsWithCSR(
+		csrPem.Bytes,
+		caPem.Bytes,
+		pk.DER(),
+		[]x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		-time.Hour, // Negative duration to create expired certificate
+	))
+	require.NoError(t, err)
+
+	hubconfig.Config.Ca = caPem.Bytes
+	certs, err := x509.ParseCertificate(certPrm.Bytes)
+	require.NoError(t, err)
+
+	err = verifyCert(certs, "testnode")
+	require.Error(t, err, "Expected error for expired certificate")
+}
+
 func TestVerifyAuthorization(t *testing.T) {
 	const cakey = `MHcCAQEEIJQgy45Hw91mXm3pRXwxwDg4BgR4DY1UvHlzm/JXr9K6oAoGCCqGSM49AwEHoUQDQgAEq4Rd11aJ/FXEYBE2YCUMjRZVpqytxDBq2anuzokPculGaTrSDiRy1IKukPhlg34bq7J6wqkF0cmFUvcTjtReqw==`
 	cakeyDer, err := base64.StdEncoding.DecodeString(cakey)
