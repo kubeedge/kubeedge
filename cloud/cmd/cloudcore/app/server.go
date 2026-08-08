@@ -129,7 +129,7 @@ kubernetes controller which manages devices so that the device metadata/status d
 				// By default, IptablesManager manages tunnel port related iptables rules
 				// The internal mode will share the host network, forward to the stream port.
 				streamPort := int(config.Modules.CloudStream.StreamPort)
-				go iptables.NewIptablesManager(config.KubeAPIConfig, streamPort).Run(ctx)
+				go iptables.NewIptablesManager(config.KubeAPIConfig, streamPort, 10*time.Second).Run(ctx)
 			}
 
 			// Start all modules
