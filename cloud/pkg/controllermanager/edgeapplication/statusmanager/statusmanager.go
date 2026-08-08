@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -40,7 +41,7 @@ type statusManager struct {
 	watchCh          chan schema.GroupVersionKind
 	cancelCh         chan schema.GroupVersionKind
 	reconcileTrigger chan event.GenericEvent
-	started          bool
+	started          atomic.Bool
 }
 
 func NewStatusManager(ctx context.Context, mgr manager.Manager, client client.Client, serializer runtime.Serializer) StatusManager {
@@ -57,38 +58,54 @@ func NewStatusManager(ctx context.Context, mgr manager.Manager, client client.Cl
 }
 
 func (s *statusManager) WatchStatus(info utils.ResourceInfo) error {
-	if !s.started {
+	if !s.started.Load() {
 		return fmt.Errorf("status manager has not started")
 	}
 
-	select {
-	case s.watchCh <- infoToGVK(info):
-	default:
-		return fmt.Errorf("the watchCh of status manager is full, drop the info %s", info.String())
-	}
-
-	return nil
+	var err error
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				err = fmt.Errorf("status manager is shutting down")
+			}
+		}()
+		select {
+		case s.watchCh <- infoToGVK(info):
+		default:
+			err = fmt.Errorf("the watchCh of status manager is full, drop the info %s", info.String())
+		}
+	}()
+	return err
 }
 
 func (s *statusManager) CancelWatch(info utils.ResourceInfo) error {
-	if !s.started {
+	if !s.started.Load() {
 		return fmt.Errorf("status manager has not started")
 	}
 
-	select {
-	case s.cancelCh <- infoToGVK(info):
-	default:
-		return fmt.Errorf("the cancelCh of status manager is full, drop the info %s", info.String())
-	}
-
-	return nil
+	var err error
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				err = fmt.Errorf("status manager is shutting down")
+			}
+		}()
+		select {
+		case s.cancelCh <- infoToGVK(info):
+		default:
+			err = fmt.Errorf("the cancelCh of status manager is full, drop the info %s", info.String())
+		}
+	}()
+	return err
 }
 
 func (s *statusManager) Start() error {
 	if s.reconcileTrigger == nil {
 		return fmt.Errorf("reconcileTrigger cannot be nil")
 	}
-	s.started = true
+	if s.started.Swap(true) {
+		return nil
+	}
 	go s.watchStatusWorker()
 	go s.cancelWatchWorker()
 	go s.waitForTerminatingWorkers()
@@ -225,10 +242,10 @@ func (s *statusManager) watchControllersGC() {
 	for gvk := range s.watching {
 		if _, ok := infoMap[gvk]; !ok {
 			// no edgeapplication need to watch status of this gvk, so cancel watch of it
-			if err := s.CancelWatch(utils.ResourceInfo{Group: gvk.Group, Version: gvk.Version, Kind: gvk.Kind}); err != nil {
-				klog.Errorf("statusControllersGC failed to cancel watch of gvk %s, %v", gvk, err)
-				continue
+			if cancel := s.watching[gvk]; cancel != nil {
+				cancel()
 			}
+			delete(s.watching, gvk)
 			klog.V(4).Infof("statusControllerGC cancel watch of gvk %s", gvk)
 		}
 	}
