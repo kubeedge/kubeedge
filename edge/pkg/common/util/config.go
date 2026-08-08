@@ -26,6 +26,8 @@ import (
 	"os"
 	"time"
 
+	"path/filepath"
+
 	certutil "k8s.io/client-go/util/cert"
 	klog "k8s.io/klog/v2"
 )
@@ -70,7 +72,7 @@ func GenerateTestCertificate(path string, certFileName string, keyFileName strin
 	certFilePEM := pem.Block{
 		Type:  certutil.CertificateBlockType,
 		Bytes: cert}
-	err = createPEMfile(path+certFileName+".crt", certFilePEM)
+	err = createPEMfile(filepath.Join(path, certFileName+".crt"), certFilePEM)
 	if err != nil {
 		return err
 	}
@@ -79,7 +81,7 @@ func GenerateTestCertificate(path string, certFileName string, keyFileName strin
 		Bytes: pKey,
 	}
 
-	return createPEMfile(path+keyFileName+".key", keyFilePEM)
+	return createPEMfile(filepath.Join(path, keyFileName+".key"), keyFilePEM)
 }
 
 // createPEMfile creates an encoded file at the path given, with PEM Block specified
