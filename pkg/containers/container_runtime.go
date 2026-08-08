@@ -18,9 +18,12 @@ package containers
 
 import (
 	"context"
-	"fmt"
-	"path/filepath"
-	"time"
+    "fmt"
+    "path"           
+    "path/filepath"
+    "sort"
+    "strings"        
+    "time"
 
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -157,14 +160,26 @@ func (runtime *ContainerRuntimeImpl) CopyResources(
 }
 
 func copyResourcesCmd(files map[string]string) string {
+	keys := make([]string, 0, len(files))
+	for containerPath := range files {
+		keys = append(keys, containerPath)
+	}
+	sort.Strings(keys)
+
 	var copyCmd string
 	first := true
-	for containerPath, hostPath := range files {
+	for _, containerPath := range keys {
+		hostPath := files[containerPath]
+
+		safeContainer := strings.ReplaceAll(containerPath, "'", "'\\''")
+		safeHost := strings.ReplaceAll(hostPath, "'", "'\\''")
+
+		cp := fmt.Sprintf("cp '%s' '%s'", safeContainer, path.Join("/tmp", safeHost))
 		if first {
-			copyCmd = copyCmd + fmt.Sprintf("cp %s %s", containerPath, filepath.Join("/tmp", hostPath))
+			copyCmd = cp
 			first = false
 		} else {
-			copyCmd = copyCmd + fmt.Sprintf(" && cp %s %s", containerPath, filepath.Join("/tmp", hostPath))
+			copyCmd = copyCmd + " && " + cp
 		}
 	}
 	return copyCmd
