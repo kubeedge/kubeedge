@@ -1,7 +1,24 @@
+/*
+Copyright 2020 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package synccontroller
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -94,9 +111,18 @@ func sendEvents(nodeName string, sync *v1alpha1.ObjectSync, resourceType string,
 		return
 	}
 
-	if CompareResourceVersion(objectResourceVersion, sync.Status.ObjectResourceVersion) > 0 {
-		// trigger the update event
-		klog.V(4).Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event", objectResourceVersion, resourceType, sync.Status.ObjectResourceVersion)
+	cmp, err := CompareResourceVersion(objectResourceVersion, sync.Status.ObjectResourceVersion)
+	if err != nil {
+		// ResourceVersion is opaque per the Kubernetes API spec; non-integer values are valid
+		// for non-standard API servers. Treat an unparseable version as "unknown — send the
+		// update" so the edge stays consistent rather than silently stalling forever.
+		klog.Warningf("objectsync %s: cannot compare resourceVersions (live=%q edge=%q): %v; sending update as fail-safe",
+			sync.Name, objectResourceVersion, sync.Status.ObjectResourceVersion, err)
+		cmp = 1
+	}
+	if cmp > 0 {
+		klog.V(4).Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event",
+			objectResourceVersion, resourceType, sync.Status.ObjectResourceVersion)
 		msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)
 		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
 	}
@@ -135,26 +161,26 @@ func GetObjectResourceVersion(obj interface{}) string {
 	return accessor.GetResourceVersion()
 }
 
-// CompareResourceVersion compares resourceversions, resource versions are actually
-// ints, so we can easily compare them.
-// If rva>rvb, return 1; rva=rvb, return 0; rva<rvb, return -1
-func CompareResourceVersion(rva, rvb string) int {
+// CompareResourceVersion compares two resourceVersion strings as uint64 integers.
+// Returns 1 if rva > rvb, 0 if equal, -1 if rva < rvb.
+// Returns an error when either string is not a valid non-negative integer.
+// The Kubernetes API spec treats resourceVersion as an opaque string; the integer
+// representation is an implementation detail of kube-apiserver that non-standard
+// API servers may not follow. Callers must handle the error explicitly.
+func CompareResourceVersion(rva, rvb string) (int, error) {
 	a, err := strconv.ParseUint(rva, 10, 64)
 	if err != nil {
-		// coder error
-		panic(err)
+		return 0, fmt.Errorf("invalid resourceVersion %q: %w", rva, err)
 	}
 	b, err := strconv.ParseUint(rvb, 10, 64)
 	if err != nil {
-		// coder error
-		panic(err)
+		return 0, fmt.Errorf("invalid resourceVersion %q: %w", rvb, err)
 	}
-
 	if a > b {
-		return 1
+		return 1, nil
 	}
 	if a == b {
-		return 0
+		return 0, nil
 	}
-	return -1
+	return -1, nil
 }
