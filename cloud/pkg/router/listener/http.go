@@ -3,7 +3,6 @@ package listener
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -29,6 +28,24 @@ const MaxMessageBytes = 12 * (1 << 20)
 var (
 	RestHandlerInstance = &RestHandler{}
 )
+
+type responseStatusError struct {
+	statusCode int
+	header     http.Header
+	body       []byte
+}
+
+func newResponseStatusError(statusCode int, header http.Header, body []byte) *responseStatusError {
+	return &responseStatusError{
+		statusCode: statusCode,
+		header:     header.Clone(),
+		body:       append([]byte(nil), body...),
+	}
+}
+
+func (e *responseStatusError) Error() string {
+	return string(e.body)
+}
 
 type RestHandler struct {
 	restTimeout time.Duration
@@ -124,8 +141,10 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	edgeNodeName := uriSections[1]
+	var responseErr *responseStatusError
 	err = retry.Do(
 		func() error {
+			responseErr = nil
 			targetCloudCoreIP, err := GetEdgeToCloudCoreIP(r.Context(), edgeNodeName)
 			if err != nil {
 				return err
@@ -155,7 +174,11 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 				for key, values := range r.Header {
 					forwardReq.Header[key] = values
 				}
-				return requestForward(targetCloudCoreIP, w, forwardReq)
+				err = requestForward(targetCloudCoreIP, w, forwardReq)
+				if respErr, ok := err.(*responseStatusError); ok {
+					responseErr = respErr
+				}
+				return err
 			}
 
 			matchPath, exist := rh.matchedPath(r.RequestURI)
@@ -201,19 +224,12 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 					klog.Errorf("response body read error, msg id: %s, reason: %v", msgID, err)
 					return nil
 				}
-				for key, values := range response.Header {
-					for _, value := range values {
-						w.Header().Add(key, value)
-					}
-				}
-
 				if response.StatusCode != http.StatusOK {
-					errMsg := string(body)
-					return errors.New(errMsg)
+					responseErr = newResponseStatusError(response.StatusCode, response.Header, body)
+					return responseErr
 				}
 
-				w.WriteHeader(response.StatusCode)
-				if _, err = w.Write(body); err != nil {
+				if err = writeHTTPResponse(w, response.StatusCode, response.Header, body); err != nil {
 					klog.Errorf("response body write error, msg id: %s, reason: %v", msgID, err)
 					return nil
 				}
@@ -231,6 +247,12 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
+		if responseErr != nil {
+			if err := writeHTTPResponse(w, responseErr.statusCode, responseErr.header, responseErr.body); err != nil {
+				klog.Errorf("response body write error: %v", err)
+			}
+			return
+		}
 		writeErr(w, r, http.StatusInternalServerError, err)
 		return
 	}
@@ -278,21 +300,15 @@ func requestForward(targetCloudCoreIP string, w http.ResponseWriter, forwardReq 
 		}
 	}(resp.Body)
 
-	for key, values := range resp.Header {
-		for _, value := range values {
-			w.Header().Add(key, value)
-		}
-	}
-
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return fmt.Errorf("error reading body:%v", err)
 		}
-		errMsg := string(bodyBytes)
-		return errors.New(errMsg)
+		return newResponseStatusError(resp.StatusCode, resp.Header, bodyBytes)
 	}
 
+	copyHTTPHeader(w.Header(), resp.Header)
 	w.WriteHeader(resp.StatusCode)
 	_, err = io.Copy(w, resp.Body)
 	if err != nil {
@@ -301,6 +317,21 @@ func requestForward(targetCloudCoreIP string, w http.ResponseWriter, forwardReq 
 
 	klog.Infof("forwarded request to %s successfully", targetCloudCoreIP)
 	return nil
+}
+
+func writeHTTPResponse(w http.ResponseWriter, statusCode int, header http.Header, body []byte) error {
+	copyHTTPHeader(w.Header(), header)
+	w.WriteHeader(statusCode)
+	_, err := w.Write(body)
+	return err
+}
+
+func copyHTTPHeader(dst, src http.Header) {
+	for key, values := range src {
+		for _, value := range values {
+			dst.Add(key, value)
+		}
+	}
 }
 
 func writeErr(w http.ResponseWriter, r *http.Request, statusCode int, err error) {
