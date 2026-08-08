@@ -429,6 +429,37 @@ func TestSendClusterObjectSyncEventDirect(t *testing.T) {
 	assert.True(t, sendCalled, "Send should have been called")
 }
 
+func TestSendClusterObjectSyncEventNilMessage(t *testing.T) {
+	backup := setupTest()
+	defer backup.restore()
+
+	compareResourceVersionFunc = func(rv1, rv2 string) int {
+		if rv1 == "1000" && rv2 == "500" {
+			return 1
+		}
+		return 0
+	}
+
+	sendCalled := false
+	sendToEdge = func(module string, msg model.Message) {
+		sendCalled = true
+	}
+
+	// buildEdgeControllerMessageFunc returns nil when BuildResource fails;
+	// the update path must skip sending instead of dereferencing nil.
+	buildEdgeControllerMessageFunc = func(nodeID, namespace, resource, resourceID string, operation string, content interface{}) *model.Message {
+		return nil
+	}
+
+	obj := createTestPod("test-pod", "12345", "1000")
+	sync := createTestSync("node1-pod-12345", "test-pod", "Pod", "v1", "500")
+
+	assert.NotPanics(t, func() {
+		sendClusterObjectSyncEvent("node1", sync, "pod", "1000", obj)
+	}, "sendClusterObjectSyncEvent should not panic when message build returns nil")
+	assert.False(t, sendCalled, "Send should not be called when message build returns nil")
+}
+
 func TestDeleteClusterObjectSyncFunc(t *testing.T) {
 	backup := setupTest()
 	defer backup.restore()
