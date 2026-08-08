@@ -14,6 +14,7 @@ import (
 	"github.com/agiledragon/gomonkey/v2"
 	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	cri "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -702,4 +703,40 @@ func (f *fakeRuntimeService) RuntimeConfig(ctx context.Context) (*runtimeapi.Run
 
 func (f *fakeRuntimeService) ImageFsInfo(ctx context.Context) (*runtimeapi.ImageFsInfoResponse, error) {
 	return f.ImageFsInfoF(ctx)
+}
+
+func TestREST_List_NoRequestInfo(t *testing.T) {
+	patch := gomonkey.NewPatches()
+	defer patch.Reset()
+	patch.ApplyFunc(connect.IsConnected, func() bool { return false }).
+		ApplyFunc(beehiveContext.SendSync, func(string, model.Message, time.Duration) (model.Message, error) {
+			return model.Message{}, fmt.Errorf("cloud unavailable")
+		})
+
+	rest := &REST{
+		Agent: &agent.Agent{Applications: sync.Map{}},
+	}
+	opts := metainternalversion.ListOptions{}
+	_, err := rest.List(context.TODO(), &opts)
+	if err == nil {
+		t.Fatal("expected error when context has no RequestInfo, got nil")
+	}
+}
+
+func TestREST_Watch_NoRequestInfo(t *testing.T) {
+	patch := gomonkey.NewPatches()
+	defer patch.Reset()
+	patch.ApplyFunc(connect.IsConnected, func() bool { return false }).
+		ApplyFunc(beehiveContext.SendSync, func(string, model.Message, time.Duration) (model.Message, error) {
+			return model.Message{}, fmt.Errorf("cloud unavailable")
+		})
+
+	rest := &REST{
+		Agent: &agent.Agent{Applications: sync.Map{}},
+	}
+	opts := metainternalversion.ListOptions{}
+	_, err := rest.Watch(context.TODO(), &opts)
+	if err == nil {
+		t.Fatal("expected error when context has no RequestInfo, got nil")
+	}
 }
