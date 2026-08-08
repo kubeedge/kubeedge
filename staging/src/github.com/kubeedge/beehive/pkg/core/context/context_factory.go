@@ -139,6 +139,17 @@ func Receive(module string) (model.Message, error) {
 	return messageContext.Receive(module)
 }
 
+// ReceiveWithContext receives a message like Receive, but returns immediately
+// with ctx.Err() when ctx is cancelled instead of blocking forever.
+func ReceiveWithContext(ctx gocontext.Context, module string) (model.Message, error) {
+	messageContext, err := getMessageContext(module)
+	if err != nil {
+		return model.Message{}, err
+	}
+
+	return messageContext.ReceiveWithContext(ctx, module)
+}
+
 // SendSync sends message in sync mode
 // module: the destination of the message
 // timeout: if <= 0 using default value(30s)

@@ -39,11 +39,14 @@ func (eh *EdgeHub) dispatch(message model.Message) error {
 	return msghandler.ProcessHandler(message, eh.chClient)
 }
 
-func (eh *EdgeHub) routeToEdge() {
+func (eh *EdgeHub) routeToEdge(connCtx context.Context) {
 	for {
 		select {
 		case <-beehiveContext.Done():
 			klog.Warning("EdgeHub RouteToEdge stop")
+			return
+		case <-connCtx.Done():
+			klog.Warning("EdgeHub RouteToEdge stop due to connection reset")
 			return
 		default:
 		}
@@ -72,16 +75,19 @@ func (eh *EdgeHub) sendToCloud(message model.Message) error {
 	return nil
 }
 
-func (eh *EdgeHub) routeToCloud() {
+func (eh *EdgeHub) routeToCloud(connCtx context.Context) {
 	for {
-		select {
-		case <-beehiveContext.Done():
-			klog.Warning("EdgeHub RouteToCloud stop")
-			return
-		default:
-		}
-		message, err := beehiveContext.Receive(modules.EdgeHubModuleName)
+		// ReceiveWithContext unblocks immediately when connCtx is cancelled
+		// (either by connCancel on reconnect, or by the beehive global context
+		// on process shutdown), preventing this goroutine from outliving its
+		// connection and accumulating across reconnect cycles.
+		message, err := beehiveContext.ReceiveWithContext(connCtx, modules.EdgeHubModuleName)
 		if err != nil {
+			if connCtx.Err() != nil {
+				// connCtx was cancelled: reconnect in progress or process shutting down.
+				klog.Warning("EdgeHub RouteToCloud stop")
+				return
+			}
 			klog.Errorf("failed to receive message from edge: %v", err)
 			time.Sleep(time.Second)
 			continue
@@ -103,11 +109,14 @@ func (eh *EdgeHub) routeToCloud() {
 	}
 }
 
-func (eh *EdgeHub) keepalive() {
+func (eh *EdgeHub) keepalive(connCtx context.Context) {
 	for {
 		select {
 		case <-beehiveContext.Done():
 			klog.Warning("EdgeHub KeepAlive stop")
+			return
+		case <-connCtx.Done():
+			klog.Warning("EdgeHub KeepAlive stop due to connection reset")
 			return
 		default:
 		}
@@ -123,7 +132,17 @@ func (eh *EdgeHub) keepalive() {
 			return
 		}
 
-		time.Sleep(time.Duration(config.Config.Heartbeat) * time.Second)
+		// Use select so that the keepalive goroutine exits immediately when
+		// connCtx is cancelled rather than sleeping through a reconnect cycle.
+		select {
+		case <-connCtx.Done():
+			klog.Warning("EdgeHub KeepAlive stop due to connection reset")
+			return
+		case <-beehiveContext.Done():
+			klog.Warning("EdgeHub KeepAlive stop")
+			return
+		case <-time.After(time.Duration(config.Config.Heartbeat) * time.Second):
+		}
 	}
 }
 
