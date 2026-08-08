@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The KubeEdge Authors.
+Copyright 2025 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,24 +17,18 @@ limitations under the License.
 package dmiserver
 
 import (
+	"testing"
 	"time"
-
-	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 )
 
-// DeviceTwinUpdate the structure of device twin update.
-type DeviceTwinUpdate struct {
-	types.BaseMessage
-	Twin map[string]*types.MsgTwin `json:"twin"`
-}
+func TestGetTimestamp(t *testing.T) {
+	before := time.Now().UnixNano() / 1e6
 
-// DeviceStateUpdate the structure of device state update.
-type DeviceStateUpdate struct {
-	types.BaseMessage
-	State string `json:"state"`
-}
+	ts := getTimestamp()
 
-// getTimestamp get current timestamp.
-func getTimestamp() int64 {
-	return time.Now().UnixNano() / 1e6
+	after := time.Now().UnixNano() / 1e6
+
+	if ts < before || ts > after {
+		t.Fatalf("timestamp %d not between %d and %d", ts, before, after)
+	}
 }
