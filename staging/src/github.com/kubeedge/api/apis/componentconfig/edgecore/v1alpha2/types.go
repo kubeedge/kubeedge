@@ -119,6 +119,28 @@ type Edged struct {
 	// RegisterNodeNamespace indicates register node namespace
 	// default "default"
 	RegisterNodeNamespace string `json:"registerNodeNamespace,omitempty"`
+	// InterLink configures the InterLink integration for HPC/HTC workload offloading.
+	// When enabled, pods annotated with "kubeedge.io/offload-to: interlink" will be
+	// routed to the InterLink API server instead of the local container runtime,
+	// enabling execution on remote HPC (SLURM) or HTC (HTCondor) backends.
+	// +optional
+	InterLink *InterLinkConfig `json:"interlink,omitempty"`
+}
+
+// InterLinkConfig holds configuration for the InterLink integration.
+// InterLink (https://github.com/interTwin-eu/interLink) enables offloading
+// Kubernetes pods to external compute backends such as HPC clusters via SLURM.
+type InterLinkConfig struct {
+	// Enable indicates whether InterLink integration is enabled.
+	// default false
+	Enable bool `json:"enable"`
+	// ServerURL is the URL of the InterLink API server.
+	// Example: "http://localhost:3000"
+	ServerURL string `json:"serverURL"`
+	// StatusPollInterval is how often to poll the InterLink API for remote job status.
+	// default "10s"
+	// +optional
+	StatusPollInterval metav1.Duration `json:"statusPollInterval,omitempty"`
 }
 
 // TailoredKubeletConfiguration indicates the tailored kubelet configuration.
