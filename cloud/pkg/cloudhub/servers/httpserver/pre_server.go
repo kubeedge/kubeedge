@@ -168,15 +168,20 @@ func createCertsToSecret(ctx context.Context) error {
 
 // GenerateAndRefreshToken creates a token and save it to secret, then create a timer to refresh the token.
 func GenerateAndRefreshToken(ctx context.Context) error {
-	if err := createNewToken(ctx); err != nil {
+	tokenDuration := hubconfig.Config.CloudHub.TokenRefreshDuration
+	if tokenDuration < time.Minute {
+		tokenDuration *= time.Hour
+	}
+
+	if err := createNewToken(ctx, tokenDuration); err != nil {
 		return err
 	}
-	t := time.NewTicker(time.Hour * hubconfig.Config.CloudHub.TokenRefreshDuration)
+	t := time.NewTicker(tokenDuration)
 	go func() {
 		for {
 			select {
 			case <-t.C:
-				if err := createNewToken(ctx); err != nil {
+				if err := createNewToken(ctx, tokenDuration); err != nil {
 					klog.Warningf("failed to refresh the new token, err: %v", err)
 					return
 				}
@@ -190,9 +195,8 @@ func GenerateAndRefreshToken(ctx context.Context) error {
 	return nil
 }
 
-func createNewToken(ctx context.Context) error {
-	caHashToken, err := token.Create(hubconfig.Config.Ca, hubconfig.Config.CaKey,
-		hubconfig.Config.CloudHub.TokenRefreshDuration)
+func createNewToken(ctx context.Context, tokenDuration time.Duration) error {
+	caHashToken, err := token.Create(hubconfig.Config.Ca, hubconfig.Config.CaKey, tokenDuration)
 	if err != nil {
 		return fmt.Errorf("failed to generate the token for edgecore register, err: %v", err)
 	}
