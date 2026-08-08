@@ -166,6 +166,26 @@ func TestParseResourceEdge(t *testing.T) {
 			wantErr:        true,
 			expectedErrMsg: "resource:  format incorrect, or Operation:  is not query/response",
 		},
+		{
+			name:           "Invalid operation with 2 parts (triggers error fallback)",
+			resource:       "default/pod",
+			operation:      "insert",
+			wantNamespace:  "",
+			wantType:       "",
+			wantID:         "",
+			wantErr:        true,
+			expectedErrMsg: "resource: default/pod format incorrect, or Operation: insert is not query/response",
+		},
+		{
+			name:           "Query operation with 1 part (operator precedence bug: length check bypassed)",
+			resource:       "default",
+			operation:      model.QueryOperation,
+			wantNamespace:  "",
+			wantType:       "",
+			wantID:         "",
+			wantErr:        true,
+			expectedErrMsg: "resource: default format incorrect, or Operation: query is not query/response",
+		},
 	}
 
 	for _, tt := range tests {
