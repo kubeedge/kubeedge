@@ -20,6 +20,7 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2/validation"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/hotreload"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
@@ -133,6 +134,10 @@ offering HTTP client capabilities to components of cloud to reach HTTP servers r
 			}
 
 			registerModules(config)
+
+			// Watch for a hot reload signal so a subset of the configuration
+			// can be updated without restarting edgecore.
+			hotreload.Watch(opts.ConfigFile)
 
 			// start all modules
 			core.Run()
