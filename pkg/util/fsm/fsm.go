@@ -96,7 +96,7 @@ func (F *FSM) transitCheck(event Event) (api.State, api.State, error) {
 	}
 	nextState, ok := F.guard[string(currentState)+"/"+event.UniqueName()]
 	if !ok {
-		return "", "", fmt.Errorf(string(currentState)+"/"+event.UniqueName(), " unsupported event")
+		return "", "", fmt.Errorf("%s/%s unsupported event", currentState, event.UniqueName())
 	}
 	return currentState, nextState, nil
 }
