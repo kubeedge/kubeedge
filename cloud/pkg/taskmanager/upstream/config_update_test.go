@@ -31,7 +31,7 @@ import (
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 )
 
-func TestNodeUpgradeJobUpdateNodeTaskStatus(t *testing.T) {
+func TestConfigUpdateJobUpdateNodeTaskStatus(t *testing.T) {
 	var (
 		jobName  = "test-job"
 		nodeName = "node1"
@@ -40,14 +40,14 @@ func TestNodeUpgradeJobUpdateNodeTaskStatus(t *testing.T) {
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
-		gomonkey.ApplyFunc(status.GetNodeUpgradeJobStatusUpdater, func() *status.StatusUpdater {
+		gomonkey.ApplyFunc(status.GetConfigeUpdateJobStatusUpdater, func() *status.StatusUpdater {
 			return &status.StatusUpdater{}
 		})
 		gomonkey.ApplyMethodFunc(reflect.TypeOf(&status.StatusUpdater{}), "UpdateStatus",
 			func(opts status.UpdateStatusOptions) {
-				act, ok := opts.ActionStatus.(*operationsv1alpha2.NodeUpgradeJobActionStatus)
+				act, ok := opts.ActionStatus.(*operationsv1alpha2.ConfigUpdateJobActionStatus)
 				require.True(t, ok)
-				assert.Equal(t, operationsv1alpha2.NodeUpgradeJobActionUpgrade, act.Action)
+				assert.Equal(t, operationsv1alpha2.ConfigUpdateJobActionUpdate, act.Action)
 				assert.Equal(t, operationsv1alpha2.NodeTaskPhaseSuccessful, opts.Phase)
 				assert.Equal(t, jobName, opts.JobName)
 				assert.Equal(t, nodeName, opts.NodeName)
@@ -55,9 +55,9 @@ func TestNodeUpgradeJobUpdateNodeTaskStatus(t *testing.T) {
 				opts.Callback(nil)
 			})
 
-		handler := &NodeUpgradeJobHandler{}
+		handler := &ConfigUpdateJobHandler{}
 		err := handler.UpdateNodeTaskStatus(jobName, nodeName, true, taskmsg.UpstreamMessage{
-			Action: string(operationsv1alpha2.NodeUpgradeJobActionUpgrade),
+			Action: string(operationsv1alpha2.ConfigUpdateJobActionUpdate),
 			Succ:   true,
 		})
 		require.NoError(t, err)
@@ -67,14 +67,14 @@ func TestNodeUpgradeJobUpdateNodeTaskStatus(t *testing.T) {
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
-		gomonkey.ApplyFunc(status.GetNodeUpgradeJobStatusUpdater, func() *status.StatusUpdater {
+		gomonkey.ApplyFunc(status.GetConfigeUpdateJobStatusUpdater, func() *status.StatusUpdater {
 			return &status.StatusUpdater{}
 		})
 		gomonkey.ApplyMethodFunc(reflect.TypeOf(&status.StatusUpdater{}), "UpdateStatus",
 			func(opts status.UpdateStatusOptions) {
-				act, ok := opts.ActionStatus.(*operationsv1alpha2.NodeUpgradeJobActionStatus)
+				act, ok := opts.ActionStatus.(*operationsv1alpha2.ConfigUpdateJobActionStatus)
 				require.True(t, ok)
-				assert.Equal(t, operationsv1alpha2.NodeUpgradeJobActionRollBack, act.Action)
+				assert.Equal(t, operationsv1alpha2.ConfigUpdateJobActionRollBack, act.Action)
 				assert.Equal(t, operationsv1alpha2.NodeTaskPhaseFailure, opts.Phase)
 				assert.Equal(t, jobName, opts.JobName)
 				assert.Equal(t, nodeName, opts.NodeName)
@@ -82,9 +82,9 @@ func TestNodeUpgradeJobUpdateNodeTaskStatus(t *testing.T) {
 				opts.Callback(nil)
 			})
 
-		handler := &NodeUpgradeJobHandler{}
+		handler := &ConfigUpdateJobHandler{}
 		err := handler.UpdateNodeTaskStatus(jobName, nodeName, true, taskmsg.UpstreamMessage{
-			Action: string(operationsv1alpha2.NodeUpgradeJobActionRollBack),
+			Action: string(operationsv1alpha2.ConfigUpdateJobActionRollBack),
 			Succ:   false,
 		})
 		require.NoError(t, err)
@@ -93,7 +93,7 @@ func TestNodeUpgradeJobUpdateNodeTaskStatus(t *testing.T) {
 
 // Regression test ensuring callback errors are propagated from
 // UpdateNodeTaskStatus instead of being silently ignored.
-func TestNodeUpgradeJobUpdateNodeTaskStatusReturnsErrorOnCallbackFailure(t *testing.T) {
+func TestConfigUpdateJobUpdateNodeTaskStatusReturnsErrorOnCallbackFailure(t *testing.T) {
 	var (
 		jobName  = "test-job"
 		nodeName = "node1"
@@ -118,7 +118,7 @@ func TestNodeUpgradeJobUpdateNodeTaskStatusReturnsErrorOnCallbackFailure(t *test
 			patches := gomonkey.NewPatches()
 			defer patches.Reset()
 
-			gomonkey.ApplyFunc(status.GetNodeUpgradeJobStatusUpdater, func() *status.StatusUpdater {
+			gomonkey.ApplyFunc(status.GetConfigeUpdateJobStatusUpdater, func() *status.StatusUpdater {
 				return &status.StatusUpdater{}
 			})
 			gomonkey.ApplyMethodFunc(reflect.TypeOf(&status.StatusUpdater{}), "UpdateStatus",
@@ -127,14 +127,14 @@ func TestNodeUpgradeJobUpdateNodeTaskStatusReturnsErrorOnCallbackFailure(t *test
 					opts.Callback(c.callbackErr)
 				})
 
-			handler := &NodeUpgradeJobHandler{}
+			handler := &ConfigUpdateJobHandler{}
 			err := handler.UpdateNodeTaskStatus(jobName, nodeName, true, taskmsg.UpstreamMessage{
-				Action: string(operationsv1alpha2.NodeUpgradeJobActionUpgrade),
+				Action: string(operationsv1alpha2.ConfigUpdateJobActionUpdate),
 				Succ:   true,
 			})
 			require.Error(t, err)
 			assert.ErrorIs(t, err, c.callbackErr)
-			assert.Contains(t, err.Error(), "node upgrade job status")
+			assert.Contains(t, err.Error(), "config update job status")
 		})
 	}
 }

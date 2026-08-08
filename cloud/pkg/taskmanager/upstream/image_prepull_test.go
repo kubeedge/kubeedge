@@ -17,6 +17,8 @@ limitations under the License.
 package upstream
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -32,7 +34,7 @@ import (
 func TestImagePrePullJobUpdateNodeTaskStatus(t *testing.T) {
 	var (
 		jobName  = "test-job"
-		nodeNmae = "node1"
+		nodeName = "node1"
 	)
 	t.Run("final action successful", func(t *testing.T) {
 		patches := gomonkey.NewPatches()
@@ -48,13 +50,13 @@ func TestImagePrePullJobUpdateNodeTaskStatus(t *testing.T) {
 				assert.Equal(t, operationsv1alpha2.ImagePrePullJobActionPull, act.Action)
 				assert.Equal(t, operationsv1alpha2.NodeTaskPhaseSuccessful, opts.Phase)
 				assert.Equal(t, jobName, opts.JobName)
-				assert.Equal(t, nodeNmae, opts.NodeName)
+				assert.Equal(t, nodeName, opts.NodeName)
 				require.NotNil(t, opts.Callback)
 				opts.Callback(nil)
 			})
 
 		handler := &ImagePrePullJobHandler{}
-		err := handler.UpdateNodeTaskStatus(jobName, nodeNmae, true, taskmsg.UpstreamMessage{
+		err := handler.UpdateNodeTaskStatus(jobName, nodeName, true, taskmsg.UpstreamMessage{
 			Action: string(operationsv1alpha2.ImagePrePullJobActionPull),
 			Succ:   true,
 		})
@@ -75,16 +77,64 @@ func TestImagePrePullJobUpdateNodeTaskStatus(t *testing.T) {
 				assert.Equal(t, operationsv1alpha2.ImagePrePullJobActionPull, act.Action)
 				assert.Equal(t, operationsv1alpha2.NodeTaskPhaseFailure, opts.Phase)
 				assert.Equal(t, jobName, opts.JobName)
-				assert.Equal(t, nodeNmae, opts.NodeName)
+				assert.Equal(t, nodeName, opts.NodeName)
 				require.NotNil(t, opts.Callback)
 				opts.Callback(nil)
 			})
 
 		handler := &ImagePrePullJobHandler{}
-		err := handler.UpdateNodeTaskStatus(jobName, nodeNmae, true, taskmsg.UpstreamMessage{
+		err := handler.UpdateNodeTaskStatus(jobName, nodeName, true, taskmsg.UpstreamMessage{
 			Action: string(operationsv1alpha2.ImagePrePullJobActionPull),
 			Succ:   false,
 		})
 		require.NoError(t, err)
 	})
+}
+
+// Regression test ensuring callback errors are propagated from
+// UpdateNodeTaskStatus instead of being silently ignored.
+func TestImagePrePullJobUpdateNodeTaskStatusReturnsErrorOnCallbackFailure(t *testing.T) {
+	var (
+		jobName  = "test-job"
+		nodeName = "node1"
+	)
+
+	cases := []struct {
+		name        string
+		callbackErr error
+	}{
+		{
+			name:        "plain callback error",
+			callbackErr: errors.New("update status failed"),
+		},
+		{
+			name:        "wrapped callback error",
+			callbackErr: fmt.Errorf("underlying: %w", errors.New("conflict")),
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			patches := gomonkey.NewPatches()
+			defer patches.Reset()
+
+			gomonkey.ApplyFunc(status.GetImagePrePullJobStatusUpdater, func() *status.StatusUpdater {
+				return &status.StatusUpdater{}
+			})
+			gomonkey.ApplyMethodFunc(reflect.TypeOf(&status.StatusUpdater{}), "UpdateStatus",
+				func(opts status.UpdateStatusOptions) {
+					require.NotNil(t, opts.Callback)
+					opts.Callback(c.callbackErr)
+				})
+
+			handler := &ImagePrePullJobHandler{}
+			err := handler.UpdateNodeTaskStatus(jobName, nodeName, true, taskmsg.UpstreamMessage{
+				Action: string(operationsv1alpha2.ImagePrePullJobActionPull),
+				Succ:   true,
+			})
+			require.Error(t, err)
+			assert.ErrorIs(t, err, c.callbackErr)
+			assert.Contains(t, err.Error(), "image prepull job status")
+		})
+	}
 }
