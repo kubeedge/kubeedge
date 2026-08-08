@@ -21,6 +21,8 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/devices/v1beta1"
+	operationsv1alpha1 "github.com/kubeedge/api/apis/operations/v1alpha1"
+	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	v1 "github.com/kubeedge/api/apis/rules/v1"
 	"github.com/kubeedge/api/client/clientset/versioned"
 	"github.com/kubeedge/kubeedge/cloud/cmd/admission/app/options"
@@ -51,6 +53,11 @@ var codecs = serializer.NewCodecFactory(scheme)
 
 var controller = &AdmissionController{}
 
+var nodeUpgradeJobWebhookVersions = []string{
+	operationsv1alpha1.Version,
+	operationsv1alpha2.Version,
+}
+
 func init() {
 	addToScheme(scheme)
 }
@@ -60,6 +67,8 @@ func addToScheme(scheme *runtime.Scheme) {
 	utilruntime.Must(admissionv1.AddToScheme(scheme))
 	utilruntime.Must(admissionregistrationv1.AddToScheme(scheme))
 	utilruntime.Must(v1beta1.AddDeviceCrds(scheme))
+	utilruntime.Must(operationsv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(operationsv1alpha2.AddToScheme(scheme))
 }
 
 // AdmissionController implements the admission webhook for validation of configuration.
@@ -287,7 +296,7 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 					},
 					Rule: admissionregistrationv1.Rule{
 						APIGroups:   []string{"operations.kubeedge.io"},
-						APIVersions: []string{"v1alpha1"},
+						APIVersions: nodeUpgradeJobWebhookVersions,
 						Resources:   []string{"nodeupgradejobs"},
 					},
 				}},
@@ -362,7 +371,7 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 
 			Rule: admissionregistrationv1.Rule{
 				APIGroups:   []string{"operations.kubeedge.io"},
-				APIVersions: []string{"v1alpha1"},
+				APIVersions: nodeUpgradeJobWebhookVersions,
 				Resources:   []string{"nodeupgradejobs"},
 			},
 		}},
