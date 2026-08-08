@@ -28,6 +28,7 @@ const (
 	OpReplace Operation = "replace"
 )
 
+// Operation represents a single JSON patch operation type (e.g., add, remove, replace).
 type Operation string
 
 // Items maps the json expression of jsonpatch.
