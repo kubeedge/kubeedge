@@ -149,7 +149,7 @@ func TestReleaseExecutorConcurrent(t *testing.T) {
 	})
 
 	globpatches.ApplyMethodFunc(reflect.TypeOf((*executor.NodeTaskExecutor)(nil)),
-		"FinishTask", func() {
+		"FinishTask", func(_nodeName string) {
 			finishTaskCalled = true
 		})
 
