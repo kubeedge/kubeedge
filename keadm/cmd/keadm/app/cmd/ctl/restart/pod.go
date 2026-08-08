@@ -38,30 +38,30 @@ var (
 	edgePodRestartShortDescription = `Restart pods in edge node`
 )
 
-// NewEdgePodRestart returns KubeEdge delete edge pod command.
+// NewEdgePodRestart returns KubeEdge restart edge pod command.
 func NewEdgePodRestart() *cobra.Command {
-	deleteOpts := NewRestartPodOpts()
+	restartOpts := NewRestartPodOpts()
 	cmd := &cobra.Command{
 		Use:   "pod",
 		Short: edgePodRestartShortDescription,
 		Long:  edgePodRestartShortDescription,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) <= 0 {
-				return fmt.Errorf("no pod specified for reboot")
+				return fmt.Errorf("no pod specified for restart")
 			}
-			cmdutil.CheckErr(deleteOpts.restartPod(args))
+			cmdutil.CheckErr(restartOpts.restartPod(args))
 			return nil
 		},
 		Aliases: []string{"pods", "po"},
 	}
-	AddRestartPodFlags(cmd, deleteOpts)
+	AddRestartPodFlags(cmd, restartOpts)
 	return cmd
 }
 
 func NewRestartPodOpts() *PodRestartOptions {
-	podDeleteOptions := &PodRestartOptions{}
-	podDeleteOptions.Namespace = "default"
-	return podDeleteOptions
+	podRestartOptions := &PodRestartOptions{}
+	podRestartOptions.Namespace = "default"
+	return podRestartOptions
 }
 
 func AddRestartPodFlags(cmd *cobra.Command, RestartPodOptions *PodRestartOptions) {
