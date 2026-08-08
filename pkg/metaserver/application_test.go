@@ -556,8 +556,7 @@ func TestReset(t *testing.T) {
 
 func TestAddAndClose(t *testing.T) {
 	app := Application{
-		countLock: &sync.Mutex{},
-		count:     1, // Initial count
+		count: 1, // Initial count
 	}
 
 	app.Add()
@@ -581,7 +580,6 @@ func TestAddAndClose(t *testing.T) {
 
 func TestLastCloseTime(t *testing.T) {
 	app1 := Application{
-		countLock: &sync.Mutex{},
 		count:     1,
 		Timestamp: time.Now(),
 	}
@@ -589,7 +587,6 @@ func TestLastCloseTime(t *testing.T) {
 	assert.True(t, result1.IsZero())
 
 	app2 := Application{
-		countLock: &sync.Mutex{},
 		count:     0,
 		Timestamp: time.Time{}, // Zero timestamp
 	}
@@ -598,7 +595,6 @@ func TestLastCloseTime(t *testing.T) {
 
 	expectedTime := time.Now()
 	app3 := Application{
-		countLock: &sync.Mutex{},
 		count:     0,
 		Timestamp: expectedTime,
 	}
@@ -636,4 +632,40 @@ func TestWait(t *testing.T) {
 	}
 	// Should not block or panic when context is nil
 	app.Wait()
+}
+
+func TestConcurrentResetWaitCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	app := Application{
+		ctx:    ctx,
+		cancel: cancel,
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 100; i++ {
+			app.Reset()
+		}
+		// Ensure the final context is cancelled so Wait does not hang
+		app.Cancel()
+	}()
+
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 100; i++ {
+			app.Wait()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 100; i++ {
+			app.Cancel()
+		}
+	}()
+
+	wg.Wait()
 }
