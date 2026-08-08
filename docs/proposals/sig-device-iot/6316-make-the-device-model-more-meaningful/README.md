@@ -45,7 +45,7 @@ A device instance will reference the device model and share its specifications, 
 ### DMI Compatibility Improvement
 
 DMI (Device Mapper Interface) is the interface through which devices interact with the system and needs to be compatible with the new device model.  
-The DMI compatibility design will be implemented by modifying the `dealMetaDeviceOperation` function in the file `edge/pkg/devicetwin/dtmanager/dmiworker.go`. The main purpose is to override the fields of the received `device_instance`.
+The DMI compatibility design is implemented in the `overrideDeviceInstanceConfig` function (invoked via `GetOverriddenDevice`) in `edge/pkg/devicetwin/dmicache/dmicache.go`. `dealMetaDeviceOperation` in `edge/pkg/devicetwin/dtmanager/dmiworker.go` only triggers it on insert and update. The main purpose is to override the fields of the received `device_instance`.
 
 1.Trigger Timing of Field Override
 - Inserting device instance
