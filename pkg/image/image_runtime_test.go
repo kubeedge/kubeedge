@@ -29,6 +29,7 @@ import (
 func TestGetImageDigest(t *testing.T) {
 	ctx := context.TODO()
 	image := "docker.io/kubeedge/installation-package:v1.20.0"
+	const validDigest = "sha256:e47afdf2746ad10ee76dd64289eae01895000327c0f23c5b498959eca6953695"
 
 	t.Run("failed to get image status", func(t *testing.T) {
 		fakeImgSvc := criapitesting.NewFakeImageService()
@@ -47,30 +48,15 @@ func TestGetImageDigest(t *testing.T) {
 			imgsvc: fakeImgSvc,
 		}
 		digest, err := imgrt.GetImageDigest(ctx, image)
-		require.NoError(t, err)
+		require.EqualError(t, err, "image docker.io/kubeedge/installation-package:v1.20.0 not found in local runtime")
 		require.Equal(t, "", digest)
 	})
 
-	t.Run("match repo tags", func(t *testing.T) {
-		fakeImgSvc := criapitesting.NewFakeImageService()
-		fakeImgSvc.Images[image] = &runtimeapi.Image{
-			RepoTags:    []string{image},
-			RepoDigests: []string{"docker.io/kubeedge/installation-package@sha256:e47afdf2746ad10ee76dd64289eae01895000327c0f23c5b498959eca6953695"},
-		}
-
-		imgrt := &RuntimeImpl{
-			imgsvc: fakeImgSvc,
-		}
-		digest, err := imgrt.GetImageDigest(ctx, image)
-		require.NoError(t, err)
-		require.Equal(t, "sha256:e47afdf2746ad10ee76dd64289eae01895000327c0f23c5b498959eca6953695", digest)
-	})
-
-	t.Run("not match repo tags", func(t *testing.T) {
+	t.Run("matches repo digest by repository name", func(t *testing.T) {
 		fakeImgSvc := criapitesting.NewFakeImageService()
 		fakeImgSvc.Images[image] = &runtimeapi.Image{
 			RepoTags:    []string{"kubeedge/installation-package:v1.20.0"},
-			RepoDigests: []string{"kubeedge/installation-package@sha256:12345"},
+			RepoDigests: []string{"kubeedge/installation-package@" + validDigest},
 		}
 
 		imgrt := &RuntimeImpl{
@@ -78,8 +64,56 @@ func TestGetImageDigest(t *testing.T) {
 		}
 		digest, err := imgrt.GetImageDigest(ctx, image)
 		require.NoError(t, err)
+		require.Equal(t, validDigest, digest)
+	})
+
+	t.Run("returns error when repo digest missing for repository", func(t *testing.T) {
+		fakeImgSvc := criapitesting.NewFakeImageService()
+		fakeImgSvc.Images[image] = &runtimeapi.Image{
+			RepoDigests: []string{"docker.io/kubeedge/edgecore@" + validDigest},
+		}
+
+		imgrt := &RuntimeImpl{
+			imgsvc: fakeImgSvc,
+		}
+		digest, err := imgrt.GetImageDigest(ctx, image)
+		require.EqualError(t, err, "image digest for repository docker.io/kubeedge/installation-package not found in local runtime")
 		require.Empty(t, digest)
 	})
+
+	t.Run("returns error when repo digest malformed", func(t *testing.T) {
+		fakeImgSvc := criapitesting.NewFakeImageService()
+		fakeImgSvc.Images[image] = &runtimeapi.Image{
+			RepoDigests: []string{"docker.io/kubeedge/installation-package@sha256:not-a-real-digest"},
+		}
+
+		imgrt := &RuntimeImpl{
+			imgsvc: fakeImgSvc,
+		}
+		digest, err := imgrt.GetImageDigest(ctx, image)
+		require.ErrorContains(t, err, "failed to parse repo digest")
+		require.Empty(t, digest)
+	})
+}
+
+func TestNormalizeDigest(t *testing.T) {
+	const validDigest = "sha256:e47afdf2746ad10ee76dd64289eae01895000327c0f23c5b498959eca6953695"
+
+	normalized, err := NormalizeDigest(validDigest)
+	require.NoError(t, err)
+	require.Equal(t, validDigest, normalized)
+
+	normalized, err = NormalizeDigest("sha256:not-a-real-digest")
+	require.EqualError(t, err, "invalid image digest \"sha256:not-a-real-digest\": invalid checksum digest length")
+	require.Empty(t, normalized)
+}
+
+func TestImmutableImageRef(t *testing.T) {
+	const validDigest = "sha256:e47afdf2746ad10ee76dd64289eae01895000327c0f23c5b498959eca6953695"
+
+	ref, err := ImmutableImageRef("kubeedge/installation-package:v1.20.0", validDigest)
+	require.NoError(t, err)
+	require.Equal(t, "docker.io/kubeedge/installation-package@"+validDigest, ref)
 }
 
 func TestConvToCRIImage(t *testing.T) {

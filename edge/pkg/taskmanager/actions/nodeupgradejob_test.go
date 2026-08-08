@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"runtime"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
@@ -89,13 +90,7 @@ func TestNodeUpgradeJobPostRun(t *testing.T) {
 
 func TestNodeUpgradeJobCheckItems(t *testing.T) {
 	ctx := context.TODO()
-	specser := &cachedSpecSerializer{
-		spec: &operationsv1alpha2.NodeUpgradeJobSpec{
-			CheckItems: []string{"cpu", "mem", "disk"},
-			Image:      "kubeedge/installation-package",
-			Version:    "v1.21.0",
-		},
-	}
+	const validDigest = "sha256:e47afdf2746ad10ee76dd64289eae01895000327c0f23c5b498959eca6953695"
 	cfg := &cfgv1alpha2.EdgeCoreConfig{
 		Modules: &cfgv1alpha2.Modules{
 			Edged: &cfgv1alpha2.Edged{
@@ -111,6 +106,13 @@ func TestNodeUpgradeJobCheckItems(t *testing.T) {
 	}
 
 	t.Run("check items failed", func(t *testing.T) {
+		specser := &cachedSpecSerializer{
+			spec: &operationsv1alpha2.NodeUpgradeJobSpec{
+				CheckItems: []string{"cpu", "mem", "disk"},
+				Image:      "kubeedge/installation-package",
+				Version:    "v1.21.0",
+			},
+		}
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
@@ -122,8 +124,14 @@ func TestNodeUpgradeJobCheckItems(t *testing.T) {
 		assert.EqualError(t, resp.Error(), "test error")
 	})
 
-	t.Run("check items success", func(t *testing.T) {
-		var pullImageCalled, copyResourcesCalled bool
+	t.Run("check items requires image digest getter", func(t *testing.T) {
+		specser := &cachedSpecSerializer{
+			spec: &operationsv1alpha2.NodeUpgradeJobSpec{
+				CheckItems: []string{"cpu", "mem", "disk"},
+				Image:      "kubeedge/installation-package",
+				Version:    "v1.21.0",
+			},
+		}
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
@@ -141,24 +149,84 @@ func TestNodeUpgradeJobCheckItems(t *testing.T) {
 		})
 		patches.ApplyMethodFunc(reflect.TypeOf(&containers.ContainerRuntimeImpl{}), "PullImage",
 			func(_ctx context.Context, image string, _authConfig *runtimeapi.AuthConfig, _sandboxConfig *runtimeapi.PodSandboxConfig) error {
-				pullImageCalled = true
 				assert.Equal(t, "kubeedge/installation-package:v1.21.0", image)
 				return nil
 			})
+
+		resp := h.checkItems(ctx, "", "", specser)
+		require.EqualError(t, resp.Error(), "imageDigestGetter is required for node upgrade jobs")
+	})
+
+	t.Run("copies keadm from immutable image reference", func(t *testing.T) {
+		specser := &cachedSpecSerializer{
+			spec: &operationsv1alpha2.NodeUpgradeJobSpec{
+				Image:   "kubeedge/installation-package",
+				Version: "v1.21.0",
+				ImageDigestGetter: &operationsv1alpha2.ImageDigestGetter{
+					AMD64: validDigest,
+					ARM64: validDigest,
+				},
+			},
+		}
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyFunc(options.GetEdgeCoreConfig, func() *cfgv1alpha2.EdgeCoreConfig {
+			return cfg
+		})
+		patches.ApplyFunc(containers.NewContainerRuntime, func(endpoint, cgroupDriver string,
+		) (containers.ContainerRuntime, error) {
+			return &containers.ContainerRuntimeImpl{}, nil
+		})
+		patches.ApplyMethodFunc(reflect.TypeOf(&containers.ContainerRuntimeImpl{}), "PullImage",
+			func(_ctx context.Context, image string, _authConfig *runtimeapi.AuthConfig, _sandboxConfig *runtimeapi.PodSandboxConfig) error {
+				assert.Equal(t, "kubeedge/installation-package:v1.21.0", image)
+				return nil
+			})
+		patches.ApplyMethodFunc(reflect.TypeOf(&containers.ContainerRuntimeImpl{}), "GetImageDigest",
+			func(_ctx context.Context, image string) (string, error) {
+				assert.Equal(t, "kubeedge/installation-package:v1.21.0", image)
+				return validDigest, nil
+			})
 		patches.ApplyMethodFunc(reflect.TypeOf(&containers.ContainerRuntimeImpl{}), "CopyResources",
-			func(_ctx context.Context, edgeImage string, files map[string]string) error {
-				copyResourcesCalled = true
-				assert.Equal(t, "kubeedge/installation-package:v1.21.0", edgeImage)
-				hostpath, ok := files["/usr/local/bin/keadm"]
-				assert.True(t, ok)
-				assert.Equal(t, "/usr/local/bin/keadm", hostpath)
+			func(_ctx context.Context, image string, files map[string]string) error {
+				assert.Equal(t, "docker.io/kubeedge/installation-package@"+validDigest, image)
+				assert.Equal(t, "/usr/local/bin/keadm", files["/usr/local/bin/keadm"])
 				return nil
 			})
 
 		resp := h.checkItems(ctx, "", "", specser)
 		require.NoError(t, resp.Error())
-		assert.True(t, pullImageCalled)
-		assert.True(t, copyResourcesCalled)
+	})
+}
+
+func TestExpectedUpgradeImageDigest(t *testing.T) {
+	t.Run("requires digest getter", func(t *testing.T) {
+		digest, err := expectedUpgradeImageDigest(nil)
+		require.EqualError(t, err, "imageDigestGetter is required for node upgrade jobs")
+		assert.Empty(t, digest)
+	})
+
+	t.Run("returns digest for current architecture", func(t *testing.T) {
+		const validDigest = "sha256:e47afdf2746ad10ee76dd64289eae01895000327c0f23c5b498959eca6953695"
+		digest, err := expectedUpgradeImageDigest(&operationsv1alpha2.ImageDigestGetter{
+			AMD64: validDigest,
+			ARM64: validDigest,
+		})
+		require.NoError(t, err)
+		if runtime.GOARCH == "amd64" || runtime.GOARCH == "arm64" {
+			assert.Equal(t, validDigest, digest)
+		} else {
+			assert.NotEmpty(t, digest)
+		}
+	})
+
+	t.Run("rejects malformed digest", func(t *testing.T) {
+		_, err := expectedUpgradeImageDigest(&operationsv1alpha2.ImageDigestGetter{
+			AMD64: "sha256:not-a-real-digest",
+			ARM64: "sha256:not-a-real-digest",
+		})
+		require.ErrorContains(t, err, "invalid image digest")
 	})
 }
 
@@ -264,7 +332,8 @@ func TestNodeUpgradeJobUpgrade(t *testing.T) {
 			Version: "v1.21.0",
 		}
 
-		args := buildNodeUpgradeJobCommandArgs(spec)
+args, err := buildNodeUpgradeJobCommandArgs(spec)
+		require.NoError(t, err)
 
 		assert.Equal(t, []string{
 			"upgrade", "edge",
@@ -279,7 +348,8 @@ func TestNodeUpgradeJobUpgrade(t *testing.T) {
 			Image:   "custom.com/kubeedge/installation-package",
 		}
 
-		args := buildNodeUpgradeJobCommandArgs(spec)
+args, err := buildNodeUpgradeJobCommandArgs(spec)
+		require.NoError(t, err)
 
 		assert.Equal(t, []string{
 			"upgrade", "edge",
@@ -295,7 +365,8 @@ func TestNodeUpgradeJobUpgrade(t *testing.T) {
 			Image:   "custom.com/kubeedge/installation-package$(touch /tmp/pwned)",
 		}
 
-		args := buildNodeUpgradeJobCommandArgs(spec)
+args, err := buildNodeUpgradeJobCommandArgs(spec)
+		require.NoError(t, err)
 
 		assert.Equal(t, []string{
 			"upgrade", "edge",
@@ -303,6 +374,37 @@ func TestNodeUpgradeJobUpgrade(t *testing.T) {
 			"--toVersion", "v1.21.0; touch /tmp/pwned",
 			"--image", "custom.com/kubeedge/installation-package$(touch /tmp/pwned)",
 		}, args)
+})
+
+	t.Run("upgrade command includes image digest", func(t *testing.T) {
+		const validDigest = "sha256:e47afdf2746ad10ee76dd64289eae01895000327c0f23c5b498959eca6953695"
+		spec := &operationsv1alpha2.NodeUpgradeJobSpec{
+			Version: "v1.21.0",
+			ImageDigestGetter: &operationsv1alpha2.ImageDigestGetter{
+				AMD64: validDigest,
+				ARM64: validDigest,
+			},
+		}
+
+		args, err := buildNodeUpgradeJobCommandArgs(spec)
+		require.NoError(t, err)
+
+		assert.Equal(t, []string{
+			"upgrade", "edge",
+			"--force",
+			"--toVersion", "v1.21.0",
+			"--image-digest", validDigest,
+		}, args)
+	})
+
+	t.Run("missing image digest returns error", func(t *testing.T) {
+		spec := &operationsv1alpha2.NodeUpgradeJobSpec{
+			Version:           "v1.21.0",
+			ImageDigestGetter: &operationsv1alpha2.ImageDigestGetter{},
+		}
+
+		_, err := buildNodeUpgradeJobCommandArgs(spec)
+		require.Error(t, err)
 	})
 }
 
