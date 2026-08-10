@@ -53,6 +53,7 @@ cloudCore:
         enable: false
         maxIncomingStreams: "10000"
       https:
+        port: 10002
         enable: true
     cloudStream:
       enable: true

@@ -29,8 +29,11 @@ helm upgrade --install cloudcore ./cloudcore --namespace kubeedge --create-names
 - `cloudCore.resources`, defines the resources limits and requests.
 - `cloudCore.modules.cloudHub.nodeLimit`, defines the edge nodes limits.
 - `cloudCore.modules.cloudHub.websocket.enable`, default `true`.
+- `cloudCore.modules.cloudHub.websocket.port`, default `10000`.
 - `cloudCore.modules.cloudHub.quic.enable`, default `false`.
+- `cloudCore.modules.cloudHub.quic.port`, default `10001`.
 - `cloudCore.modules.cloudHub.https.enable`, default `true`.
+- `cloudCore.modules.cloudHub.https.port`, default `10002`.
 - `cloudCore.modules.cloudStream.enable`, default `true`.
 - `cloudCore.modules.deviceController.enable`, default `true`.
 - `cloudCore.modules.dynamicController.enable`,  default `false`.
