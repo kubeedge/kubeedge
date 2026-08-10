@@ -2,7 +2,7 @@ module github.com/kubeedge/api
 
 go 1.23.12
 
-toolchain go1.24.2
+toolchain go1.23.12
 
 require (
 	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace

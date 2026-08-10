@@ -20,6 +20,7 @@ on:
 env:
   CONTAINER_RUN_OPTIONS: " "
   GINKGO_VERSION: "v2.21.0"
+  KUBEEDGE_BUILD_IMAGE: "kubeedge/build-tools:1.23.12-ke1"
 
 permissions:
   contents: read
@@ -33,9 +34,9 @@ jobs:
     steps:
       - name: Pull kubeedge/build-tools image
         run: |
-          docker pull kubeedge/build-tools:1.22.9-ke1
+          docker pull kubeedge/build-tools:1.23.12-ke1
           mkdir -p /home/runner/build-tools/
-          docker save kubeedge/build-tools:1.22.9-ke1 > /home/runner/build-tools/build-tools.tar
+          docker save kubeedge/build-tools:1.23.12-ke1 > /home/runner/build-tools/build-tools.tar
 
       - name: Temporarily save kubeedge/build-tools image
         uses: actions/upload-artifact@v4

@@ -2,7 +2,7 @@ module github.com/kubeedge/Template
 
 go 1.23.12
 
-toolchain go1.23.2
+toolchain go1.23.12
 
 require (
 	github.com/eclipse/paho.mqtt.golang v1.2.0
