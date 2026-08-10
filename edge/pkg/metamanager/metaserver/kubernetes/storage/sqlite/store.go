@@ -91,11 +91,11 @@ func (s *store) GetList(ctx context.Context, key string, opts storage.ListOption
 	}
 
 	resp, err := s.client.List(context.TODO(), key)
-
-	if err != nil || len(*resp.Kvs) == 0 {
-		klog.Error(err)
+	if err != nil {
+		klog.Errorf("failed to list %s from local store: %v", key, err)
 		return err
 	}
+
 	unstrList := listObj.(*unstructured.UnstructuredList)
 	for _, v := range *resp.Kvs {
 		var unstrObj unstructured.Unstructured
