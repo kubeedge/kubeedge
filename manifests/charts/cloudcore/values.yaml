@@ -56,10 +56,17 @@ cloudCore:
         enable: true
     cloudStream:
       enable: true
+    deviceController:
+      enable: true
     dynamicController:
       enable: false
+    edgeController:
+      enable: true
+      nodeUpdateFrequency: 10
     router:
       enable: false
+    syncController:
+      enable: true
     taskManager:
       enable: false
   service:
