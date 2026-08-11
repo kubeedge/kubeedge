@@ -58,6 +58,26 @@ func (f *FilterImpl) NeedFilter(content interface{}) bool {
 	return false
 }
 
+// getService resolves the Service owning an endpoint object, preferring the
+// shared informer cache and falling back to a live GET while it is unavailable.
+func getService(namespace, name string) (metav1.Object, error) {
+	servicesGVR := v1.SchemeGroupVersion.WithResource("services")
+
+	var svcRaw interface{}
+	lister, err := filter.GetSyncedResourceLister(servicesGVR)
+	if err != nil {
+		klog.Infof("services lister unavailable, falling back to live get: %v", err)
+		svcRaw, err = client.GetDynamicClient().Resource(servicesGVR).Namespace(namespace).
+			Get(context.TODO(), name, metav1.GetOptions{})
+	} else {
+		svcRaw, err = lister.ByNamespace(namespace).Get(name)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return meta.Accessor(svcRaw)
+}
+
 func filterEndpointSlice(targetNode string, obj runtime.Object) {
 	unstruct, ok := obj.(*unstructured.Unstructured)
 	if !ok {
@@ -71,14 +91,9 @@ func filterEndpointSlice(targetNode string, obj runtime.Object) {
 	}
 	var svcTopology string
 	if svcName, ok := epSlice.Labels[discovery.LabelServiceName]; ok {
-		svcRaw, err := filter.GetDynamicResourceInformer(v1.SchemeGroupVersion.WithResource("services")).Lister().ByNamespace(epSlice.Namespace).Get(svcName)
+		svcObj, err := getService(epSlice.Namespace, svcName)
 		if err != nil {
 			klog.Errorf("filter endpoint slice for svc %s error: %v", svcName, err)
-			return
-		}
-		svcObj, err := meta.Accessor(svcRaw)
-		if err != nil {
-			klog.Errorf("get service %v accessor error: %v", svcName, err)
 			return
 		}
 		svcTopology = svcObj.GetAnnotations()[nodegroup.ServiceTopologyAnnotation]
@@ -127,27 +142,9 @@ func filterEndpoints(targetNode string, obj runtime.Object) {
 		return
 	}
 	svcName := ep.GetName()
-	var svcRaw interface{}
-
-	if !filter.GetDynamicResourceInformer(v1.SchemeGroupVersion.WithResource("services")).Informer().HasSynced() {
-		klog.Info("services informer has not synced yet")
-		svcRaw, err = client.GetDynamicClient().Resource(v1.SchemeGroupVersion.WithResource("services")).Namespace(ep.Namespace).Get(context.TODO(), svcName, metav1.GetOptions{})
-		if err != nil {
-			klog.Errorf("filter endpoint for svc %s error: %v", svcName, err)
-			return
-		}
-	} else {
-		svcRaw, err = filter.GetDynamicResourceInformer(v1.SchemeGroupVersion.WithResource("services")).Lister().
-			ByNamespace(ep.Namespace).Get(svcName)
-		if err != nil {
-			klog.Errorf("filter endpoint for svc %s error: %v", svcName, err)
-			return
-		}
-	}
-
-	svcObj, err := meta.Accessor(svcRaw)
+	svcObj, err := getService(ep.Namespace, svcName)
 	if err != nil {
-		klog.Errorf("get service %v accessor error: %v", svcName, err)
+		klog.Errorf("filter endpoint for svc %s error: %v", svcName, err)
 		return
 	}
 
