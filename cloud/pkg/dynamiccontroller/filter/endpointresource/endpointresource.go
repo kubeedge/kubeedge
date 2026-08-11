@@ -104,6 +104,14 @@ func filterEndpointSlice(targetNode string, obj runtime.Object) {
 	}
 	var epsTmp []discovery.Endpoint
 	for _, ep := range epSlice.Endpoints {
+		// nodeName is optional and is routinely absent while the backing pod is
+		// being scheduled. Such an endpoint cannot be matched to a node group,
+		// so it is skipped instead of dereferenced, as filterEndpointsAddress
+		// already does for the Endpoints resource.
+		if ep.NodeName == nil {
+			klog.V(4).Infof("skip endpoint without nodeName in endpointSlice %v", unstruct.GetName())
+			continue
+		}
 		if filter.IsBelongToSameGroup(targetNode, *ep.NodeName) {
 			epsTmp = append(epsTmp, ep)
 		}
