@@ -1,0 +1,3 @@
+# Installed in addition to the mapper framework's own requirements.
+# The driver and simulator intentionally share one tested PyModbus range.
+pymodbus[serial]>=3.14,<4

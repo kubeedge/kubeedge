@@ -1,0 +1,3 @@
+# Reuse the parent Modbus example's tested PyModbus version range so the
+# driver and simulator cannot drift to incompatible versions.
+-r ../requirements.txt

@@ -1,0 +1,4 @@
+grpcio>=1.60.0
+protobuf>=5.29.3
+PyYAML>=6.0
+

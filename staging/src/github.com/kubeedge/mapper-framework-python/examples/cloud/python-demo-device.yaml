@@ -1,0 +1,33 @@
+apiVersion: devices.kubeedge.io/v1beta1
+kind: Device
+metadata:
+  name: python-demo-device
+  namespace: default
+spec:
+  # Replace with the node running EdgeCore.
+  nodeName: edge-node-name
+  deviceModelRef:
+    name: python-demo-model
+  protocol:
+    protocolName: python-demo
+    configData:
+      deviceMessage: "instance config from cloud"
+  properties:
+    - name: message
+      desired:
+        value: "hello from cloud"
+        metadata:
+          type: string
+      visitors:
+        protocolName: python-demo
+        configData:
+          source: device-instance
+      collectCycle: 1000
+      reportToCloud: false
+  # methods:
+  #   - name: setMessage
+  #     description: Set message property
+  #     propertyNames:
+  #       - message
+  stateReport:
+    reportToCloud: false

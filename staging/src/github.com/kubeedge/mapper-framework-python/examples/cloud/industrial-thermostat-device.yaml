@@ -1,0 +1,157 @@
+apiVersion: devices.kubeedge.io/v1beta1
+kind: Device
+metadata:
+  name: industrial-thermostat
+  namespace: default
+spec:
+  # Before deployment, set this to the name of the edge node running EdgeCore and this Mapper.
+  nodeName: edge-node-name
+  deviceModelRef:
+    name: industrial-thermostat-model
+  protocol:
+    protocolName: modbus-rtu
+    configData:
+      port: /dev/ttyUSB0
+      slave_address: "1"
+      baud_rate: "9600"
+      data_bits: "8"
+      parity: none
+      stop_bits: "1"
+      timeout_seconds: 1.0
+      retries: "2"
+      probe_on_connect: true
+      verify_writes: true
+      handle_local_echo: false
+  properties:
+    - name: temperature_pv
+      visitors:
+        protocolName: modbus-rtu
+        configData:
+          register_type: holding_register
+          address: "0x0000"
+          plc_address: 40001
+          data_type: int16
+          scale: 0.1
+      collectCycle: 5000
+      reportCycle: 5000
+      reportToCloud: true
+    - name: humidity_rh
+      visitors:
+        protocolName: modbus-rtu
+        configData:
+          register_type: holding_register
+          address: "0x0001"
+          plc_address: 40002
+          data_type: uint16
+          scale: 0.1
+      collectCycle: 5000
+      reportCycle: 5000
+      reportToCloud: true
+    - name: temperature_sv
+      visitors:
+        protocolName: modbus-rtu
+        configData:
+          register_type: holding_register
+          address: "0x0002"
+          plc_address: 40003
+          data_type: int16
+          scale: 0.1
+          write_function_code: "0x06"
+      collectCycle: 5000
+      reportCycle: 5000
+      reportToCloud: true
+    - name: power
+      visitors:
+        protocolName: modbus-rtu
+        configData:
+          register_type: holding_register
+          address: "0x0003"
+          plc_address: 40004
+          data_type: uint16
+          write_function_code: "0x06"
+      collectCycle: 5000
+      reportCycle: 5000
+      reportToCloud: true
+    - name: mode
+      visitors:
+        protocolName: modbus-rtu
+        configData:
+          register_type: holding_register
+          address: "0x0004"
+          plc_address: 40005
+          data_type: uint16
+          write_function_code: "0x06"
+      collectCycle: 5000
+      reportCycle: 5000
+      reportToCloud: true
+    - name: fan_speed
+      visitors:
+        protocolName: modbus-rtu
+        configData:
+          register_type: holding_register
+          address: "0x0006"
+          plc_address: 40007
+          data_type: uint16
+          write_function_code: "0x06"
+      collectCycle: 5000
+      reportCycle: 5000
+      reportToCloud: true
+    - name: alarm_status
+      visitors:
+        protocolName: modbus-rtu
+        configData:
+          register_type: holding_register
+          address: "0x000A"
+          plc_address: 40011
+          data_type: uint16
+      collectCycle: 5000
+      reportCycle: 5000
+      reportToCloud: true
+    - name: modbus_address
+      visitors:
+        protocolName: modbus-rtu
+        configData:
+          register_type: holding_register
+          address: "0x0100"
+          plc_address: 40257
+          data_type: uint16
+          write_function_code: "0x06"
+          apply: after_response
+      collectCycle: 60000
+      reportCycle: 60000
+      reportToCloud: true
+    - name: baud_rate
+      visitors:
+        protocolName: modbus-rtu
+        configData:
+          register_type: holding_register
+          address: "0x0101"
+          plc_address: 40258
+          data_type: uint16
+          write_function_code: "0x06"
+          apply: after_response
+      collectCycle: 60000
+      reportCycle: 60000
+      reportToCloud: true
+  methods:
+    - name: setTemperature
+      description: Set the target temperature
+      propertyNames: [temperature_sv]
+    - name: setPower
+      description: Set the power switch
+      propertyNames: [power]
+    - name: setMode
+      description: Set the operating mode
+      propertyNames: [mode]
+    - name: setFanSpeed
+      description: Set the fan speed
+      propertyNames: [fan_speed]
+    - name: setModbusAddress
+      description: Change the Modbus slave address (use with caution)
+      propertyNames: [modbus_address]
+    - name: setBaudRate
+      description: Change the baud rate (use with caution)
+      propertyNames: [baud_rate]
+  stateReport:
+    reportToCloud: true
+    reportCycle: 30000

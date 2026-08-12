@@ -1,0 +1,65 @@
+apiVersion: devices.kubeedge.io/v1beta1
+kind: DeviceModel
+metadata:
+  name: industrial-thermostat-model
+  namespace: default
+spec:
+  protocol: modbus-rtu
+  properties:
+    - name: temperature_pv
+      description: Current measured temperature; register 0x0000, PLC address 40001
+      type: FLOAT
+      accessMode: ReadOnly
+      minimum: "-20.0"
+      maximum: "100.0"
+      unit: "°C"
+    - name: humidity_rh
+      description: Current measured humidity; register 0x0001, PLC address 40002
+      type: FLOAT
+      accessMode: ReadOnly
+      minimum: "0.0"
+      maximum: "100.0"
+      unit: "%RH"
+    - name: temperature_sv
+      description: Target setpoint temperature; register 0x0002, PLC address 40003
+      type: FLOAT
+      accessMode: ReadWrite
+      minimum: "5.0"
+      maximum: "35.0"
+      unit: "°C"
+    - name: power
+      description: Power switch; 0=OFF, 1=ON; register 0x0003
+      type: INT
+      accessMode: ReadWrite
+      minimum: "0"
+      maximum: "1"
+    - name: mode
+      description: Operating mode; 0=cooling, 1=heating, 2=ventilation; register 0x0004
+      type: INT
+      accessMode: ReadWrite
+      minimum: "0"
+      maximum: "2"
+    - name: fan_speed
+      description: Fan speed; 0=low, 1=medium, 2=high, 3=auto; register 0x0006
+      type: INT
+      accessMode: ReadWrite
+      minimum: "0"
+      maximum: "3"
+    - name: alarm_status
+      description: Alarm bitmap; bit0=overtemperature, bit1=temperature sensor, bit2=humidity sensor, bit3=fan
+      type: INT
+      accessMode: ReadOnly
+      minimum: "0"
+      maximum: "15"
+    - name: modbus_address
+      description: Modbus slave address; register 0x0100, effective after the response is sent
+      type: INT
+      accessMode: ReadWrite
+      minimum: "1"
+      maximum: "247"
+    - name: baud_rate
+      description: Baud rate enumeration; 0=2400, 1=4800, 2=9600, 3=19200; register 0x0101
+      type: INT
+      accessMode: ReadWrite
+      minimum: "0"
+      maximum: "3"

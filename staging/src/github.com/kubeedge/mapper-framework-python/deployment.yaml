@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-demo-mapper
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: python-demo-mapper
+  template:
+    metadata:
+      labels:
+        app: python-demo-mapper
+    spec:
+      containers:
+        - name: mapper
+          image: kubeedge/python-mapper-framework:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 7777
+          volumeMounts:
+            - name: kubeedge-socket
+              mountPath: /etc/kubeedge
+      volumes:
+        - name: kubeedge-socket
+          hostPath:
+            path: /etc/kubeedge
+            type: Directory
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: python-demo-mapper
+  namespace: default
+spec:
+  selector:
+    app: python-demo-mapper
+  ports:
+    - name: http
+      port: 7777
+      targetPort: http
+

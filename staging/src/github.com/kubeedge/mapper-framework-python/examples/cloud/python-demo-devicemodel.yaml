@@ -1,0 +1,17 @@
+apiVersion: devices.kubeedge.io/v1beta1
+kind: DeviceModel
+metadata:
+  name: python-demo-model
+  namespace: default
+spec:
+  protocol: python-demo
+  properties:
+    - name: message
+      description: A demo property printed by the Python Mapper Framework
+      type: STRING
+      accessMode: ReadWrite
+      visitors:
+        protocolName: python-demo
+        configData:
+          source: model-default
+

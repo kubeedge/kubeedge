@@ -1,0 +1,19 @@
+grpc_server:
+  socket_path: /etc/kubeedge/modbus-thermostat-mapper.sock
+
+common:
+  name: modbus-thermostat-mapper
+  version: v0.1.0
+  api_version: v1beta1
+  protocol: modbus-rtu
+  address: 127.0.0.1
+  edgecore_sock: /etc/kubeedge/dmi.sock
+  register_with_data: true
+  request_timeout_seconds: 10
+  reconnect_interval_seconds: 5
+
+http_server:
+  enabled: true
+  host: 0.0.0.0
+  port: 7777
+

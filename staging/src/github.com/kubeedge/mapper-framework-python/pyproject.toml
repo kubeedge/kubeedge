@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kubeedge-mapper-framework-python"
+version = "0.1.0"
+description = "A usable Python framework for KubeEdge DMI mappers"
+requires-python = ">=3.10"
+dependencies = [
+  "grpcio>=1.60.0",
+  "protobuf>=5.29.3",
+  "PyYAML>=6.0",
+]
+
+[project.scripts]
+kubeedge-python-mapper = "mapper_framework.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["mapper_framework*"]
