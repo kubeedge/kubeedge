@@ -409,26 +409,26 @@ func SetsContainSubstring(sets []string, sub string) bool {
 }
 
 func (cu *KubeCloudHelmInstTool) rebuildFlagVals() error {
-	unDuplicatedStore := make(map[string]string)
+	seen := make(map[string]int, len(cu.Sets))
+	result := make([]string, 0, len(cu.Sets))
 
 	for _, s := range cu.Sets {
-		p := strings.Split(s, "=")
+		p := strings.SplitN(s, "=", 2)
 
 		if len(p) < 2 {
 			fmt.Println("Unsupported flags:", s)
 			continue
 		}
 
-		unDuplicatedStore[p[0]] = p[1]
+		if idx, ok := seen[p[0]]; ok {
+			result[idx] = s
+		} else {
+			seen[p[0]] = len(result)
+			result = append(result, s)
+		}
 	}
 
-	// clear Sets to avoid append on the exist slice
-	cu.Sets = []string{}
-
-	for k, v := range unDuplicatedStore {
-		cu.Sets = append(cu.Sets, fmt.Sprintf("%s=%s", k, v))
-	}
-
+	cu.Sets = result
 	return nil
 }
 

@@ -417,23 +417,73 @@ func TestRebuildFlagVals(t *testing.T) {
 
 			assert.NoError(t, err)
 
-			assert.Equal(t, len(tt.expectedSets), len(cu.Sets))
+			assert.Equal(t, tt.expectedSets, cu.Sets)
+		})
+	}
+}
 
-			expectedMap := make(map[string]bool)
-			for _, set := range tt.expectedSets {
-				expectedMap[set] = true
+func TestRebuildFlagValsPreservesHelmExpressions(t *testing.T) {
+	tests := []struct {
+		name         string
+		initialSets  []string
+		expectedSets []string
+	}{
+		{
+			name: "Comma-separated Helm expression preserved",
+			initialSets: []string{
+				"key1=value1,key2=value2",
+			},
+			expectedSets: []string{
+				"key1=value1,key2=value2",
+			},
+		},
+		{
+			name: "Value containing extra equals sign preserved",
+			initialSets: []string{
+				"token=abc=def",
+			},
+			expectedSets: []string{
+				"token=abc=def",
+			},
+		},
+		{
+			name: "Order preserved across multiple entries",
+			initialSets: []string{
+				"alpha=1",
+				"beta=2",
+				"gamma=3",
+			},
+			expectedSets: []string{
+				"alpha=1",
+				"beta=2",
+				"gamma=3",
+			},
+		},
+		{
+			name: "Duplicate key last-wins with order preserved",
+			initialSets: []string{
+				"alpha=1",
+				"beta=2",
+				"alpha=3",
+			},
+			expectedSets: []string{
+				"alpha=3",
+				"beta=2",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cu := &KubeCloudHelmInstTool{
+				Sets: tt.initialSets,
 			}
 
-			actualMap := make(map[string]bool)
-			for _, set := range cu.Sets {
-				actualMap[set] = true
-			}
+			err := cu.rebuildFlagVals()
 
-			assert.Equal(t, len(expectedMap), len(actualMap))
+			assert.NoError(t, err)
 
-			for key := range expectedMap {
-				assert.True(t, actualMap[key], "Expected set not found: %s", key)
-			}
+			assert.Equal(t, tt.expectedSets, cu.Sets)
 		})
 	}
 }
