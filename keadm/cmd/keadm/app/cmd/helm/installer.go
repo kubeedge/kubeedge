@@ -409,23 +409,15 @@ func SetsContainSubstring(sets []string, sub string) bool {
 }
 
 func (cu *KubeCloudHelmInstTool) rebuildFlagVals() error {
-	seen := make(map[string]int, len(cu.Sets))
 	result := make([]string, 0, len(cu.Sets))
 
 	for _, s := range cu.Sets {
-		p := strings.SplitN(s, "=", 2)
-
-		if len(p) < 2 {
+		if !strings.Contains(s, "=") {
 			fmt.Println("Unsupported flags:", s)
 			continue
 		}
 
-		if idx, ok := seen[p[0]]; ok {
-			result[idx] = s
-		} else {
-			seen[p[0]] = len(result)
-			result = append(result, s)
-		}
+		result = append(result, s)
 	}
 
 	cu.Sets = result
