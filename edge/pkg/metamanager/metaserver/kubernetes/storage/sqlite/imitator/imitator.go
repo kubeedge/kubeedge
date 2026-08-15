@@ -228,15 +228,15 @@ func (s *imitator) Event(msg *model.Message) []watch.Event {
 		klog.V(4).Infof("skip status or node-lease messages")
 		return []watch.Event{}
 	}
-	var bytes []byte
+	var msgBytes []byte
 	var err error
 	var body = msg.GetContent()
 	// convert body to bytes
 	switch body := body.(type) {
 	case []byte:
-		bytes = body
+		msgBytes = body
 	default:
-		bytes, err = json.Marshal(body)
+		msgBytes, err = json.Marshal(body)
 		if err != nil {
 			klog.Errorf("failed to marshal msg content, err: %+v", err)
 			return ret
@@ -251,9 +251,24 @@ func (s *imitator) Event(msg *model.Message) []watch.Event {
 	case model.DeleteOperation:
 		op = watch.Deleted
 	}
-	//TODO: support array List like []obj
+
+	trimBytes := bytes.TrimSpace(msgBytes)
+	if len(trimBytes) > 0 && trimBytes[0] == '[' {
+		var objs []map[string]interface{}
+		err = json.Unmarshal(trimBytes, &objs)
+		if err != nil {
+			klog.Errorf("failed to unmarshal array message content: %+v", err)
+			return ret
+		}
+		for _, m := range objs {
+			u := &unstructured.Unstructured{Object: m}
+			ret = append(ret, watch.Event{Type: op, Object: u})
+		}
+		return ret
+	}
+
 	obj := new(unstructured.Unstructured)
-	err = runtime.DecodeInto(s.codec, bytes, obj)
+	err = runtime.DecodeInto(s.codec, msgBytes, obj)
 	if err != nil {
 		klog.Errorf("failed to unmarshal message content to unstructured obj: %+v", err)
 		return ret
