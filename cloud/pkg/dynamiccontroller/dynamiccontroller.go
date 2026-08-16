@@ -19,7 +19,7 @@ package dynamiccontroller
 import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/dynamic/dynamicinformer"
-	"k8s.io/klog/v2"
+	"fmt"`n`n`t"k8s.io/klog/v2"
 
 	configv1alpha1 "github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core"
