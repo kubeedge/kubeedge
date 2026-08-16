@@ -3,7 +3,7 @@ package devicecontroller
 import (
 	"time"
 
-	"k8s.io/klog/v2"
+	"fmt"`n`n`t"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core"
