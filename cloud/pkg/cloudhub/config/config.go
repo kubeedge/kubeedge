@@ -3,7 +3,7 @@ package config
 import (
 	"sync"
 
-	"k8s.io/klog/v2"
+	"fmt"`n`n`t"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/security/certs"
@@ -24,7 +24,7 @@ type Configure struct {
 func InitConfigure(hub *v1alpha1.CloudHub) {
 	once.Do(func() {
 		if len(hub.AdvertiseAddress) == 0 {
-			klog.Exit("AdvertiseAddress must be specified!")
+			panic(fmt.Errorf("AdvertiseAddress must be specified"))
 		}
 
 		Config = Configure{CloudHub: *hub}
@@ -51,7 +51,7 @@ func InitConfigure(hub *v1alpha1.CloudHub) {
 			Config.Ca = ca
 			Config.CaKey = caKey
 		} else if !(ca == nil && caKey == nil) {
-			klog.Exit("Both of ca and caKey should be specified!")
+			panic(fmt.Errorf("both ca and caKey must be specified"))
 		}
 
 		if hub.TLSCertFile != "" {
@@ -74,7 +74,7 @@ func InitConfigure(hub *v1alpha1.CloudHub) {
 			Config.Cert = cert
 			Config.Key = key
 		} else if !(cert == nil && key == nil) {
-			klog.Exit("Both of cert and key should be specified!")
+			panic(fmt.Errorf("both cert and key must be specified"))
 		}
 	})
 }
