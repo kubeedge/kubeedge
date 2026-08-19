@@ -338,10 +338,14 @@ func (ns *NodeSession) syncAckMessage() (bool, error) {
 func (ns *NodeSession) sendMessageWithRetry(copyMsg, msg *beehivemodel.Message) error {
 	ackChan := make(chan struct{})
 	ns.ackMessageCache.Store(copyMsg.GetID(), ackChan)
+	// Delete the ack channel from the cache on every return path.
+	// This prevents a leak when the edge node never acknowledges the message.
+	defer ns.ackMessageCache.Delete(copyMsg.GetID())
 
 	// initialize retry count and timer for sending message
 	retryCount := 0
 	ticker := time.NewTimer(sendRetryInterval)
+	defer ticker.Stop()
 
 	err := ns.connection.WriteMessageAsync(copyMsg)
 	if err != nil {
