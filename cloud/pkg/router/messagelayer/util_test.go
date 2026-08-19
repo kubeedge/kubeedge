@@ -45,7 +45,7 @@ func TestBuildResourceForRouter(t *testing.T) {
 				resourceID:   "id",
 			},
 			wantResource: "",
-			wantErr:      fmt.Errorf("required parameter are not set (resourceID or resource type)"),
+			wantErr:      fmt.Errorf("required parameters are not set (resourceID or resource type)"),
 		},
 		{
 			name: "case 2: empty resourceID",
@@ -55,7 +55,7 @@ func TestBuildResourceForRouter(t *testing.T) {
 				resourceID:   "",
 			},
 			wantResource: "",
-			wantErr:      fmt.Errorf("required parameter are not set (resourceID or resource type)"),
+			wantErr:      fmt.Errorf("required parameters are not set (resourceID or resource type)"),
 		},
 		{
 			name: "case 3: empty namespace",
