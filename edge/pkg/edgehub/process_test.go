@@ -341,6 +341,53 @@ func TestRouteToCloud(t *testing.T) {
 	}
 }
 
+// TestRouteToCloudRequeueOnSendFailure tests that routeToCloud puts the
+// failed message back into the EdgeHub queue before it triggers the
+// reconnect. Otherwise the message is lost when the connection breaks.
+func TestRouteToCloudRequeueOnSendFailure(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+	config.Config.MessageQPS = 3
+	config.Config.MessageBurst = 6
+
+	hub := newEdgeHub(true)
+	hub.chClient = mockAdapter
+
+	mockAdapter.EXPECT().Send(gomock.Any()).Return(errors.New("Connection Refused")).AnyTimes()
+
+	go hub.routeToCloud()
+	time.Sleep(time.Second)
+
+	msg := model.NewMessage("").BuildHeader("test_id", "", 1)
+	beehiveContext.Send(modules.EdgeHubModuleName, *msg)
+
+	select {
+	case <-hub.reconnectChan:
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out waiting for the reconnect signal")
+	}
+
+	requeuedCh := make(chan *model.Message, 1)
+	go func() {
+		got, _ := beehiveContext.Receive(modules.EdgeHubModuleName)
+		requeuedCh <- &got
+	}()
+	var requeued *model.Message
+	select {
+	case requeued = <-requeuedCh:
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out waiting for the requeued message")
+	}
+
+	if requeued.GetID() != msg.GetID() {
+		t.Errorf("requeued message ID = %s, want %s", requeued.GetID(), msg.GetID())
+	}
+	if requeued.GetContent() != msg.GetContent() {
+		t.Errorf("requeued message content = %v, want %v", requeued.GetContent(), msg.GetContent())
+	}
+}
+
 // TestKeepalive() tests whether ping message sent to the cloud at regular intervals happens properly
 func TestKeepalive(t *testing.T) {
 	CertFile := "/tmp/kubeedge/certs/edge.crt"
