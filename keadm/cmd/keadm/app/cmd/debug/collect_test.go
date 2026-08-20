@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -166,7 +167,7 @@ func TestMakeDirTmp(t *testing.T) {
 
 	mkdirPatch := gomonkey.ApplyFunc(os.Mkdir, func(path string, perm os.FileMode) error {
 		assert.Equal(expectedTmpName, path)
-		assert.Equal(os.ModePerm, perm)
+		assert.Equal(os.FileMode(collectDirPermission), perm)
 		return nil
 	})
 	defer mkdirPatch.Reset()
@@ -407,14 +408,14 @@ func TestCollectRuntimeData(t *testing.T) {
 	execShellPatch := setupExecShellPatch(true)
 	defer execShellPatch.Reset()
 
-	err := collectRuntimeData("/tmp/runtime")
+	err := collectRuntimeData("/tmp/runtime", "unix:///var/run/docker.sock")
 	assert.NoError(err)
 
 	mkdirPatch.Reset()
 	mkdirErrorPatch := setupMkdirPatch(t, "/tmp/runtime", false)
 	defer mkdirErrorPatch.Reset()
 
-	err = collectRuntimeData("/tmp/runtime")
+	err = collectRuntimeData("/tmp/runtime", "unix:///var/run/docker.sock")
 	assert.Error(err)
 	assert.Equal("directory creation failed", err.Error())
 
@@ -426,9 +427,79 @@ func TestCollectRuntimeData(t *testing.T) {
 	copyFileErrorPatch := setupCopyFilePatch(false)
 	defer copyFileErrorPatch.Reset()
 
-	err = collectRuntimeData("/tmp/runtime")
+	err = collectRuntimeData("/tmp/runtime", "unix:///var/run/docker.sock")
 	assert.Error(err)
 	assert.Equal("file copy failed", err.Error())
+}
+
+func TestCollectContainerdData(t *testing.T) {
+	assert := assert.New(t)
+	if runtimeGOOS == "windows" {
+		t.Skip("containerd diagnostics use Unix commands")
+	}
+
+	endpoint := "unix:///run/containerd/containerd.sock"
+	binDir := t.TempDir()
+	for _, command := range []string{"crictl", "journalctl", "systemctl"} {
+		path := filepath.Join(binDir, command)
+		err := os.WriteFile(path, []byte("#!/bin/sh\nprintf '%s\\n' \"$@\"\n"), 0755)
+		assert.NoError(err)
+	}
+	t.Setenv("PATH", binDir+":"+os.Getenv("PATH"))
+
+	runtimeDir := filepath.Join(t.TempDir(), "runtime")
+	err := collectRuntimeData(runtimeDir, endpoint)
+	assert.NoError(err)
+
+	version, err := os.ReadFile(filepath.Join(runtimeDir, "version"))
+	assert.NoError(err)
+	assert.Contains(string(version), "--runtime-endpoint")
+	assert.Contains(string(version), endpoint)
+	assert.Contains(string(version), "version")
+
+	containerInfo, err := os.ReadFile(filepath.Join(runtimeDir, "containerInfo"))
+	assert.NoError(err)
+	assert.Equal("--runtime-endpoint\n"+endpoint+"\nps\n-a\n", string(containerInfo))
+
+	for _, name := range []string{"info", "images", "log", "service"} {
+		content, err := os.ReadFile(filepath.Join(runtimeDir, name))
+		assert.NoError(err)
+		assert.NotEmpty(strings.TrimSpace(string(content)))
+	}
+
+	log, err := os.ReadFile(filepath.Join(runtimeDir, "log"))
+	assert.NoError(err)
+	assert.Equal("--no-pager\n--since\n24 hours ago\n-u\ncontainerd\n", string(log))
+
+	service, err := os.ReadFile(filepath.Join(runtimeDir, "service"))
+	assert.NoError(err)
+	assert.Equal("--no-pager\n--full\nstatus\ncontainerd\n", string(service))
+}
+
+func TestCollectRuntimeDataOnWindows(t *testing.T) {
+	assert := assert.New(t)
+	originalGOOS := runtimeGOOS
+	runtimeGOOS = "windows"
+	defer func() { runtimeGOOS = originalGOOS }()
+
+	err := collectRuntimeData(filepath.Join(t.TempDir(), "runtime"), "npipe:////./pipe/containerd-containerd")
+	assert.EqualError(err, "container runtime diagnostics are not supported on Windows")
+}
+
+func TestWriteCollectionError(t *testing.T) {
+	assert := assert.New(t)
+	runtimeDir := filepath.Join(t.TempDir(), "runtime")
+
+	err := writeCollectionError(runtimeDir, errors.New("crictl is unavailable"))
+	assert.NoError(err)
+
+	content, err := os.ReadFile(filepath.Join(runtimeDir, "error"))
+	assert.NoError(err)
+	assert.Equal("crictl is unavailable\n", string(content))
+
+	info, err := os.Stat(filepath.Join(runtimeDir, "error"))
+	assert.NoError(err)
+	assert.Equal(os.FileMode(collectFilePermission), info.Mode().Perm())
 }
 
 func TestExecuteCollect(t *testing.T) {
@@ -471,12 +542,25 @@ func TestExecuteCollect(t *testing.T) {
 	})
 	defer collectEdgePatch.Reset()
 
+	collectRuntimePatch := gomonkey.ApplyFunc(collectRuntimeData, func(tmpPath, endpoint string) error {
+		assert.Equal(tmpDir+"/runtime", tmpPath)
+		return nil
+	})
+	defer collectRuntimePatch.Reset()
+
 	compressPatch := gomonkey.ApplyFunc(util.Compress, func(zipName string, sources []string) error {
 		assert.Equal("/path/to/output/edge_"+timeStr+".tar.gz", zipName)
 		assert.Equal([]string{tmpDir}, sources)
 		return nil
 	})
 	defer compressPatch.Reset()
+
+	chmodPatch := gomonkey.ApplyFunc(os.Chmod, func(name string, mode os.FileMode) error {
+		assert.Equal("/path/to/output/edge_"+timeStr+".tar.gz", name)
+		assert.Equal(os.FileMode(collectFilePermission), mode)
+		return nil
+	})
+	defer chmodPatch.Reset()
 
 	removeAllPatch := gomonkey.ApplyFunc(os.RemoveAll, func(path string) error {
 		assert.Equal(tmpDir, path)
