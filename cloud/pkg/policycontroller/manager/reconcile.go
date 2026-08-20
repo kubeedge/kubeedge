@@ -429,17 +429,7 @@ func (c *Controller) syncRules(ctx context.Context, acc *policyv1alpha1.ServiceA
 			klog.Errorf("failed to update serviceaccountaccess %s/%s, %v", acc.Namespace, acc.Name, err)
 			return controllerruntime.Result{Requeue: true}, err
 		}
-		if !equality.Semantic.DeepEqual(acc.Status.NodeList, nodes) {
-			acc.Status.NodeList = append([]string{}, nodes...)
-			if err := c.Client.Status().Update(ctx, acc); err != nil {
-				klog.Errorf("failed to update serviceaccountaccess status %s/%s, %v", acc.Namespace, acc.Name, err)
-				return controllerruntime.Result{Requeue: true}, err
-			}
-		}
 		c.send2Edge(acc, nodes, model.UpdateOperation)
-	} else {
-		addNodes := subtractSlice(acc.Status.NodeList, nodes)
-		klog.V(4).Infof("serviceaccountaccess spec %s/%s is up to date", acc.Namespace, acc.Name)
 		if !equality.Semantic.DeepEqual(acc.Status.NodeList, nodes) {
 			acc.Status.NodeList = append([]string{}, nodes...)
 			if err := c.Client.Status().Update(ctx, acc); err != nil {
@@ -447,8 +437,24 @@ func (c *Controller) syncRules(ctx context.Context, acc *policyv1alpha1.ServiceA
 				return controllerruntime.Result{Requeue: true}, err
 			}
 		}
-		if len(addNodes) != 0 {
-			c.send2Edge(acc, addNodes, model.InsertOperation)
+	} else {
+		klog.V(4).Infof("serviceaccountaccess spec %s/%s is up to date", acc.Namespace, acc.Name)
+		// Send to every node, not only the ones missing from status.NodeList.
+		// cloudHub drops a message whose resourceVersion is not newer than the
+		// one recorded in that node's ObjectSync, so a node already in sync
+		// costs nothing on the wire, while a node that silently missed an
+		// earlier send is repaired instead of being stranded forever.
+		c.send2Edge(acc, nodes, model.UpdateOperation)
+		// Record the node list only after the send. A node written into
+		// status.NodeList but never sent to used to be unreachable afterwards,
+		// because the send list was derived from that same list on every later
+		// pass.
+		if !equality.Semantic.DeepEqual(acc.Status.NodeList, nodes) {
+			acc.Status.NodeList = append([]string{}, nodes...)
+			if err := c.Client.Status().Update(ctx, acc); err != nil {
+				klog.Errorf("failed to update serviceaccountaccess status %s/%s, %v", acc.Namespace, acc.Name, err)
+				return controllerruntime.Result{Requeue: true}, err
+			}
 		}
 	}
 	return controllerruntime.Result{}, nil
