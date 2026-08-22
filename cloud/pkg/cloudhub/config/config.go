@@ -3,7 +3,9 @@ package config
 import (
 	"sync"
 
-	"fmt"`n`n`t"k8s.io/klog/v2"
+	"fmt"
+
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/pkg/security/certs"
