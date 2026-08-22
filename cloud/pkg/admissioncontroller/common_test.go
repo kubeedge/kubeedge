@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,8 +14,6 @@ import (
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
-
-	"github.com/kubeedge/kubeedge/cloud/test/httpfake"
 )
 
 func TestRegisterValidateWebhook(t *testing.T) {
@@ -146,37 +145,63 @@ func TestRegisterMutatingWebhook(t *testing.T) {
 }
 
 func TestServe(t *testing.T) {
-	w := httpfake.NewResponseWriter()
 	hookfn := func(admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 		return &admissionv1.AdmissionResponse{Allowed: true}
 	}
 
-	t.Run("not json content-type", func(_ *testing.T) {
+	t.Run("not json content-type", func(t *testing.T) {
+		w := httptest.NewRecorder()
 		serve(w, &http.Request{
 			Header: map[string][]string{
 				"Content-Type": {"application/xml"},
 			},
 		}, hookfn)
+		assert.Equal(t, http.StatusUnsupportedMediaType, w.Code)
+		assert.Contains(t, w.Body.String(), "invalid Content-Type")
 	})
 
-	t.Run("decode body failed", func(_ *testing.T) {
-		raw := "{"
-		serve(w, &http.Request{
-			Header: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-			Body: io.NopCloser(bytes.NewReader([]byte(raw))),
-		}, hookfn)
-	})
-
-	t.Run("handle hook func", func(_ *testing.T) {
+	t.Run("json content-type with charset", func(t *testing.T) {
+		called := false
 		raw := "{\"request\": {\"uid\": \"1\"}}"
+		w := httptest.NewRecorder()
+		serve(w, &http.Request{
+			Header: map[string][]string{
+				"Content-Type": {"application/json; charset=utf-8"},
+			},
+			Body: io.NopCloser(bytes.NewReader([]byte(raw))),
+		}, func(ar admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
+			called = true
+			return &admissionv1.AdmissionResponse{Allowed: true, UID: ar.Request.UID}
+		})
+		assert.True(t, called)
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Contains(t, w.Body.String(), "\"allowed\":true")
+	})
+
+	t.Run("decode body failed", func(t *testing.T) {
+		raw := "{"
+		w := httptest.NewRecorder()
 		serve(w, &http.Request{
 			Header: map[string][]string{
 				"Content-Type": {"application/json"},
 			},
 			Body: io.NopCloser(bytes.NewReader([]byte(raw))),
 		}, hookfn)
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Contains(t, w.Body.String(), "unexpected end of JSON input")
+	})
+
+	t.Run("handle hook func", func(t *testing.T) {
+		raw := "{\"request\": {\"uid\": \"1\"}}"
+		w := httptest.NewRecorder()
+		serve(w, &http.Request{
+			Header: map[string][]string{
+				"Content-Type": {"application/json"},
+			},
+			Body: io.NopCloser(bytes.NewReader([]byte(raw))),
+		}, hookfn)
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Contains(t, w.Body.String(), "\"allowed\":true")
 	})
 }
 

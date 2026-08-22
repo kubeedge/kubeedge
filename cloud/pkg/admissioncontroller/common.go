@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"mime"
 	"net/http"
 
 	admissionv1 "k8s.io/api/admission/v1"
@@ -76,8 +77,10 @@ func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 
 	// verify the content type is accurate
 	contentType := r.Header.Get("Content-Type")
-	if contentType != "application/json" {
+	mediaType, _, err := mime.ParseMediaType(contentType)
+	if err != nil || mediaType != "application/json" {
 		klog.Errorf("contentType=%s, expect application/json", contentType)
+		http.Error(w, "invalid Content-Type, expect application/json", http.StatusUnsupportedMediaType)
 		return
 	}
 
