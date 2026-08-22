@@ -1004,6 +1004,35 @@ func TestDecompressTarGzAllowsSafeEntries(t *testing.T) {
 	assert.Equal(t, "SAFE", string(got))
 }
 
+func TestDecompressTarGzRejectsOversizedEntry(t *testing.T) {
+	base := t.TempDir()
+	dest := filepath.Join(base, "extract")
+	archivePath := filepath.Join(base, "oversized.tar.gz")
+
+	file, err := os.Create(archivePath)
+	assert.NoError(t, err)
+	gzWriter := gzip.NewWriter(file)
+	tarWriter := tar.NewWriter(gzWriter)
+	err = tarWriter.WriteHeader(&tar.Header{
+		Name:     "oversized.bin",
+		Mode:     0644,
+		Size:     5,
+		Typeflag: tar.TypeReg,
+	})
+	assert.NoError(t, err)
+	_, err = tarWriter.Write([]byte("12345"))
+	assert.NoError(t, err)
+	assert.NoError(t, tarWriter.Close())
+	assert.NoError(t, gzWriter.Close())
+	assert.NoError(t, file.Close())
+
+	err = decompressTarGz(archivePath, dest, 4, 8)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "exceeds maximum allowed size")
+	_, statErr := os.Stat(filepath.Join(dest, "oversized.bin"))
+	assert.Error(t, statErr)
+}
+
 func TestDecompressTarGzRejectsPathTraversal(t *testing.T) {
 	tests := []struct {
 		name      string
