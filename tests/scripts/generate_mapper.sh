@@ -59,8 +59,13 @@ docker build -f Dockerfile_nostream -t modbus-e2e-mapper:v1.0.0 . && echo "succe
 docker save -o modbus-mapper.tar modbus-e2e-mapper:v1.0.0
 
 if [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
-  # Use podman to import the mapper image and change it to the correct name
-  sudo podman load -i modbus-mapper.tar && sudo podman tag localhost/v1.0.0:latest docker.io/library/modbus-e2e-mapper:v1.0.0 && echo "successfully import modbus mapper image to CRI-O"
+  # podman's load naming for the archive's tag varies by version, so read back
+  # the name it actually loaded and only retag if it doesn't already match.
+  loaded_image=$(sudo podman load -i modbus-mapper.tar | sed -n 's/^Loaded image: //p' | tail -n1)
+  if [[ -n "${loaded_image}" && "${loaded_image}" != "docker.io/library/modbus-e2e-mapper:v1.0.0" ]]; then
+    sudo podman tag "${loaded_image}" docker.io/library/modbus-e2e-mapper:v1.0.0
+  fi
+  echo "successfully import modbus mapper image to CRI-O"
 elif [[ "${CONTAINER_RUNTIME}" = "isulad" ]]; then
   sudo isula load -i modbus-mapper.tar && echo "successfully import modbus mapper image to Isulad"
 elif [[ "${CONTAINER_RUNTIME}" = "containerd" ]]; then

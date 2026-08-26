@@ -131,7 +131,9 @@ func convertDeviceProperty(prop *v1beta1.DeviceProperty) (*pb.DeviceProperty, er
 		return nil, fmt.Errorf("failed to marshal property: %w", err)
 	}
 
-	err = json.Unmarshal(propertyData, item)
+	if err := json.Unmarshal(propertyData, item); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal property: %w", err)
+	}
 
 	if prop.Visitors.ConfigData != nil && prop.Visitors.ConfigData.Data != nil {
 		configAnyData := make(map[string]*anypb.Any)
