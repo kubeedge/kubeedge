@@ -224,7 +224,26 @@ func GetCurrentVersion(version string) (string, error) {
 	return GetCurrentVersion(remoteVersion)
 }
 
+// maxExtractedFileSize is the maximum number of bytes allowed for a single
+// entry extracted from a tar archive, to guard against decompression bombs.
+// 512 MiB is far larger than any individual file in a KubeEdge release tarball.
+const maxExtractedFileSize int64 = 512 * 1024 * 1024 // 512 MiB
+
+// maxTotalExtractedSize is the maximum cumulative number of bytes allowed
+// across all entries extracted from a tar archive.
+// 1 GiB is far larger than any KubeEdge release tarball.
+const maxTotalExtractedSize int64 = 1024 * 1024 * 1024 // 1 GiB
+
+// DecompressTarGz extracts a gzip-compressed tar archive to dest.
+// It is hardened against both path traversal and decompression bombs (tar bombs).
 func DecompressTarGz(gzFilePath, dest string) error {
+	return decompressTarGzWithLimits(gzFilePath, dest, maxExtractedFileSize, maxTotalExtractedSize)
+}
+
+// decompressTarGzWithLimits is the testable inner implementation of DecompressTarGz.
+// maxFileSize caps the bytes extracted from any single tar entry.
+// maxTotalSize caps the total bytes extracted across all entries.
+func decompressTarGzWithLimits(gzFilePath, dest string, maxFileSize, maxTotalSize int64) error {
 	reader, err := os.Open(gzFilePath)
 	if err != nil {
 		return err
@@ -249,6 +268,7 @@ func DecompressTarGz(gzFilePath, dest string) error {
 
 	tr := tar.NewReader(archive)
 
+	var totalExtracted int64
 	for {
 		header, err := tr.Next()
 		switch {
@@ -289,11 +309,24 @@ func DecompressTarGz(gzFilePath, dest string) error {
 			if err != nil {
 				return err
 			}
-			if _, err := io.Copy(writer, tr); err != nil {
-				writer.Close() // Close the file explicitly here in case of an error
+			// Guard against decompression bombs: limit the bytes read from each
+			// tar entry. io.LimitReader returns io.EOF after maxFileSize bytes,
+			// so n == maxFileSize means the entry may have been truncated.
+			n, err := io.Copy(writer, io.LimitReader(tr, maxFileSize))
+			closeErr := writer.Close()
+			if err != nil {
 				return err
 			}
-			writer.Close() // Close the file explicitly after successful write
+			if closeErr != nil {
+				return closeErr
+			}
+			if n >= maxFileSize {
+				return fmt.Errorf("tar entry %q exceeds maximum allowed size of %d bytes", header.Name, maxFileSize)
+			}
+			totalExtracted += n
+			if totalExtracted > maxTotalSize {
+				return fmt.Errorf("tar archive total extracted size exceeds maximum allowed size of %d bytes", maxTotalSize)
+			}
 		}
 	}
 }

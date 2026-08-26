@@ -21,6 +21,7 @@ import (
 	"compress/gzip"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -1057,3 +1058,129 @@ func TestDecompressTarGzRejectsPathTraversal(t *testing.T) {
 		})
 	}
 }
+
+// createTestTarGzFromReader builds a .tar.gz archive containing a single regular
+// file entry whose content is streamed from r. size must equal the number of bytes
+// that r will produce so that the tar header is written correctly.
+func createTestTarGzFromReader(t *testing.T, entryName string, r io.Reader, size int64) string {
+	t.Helper()
+
+	archivePath := filepath.Join(t.TempDir(), "bomb.tar.gz")
+	file, err := os.Create(archivePath)
+	if err != nil {
+		t.Fatalf("failed to create test archive: %v", err)
+	}
+
+	gzWriter := gzip.NewWriter(file)
+	tarWriter := tar.NewWriter(gzWriter)
+
+	hdr := &tar.Header{
+		Name:     entryName,
+		Mode:     0644,
+		Typeflag: tar.TypeReg,
+		Size:     size,
+	}
+	if err := tarWriter.WriteHeader(hdr); err != nil {
+		t.Fatalf("failed to write tar header: %v", err)
+	}
+	if _, err := io.Copy(tarWriter, r); err != nil {
+		t.Fatalf("failed to write tar body: %v", err)
+	}
+	if err := tarWriter.Close(); err != nil {
+		t.Fatalf("failed to close tar writer: %v", err)
+	}
+	if err := gzWriter.Close(); err != nil {
+		t.Fatalf("failed to close gzip writer: %v", err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatalf("failed to close archive file: %v", err)
+	}
+	return archivePath
+}
+
+// zeroReader is an io.Reader that produces n zero bytes.
+type zeroReader struct{ remaining int64 }
+
+func (z *zeroReader) Read(p []byte) (int, error) {
+	if z.remaining <= 0 {
+		return 0, io.EOF
+	}
+	n := int64(len(p))
+	if n > z.remaining {
+		n = z.remaining
+	}
+	for i := int64(0); i < n; i++ {
+		p[i] = 0
+	}
+	z.remaining -= n
+	return int(n), nil
+}
+
+// TestDecompressTarGzRejectsTarBomb_SingleEntry verifies that a single tar entry
+// whose uncompressed size meets or exceeds the per-entry limit is rejected.
+// We use tiny limits (1 KiB per-entry, 2 KiB cumulative) so the test runs
+// instantly without writing large amounts of data to disk.
+func TestDecompressTarGzRejectsTarBomb_SingleEntry(t *testing.T) {
+	const testMaxFile int64 = 1024        // 1 KiB per-entry limit for testing
+	const testMaxTotal int64 = 2 * 1024   // 2 KiB cumulative limit for testing
+	const entrySize int64 = testMaxFile   // exactly at the limit — io.LimitReader stops here
+
+	dest := filepath.Join(t.TempDir(), "extract")
+	archivePath := createTestTarGzFromReader(t, "bigfile.bin", &zeroReader{remaining: entrySize}, entrySize)
+
+	err := decompressTarGzWithLimits(archivePath, dest, testMaxFile, testMaxTotal)
+	assert.Error(t, err, "expected error when a single entry equals the per-entry size limit")
+	assert.Contains(t, err.Error(), "exceeds maximum allowed size")
+}
+
+// TestDecompressTarGzRejectsTarBomb_Cumulative verifies that multiple entries
+// whose individual sizes are within the per-entry limit, but whose cumulative
+// total exceeds the archive-wide limit, are rejected.
+func TestDecompressTarGzRejectsTarBomb_Cumulative(t *testing.T) {
+	const testMaxFile int64 = 1024      // 1 KiB per-entry limit for testing
+	const testMaxTotal int64 = 2 * 1024 // 2 KiB cumulative limit for testing
+
+	// Build an archive with three entries of 800 bytes each.
+	// Each entry is within the 1 KiB per-entry limit, but together (2400 bytes)
+	// they exceed the 2 KiB cumulative limit.
+	dest := filepath.Join(t.TempDir(), "extract")
+
+	archivePath := filepath.Join(t.TempDir(), "multi.tar.gz")
+	file, err := os.Create(archivePath)
+	if err != nil {
+		t.Fatalf("failed to create test archive: %v", err)
+	}
+	gzWriter := gzip.NewWriter(file)
+	tarWriter := tar.NewWriter(gzWriter)
+
+	const entryPayload = 800
+	entryNames := []string{"a.bin", "b.bin", "c.bin"}
+	for _, name := range entryNames {
+		hdr := &tar.Header{
+			Name:     name,
+			Mode:     0644,
+			Typeflag: tar.TypeReg,
+			Size:     entryPayload,
+		}
+		if err := tarWriter.WriteHeader(hdr); err != nil {
+			t.Fatalf("failed to write tar header: %v", err)
+		}
+		if _, err := io.Copy(tarWriter, &zeroReader{remaining: entryPayload}); err != nil {
+			t.Fatalf("failed to write tar body: %v", err)
+		}
+	}
+	if err := tarWriter.Close(); err != nil {
+		t.Fatalf("failed to close tar writer: %v", err)
+	}
+	if err := gzWriter.Close(); err != nil {
+		t.Fatalf("failed to close gzip writer: %v", err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatalf("failed to close archive file: %v", err)
+	}
+
+	err = decompressTarGzWithLimits(archivePath, dest, testMaxFile, testMaxTotal)
+	assert.Error(t, err, "expected error when cumulative extracted size exceeds the total limit")
+	assert.Contains(t, err.Error(), "total extracted size exceeds maximum allowed size")
+}
+
