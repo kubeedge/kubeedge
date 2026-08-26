@@ -11,29 +11,40 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	admissionregistrationv1client "k8s.io/client-go/kubernetes/typed/admissionregistration/v1"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 )
 
+// isRegistrationRetriable reports whether a failed registration can be resolved by
+// reading the webhook configuration again and writing it once more. A conflict means
+// another writer updated the configuration between our get and update, an already
+// exists error means another writer created it between our get and create.
+func isRegistrationRetriable(err error) bool {
+	return apierrors.IsConflict(err) || apierrors.IsAlreadyExists(err)
+}
+
 func registerValidateWebhook(client admissionregistrationv1client.ValidatingWebhookConfigurationInterface,
 	webhooks []admissionregistrationv1.ValidatingWebhookConfiguration) error {
 	for _, hook := range webhooks {
-		existing, err := client.Get(context.Background(), hook.Name, metav1.GetOptions{})
-		if err != nil && !apierrors.IsNotFound(err) {
-			return err
-		}
-		if err == nil && existing != nil {
+		err := retry.OnError(retry.DefaultRetry, isRegistrationRetriable, func() error {
+			existing, err := client.Get(context.Background(), hook.Name, metav1.GetOptions{})
+			if err != nil {
+				if !apierrors.IsNotFound(err) {
+					return err
+				}
+				klog.Infof("Creating ValidatingWebhookConfiguration: %v", hook.Name)
+				_, err = client.Create(context.Background(), &hook, metav1.CreateOptions{})
+				return err
+			}
 			existing.Webhooks = hook.Webhooks
 			klog.Infof("Updating ValidatingWebhookConfiguration: %v", hook.Name)
-			if _, err := client.Update(context.Background(), existing, metav1.UpdateOptions{}); err != nil {
-				return err
-			}
-		} else {
-			klog.Infof("Creating ValidatingWebhookConfiguration: %v", hook.Name)
-			if _, err := client.Create(context.Background(), &hook, metav1.CreateOptions{}); err != nil {
-				return err
-			}
+			_, err = client.Update(context.Background(), existing, metav1.UpdateOptions{})
+			return err
+		})
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -42,21 +53,23 @@ func registerValidateWebhook(client admissionregistrationv1client.ValidatingWebh
 func registerMutatingWebhook(client admissionregistrationv1client.MutatingWebhookConfigurationInterface,
 	webhooks []admissionregistrationv1.MutatingWebhookConfiguration) error {
 	for _, hook := range webhooks {
-		existing, err := client.Get(context.Background(), hook.Name, metav1.GetOptions{})
-		if err != nil && !apierrors.IsNotFound(err) {
-			return err
-		}
-		if err == nil && existing != nil {
+		err := retry.OnError(retry.DefaultRetry, isRegistrationRetriable, func() error {
+			existing, err := client.Get(context.Background(), hook.Name, metav1.GetOptions{})
+			if err != nil {
+				if !apierrors.IsNotFound(err) {
+					return err
+				}
+				klog.Infof("Creating MutatingWebhookConfiguration: %v", hook.Name)
+				_, err = client.Create(context.Background(), &hook, metav1.CreateOptions{})
+				return err
+			}
 			existing.Webhooks = hook.Webhooks
 			klog.Infof("Updating MutatingWebhookConfiguration: %v", hook.Name)
-			if _, err := client.Update(context.Background(), existing, metav1.UpdateOptions{}); err != nil {
-				return err
-			}
-		} else {
-			klog.Infof("Creating MutatingWebhookConfiguration: %v", hook.Name)
-			if _, err := client.Create(context.Background(), &hook, metav1.CreateOptions{}); err != nil {
-				return err
-			}
+			_, err = client.Update(context.Background(), existing, metav1.UpdateOptions{})
+			return err
+		})
+		if err != nil {
+			return err
 		}
 	}
 	return nil

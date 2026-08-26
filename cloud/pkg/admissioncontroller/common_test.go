@@ -11,11 +11,27 @@ import (
 	"github.com/stretchr/testify/assert"
 	admissionv1 "k8s.io/api/admission/v1"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
+	k8stesting "k8s.io/client-go/testing"
 
 	"github.com/kubeedge/kubeedge/cloud/test/httpfake"
 )
+
+// failOnce returns a reactor failing the first action it handles with err and letting
+// the following ones fall through to the object tracker.
+func failOnce(err error) k8stesting.ReactionFunc {
+	handled := false
+	return func(k8stesting.Action) (bool, runtime.Object, error) {
+		if handled {
+			return false, nil, nil
+		}
+		handled = true
+		return true, nil, err
+	}
+}
 
 func TestRegisterValidateWebhook(t *testing.T) {
 	assert := assert.New(t)
@@ -141,6 +157,154 @@ func TestRegisterMutatingWebhook(t *testing.T) {
 					assert.Equal(hook.Webhooks, registeredHook.Webhooks)
 				}
 			}
+		})
+	}
+}
+
+func TestRegisterValidateWebhookConcurrentWriter(t *testing.T) {
+	const name = "test-webhook"
+	resource := admissionregistrationv1.Resource("validatingwebhookconfigurations")
+
+	existing := func() *admissionregistrationv1.ValidatingWebhookConfiguration {
+		return &admissionregistrationv1.ValidatingWebhookConfiguration{
+			ObjectMeta: metav1.ObjectMeta{Name: name},
+			Webhooks:   []admissionregistrationv1.ValidatingWebhook{{Name: "old.test-webhook.com"}},
+		}
+	}
+	hooks := []admissionregistrationv1.ValidatingWebhookConfiguration{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: name},
+			Webhooks:   []admissionregistrationv1.ValidatingWebhook{{Name: "new.test-webhook.com"}},
+		},
+	}
+
+	testCases := []struct {
+		name          string
+		verb          string
+		reactionError error
+		expectedError bool
+	}{
+		{
+			name:          "another writer updated the configuration first",
+			verb:          "update",
+			reactionError: apierrors.NewConflict(resource, name, errors.New("object was modified")),
+		},
+		{
+			name:          "another writer created the configuration first",
+			verb:          "create",
+			reactionError: apierrors.NewAlreadyExists(resource, name),
+		},
+		{
+			name:          "the api server rejected reading the configuration",
+			verb:          "get",
+			reactionError: apierrors.NewInternalError(errors.New("read failed")),
+			expectedError: true,
+		},
+		{
+			name:          "the api server rejected the registration",
+			verb:          "update",
+			reactionError: apierrors.NewInternalError(errors.New("registration failed")),
+			expectedError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			clientset := fake.NewSimpleClientset(existing())
+			if tc.verb == "create" {
+				// The configuration is only seen after the create lost the race.
+				clientset.PrependReactor("get", "validatingwebhookconfigurations",
+					failOnce(apierrors.NewNotFound(resource, name)))
+			}
+			clientset.PrependReactor(tc.verb, "validatingwebhookconfigurations", failOnce(tc.reactionError))
+
+			err := registerValidateWebhook(clientset.AdmissionregistrationV1().ValidatingWebhookConfigurations(), hooks)
+			if tc.expectedError {
+				assert.Error(err)
+				return
+			}
+			assert.NoError(err)
+
+			registeredHook, err := clientset.AdmissionregistrationV1().ValidatingWebhookConfigurations().
+				Get(context.Background(), name, metav1.GetOptions{})
+			assert.NoError(err)
+			assert.Equal(hooks[0].Webhooks, registeredHook.Webhooks)
+		})
+	}
+}
+
+func TestRegisterMutatingWebhookConcurrentWriter(t *testing.T) {
+	const name = "test-mutating-webhook"
+	resource := admissionregistrationv1.Resource("mutatingwebhookconfigurations")
+
+	existing := func() *admissionregistrationv1.MutatingWebhookConfiguration {
+		return &admissionregistrationv1.MutatingWebhookConfiguration{
+			ObjectMeta: metav1.ObjectMeta{Name: name},
+			Webhooks:   []admissionregistrationv1.MutatingWebhook{{Name: "old.mutating.webhook.com"}},
+		}
+	}
+	hooks := []admissionregistrationv1.MutatingWebhookConfiguration{
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: name},
+			Webhooks:   []admissionregistrationv1.MutatingWebhook{{Name: "new.mutating.webhook.com"}},
+		},
+	}
+
+	testCases := []struct {
+		name          string
+		verb          string
+		reactionError error
+		expectedError bool
+	}{
+		{
+			name:          "another writer updated the configuration first",
+			verb:          "update",
+			reactionError: apierrors.NewConflict(resource, name, errors.New("object was modified")),
+		},
+		{
+			name:          "another writer created the configuration first",
+			verb:          "create",
+			reactionError: apierrors.NewAlreadyExists(resource, name),
+		},
+		{
+			name:          "the api server rejected reading the configuration",
+			verb:          "get",
+			reactionError: apierrors.NewInternalError(errors.New("read failed")),
+			expectedError: true,
+		},
+		{
+			name:          "the api server rejected the registration",
+			verb:          "update",
+			reactionError: apierrors.NewInternalError(errors.New("registration failed")),
+			expectedError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			clientset := fake.NewSimpleClientset(existing())
+			if tc.verb == "create" {
+				// The configuration is only seen after the create lost the race.
+				clientset.PrependReactor("get", "mutatingwebhookconfigurations",
+					failOnce(apierrors.NewNotFound(resource, name)))
+			}
+			clientset.PrependReactor(tc.verb, "mutatingwebhookconfigurations", failOnce(tc.reactionError))
+
+			err := registerMutatingWebhook(clientset.AdmissionregistrationV1().MutatingWebhookConfigurations(), hooks)
+			if tc.expectedError {
+				assert.Error(err)
+				return
+			}
+			assert.NoError(err)
+
+			registeredHook, err := clientset.AdmissionregistrationV1().MutatingWebhookConfigurations().
+				Get(context.Background(), name, metav1.GetOptions{})
+			assert.NoError(err)
+			assert.Equal(hooks[0].Webhooks, registeredHook.Webhooks)
 		})
 	}
 }
