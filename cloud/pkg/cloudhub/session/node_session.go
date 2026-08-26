@@ -342,6 +342,7 @@ func (ns *NodeSession) sendMessageWithRetry(copyMsg, msg *beehivemodel.Message) 
 	// initialize retry count and timer for sending message
 	retryCount := 0
 	ticker := time.NewTimer(sendRetryInterval)
+	defer ticker.Stop()
 
 	err := ns.connection.WriteMessageAsync(copyMsg)
 	if err != nil {
