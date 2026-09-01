@@ -32,6 +32,8 @@ import (
 // from one record's JSON into the next record's output.
 func TestGetPodsFromDatabaseNoStaleKeys(t *testing.T) {
 	dao.Init(":memory:", &v1alpha2.MetaManager{Enable: true})
+	prevMs := ms
+	t.Cleanup(func() { ms = prevMs })
 	ms = dbclient.NewMetaService()
 
 	metas := []models.Meta{
@@ -64,6 +66,8 @@ func TestGetPodsFromDatabaseNoStaleKeys(t *testing.T) {
 // TestGetPodsFromDatabaseNoStaleKeys.
 func TestGetNodeFromDatabaseNoStaleKeys(t *testing.T) {
 	dao.Init(":memory:", &v1alpha2.MetaManager{Enable: true})
+	prevMs := ms
+	t.Cleanup(func() { ms = prevMs })
 	ms = dbclient.NewMetaService()
 
 	metas := []models.Meta{
