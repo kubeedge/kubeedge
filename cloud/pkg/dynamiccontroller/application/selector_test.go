@@ -17,6 +17,7 @@ limitations under the License.
 package application
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -73,6 +74,32 @@ func TestNewSelector(t *testing.T) {
 			assert.Equal(tc.expectedLabel, selector.Label.String())
 			assert.Equal(tc.expectedField, selector.Field.String())
 		})
+	}
+}
+
+func TestLabelFieldSelectorJSONRoundTrip(t *testing.T) {
+	original := NewSelector("app=myapp,tier=frontend", "metadata.namespace=default")
+	data, err := json.Marshal(original)
+	if err != nil {
+		t.Fatalf("marshal selector: %v", err)
+	}
+	if got, want := string(data), `{"labelSelector":"app=myapp,tier=frontend","fieldSelector":"metadata.namespace=default"}`; got != want {
+		t.Fatalf("unexpected JSON: got %s, want %s", got, want)
+	}
+
+	var decoded LabelFieldSelector
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("unmarshal selector: %v", err)
+	}
+	if got, want := decoded.String(), original.String(); got != want {
+		t.Fatalf("round-trip changed selector: got %q, want %q", got, want)
+	}
+}
+
+func TestLabelFieldSelectorJSONRejectsInvalidSelector(t *testing.T) {
+	var selector LabelFieldSelector
+	if err := json.Unmarshal([]byte(`{"labelSelector":"app in (","fieldSelector":""}`), &selector); err == nil {
+		t.Fatal("expected invalid label selector to be rejected")
 	}
 }
 
