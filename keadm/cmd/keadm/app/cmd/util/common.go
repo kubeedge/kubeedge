@@ -78,6 +78,11 @@ const (
 	PACMAN string = "pacman"
 
 	EdgeCoreSELinuxLabel = "system_u:object_r:bin_t:s0"
+
+	// Decompression limits protect keadm from archives that expand to an
+	// excessive amount of data (for example, a tar bomb).
+	maxExtractedFileSize  int64 = 512 * 1024 * 1024
+	maxExtractedTotalSize int64 = 1024 * 1024 * 1024
 )
 
 // AddToolVals gets the value and default values of each flags and collects them in temporary cache
@@ -225,6 +230,10 @@ func GetCurrentVersion(version string) (string, error) {
 }
 
 func DecompressTarGz(gzFilePath, dest string) error {
+	return decompressTarGz(gzFilePath, dest, maxExtractedFileSize, maxExtractedTotalSize)
+}
+
+func decompressTarGz(gzFilePath, dest string, maxFileSize, maxTotalSize int64) error {
 	reader, err := os.Open(gzFilePath)
 	if err != nil {
 		return err
@@ -248,6 +257,7 @@ func DecompressTarGz(gzFilePath, dest string) error {
 	defer archive.Close()
 
 	tr := tar.NewReader(archive)
+	var extractedTotalSize int64
 
 	for {
 		header, err := tr.Next()
@@ -285,15 +295,32 @@ func DecompressTarGz(gzFilePath, dest string) error {
 				}
 			}
 		case tar.TypeReg:
+			if header.Size > maxFileSize {
+				return fmt.Errorf("tar entry %q exceeds maximum allowed size of %d bytes", header.Name, maxFileSize)
+			}
+			if header.Size > maxTotalSize-extractedTotalSize {
+				return fmt.Errorf("tar archive exceeds maximum extracted size of %d bytes", maxTotalSize)
+			}
+
 			writer, err := os.Create(target)
 			if err != nil {
 				return err
 			}
-			if _, err := io.Copy(writer, tr); err != nil {
-				writer.Close() // Close the file explicitly here in case of an error
-				return err
+			n, copyErr := io.Copy(writer, io.LimitReader(tr, maxFileSize))
+			closeErr := writer.Close()
+			if copyErr != nil {
+				os.Remove(target)
+				return copyErr
 			}
-			writer.Close() // Close the file explicitly after successful write
+			if closeErr != nil {
+				os.Remove(target)
+				return closeErr
+			}
+			if n != header.Size {
+				os.Remove(target)
+				return fmt.Errorf("tar entry %q has unexpected size: got %d bytes, want %d", header.Name, n, header.Size)
+			}
+			extractedTotalSize += n
 		}
 	}
 }
