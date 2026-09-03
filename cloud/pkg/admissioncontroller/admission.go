@@ -65,7 +65,7 @@ func addToScheme(scheme *runtime.Scheme) {
 // AdmissionController implements the admission webhook for validation of configuration.
 type AdmissionController struct {
 	Client    *kubernetes.Clientset
-	CrdClient *versioned.Clientset
+	CrdClient versioned.Interface
 }
 
 func strPtr(s string) *string { return &s }
