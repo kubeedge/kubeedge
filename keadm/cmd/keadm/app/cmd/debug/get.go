@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/printers"
+	klog "k8s.io/klog/v2"
 	api "k8s.io/kubernetes/pkg/apis/core"
 	k8s_v1_api "k8s.io/kubernetes/pkg/apis/core/v1"
 	k8sprinters "k8s.io/kubernetes/pkg/printers"
@@ -194,9 +195,7 @@ func (g *GetOptions) Run(args []string) error {
 	}
 
 	if len(results) == 0 {
-		if _, err := fmt.Printf("No resources found in %v namespace.\n", g.Namespace); err != nil {
-			return err
-		}
+		klog.Infof("No resources found in %v namespace.", g.Namespace)
 		return nil
 	}
 	if *g.PrintFlags.OutputFormat == "" || *g.PrintFlags.OutputFormat == FormatTypeWIDE {
@@ -227,7 +226,7 @@ func (g *GetOptions) Validate(args []string) error {
 		return fmt.Errorf("unrecognized resource type: %v. ", args[0])
 	}
 	if len(g.DataPath) == 0 {
-		fmt.Printf("not specified the EdgeCore database path, use the default path: %v. ", g.DataPath)
+		klog.Infof("not specified the EdgeCore database path, use the default path: %v.", g.DataPath)
 	}
 	if !isFileExist(g.DataPath) {
 		return fmt.Errorf("edgeCore database file %v not exist. ", g.DataPath)

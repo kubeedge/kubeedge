@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	klog "k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/common/constants"
 	apiconsts "github.com/kubeedge/api/apis/common/constants"
@@ -26,7 +27,7 @@ keadm debug collect --output-path .
 `
 )
 
-var printDeatilFlag = false
+var printDetailFlag = false
 
 // NewCollect returns KubeEdge collect command.
 func NewCollect() *cobra.Command {
@@ -40,7 +41,7 @@ func NewCollect() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			err := ExecuteCollect(collectOptions)
 			if err != nil {
-				fmt.Println(err)
+				klog.Errorf("collect failed: %v", err)
 			}
 		},
 	}
@@ -79,7 +80,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 		return err
 	}
 
-	fmt.Println("Start collecting data")
+	klog.Infof("Start collecting data")
 	// create tmp direction
 	tmpName, timenow, err := makeDirTmp()
 	if err != nil {
@@ -89,7 +90,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 
 	err = collectSystemData(fmt.Sprintf("%s/system", tmpName))
 	if err != nil {
-		fmt.Printf("collect System data failed")
+		klog.Warningf("collect System data failed")
 	}
 	printDetail("collect systemd data finish")
 
@@ -100,7 +101,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	}
 	err = collectEdgecoreData(fmt.Sprintf("%s/edgecore", tmpName), edgeconfig, collectOptions)
 	if err != nil {
-		fmt.Printf("collect edgecore data failed")
+		klog.Warningf("collect edgecore data failed")
 	}
 	printDetail("collect edgecore data finish")
 
@@ -121,7 +122,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 
 	printDetail("Remove tmp data finish")
 
-	fmt.Printf("Data collected successfully, path: %s\n", zipName)
+	klog.Infof("Data collected successfully, path: %s", zipName)
 	return nil
 }
 
@@ -141,7 +142,7 @@ func VerificationParameters(collectOptions *common.CollectOptions) error {
 	collectOptions.OutputPath = path
 
 	if collectOptions.Detail {
-		printDeatilFlag = true
+		printDetailFlag = true
 	}
 
 	return nil
@@ -300,7 +301,7 @@ func ExecuteShell(cmdStr string, tmpPath string) error {
 }
 
 func printDetail(msg string) {
-	if printDeatilFlag {
-		fmt.Println(msg)
+	if printDetailFlag {
+		klog.V(4).Infof("%s", msg)
 	}
 }
