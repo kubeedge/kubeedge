@@ -340,6 +340,39 @@ func TestNodeSessionSendAckMessage(t *testing.T) {
 	}
 }
 
+// TestNodeSessionReceiveMessageAckConcurrently verifies that duplicated acks
+// carrying the same parentID, which sendMessageWithRetry makes an expected case
+// by resending the same message, do not close the ack channel more than once.
+func TestNodeSessionReceiveMessageAckConcurrently(t *testing.T) {
+	const (
+		rounds     = 20000
+		concurrent = 4
+		parentID   = "1c5d1a1a-4b0c-4a2f-9d38-4c1a08c1b0e6"
+	)
+
+	for i := 0; i < rounds; i++ {
+		ns := &NodeSession{}
+		ns.ackMessageCache.Store(parentID, make(chan struct{}))
+
+		var start, done sync.WaitGroup
+		start.Add(1)
+		done.Add(concurrent)
+		for j := 0; j < concurrent; j++ {
+			go func() {
+				defer done.Done()
+				start.Wait()
+				ns.ReceiveMessageAck(parentID)
+			}()
+		}
+		start.Done()
+		done.Wait()
+
+		if _, exist := ns.ackMessageCache.Load(parentID); exist {
+			t.Fatalf("ack channel of %s was not removed from the cache", parentID)
+		}
+	}
+}
+
 func normalSimulateMessageFunc(pool *common.NodeMessagePool, messages []*beehivemodel.Message) {
 	for _, message := range messages {
 		enqueueAckMessage(pool, message)
