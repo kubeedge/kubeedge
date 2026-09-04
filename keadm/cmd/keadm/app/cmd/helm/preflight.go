@@ -57,7 +57,12 @@ func (c *CloudCoreHelmTool) runPreflightChecks(kubeConfig string, skip bool) err
 // checkNodeReadiness verifies at least one node in the cluster is Ready.
 // cloudcore depends on the node registry being functional before it can schedule edge workloads.
 func checkNodeReadiness(cli kubernetes.Interface) error {
-	nodes, err := cli.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+	var nodes *corev1.NodeList
+	err := util.RetryWithBackoff(context.Background(), util.DefaultPreflightBackoff(), func() error {
+		var err error
+		nodes, err = cli.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("pre-flight check failed: cannot list nodes, err: %v", err)
 	}
@@ -80,8 +85,13 @@ func checkNodeReadiness(cli kubernetes.Interface) error {
 func checkCoreDNS(cli kubernetes.Interface) error {
 	selectors := []string{"app=coredns", "k8s-app=kube-dns"}
 	for _, sel := range selectors {
-		pods, err := cli.CoreV1().Pods("kube-system").List(context.Background(), metav1.ListOptions{
-			LabelSelector: sel,
+		var pods *corev1.PodList
+		err := util.RetryWithBackoff(context.Background(), util.DefaultPreflightBackoff(), func() error {
+			var err error
+			pods, err = cli.CoreV1().Pods("kube-system").List(context.Background(), metav1.ListOptions{
+				LabelSelector: sel,
+			})
+			return err
 		})
 		if err != nil {
 			return fmt.Errorf("pre-flight check failed: cannot list pods in kube-system, err: %v", err)
