@@ -27,6 +27,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/authorization/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -84,7 +85,7 @@ func TestOptionTo(t *testing.T) {
 			if tc.expectError {
 				assert.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				if tc.optionJSON != `{}` {
 					if tc.optionJSON == `{"labelSelector":"app=nginx","fieldSelector":"metadata.name=test"}` {
 						assert.Equal(t, "app=nginx", listOptions.LabelSelector)
@@ -158,7 +159,7 @@ func TestReqBodyTo(t *testing.T) {
 	}
 
 	objData, err := json.Marshal(obj.Object)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	app := &metaserver.Application{
 		ReqBody: objData,
@@ -166,7 +167,7 @@ func TestReqBodyTo(t *testing.T) {
 
 	var result unstructured.Unstructured
 	err = app.ReqBodyTo(&result)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, obj.GetName(), result.GetName())
 	assert.Equal(t, obj.GetNamespace(), result.GetNamespace())
@@ -512,7 +513,7 @@ func TestProcessApplication(t *testing.T) {
 	}
 
 	_, err := dynamicClient.Resource(deployGVR).Namespace("default").Create(context.TODO(), deployment, metav1.CreateOptions{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	t.Run("WATCH verb", func(t *testing.T) {
 		originalEnableAuthorization := config.Config.EnableAuthorization
 		config.Config.EnableAuthorization = false
@@ -529,7 +530,7 @@ func TestProcessApplication(t *testing.T) {
 		}
 
 		resp, err := center.ProcessApplication(app)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Nil(t, resp)
 	})
 
@@ -616,7 +617,7 @@ func TestProcessWatchApp(t *testing.T) {
 		}
 
 		err := center.processWatchApp(app)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, metaserver.InProcessing, app.Status)
 	})
 
