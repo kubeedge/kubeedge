@@ -1,7 +1,6 @@
 package servicebus
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -124,22 +123,39 @@ func (sf *servicebusFactory) GetTarget(ep *v1.RuleEndpoint, targetResource map[s
 func (sb *ServiceBus) GoToTarget(data map[string]interface{}, stop chan struct{}) (interface{}, error) {
 	var response *model.Message
 	messageID, ok := data["messageID"].(string)
-	param, ok := data["param"].(string)
+	if !ok {
+		return nil, buildAndLogError("messageID")
+	}
 	nodeName, ok := data["nodeName"].(string)
+	if !ok {
+		return nil, buildAndLogError("nodeName")
+	}
 	request := commonType.HTTPRequest{}
 	request.Method, ok = data["method"].(string)
-	request.Header, ok = data["header"].(http.Header)
-	request.Body, ok = data["data"].([]byte)
 	if !ok {
-		err := errors.New("data transform failed")
-		klog.Error(err.Error())
-		return nil, err
+		return nil, buildAndLogError("method")
 	}
+	// header is optional; validate the type only when a value is provided
+	if rawHeader, exists := data["header"]; exists && rawHeader != nil {
+		request.Header, ok = rawHeader.(http.Header)
+		if !ok {
+			return nil, buildAndLogError("header")
+		}
+	}
+	// body is optional; validate the type only when a value is provided
+	if rawBody, exists := data["data"]; exists && rawBody != nil {
+		request.Body, ok = rawBody.([]byte)
+		if !ok {
+			return nil, buildAndLogError("data body")
+		}
+	}
+	// use zero value if not found param
+	param, _ := data["param"].(string)
 
 	msg := model.NewMessage("")
 	msg.BuildHeader(messageID, "", msg.GetTimestamp())
 	resource := "node/" + nodeName + "/" + sb.servicePort + ":"
-	if !ok || param == "" {
+	if param == "" {
 		resource = resource + sb.targetPath
 	} else {
 		resource = resource + strings.TrimSuffix(sb.targetPath, "/") + "/" + strings.TrimPrefix(param, "/")
@@ -165,4 +181,10 @@ func (sb *ServiceBus) GoToTarget(data map[string]interface{}, stop chan struct{}
 		listener.MessageHandlerInstance.DelCallback(messageID)
 	}
 	return response, nil
+}
+
+func buildAndLogError(key string) error {
+	err := fmt.Errorf("data transform failed, %s type is not matched or value is nil", key)
+	klog.Error(err.Error())
+	return err
 }
