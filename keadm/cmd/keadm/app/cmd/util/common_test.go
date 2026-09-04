@@ -569,6 +569,16 @@ func TestDecompressAndCompress(t *testing.T) {
 	assert.FileExists(t, extractedFile1)
 	assert.FileExists(t, extractedFile2)
 
+	// Test uncompressed tar archive
+	testTar := filepath.Join(testDir, "archive.tar")
+	err = Compress(testTar, []string{testFile1, testFile2})
+	assert.NoError(t, err)
+	assert.FileExists(t, testTar)
+
+	// Test error when input path does not exist
+	err = Compress(filepath.Join(testDir, "error.tar.gz"), []string{filepath.Join(testDir, "nonexistent_source")})
+	assert.Error(t, err)
+
 	badPath := filepath.Join(os.TempDir(), "invalid/path/test.tar.gz")
 	err = Compress(badPath, []string{testFile1})
 	assert.Error(t, err)
