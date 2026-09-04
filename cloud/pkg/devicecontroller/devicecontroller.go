@@ -41,6 +41,8 @@ func newDeviceController(enable bool) *DeviceController {
 	}
 }
 
+// Register initializes the devicecontroller configuration and registers the
+// module to the core framework.
 func Register(dc *v1alpha1.DeviceController) {
 	config.InitConfigure(dc)
 	core.Register(newDeviceController(dc.Enable))
