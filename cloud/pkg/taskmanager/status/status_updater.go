@@ -21,6 +21,7 @@ import (
 	"time"
 
 	retry "github.com/avast/retry-go"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	crdcliset "github.com/kubeedge/api/client/clientset/versioned"
@@ -56,6 +57,8 @@ type TryUpdateStatusOptions struct {
 	// I.e., *ImagePrePullJobActionStatus or *NodeUpgradeJobActionStatus,
 	// or the action status of other node jobs that must be a pointer structure.
 	ActionStatus any
+	// JobCondition is a job-level condition to merge into the node job status.
+	JobCondition *metav1.Condition
 }
 
 // TryUpdateFun defines the function type for updating the status.
