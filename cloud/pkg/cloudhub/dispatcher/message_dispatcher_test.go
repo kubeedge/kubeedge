@@ -22,9 +22,15 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	ktesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
+	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	"github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/api/client/clientset/versioned/fake"
 	syncinformer "github.com/kubeedge/api/client/informers/externalversions"
@@ -33,6 +39,9 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	tf "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/testing"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/session"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
+	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	mockcon "github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn/testing"
 )
 
@@ -358,6 +367,182 @@ func TestEnqueueAckMessage(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			executeTest(t, test)
 		})
+	}
+}
+
+func TestEnqueueNamespacedResourceSkipsAPIForInitializedObjectSync(t *testing.T) {
+	msg, objectSync := newNamespacedObjectSyncSpecTestData(t, true)
+	client, dispatcher := newObjectSyncSpecTestDispatcher(t, objectSync, nil)
+
+	if !dispatcher.enqueueNamespacedResource(tf.TestNodeID, msg) {
+		t.Fatal("expected newer message to be enqueued")
+	}
+	if actions := client.Actions(); len(actions) != 0 {
+		t.Fatalf("expected initialized hot path to avoid API calls, got %v", actions)
+	}
+}
+
+func TestEnqueueNonNamespacedResourceSkipsAPIForInitializedClusterObjectSync(t *testing.T) {
+	msg, clusterObjectSync := newClusterObjectSyncSpecTestData(t, true)
+	client, dispatcher := newObjectSyncSpecTestDispatcher(t, nil, clusterObjectSync)
+
+	if !dispatcher.enqueueNonNamespacedResource(tf.TestNodeID, msg) {
+		t.Fatal("expected newer message to be enqueued")
+	}
+	if actions := client.Actions(); len(actions) != 0 {
+		t.Fatalf("expected initialized hot path to avoid API calls, got %v", actions)
+	}
+}
+
+func TestEnqueueNamespacedResourceBackfillsMissingObjectSyncSpec(t *testing.T) {
+	msg, objectSync := newNamespacedObjectSyncSpecTestData(t, false)
+	client, dispatcher := newObjectSyncSpecTestDispatcher(t, objectSync, nil)
+
+	if !dispatcher.enqueueNamespacedResource(tf.TestNodeID, msg) {
+		t.Fatal("expected newer message to be enqueued after spec backfill")
+	}
+	assertBackfillActions(t, client.Actions())
+
+	got, err := client.ReliablesyncsV1alpha1().ObjectSyncs(tf.TestNamespace).
+		Get(t.Context(), objectSync.Name, metav1.GetOptions{})
+	if err != nil {
+		t.Fatalf("failed to get objectSync: %v", err)
+	}
+	assertObjectSyncSpec(t, got.Spec, "policy.kubeedge.io/v1alpha1", "ServiceAccountAccess", "orangepi-agent")
+}
+
+func TestEnqueueNonNamespacedResourceBackfillsMissingClusterObjectSyncSpec(t *testing.T) {
+	msg, clusterObjectSync := newClusterObjectSyncSpecTestData(t, false)
+	client, dispatcher := newObjectSyncSpecTestDispatcher(t, nil, clusterObjectSync)
+
+	if !dispatcher.enqueueNonNamespacedResource(tf.TestNodeID, msg) {
+		t.Fatal("expected newer message to be enqueued after spec backfill")
+	}
+	assertBackfillActions(t, client.Actions())
+
+	got, err := client.ReliablesyncsV1alpha1().ClusterObjectSyncs().
+		Get(t.Context(), clusterObjectSync.Name, metav1.GetOptions{})
+	if err != nil {
+		t.Fatalf("failed to get clusterObjectSync: %v", err)
+	}
+	assertObjectSyncSpec(t, got.Spec, "v1", "Node", "test-resource-node")
+}
+
+func newNamespacedObjectSyncSpecTestData(t *testing.T, completeSpec bool) (*beehivemodel.Message, *v1alpha1.ObjectSync) {
+	t.Helper()
+	resource := &policyv1alpha1.ServiceAccountAccess{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "orangepi-agent",
+			Namespace:       tf.TestNamespace,
+			UID:             types.UID("service-account-access-uid"),
+			ResourceVersion: "3",
+		},
+	}
+	messageResource, err := messagelayer.BuildResource(
+		tf.TestNodeID, resource.Namespace, "serviceaccountaccess", resource.Name)
+	if err != nil {
+		t.Fatalf("failed to build message resource: %v", err)
+	}
+	msg := beehivemodel.NewMessage("").
+		SetResourceVersion(resource.ResourceVersion).
+		FillBody(resource).
+		BuildRouter("policycontroller", "resource", messageResource, "update")
+
+	spec := v1alpha1.ObjectSyncSpec{ObjectName: resource.Name}
+	if completeSpec {
+		spec.ObjectAPIVersion = "policy.kubeedge.io/v1alpha1"
+		spec.ObjectKind = "ServiceAccountAccess"
+	}
+	return msg, &v1alpha1.ObjectSync{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      synccontroller.BuildObjectSyncName(tf.TestNodeID, string(resource.UID)),
+			Namespace: resource.Namespace,
+		},
+		Spec: spec,
+		Status: v1alpha1.ObjectSyncStatus{
+			ObjectResourceVersion: "2",
+		},
+	}
+}
+
+func newClusterObjectSyncSpecTestData(t *testing.T, completeSpec bool) (*beehivemodel.Message, *v1alpha1.ClusterObjectSync) {
+	t.Helper()
+	resource := &corev1.Node{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Node"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "test-resource-node",
+			UID:             types.UID("node-uid"),
+			ResourceVersion: "3",
+		},
+	}
+	messageResource, err := messagelayer.BuildResource(
+		tf.TestNodeID, models.NullNamespace, "node", resource.Name)
+	if err != nil {
+		t.Fatalf("failed to build message resource: %v", err)
+	}
+	msg := beehivemodel.NewMessage("").
+		SetResourceVersion(resource.ResourceVersion).
+		FillBody(resource).
+		BuildRouter("edgecontroller", "resource", messageResource, "update")
+
+	spec := v1alpha1.ObjectSyncSpec{ObjectName: resource.Name}
+	if completeSpec {
+		spec.ObjectAPIVersion = "v1"
+		spec.ObjectKind = "Node"
+	}
+	return msg, &v1alpha1.ClusterObjectSync{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: synccontroller.BuildObjectSyncName(tf.TestNodeID, string(resource.UID)),
+		},
+		Spec: spec,
+		Status: v1alpha1.ObjectSyncStatus{
+			ObjectResourceVersion: "2",
+		},
+	}
+}
+
+func newObjectSyncSpecTestDispatcher(
+	t *testing.T,
+	objectSync *v1alpha1.ObjectSync,
+	clusterObjectSync *v1alpha1.ClusterObjectSync,
+) (*fake.Clientset, *messageDispatcher) {
+	t.Helper()
+	objects := make([]runtime.Object, 0, 2)
+	objectSyncIndexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
+	clusterObjectSyncIndexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
+	if objectSync != nil {
+		objects = append(objects, objectSync.DeepCopy())
+		if err := objectSyncIndexer.Add(objectSync); err != nil {
+			t.Fatalf("failed to seed objectSync lister: %v", err)
+		}
+	}
+	if clusterObjectSync != nil {
+		objects = append(objects, clusterObjectSync.DeepCopy())
+		if err := clusterObjectSyncIndexer.Add(clusterObjectSync); err != nil {
+			t.Fatalf("failed to seed clusterObjectSync lister: %v", err)
+		}
+	}
+
+	client := fake.NewSimpleClientset(objects...)
+	client.ClearActions()
+	return client, &messageDispatcher{
+		reliableClient:          client,
+		objectSyncLister:        synclisters.NewObjectSyncLister(objectSyncIndexer),
+		clusterObjectSyncLister: synclisters.NewClusterObjectSyncLister(clusterObjectSyncIndexer),
+	}
+}
+
+func assertBackfillActions(t *testing.T, actions []ktesting.Action) {
+	t.Helper()
+	if len(actions) != 2 || actions[0].GetVerb() != "get" || actions[1].GetVerb() != "update" {
+		t.Fatalf("expected get and update backfill actions, got %v", actions)
+	}
+}
+
+func assertObjectSyncSpec(t *testing.T, spec v1alpha1.ObjectSyncSpec, apiVersion, kind, name string) {
+	t.Helper()
+	if spec.ObjectAPIVersion != apiVersion || spec.ObjectKind != kind || spec.ObjectName != name {
+		t.Fatalf("unexpected objectSync spec: %#v", spec)
 	}
 }
 
