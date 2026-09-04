@@ -19,6 +19,8 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/version/verflag"
 )
 
+// NewControllerManagerCommand creates a *cobra.Command object with default
+// parameters and registry setup.
 func NewControllerManagerCommand(ctx context.Context) *cobra.Command {
 	log.SetLogger(klog.FromContext(ctx))
 	opts := options.NewControllerManagerOptions()
