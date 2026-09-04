@@ -120,6 +120,7 @@ func TestFSM_AllowTransit(t *testing.T) {
 		currentState api.State
 		event        Event
 		wantErr      bool
+		wantErrMsg   string
 	}{
 		{
 			name:         "Valid transition",
@@ -132,12 +133,14 @@ func TestFSM_AllowTransit(t *testing.T) {
 			currentState: StateRunning,
 			event:        eventStart,
 			wantErr:      true,
+			wantErrMsg:   "Running/Task/Start unsupported event",
 		},
 		{
 			name:         "Invalid event",
 			currentState: StateIdle,
 			event:        eventStop,
 			wantErr:      true,
+			wantErrMsg:   "Idle/Task/Stop unsupported event",
 		},
 	}
 
@@ -152,6 +155,9 @@ func TestFSM_AllowTransit(t *testing.T) {
 			err := fsm.AllowTransit(tt.event)
 			if tt.wantErr {
 				assert.Error(t, err)
+				if tt.wantErrMsg != "" {
+					assert.EqualError(t, err, tt.wantErrMsg)
+				}
 			} else {
 				assert.NoError(t, err)
 			}
