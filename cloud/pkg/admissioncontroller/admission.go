@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	admissionv1 "k8s.io/api/admission/v1"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
@@ -113,8 +114,9 @@ func Run(opt *options.AdmissionOptions) error {
 		return err
 	}
 	server := &http.Server{
-		Addr:      fmt.Sprintf(":%v", opt.Port),
-		TLSConfig: tlsConfig,
+		Addr:              fmt.Sprintf(":%v", opt.Port),
+		TLSConfig:         tlsConfig,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	if err := server.ListenAndServeTLS("", ""); err != nil {

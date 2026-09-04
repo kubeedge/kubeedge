@@ -406,8 +406,9 @@ func server(stopChan <-chan struct{}, tlsOpts TLSOptions) {
 
 	h := buildBasicHandler(timeout)
 	s := http.Server{
-		Addr:    fmt.Sprintf("%s:%d", servicebusConfig.Config.Server, servicebusConfig.Config.Port),
-		Handler: h,
+		Addr:              fmt.Sprintf("%s:%d", servicebusConfig.Config.Server, servicebusConfig.Config.Port),
+		Handler:           h,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	if tlsOpts.TLSEnabled {
