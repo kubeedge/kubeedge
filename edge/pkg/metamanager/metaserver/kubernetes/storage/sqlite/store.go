@@ -184,7 +184,7 @@ func MergePatchedResource(ctx context.Context, originalObj *unstructured.Unstruc
 		if err = patchutil.StrategicPatchObject(ctx, defaulter, originalObj, []byte((*metas)[0]), updatedResource, schemaReferenceObj, ""); err != nil {
 			return err
 		}
-		originalObj = updatedResource
+		*originalObj = *updatedResource
 	}
 	return nil
 }
