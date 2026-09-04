@@ -28,6 +28,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apierror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	cliflag "k8s.io/component-base/cli/flag"
 	"k8s.io/component-base/cli/globalflag"
 	"k8s.io/component-base/term"
@@ -59,6 +60,14 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/util"
 	"github.com/kubeedge/kubeedge/pkg/util/flag"
 	"github.com/kubeedge/kubeedge/pkg/version"
+)
+
+// For testing
+var (
+	// Functions that can be stubbed for testing
+	getHostnameFunc             = util.GetHostname
+	getLocalIPFunc              = util.GetLocalIP
+	createNamespaceIfNeededFunc = client.CreateNamespaceIfNeeded
 )
 
 func NewCloudCoreCommand() *cobra.Command {
@@ -161,6 +170,12 @@ kubernetes controller which manages devices so that the device metadata/status d
 	return cmd
 }
 
+// RegisterModules registers all the modules started in cloudcore
+// Exported for testing
+func RegisterModules(c *v1alpha1.CloudCoreConfig) {
+	registerModules(c)
+}
+
 // registerModules register all the modules started in cloudcore
 func registerModules(c *v1alpha1.CloudCoreConfig) {
 	enableAuthorization := c.Modules.CloudHub.Authorization != nil &&
@@ -178,10 +193,10 @@ func registerModules(c *v1alpha1.CloudCoreConfig) {
 	policycontroller.Register(client.CrdConfig)
 }
 
-func NegotiateTunnelPort() (*int, error) {
+// For testing - allows dependency injection
+func NegotiateTunnelPortWithClient(kubeClient kubernetes.Interface) (*int, error) {
 	ctx := context.Background()
-	kubeClient := client.GetKubeClient()
-	err := client.CreateNamespaceIfNeeded(ctx, constants.SystemNamespace)
+	err := createNamespaceIfNeededFunc(ctx, constants.SystemNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create system namespace: %v", err)
 	}
@@ -193,8 +208,8 @@ func NegotiateTunnelPort() (*int, error) {
 		return nil, err
 	}
 
-	hostnameOverride := util.GetHostname()
-	localIP, _ := util.GetLocalIP(hostnameOverride)
+	hostnameOverride := getHostnameFunc()
+	localIP, _ := getLocalIPFunc(hostnameOverride)
 
 	var record iptables.TunnelPortRecord
 	if err == nil {
@@ -213,7 +228,7 @@ func NegotiateTunnelPort() (*int, error) {
 			return &port, nil
 		}
 
-		port = negotiatePort(record.Port)
+		port = NegotiatePortFunc(record.Port)
 
 		record.IPTunnelPort[localIP] = port
 		record.Port[port] = true
@@ -234,7 +249,7 @@ func NegotiateTunnelPort() (*int, error) {
 	}
 
 	if apierror.IsNotFound(err) {
-		port := negotiatePort(record.Port)
+		port := NegotiatePortFunc(record.Port)
 		record := iptables.TunnelPortRecord{
 			IPTunnelPort: map[string]int{
 				localIP: port,
@@ -268,34 +283,53 @@ func NegotiateTunnelPort() (*int, error) {
 	return nil, errors.New("failed to negotiate the tunnel port")
 }
 
-func negotiatePort(portRecord map[int]bool) int {
-	for port := constants.ServerPort; ; {
-		port++
-		if _, found := portRecord[port]; !found {
-			return port
-		}
-	}
+var kubeClientGetter = client.GetKubeClient
+
+func NegotiateTunnelPort() (*int, error) {
+	return NegotiateTunnelPortWithClient(kubeClientGetter())
 }
 
-func updateCloudCoreConfigMap(c *v1alpha1.CloudCoreConfig) {
-	kubeClient := client.GetKubeClient()
-
+// UpdateCloudCoreConfigMapWithClient updates the cloudcore configmap with the given client
+// Exported for testing
+func UpdateCloudCoreConfigMapWithClient(c *v1alpha1.CloudCoreConfig, kubeClient kubernetes.Interface) error {
 	cloudCoreCM, err := kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Get(context.TODO(), constants.CloudConfigMapName, metav1.GetOptions{})
 	if err != nil {
-		klog.Warningf("failed to get CloudCore configMap %s/%s", constants.SystemNamespace, constants.CloudConfigMapName)
-		return
+		klog.Warningf("failed to get CloudCore configMap %s/%s: %v", constants.SystemNamespace, constants.CloudConfigMapName, err)
+		return err
 	}
 
 	configBytes, err := yaml.Marshal(c)
 	if err != nil {
 		klog.Errorf("Failed to marshal cloudcore config: %v", err)
-		return
+		return err
 	}
 
 	cloudCoreCM.Data["cloudcore.yaml"] = string(configBytes)
 
 	_, err = kubeClient.CoreV1().ConfigMaps(constants.SystemNamespace).Update(context.TODO(), cloudCoreCM, metav1.UpdateOptions{})
 	if err != nil {
-		klog.Errorf("Failed to marshal cloudcore config: %v", err)
+		klog.Errorf("Failed to update cloudcore config: %v", err)
+		return err
+	}
+	return nil
+}
+
+var updateCloudCoreConfigMapWarningf = klog.Warningf
+
+func updateCloudCoreConfigMap(c *v1alpha1.CloudCoreConfig) {
+	err := UpdateCloudCoreConfigMapWithClient(c, kubeClientGetter())
+	if err != nil {
+		updateCloudCoreConfigMapWarningf("Failed to update cloudcore config: %v", err)
+	}
+}
+
+// NegotiatePortFunc finds the next available port starting from ServerPort
+// Exported for testing
+func NegotiatePortFunc(portRecord map[int]bool) int {
+	for port := constants.ServerPort; ; {
+		port++
+		if _, found := portRecord[port]; !found {
+			return port
+		}
 	}
 }
