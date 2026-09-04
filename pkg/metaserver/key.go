@@ -98,7 +98,8 @@ func KeyFuncReq(ctx context.Context, _ string) (string, error) {
 func KeyRootFunc(ctx context.Context) string {
 	key, err := KeyFuncReq(ctx, "")
 	if err != nil {
-		panic("fail to get list key!")
+		klog.Errorf("failed to get list key: %v", err)
+		return ""
 	}
 	return key
 }
