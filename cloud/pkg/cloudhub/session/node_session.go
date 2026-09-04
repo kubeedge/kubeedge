@@ -345,6 +345,7 @@ func (ns *NodeSession) sendMessageWithRetry(copyMsg, msg *beehivemodel.Message) 
 
 	err := ns.connection.WriteMessageAsync(copyMsg)
 	if err != nil {
+		ns.ackMessageCache.Delete(copyMsg.GetID())
 		return err
 	}
 
@@ -354,13 +355,19 @@ func (ns *NodeSession) sendMessageWithRetry(copyMsg, msg *beehivemodel.Message) 
 			ns.saveSuccessPoint(msg)
 			return nil
 
+		case <-ns.ctx.Done():
+			ns.ackMessageCache.Delete(copyMsg.GetID())
+			return fmt.Errorf("session closed while waiting for ack of message %s", copyMsg.GetID())
+
 		case <-ticker.C:
 			if retryCount == 4 {
+				ns.ackMessageCache.Delete(copyMsg.GetID())
 				return ErrWaitTimeout
 			}
 
 			err := ns.connection.WriteMessageAsync(copyMsg)
 			if err != nil {
+				ns.ackMessageCache.Delete(copyMsg.GetID())
 				return err
 			}
 
