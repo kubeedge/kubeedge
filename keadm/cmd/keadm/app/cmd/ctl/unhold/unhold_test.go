@@ -26,7 +26,7 @@ func TestNewEdgeUnholdUpgrade(t *testing.T) {
 	cmd := NewEdgeUnholdUpgrade()
 
 	assert.NotNil(t, cmd)
-	assert.Equal(t, "unhold-upgrade <resource-type> [<name>] [--namespace namespace]", cmd.Use)
+	assert.Equal(t, "unhold <resource-type> [<name>] [--namespace namespace]", cmd.Use)
 	assert.Equal(t, "Unhold an upgrade for a pod or node-wide", cmd.Short)
 	assert.NotNil(t, cmd.RunE)
 

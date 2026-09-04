@@ -24,11 +24,10 @@ import (
 
 	"github.com/moby/term"
 	"github.com/spf13/cobra"
+	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
-	"k8s.io/klog/v2"
-	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 
 	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -49,6 +48,8 @@ type PodExecOptions struct {
 
 	// TTY is true if stdin is a TTY
 	TTY bool
+
+	genericiooptions.IOStreams
 }
 
 var edgePodExecShortDescription = `Execute command in edge pod`
@@ -64,8 +65,7 @@ func NewEdgePodExec() *cobra.Command {
 			if len(args) == 0 {
 				return fmt.Errorf("no pod specified for exec")
 			}
-			cmdutil.CheckErr(execOpts.execPod(args))
-			return nil
+			return execOpts.execPod(args)
 		},
 	}
 	AddPodExecFlags(cmd, execOpts)
@@ -73,12 +73,14 @@ func NewEdgePodExec() *cobra.Command {
 }
 
 func NewEdgePodExecOpts() *PodExecOptions {
-	podExecOptions := &PodExecOptions{}
-	return podExecOptions
+	return &PodExecOptions{
+		Namespace: "default",
+		IOStreams: genericiooptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr},
+	}
 }
 
 func AddPodExecFlags(cmd *cobra.Command, execOpts *PodExecOptions) {
-	cmd.Flags().StringVarP(&execOpts.Namespace, common.FlagNameNamespace, "n", "default", "Namespace of the pod")
+	cmd.Flags().StringVarP(&execOpts.Namespace, common.FlagNameNamespace, "n", execOpts.Namespace, "Namespace of the pod")
 	cmd.Flags().StringVarP(&execOpts.Container, common.FlagNameContainer, "c", "", "Container name")
 	cmd.Flags().BoolVarP(&execOpts.Stdin, common.FlagNameStdin, "i", false, "Pass stdin to the container")
 	cmd.Flags().BoolVarP(&execOpts.TTY, common.FlagNameTTY, "t", false, "Allocate a TTY")
@@ -104,13 +106,13 @@ func (o *PodExecOptions) execPod(args []string) error {
 	}
 
 	for _, runOutMsg := range execResponse.RunOutMessages {
-		klog.Info(runOutMsg)
+		fmt.Fprint(o.Out, runOutMsg)
 	}
 	for _, runErrMsg := range execResponse.RunErrMessages {
-		klog.Info(runErrMsg)
+		fmt.Fprint(o.ErrOut, runErrMsg)
 	}
 	for _, errMsg := range execResponse.ErrMessages {
-		klog.Info(errMsg)
+		fmt.Fprintln(o.ErrOut, errMsg)
 	}
 	return nil
 }
