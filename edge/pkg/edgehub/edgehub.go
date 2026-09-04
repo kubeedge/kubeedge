@@ -1,6 +1,7 @@
 package edgehub
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -122,13 +123,21 @@ func (eh *EdgeHub) Start() {
 		}
 		// execute hook func after connect
 		eh.pubConnectInfo(true)
-		go eh.routeToEdge()
-		go eh.routeToCloud()
-		go eh.keepalive()
+		// Derive connCtx from the beehive global context so that both
+		// an explicit reconnect (connCancel) and process shutdown (beehive
+		// context cancel) both cause the goroutines below to exit.
+		connCtx, connCancel := context.WithCancel(beehiveContext.GetContext())
+		go eh.routeToEdge(connCtx)
+		go eh.routeToCloud(connCtx)
+		go eh.keepalive(connCtx)
 
 		// wait the stop signal
 		// stop authinfo manager/websocket connection
 		<-eh.reconnectChan
+		// Cancel the connection context before UnInit so that goroutines blocked
+		// inside ReceiveWithContext or the keepalive sleep exit immediately,
+		// preventing goroutine accumulation across reconnects.
+		connCancel()
 		eh.chClient.UnInit()
 
 		// execute hook fun after disconnect
