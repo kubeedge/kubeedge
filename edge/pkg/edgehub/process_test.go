@@ -34,6 +34,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/mocks/edgehub"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/certificate"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 	msghandler "github.com/kubeedge/kubeedge/edge/pkg/edgehub/messagehandler"
 )
@@ -376,4 +377,121 @@ func TestKeepalive(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIfRotationDone(t *testing.T) {
+	t.Run("RotateCertificates disabled", func(t *testing.T) {
+		hub := &EdgeHub{
+			certManager: certificate.CertManager{
+				RotateCertificates: false,
+			},
+		}
+		hub.ifRotationDone()
+	})
+
+	t.Run("Successful send to reconnectChan when receiver ready", func(t *testing.T) {
+		hub := &EdgeHub{
+			certManager: certificate.CertManager{
+				RotateCertificates: true,
+				Done:               make(chan struct{}),
+			},
+			reconnectChan: make(chan struct{}),
+		}
+
+		go hub.ifRotationDone()
+
+		recChan := make(chan struct{})
+		go func() {
+			<-hub.reconnectChan
+			close(recChan)
+		}()
+
+		time.Sleep(20 * time.Millisecond)
+		hub.certManager.Done <- struct{}{}
+
+		select {
+		case <-recChan:
+			// Success: reconnectChan received signal
+		case <-time.After(2 * time.Second):
+			t.Fatal("expected signal on reconnectChan")
+		}
+	})
+
+	t.Run("Sends to reconnectChan when receiver becomes ready", func(t *testing.T) {
+		hub := &EdgeHub{
+			certManager: certificate.CertManager{
+				RotateCertificates: true,
+				Done:               make(chan struct{}, 1),
+			},
+			reconnectChan: make(chan struct{}),
+		}
+
+		go hub.ifRotationDone()
+
+		hub.certManager.Done <- struct{}{}
+
+		select {
+		case <-hub.reconnectChan:
+			// Success: reconnectChan received signal when receiver read from it
+		case <-time.After(2 * time.Second):
+			t.Fatal("expected signal on reconnectChan")
+		}
+	})
+
+	t.Run("Stopped by outer beehiveContext.Done", func(t *testing.T) {
+		beehiveContext.InitContext([]string{"channel"})
+		defer beehiveContext.InitContext([]string{"channel"})
+		beehiveContext.Cancel()
+
+		hub := &EdgeHub{
+			certManager: certificate.CertManager{
+				RotateCertificates: true,
+				Done:               make(chan struct{}),
+			},
+		}
+
+		done := make(chan struct{})
+		go func() {
+			hub.ifRotationDone()
+			close(done)
+		}()
+
+		select {
+		case <-done:
+			// Success: exited when beehiveContext.Done closed
+		case <-time.After(2 * time.Second):
+			t.Fatal("ifRotationDone did not exit on beehiveContext.Done")
+		}
+	})
+
+	t.Run("Stopped by inner beehiveContext.Done", func(t *testing.T) {
+		beehiveContext.InitContext([]string{"channel"})
+		defer beehiveContext.InitContext([]string{"channel"})
+
+		hub := &EdgeHub{
+			certManager: certificate.CertManager{
+				RotateCertificates: true,
+				Done:               make(chan struct{}, 1),
+			},
+			reconnectChan: make(chan struct{}),
+		}
+
+		done := make(chan struct{})
+		go func() {
+			hub.ifRotationDone()
+			close(done)
+		}()
+
+		hub.certManager.Done <- struct{}{}
+
+		time.Sleep(50 * time.Millisecond)
+		beehiveContext.Cancel()
+
+		select {
+		case <-done:
+			// Success: exited via inner beehiveContext.Done branch
+		case <-time.After(2 * time.Second):
+			t.Fatal("ifRotationDone did not exit on inner beehiveContext.Done")
+		}
+	})
 }

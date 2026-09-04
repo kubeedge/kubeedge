@@ -54,12 +54,12 @@ func FileCopy(src, dst string) error {
 	return err
 }
 
+// FileExists reports whether the file at the given path exists.
+// It returns true when os.Stat succeeds, or when the stat error is anything
+// other than "not exist" (e.g. permission denied still means the file is there).
 func FileExists(path string) bool {
 	_, err := os.Stat(path)
-	if err != nil {
-		return os.IsExist(err)
-	}
-	return true
+	return !os.IsNotExist(err)
 }
 
 // GetSubDirs returns the subdirectories of the given directory.

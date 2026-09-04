@@ -149,8 +149,17 @@ func (eh *EdgeHub) pubConnectInfo(isConnected bool) {
 func (eh *EdgeHub) ifRotationDone() {
 	if eh.certManager.RotateCertificates {
 		for {
-			<-eh.certManager.Done
-			eh.reconnectChan <- struct{}{}
+			select {
+			case <-beehiveContext.Done():
+				klog.Warning("EdgeHub ifRotationDone stop")
+				return
+			case <-eh.certManager.Done:
+				select {
+				case <-beehiveContext.Done():
+					return
+				case eh.reconnectChan <- struct{}{}:
+				}
+			}
 		}
 	}
 }

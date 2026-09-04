@@ -19,6 +19,7 @@ package files
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -49,8 +50,9 @@ func TestFileCopy(t *testing.T) {
 	t.Run("copy file successfully", func(t *testing.T) {
 		const src, dest = "a.txt", "b.txt"
 		var err error
-		_, err = os.Create(src)
+		f, err := os.Create(src)
 		assert.NoError(t, err)
+		f.Close()
 
 		defer func() {
 			err = os.Remove(src)
@@ -67,18 +69,28 @@ func TestFileCopy(t *testing.T) {
 func TestFileExists(t *testing.T) {
 	dir := t.TempDir()
 
+	// case: file exists and is readable
 	ef, err := os.CreateTemp(dir, "FileExist")
-	if err == nil {
-		if !FileExists(ef.Name()) {
-			t.Fatalf("file %v should exist", ef.Name())
-		}
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+	ef.Close()
+	if !FileExists(ef.Name()) {
+		t.Errorf("existing file should be reported as existing")
 	}
 
-	nonexistentDir := filepath.Join(dir, "not_exists_dir")
-	notExistFile := filepath.Join(nonexistentDir, "not_exist_file")
-
+	// case: file does not exist
+	notExistFile := filepath.Join(dir, "not_exists_dir", "not_exist_file")
 	if FileExists(notExistFile) {
-		t.Fatalf("file %v should not exist", notExistFile)
+		t.Errorf("non-existent file should be reported as not existing")
+	}
+
+	// case: stat returns an error other than ErrNotExist
+	// e.g., filename too long
+	longName := filepath.Join(dir, strings.Repeat("a", 1000))
+	// FileExists conservatively returns true for errors other than ErrNotExist
+	if !FileExists(longName) {
+		t.Errorf("file with very long name should conservatively report as existing")
 	}
 }
 
