@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	authenticationv1 "k8s.io/api/authentication/v1"
@@ -15,6 +16,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 // ServiceAccountTokenGetter is interface to get client service account token
@@ -32,7 +34,15 @@ type serviceAccountToken struct {
 	send SendInterface
 }
 
-const maxTTL = 24 * time.Hour
+const (
+	maxTTL                 = 24 * time.Hour
+	expiredTokenGCInterval = time.Minute
+)
+
+type serviceAccountTokenMetaStore interface {
+	QueryAllMeta(key string, condition string) (*[]models.Meta, error)
+	DeleteMetaByKey(key string) error
+}
 
 func newServiceAccountToken(s SendInterface) *serviceAccountToken {
 	return &serviceAccountToken{
@@ -87,8 +97,9 @@ func requiresRefresh(tr *authenticationv1.TokenRequest) bool {
 	return false
 }
 
-// KeyFunc keys should be nonconfidential and safe to log
-func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
+// baseKey returns the key shared by all generations of the same logical token.
+// Keys are nonconfidential and safe to log.
+func baseKey(name, namespace string, tr *authenticationv1.TokenRequest) string {
 	var exp int64
 	if tr.Spec.ExpirationSeconds != nil {
 		exp = *tr.Spec.ExpirationSeconds
@@ -102,34 +113,67 @@ func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
 	return fmt.Sprintf("%q/%q/%#v/%#v/%#v", name, namespace, tr.Spec.Audiences, exp, ref)
 }
 
+// KeyFunc returns the storage key for a service account token. A token response
+// with an expiration timestamp gets a generation-specific key so refreshing it
+// does not overwrite a previous generation that is still valid.
+func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
+	key := baseKey(name, namespace, tr)
+	if tr.Status.ExpirationTimestamp.IsZero() {
+		return key
+	}
+	return fmt.Sprintf("%s/%d", key, tr.Status.ExpirationTimestamp.UnixNano())
+}
+
+func newestUnexpiredToken(key string, metas []models.Meta, now time.Time) (*authenticationv1.TokenRequest, error) {
+	var newest authenticationv1.TokenRequest
+	found := false
+	for _, meta := range metas {
+		if meta.Key != key && !strings.HasPrefix(meta.Key, key+"/") {
+			continue
+		}
+
+		var current authenticationv1.TokenRequest
+		if err := json.Unmarshal([]byte(meta.Value), &current); err != nil {
+			klog.Errorf("unmarshal cached token %s failed: %v", meta.Key, err)
+			continue
+		}
+		expiresAt := current.Status.ExpirationTimestamp
+		if expiresAt.IsZero() || !expiresAt.Time.After(now) {
+			continue
+		}
+		if !found || expiresAt.Time.After(newest.Status.ExpirationTimestamp.Time) {
+			newest = current
+			found = true
+		}
+	}
+	if !found {
+		return nil, fmt.Errorf("no unexpired cached token for %s", key)
+	}
+	return &newest, nil
+}
+
 func getTokenLocally(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
-	resKey := KeyFunc(name, namespace, tr)
+	resKey := baseKey(name, namespace, tr)
 	ms := dbclient.NewMetaService()
-	metas, err := ms.QueryMeta("key", resKey)
+	metas, err := ms.QueryAllMetaByKeyPrefix(resKey)
 	if err != nil {
 		klog.Errorf("query meta %s failed: %v", resKey, err)
 		return nil, err
 	}
-	if len(*metas) != 1 {
-		klog.Errorf("query meta %s length error", resKey)
-		return nil, fmt.Errorf("query meta %s length error", resKey)
+	if metas == nil {
+		return nil, fmt.Errorf("no cached token for %s", resKey)
 	}
-	var tokenRequest authenticationv1.TokenRequest
-	err = json.Unmarshal([]byte((*metas)[0]), &tokenRequest)
+
+	tokenRequest, err := newestUnexpiredToken(resKey, *metas, time.Now())
 	if err != nil {
-		klog.Errorf("unmarshal resource %s token request failed: %v", resKey, err)
+		klog.V(4).Infof("query cached token %s failed: %v", resKey, err)
 		return nil, err
 	}
-	if requiresRefresh(&tokenRequest) {
-		err := ms.DeleteMetaByKey(resKey)
-		if err != nil {
-			klog.Errorf("delete meta %s failed: %v", resKey, err)
-			return nil, err
-		}
-		klog.Errorf("resource %s token expired", resKey)
-		return nil, fmt.Errorf("resource %s token expired", resKey)
+	if requiresRefresh(tokenRequest) {
+		klog.V(4).Infof("resource %s token requires refresh", resKey)
+		return nil, fmt.Errorf("resource %s token requires refresh", resKey)
 	}
-	return &tokenRequest, nil
+	return tokenRequest, nil
 }
 
 func getTokenRemotely(resource string, tr *authenticationv1.TokenRequest, c *serviceAccountToken) (*authenticationv1.TokenRequest, error) {
@@ -237,17 +281,75 @@ func CheckTokenExist(token string) bool {
 		klog.Errorf("query meta %s failed: %v", model.ResourceTypeServiceAccountToken, err)
 		return false
 	}
+	if metas == nil {
+		return false
+	}
+	return tokenExists(token, *metas)
+}
 
-	for _, v := range *metas {
+func tokenExists(token string, metas []string) bool {
+	if token == "" {
+		return false
+	}
+	for _, value := range metas {
 		var tokenRequest authenticationv1.TokenRequest
-		err = json.Unmarshal([]byte(v), &tokenRequest)
-		if err != nil {
+		if err := json.Unmarshal([]byte(value), &tokenRequest); err != nil {
 			klog.Errorf("unmarshal resource %s token request failed: %v", model.ResourceTypeServiceAccountToken, err)
-			return false
+			continue
 		}
 		if tokenRequest.Status.Token == token {
 			return true
 		}
 	}
 	return false
+}
+
+func gcExpiredTokensOnce(metaStore serviceAccountTokenMetaStore, now time.Time) {
+	metas, err := metaStore.QueryAllMeta("type", model.ResourceTypeServiceAccountToken)
+	if err != nil {
+		klog.Errorf("query service account tokens for garbage collection failed: %v", err)
+		return
+	}
+	if metas == nil {
+		return
+	}
+
+	for _, meta := range *metas {
+		var tokenRequest authenticationv1.TokenRequest
+		if err := json.Unmarshal([]byte(meta.Value), &tokenRequest); err != nil {
+			klog.Errorf("unmarshal service account token %s for garbage collection failed: %v", meta.Key, err)
+			continue
+		}
+		expiresAt := tokenRequest.Status.ExpirationTimestamp
+		if expiresAt.IsZero() || expiresAt.Time.After(now) {
+			continue
+		}
+		if err := metaStore.DeleteMetaByKey(meta.Key); err != nil {
+			klog.Errorf("delete expired service account token %s failed: %v", meta.Key, err)
+		}
+	}
+}
+
+func runExpiredTokenGC(stopCh <-chan struct{}, interval time.Duration, metaStore serviceAccountTokenMetaStore) {
+	if interval <= 0 {
+		interval = expiredTokenGCInterval
+	}
+
+	gcExpiredTokensOnce(metaStore, time.Now())
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-stopCh:
+			return
+		case <-ticker.C:
+			gcExpiredTokensOnce(metaStore, time.Now())
+		}
+	}
+}
+
+// RunExpiredTokenGC removes expired service account token generations until
+// stopCh is closed.
+func RunExpiredTokenGC(stopCh <-chan struct{}) {
+	runExpiredTokenGC(stopCh, expiredTokenGCInterval, dbclient.NewMetaService())
 }
