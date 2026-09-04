@@ -1,6 +1,8 @@
 package filter
 
 import (
+	"time"
+
 	"context"
 
 	v1 "k8s.io/api/core/v1"
@@ -27,7 +29,9 @@ func IsBelongToSameGroup(targetNodeName string, epNodeName string) bool {
 	if !GetDynamicResourceInformer(v1.SchemeGroupVersion.WithResource("nodes")).Informer().HasSynced() {
 		klog.Info("nodes informer has not synced yet")
 		getNode = func(nodeName string) (interface{}, error) {
-			return client.GetDynamicClient().Resource(v1.SchemeGroupVersion.WithResource("nodes")).Get(context.TODO(), nodeName, metav1.GetOptions{})
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			return client.GetDynamicClient().Resource(v1.SchemeGroupVersion.WithResource("nodes")).Get(ctx, nodeName, metav1.GetOptions{})
 		}
 	} else {
 		getNode = func(nodeName string) (interface{}, error) {
