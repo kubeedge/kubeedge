@@ -22,6 +22,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -34,6 +35,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	commhttp "github.com/kubeedge/kubeedge/edge/pkg/edgehub/certificate/http"
 	httpfake "github.com/kubeedge/kubeedge/edge/pkg/edgehub/certificate/http/fake"
+	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/security/certs"
 )
 
@@ -132,6 +134,120 @@ func TestGetEdgeCert(t *testing.T) {
 		cm := &CertManager{}
 		_, _, err := cm.GetEdgeCert(fakehost+constants.DefaultCAURL, []byte{}, tls.Certificate{}, "")
 		require.NoError(t, err)
+	})
+}
+
+func TestNewCertManager(t *testing.T) {
+	edgehubConfig := v1alpha2.EdgeHub{
+		RotateCertificates: true,
+		Token:              "test-token",
+		TLSCAFile:          "ca.crt",
+		TLSCertFile:        "server.crt",
+		TLSPrivateKeyFile:  "server.key",
+		HTTPServer:         "https://localhost:10002",
+	}
+	nodename := "testnode"
+
+	cm := NewCertManager(edgehubConfig, nodename)
+
+	require.Equal(t, edgehubConfig.RotateCertificates, cm.RotateCertificates)
+	require.Equal(t, nodename, cm.NodeName)
+	require.Equal(t, edgehubConfig.Token, cm.token)
+	require.Equal(t, edgehubConfig.TLSCAFile, cm.caFile)
+	require.Equal(t, edgehubConfig.TLSCertFile, cm.certFile)
+	require.Equal(t, edgehubConfig.TLSPrivateKeyFile, cm.keyFile)
+	require.Equal(t, edgehubConfig.HTTPServer+constants.DefaultCAURL, cm.caURL)
+	require.Equal(t, edgehubConfig.HTTPServer+constants.DefaultCertURL, cm.certURL)
+	require.NotNil(t, cm.Done)
+	require.Equal(t, 1, cap(cm.Done))
+}
+
+func TestRotateCert(t *testing.T) {
+	cahandler := certs.GetCAHandler(certs.CAHandlerTypeX509)
+	pk, err := cahandler.GenPrivateKey()
+	require.NoError(t, err)
+	caPem, err := cahandler.NewSelfSigned(pk)
+	require.NoError(t, err)
+
+	certshandler := certs.GetHandler(certs.HandlerTypeX509)
+
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(commhttp.NewHTTPClientWithCA,
+		func(capem []byte, certificate tls.Certificate) (*http.Client, error) {
+			return &http.Client{}, nil
+		})
+	patches.ApplyFunc(commhttp.SendRequest,
+		func(req *http.Request, _ *http.Client) (*http.Response, error) {
+			csrBytes, err := io.ReadAll(req.Body)
+			if err != nil {
+				return nil, err
+			}
+			certBlock, err := certshandler.SignCerts(certs.SignCertsOptionsWithCSR(
+				csrBytes,
+				caPem.Bytes,
+				pk.DER(),
+				[]x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+				time.Hour,
+			))
+			if err != nil {
+				return nil, err
+			}
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       httpfake.NewFakeBodyReader(certBlock.Bytes),
+			}, nil
+		})
+
+	t.Run("rotateCert sends to Done channel when receiver ready", func(t *testing.T) {
+		require.NoError(t, genFakeCerts())
+		defer os.RemoveAll(fakeCertsDir)
+
+		doneChan := make(chan struct{}, 1)
+		cm := &CertManager{
+			NodeName: "testnode",
+			caFile:   filepath.Join(fakeCertsDir, "ca.crt"),
+			certFile: filepath.Join(fakeCertsDir, "server.crt"),
+			keyFile:  filepath.Join(fakeCertsDir, "server.key"),
+			Done:     doneChan,
+		}
+
+		success, err := cm.rotateCert()
+		require.NoError(t, err)
+		require.True(t, success)
+
+		select {
+		case <-doneChan:
+			// Success
+		default:
+			t.Fatal("expected signal on Done channel")
+		}
+	})
+
+	t.Run("rotateCert does not block when no receiver on Done channel", func(t *testing.T) {
+		require.NoError(t, genFakeCerts())
+		defer os.RemoveAll(fakeCertsDir)
+
+		doneChan := make(chan struct{})
+		cm := &CertManager{
+			NodeName: "testnode",
+			caFile:   filepath.Join(fakeCertsDir, "ca.crt"),
+			certFile: filepath.Join(fakeCertsDir, "server.crt"),
+			keyFile:  filepath.Join(fakeCertsDir, "server.key"),
+			Done:     doneChan,
+		}
+
+		success, err := cm.rotateCert()
+		require.NoError(t, err)
+		require.True(t, success)
+
+		select {
+		case <-doneChan:
+			t.Fatal("unexpected signal on unbuffered unread Done channel")
+		default:
+			// Success
+		}
 	})
 }
 

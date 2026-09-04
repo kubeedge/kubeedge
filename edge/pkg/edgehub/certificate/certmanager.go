@@ -69,7 +69,7 @@ func NewCertManager(edgehub v1alpha2.EdgeHub, nodename string) CertManager {
 		now:                time.Now,
 		caURL:              edgehub.HTTPServer + constants.DefaultCAURL,
 		certURL:            edgehub.HTTPServer + constants.DefaultCertURL,
-		Done:               make(chan struct{}),
+		Done:               make(chan struct{}, 1),
 	}
 }
 
@@ -219,7 +219,10 @@ func (cm *CertManager) rotateCert() (bool, error) {
 
 	klog.Info("succeeded to rotate certificate")
 
-	cm.Done <- struct{}{}
+	select {
+	case cm.Done <- struct{}{}:
+	default:
+	}
 
 	return true, nil
 }
