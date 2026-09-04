@@ -19,6 +19,7 @@ package synccontroller
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -175,6 +176,41 @@ func TestSendEvents(t *testing.T) {
 		})
 	}
 }
+
+func TestSendEventsTreatsEmptyObjectSyncStatusAsZero(t *testing.T) {
+	cloudHub := &common.ModuleInfo{
+		ModuleName: modules.CloudHubModuleName,
+		ModuleType: common.MsgCtxTypeChannel,
+	}
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+	beehiveContext.AddModule(cloudHub)
+	beehiveContext.AddModuleGroup(modules.CloudHubModuleName, modules.CloudHubModuleGroup)
+
+	objectSync := tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, ""), "Pod")
+	objectSync.Status.ObjectResourceVersion = ""
+	obj := tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2")
+
+	go sendEvents(tf.TestNodeID, objectSync, "pod", obj.ResourceVersion, obj)
+
+	select {
+	case message := <-receiveCloudHubMessage():
+		if message.GetOperation() != model.UpdateOperation {
+			t.Fatalf("expected update operation, got %q", message.GetOperation())
+		}
+	case <-time.After(time.Second):
+		t.Fatal("expected update message for empty objectSync status")
+	}
+}
+
+func receiveCloudHubMessage() <-chan model.Message {
+	ch := make(chan model.Message, 1)
+	go func() {
+		message, _ := beehiveContext.Receive(modules.CloudHubModuleName)
+		ch <- message
+	}()
+	return ch
+}
+
 func newUnstructured(apiVersion, kind, namespace, name string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
