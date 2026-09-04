@@ -28,6 +28,7 @@ import (
 	"strings"
 
 	"github.com/blang/semver"
+	"golang.org/x/sys/windows"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/common/constants"
@@ -36,6 +37,33 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/util/execs"
 	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
+
+// CheckRootPrivileges verifies the current process is running with Administrator
+// privileges, since keadm writes to system directories and manages host services
+// that a regular user cannot access.
+func CheckRootPrivileges() error {
+	var sid *windows.SID
+	err := windows.AllocateAndInitializeSid(
+		&windows.SECURITY_NT_AUTHORITY,
+		2,
+		windows.SECURITY_BUILTIN_DOMAIN_RID,
+		windows.DOMAIN_ALIAS_RID_ADMINS,
+		0, 0, 0, 0, 0, 0,
+		&sid)
+	if err != nil {
+		return fmt.Errorf("failed to check administrator privileges: %v", err)
+	}
+	defer windows.FreeSid(sid)
+
+	isAdmin, err := windows.Token(0).IsMember(sid)
+	if err != nil {
+		return fmt.Errorf("failed to check administrator privileges: %v", err)
+	}
+	if !isAdmin {
+		return fmt.Errorf("this command must be run as Administrator")
+	}
+	return nil
+}
 
 // Constants used by installers
 const (
