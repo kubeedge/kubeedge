@@ -122,7 +122,12 @@ func sendClusterObjectSyncEvent(nodeName string, sync *v1alpha1.ClusterObjectSyn
 		return
 	}
 
-	if compareResourceVersionFunc(objectResourceVersion, sync.Status.ObjectResourceVersion) > 0 {
+	cmp, err := compareResourceVersionFunc(objectResourceVersion, sync.Status.ObjectResourceVersion)
+	if err != nil {
+		klog.Errorf("Failed to compare resource version for %s: %v", sync.Name, err)
+		return
+	}
+	if cmp > 0 {
 		// trigger the update event
 		klog.V(4).Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event", objectResourceVersion, resourceType, sync.Status.ObjectResourceVersion)
 		msg := buildEdgeControllerMessageFunc(nodeName, models.NullNamespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)

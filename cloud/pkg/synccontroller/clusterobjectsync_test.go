@@ -43,7 +43,7 @@ type testFuncBackup struct {
 	originalBuildEdgeControllerMessageFunc func(string, string, string, string, string, interface{}) *model.Message
 	originalGetNodeNameFunc                func(string) string
 	originalGetObjectUIDFunc               func(string) string
-	originalCompareResourceVersionFunc     func(string, string) int
+	originalCompareResourceVersionFunc     func(string, string) (int, error)
 	originalGcFunc                         func(*SyncController, *v1alpha1.ClusterObjectSync)
 	originalDeleteFunc                     func(*SyncController, string) error
 }
@@ -87,17 +87,17 @@ func mockGetObjectUID(syncName string) string {
 	return ""
 }
 
-func mockCompareResourceVersion(rv1, rv2 string) int {
+func mockCompareResourceVersion(rv1, rv2 string) (int, error) {
 	if rv1 == "1000" && rv2 == "500" {
-		return 1
+		return 1, nil
 	}
 	if rv1 == rv2 {
-		return 0
+		return 0, nil
 	}
 	if rv1 > rv2 {
-		return 1
+		return 1, nil
 	}
-	return -1
+	return -1, nil
 }
 
 type MockLister struct {
@@ -294,7 +294,7 @@ func TestReconcileClusterObjectSync(t *testing.T) {
 			ctrl.reconcileClusterObjectSync(tt.sync)
 
 			if tt.name == "Object found with newer resource version" {
-				result := compareResourceVersionFunc("1000", "500")
+				result, _ := compareResourceVersionFunc("1000", "500")
 				if result <= 0 {
 					t.Errorf("Mock compareResourceVersionFunc returned unexpected result %d for 1000 vs 500", result)
 				}
@@ -401,11 +401,11 @@ func TestSendClusterObjectSyncEventDirect(t *testing.T) {
 	backup := setupTest()
 	defer backup.restore()
 
-	compareResourceVersionFunc = func(rv1, rv2 string) int {
+	compareResourceVersionFunc = func(rv1, rv2 string) (int, error) {
 		if rv1 == "1000" && rv2 == "500" {
-			return 1
+			return 1, nil
 		}
-		return 0
+		return 0, nil
 	}
 
 	sendCalled := false
@@ -427,6 +427,31 @@ func TestSendClusterObjectSyncEventDirect(t *testing.T) {
 	sendClusterObjectSyncEvent(nodeName, sync, resourceType, objectResourceVersion, obj)
 
 	assert.True(t, sendCalled, "Send should have been called")
+}
+
+func TestSendClusterObjectSyncEventDirectCompareError(t *testing.T) {
+	backup := setupTest()
+	defer backup.restore()
+
+	compareResourceVersionFunc = func(rv1, rv2 string) (int, error) {
+		return -1, errors.New("mock error")
+	}
+
+	sendCalled := false
+
+	sendToEdge = func(module string, msg model.Message) {
+		sendCalled = true
+	}
+
+	nodeName := "node1"
+	resourceType := "pod"
+	objectResourceVersion := "1000"
+	obj := createTestPod("test-pod", "12345", "1000")
+	sync := createTestSync("node1-pod-12345", "test-pod", "Pod", "v1", "500")
+
+	sendClusterObjectSyncEvent(nodeName, sync, resourceType, objectResourceVersion, obj)
+
+	assert.False(t, sendCalled, "Send should not have been called on compare error")
 }
 
 func TestDeleteClusterObjectSyncFunc(t *testing.T) {
