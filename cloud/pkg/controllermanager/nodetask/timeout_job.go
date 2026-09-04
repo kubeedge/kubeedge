@@ -93,6 +93,9 @@ func (job *TimeoutJob[T]) Run(ctx context.Context) {
 				job.ticker.Stop()
 				return
 			}
+			if job.IsStopped() {
+				return
+			}
 		case <-ctx.Done():
 			logger.V(2).Info("timeout job is stopped by context")
 			job.ticker.Stop()

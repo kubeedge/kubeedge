@@ -86,6 +86,37 @@ func TestRunReconcile(t *testing.T) {
 		assert.Equal(t, 1, handler.called["UpdateJobStatus"])
 	})
 
+	t.Run("job not found during status retry", func(t *testing.T) {
+		jobName := "retry-not-found-job"
+		retryReq := controllerruntime.Request{
+			NamespacedName: types.NamespacedName{
+				Name: jobName,
+			},
+		}
+		retryObj := &operationsv1alpha2.ImagePrePullJob{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       jobName,
+				Finalizers: []string{operationsv1alpha2.FinalizerImagePrePullJob},
+			},
+			Status: operationsv1alpha2.ImagePrePullJobStatus{
+				Phase: operationsv1alpha2.JobPhaseInProgress,
+			},
+		}
+		handler := &fakeReconcileHandler{
+			getJobs: []*operationsv1alpha2.ImagePrePullJob{retryObj, nil},
+		}
+
+		defer ReleaseTimeoutJob[operationsv1alpha2.ImagePrePullJob](ctx, jobName, operationsv1alpha2.ResourceImagePrePullJob)
+
+		err := RunReconcile(ctx, retryReq, handler)
+		assert.NoError(t, err)
+		assert.Equal(t, 2, handler.called["GetJob"])
+		assert.Equal(t, 0, handler.called["CalculateStatus"])
+		assert.Equal(t, 0, handler.called["UpdateJobStatus"])
+		_, ok := timeoutJobs.Load(timeoutJobsKey(jobName, operationsv1alpha2.ResourceImagePrePullJob))
+		assert.False(t, ok)
+	})
+
 	t.Run("job is final phase", func(t *testing.T) {
 		obj.Status.Phase = operationsv1alpha2.JobPhaseCompleted
 		handler := &fakeReconcileHandler{
@@ -110,6 +141,8 @@ func TestRunReconcile(t *testing.T) {
 type fakeReconcileHandler struct {
 	// obj is the job object
 	obj *operationsv1alpha2.ImagePrePullJob
+	// getJobs is the sequence of jobs returned by GetJob.
+	getJobs []*operationsv1alpha2.ImagePrePullJob
 	// called records the function call times
 	called map[string]int
 }
@@ -121,6 +154,11 @@ func (fakeReconcileHandler) GetResource() string {
 func (h *fakeReconcileHandler) GetJob(_ctx context.Context, _req controllerruntime.Request,
 ) (*operationsv1alpha2.ImagePrePullJob, error) {
 	h.recordCalledFunc("GetJob")
+	if len(h.getJobs) > 0 {
+		job := h.getJobs[0]
+		h.getJobs = h.getJobs[1:]
+		return job, nil
+	}
 	return h.obj, nil
 }
 
