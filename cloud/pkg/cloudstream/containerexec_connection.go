@@ -22,7 +22,9 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"time"
 
+	"github.com/avast/retry-go"
 	"github.com/emicklei/go-restful"
 	"k8s.io/klog/v2"
 
@@ -108,14 +110,22 @@ func (c *ContainerExecConnection) Serve() error {
 
 	sendCloseMessage := func() {
 		msg := stream.NewMessage(c.MessageID, stream.MessageTypeRemoveConnect, nil)
-		for retry := 0; retry < 3; retry++ {
-			if err := c.WriteToTunnel(msg); err == nil {
-				klog.V(6).Infof("%s send close message to edge successfully", c.String())
-				return
-			}
-			klog.Warningf("%v failed send %s message to edge, err: %v", c, msg.MessageType, err)
+		err = retry.Do(
+			func() error {
+				if err := c.WriteToTunnel(msg); err == nil {
+					klog.V(6).Infof("%s send close message to edge successfully", c.String())
+					return nil
+				}
+				klog.Warningf("%v failed send %s message to edge, err: %v", c, msg.MessageType, err)
+				return err
+			},
+			retry.Delay(1*time.Second),
+			retry.Attempts(3),
+			retry.DelayType(retry.FixedDelay),
+		)
+		if err != nil {
+			klog.Errorf("max retry count reached when send %s message to edge", msg.MessageType)
 		}
-		klog.Errorf("max retry count reached when send %s message to edge", msg.MessageType)
 	}
 
 	var data [256]byte
