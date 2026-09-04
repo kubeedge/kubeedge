@@ -174,7 +174,10 @@ func (r *REST) PassThrough(ctx context.Context, options *metav1.GetOptions) ([]b
 }
 
 func (r *REST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
-	info, _ := apirequest.RequestInfoFrom(ctx)
+	info, ok := apirequest.RequestInfoFrom(ctx)
+	if !ok || info == nil {
+		return nil, fmt.Errorf("no request info in context, cannot list")
+	}
 	// First try to list the object from remote cloud
 	list, err := func() (runtime.Object, error) {
 		app, err := r.Agent.Generate(ctx, metaserver.List, *options, nil)
@@ -212,7 +215,10 @@ func (r *REST) List(ctx context.Context, options *metainternalversion.ListOption
 }
 
 func (r *REST) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
-	info, _ := apirequest.RequestInfoFrom(ctx)
+	info, ok := apirequest.RequestInfoFrom(ctx)
+	if !ok || info == nil {
+		return nil, fmt.Errorf("no request info in context, cannot watch")
+	}
 
 	// First try watch from remote cloud
 	_, err := func() (runtime.Object, error) {
