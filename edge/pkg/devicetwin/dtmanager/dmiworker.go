@@ -209,7 +209,7 @@ func (dw *DMIWorker) initDeviceModelInfoFromDB() {
 		deviceModel := v1beta1.DeviceModel{}
 		if err := json.Unmarshal([]byte(meta), &deviceModel); err != nil {
 			klog.Errorf("fail to unmarshal device model info from db with err: %v", err)
-			return
+			continue
 		}
 		dw.dmiCache.PutDeviceModel(&deviceModel)
 	}
@@ -227,7 +227,7 @@ func (dw *DMIWorker) initDeviceInfoFromDB() {
 		device := v1beta1.Device{}
 		if err := json.Unmarshal([]byte(meta), &device); err != nil {
 			klog.Errorf("fail to unmarshal device info from db with err: %v", err)
-			return
+			continue
 		}
 		dw.dmiCache.PutDevice(&device)
 	}
@@ -245,7 +245,7 @@ func (dw *DMIWorker) initDeviceMapperInfoFromDB() {
 		deviceMapper := pb.MapperInfo{}
 		if err := json.Unmarshal([]byte(meta), &deviceMapper); err != nil {
 			klog.Errorf("fail to unmarshal device mapper info from db with err: %v", err)
-			return
+			continue
 		}
 
 		err := dmiclient.DMIClientsImp.CreateDMIClient(deviceMapper.Protocol, string(deviceMapper.Address), true)
