@@ -20,6 +20,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -175,6 +176,32 @@ func TestSendEvents(t *testing.T) {
 		})
 	}
 }
+
+// sendEvents must not panic when the message builder returns nil, and it
+// must skip sending in that case. buildEdgeControllerMessageFunc returns nil
+// when messagelayer.BuildResource fails; mock it directly so the test
+// deterministically exercises the nil-guard branch instead of relying on the
+// internal validation behavior of BuildResource.
+func TestSendEventsNilMessage(t *testing.T) {
+	originalBuild := buildEdgeControllerMessageFunc
+	defer func() { buildEdgeControllerMessageFunc = originalBuild }()
+
+	buildEdgeControllerMessageFunc = func(nodeName, namespace, resourceType, resourceName, operationType string, obj interface{}) *model.Message {
+		return nil
+	}
+
+	// status resourceVersion "1" < object resourceVersion "2" drives the
+	// update branch, where the builder is invoked and returns nil here.
+	sync := tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod")
+	tmp := sync.DeepCopy()
+
+	// The nil-guard returns before reaching beehiveContext.Send, so reaching
+	// this point without a panic proves the message was not dereferenced or sent.
+	assert.NotPanics(t, func() {
+		sendEvents(tf.TestNodeID, sync, "pod", "2", tmp)
+	}, "sendEvents should not panic when message build returns nil")
+}
+
 func newUnstructured(apiVersion, kind, namespace, name string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
