@@ -36,7 +36,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
-var edgeDescribePodShortDescription = `Describe pod in edge node`
+var edgeDescribePodShortDescription = `Describe pod on an edge node`
 
 type PodDescribeOptions struct {
 	Namespace     string

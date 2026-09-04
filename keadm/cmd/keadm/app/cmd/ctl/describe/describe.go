@@ -20,12 +20,19 @@ import "github.com/spf13/cobra"
 
 var edgeDescribeShortDescription = `Show details of a specific resource`
 
+var edgeDescribeLongDescription = `Show details of a specific resource.
+
+This command is intended to be run on the edge node where EdgeCore is running. It queries the local MetaServer API to retrieve the details of a resource.
+Please ensure that the MetaServer module is enabled in your edgecore.yaml configuration.
+
+Currently, only 'pod' and 'device' resources are supported by this command.`
+
 // NewEdgeDescribe returns KubeEdge edge resources describe command.
 func NewEdgeDescribe() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "describe",
 		Short: edgeDescribeShortDescription,
-		Long:  edgeDescribeShortDescription,
+		Long:  edgeDescribeLongDescription,
 	}
 
 	cmd.AddCommand(NewEdgeDescribePod())
