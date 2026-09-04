@@ -119,3 +119,19 @@ func toAdmissionResponse(err error) *admissionv1.AdmissionResponse {
 		},
 	}
 }
+
+// admissionResponse is a helper function to create an AdmissionResponse
+func admissionResponse(err error) *admissionv1.AdmissionResponse {
+	if err != nil {
+		return &admissionv1.AdmissionResponse{
+			Allowed: false,
+			Result: &metav1.Status{
+				Message: err.Error(),
+			},
+		}
+	}
+
+	return &admissionv1.AdmissionResponse{
+		Allowed: true,
+	}
+}
