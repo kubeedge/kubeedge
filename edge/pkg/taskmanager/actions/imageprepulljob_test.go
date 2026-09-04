@@ -33,7 +33,9 @@ import (
 	edgecoreconfig "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/pkg/image"
+	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 )
 
 func TestImagePrePullJobCheckItems(t *testing.T) {
@@ -117,4 +119,94 @@ func TestImagePrePullJobPullImages(t *testing.T) {
 	assert.Equal(t, metav1.ConditionTrue, imagePrePullResp.imageStatus[0].Status)
 	assert.Equal(t, metav1.ConditionFalse, imagePrePullResp.imageStatus[1].Status)
 	assert.Equal(t, "test error", imagePrePullResp.imageStatus[1].Reason)
+}
+
+func TestImagePrePullJobReportActionStatus(t *testing.T) {
+	var (
+		jobName  = "test-job"
+		nodeName = "node1"
+		status   = []operationsv1alpha2.ImageStatus{
+			{
+				Image:  "image1",
+				Status: metav1.ConditionTrue,
+			},
+			{
+				Image:  "image2",
+				Status: metav1.ConditionFalse,
+				Reason: "test error",
+			},
+		}
+	)
+
+	cases := []struct {
+		name       string
+		action     string
+		resp       ActionResponse
+		wantExtend bool
+	}{
+		{
+			name:   "check action does not report image status",
+			action: string(operationsv1alpha2.ImagePrePullJobActionCheck),
+			resp: &imagePrePullJobActionResponse{
+				imageStatus: status,
+			},
+		},
+		{
+			name:   "pull action reports image status",
+			action: string(operationsv1alpha2.ImagePrePullJobActionPull),
+			resp: &imagePrePullJobActionResponse{
+				imageStatus: status,
+			},
+			wantExtend: true,
+		},
+		{
+			name:   "failed pull action reports image status",
+			action: string(operationsv1alpha2.ImagePrePullJobActionPull),
+			resp: &imagePrePullJobActionResponse{
+				imageStatus: status,
+				baseActionResponse: baseActionResponse{
+					err: errors.New("test error"),
+				},
+			},
+			wantExtend: true,
+		},
+	}
+
+	h := imagePrePullJobActionHandler{
+		logger: klog.Background(),
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			patches := gomonkey.NewPatches()
+			defer patches.Reset()
+
+			called := false
+			patches.ApplyFunc(message.ReportNodeTaskStatus, func(res taskmsg.Resource, msgbody taskmsg.UpstreamMessage) {
+				called = true
+				assert.Equal(t, operationsv1alpha2.SchemeGroupVersion.String(), res.APIVersion)
+				assert.Equal(t, operationsv1alpha2.ResourceImagePrePullJob, res.ResourceType)
+				assert.Equal(t, jobName, res.JobName)
+				assert.Equal(t, nodeName, res.NodeName)
+				assert.Equal(t, c.action, msgbody.Action)
+				assert.NotEmpty(t, msgbody.FinishTime)
+				if c.wantExtend {
+					require.NotEmpty(t, msgbody.Extend)
+					gotStatus, err := taskmsg.ParseImagePrePullJobExtend(msgbody.Extend)
+					require.NoError(t, err)
+					assert.Equal(t, status, gotStatus)
+				} else {
+					assert.Empty(t, msgbody.Extend)
+				}
+				if c.resp.Error() == nil {
+					assert.True(t, msgbody.Succ)
+				} else {
+					assert.False(t, msgbody.Succ)
+					assert.Equal(t, c.resp.Error().Error(), msgbody.Reason)
+				}
+			})
+
+			h.reportActionStatus(jobName, nodeName, c.action, c.resp)
+			assert.True(t, called)
+		})
+	}
 }
