@@ -22,7 +22,7 @@ jobs:
       GOPATH: /home/runner/work/${{ github.repository }}
     steps:
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: 1.23.x
 
@@ -114,7 +114,7 @@ jobs:
       GO111MODULE: on
     steps:
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: 1.23.x
 
@@ -178,7 +178,7 @@ jobs:
       GO111MODULE: on
     steps:
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: 1.23.x
 
