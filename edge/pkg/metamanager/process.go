@@ -371,7 +371,7 @@ func (m *metaManager) processRemote(message model.Message) {
 		resp, err := beehiveContext.SendSync(
 			string(metaManagerConfig.Config.ContextSendModule),
 			message,
-			time.Duration(metaManagerConfig.Config.RemoteQueryTimeout)*time.Second)
+			time.Duration(metaManagerConfig.GetRemoteQueryTimeout())*time.Second)
 		if err != nil {
 			klog.Errorf("process remote failed, req[%s], err: %v", msgDebugInfo(&message), err)
 			feedbackError(fmt.Errorf("failed to process remote: %s", err), message)
