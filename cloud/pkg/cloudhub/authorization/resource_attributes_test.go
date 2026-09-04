@@ -62,6 +62,21 @@ func TestGetBuiltinResourceAttributes(t *testing.T) {
 			router: model.MessageRoute{Operation: model.UpdateOperation, Resource: "ns/secret/sc"},
 			want:   authorization.ResourceAttributes{Namespace: "ns", Name: "sc", Verb: "update", Group: "", Version: "v1", Resource: "secrets"},
 		},
+		{
+			name:   "runtimeclass get message",
+			router: model.MessageRoute{Operation: model.QueryOperation, Resource: "null/runtimeclass/kata-containers"},
+			want:   authorization.ResourceAttributes{Namespace: "", Name: "kata-containers", Verb: "get", Group: "node.k8s.io", Version: "v1", Resource: "runtimeclasses"},
+		},
+		{
+			name:   "runtimeclass delete message",
+			router: model.MessageRoute{Operation: model.DeleteOperation, Resource: "null/runtimeclass/kata-containers"},
+			want:   authorization.ResourceAttributes{Namespace: "", Name: "kata-containers", Verb: "delete", Group: "node.k8s.io", Version: "v1", Resource: "runtimeclasses"},
+		},
+		{
+			name:   "runtimeclass update message",
+			router: model.MessageRoute{Operation: model.UpdateOperation, Resource: "null/runtimeclass/kata-containers"},
+			want:   authorization.ResourceAttributes{Namespace: "", Name: "kata-containers", Verb: "update", Group: "node.k8s.io", Version: "v1", Resource: "runtimeclasses"},
+		},
 	}
 
 	for _, tt := range tests {

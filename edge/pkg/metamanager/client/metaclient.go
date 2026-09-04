@@ -33,6 +33,7 @@ type CoreInterface interface {
 	VolumeAttachmentsGetter
 	LeasesGetter
 	CertificateSigningRequestsGetter
+	RuntimeClassesGetter
 }
 
 type metaClient struct {
@@ -96,6 +97,10 @@ func (m *metaClient) Leases(namespace string) LeasesInterface {
 
 func (m *metaClient) CertificateSigningRequests() CertificateSigningRequestInterface {
 	return newCertificateSigningRequests(m.send)
+}
+
+func (m *metaClient) RuntimeClasses() RuntimeClassInterface {
+	return newRuntimeClasses(m.send)
 }
 
 // New creates new metaclient

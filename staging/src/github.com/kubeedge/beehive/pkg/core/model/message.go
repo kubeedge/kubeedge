@@ -39,6 +39,7 @@ const (
 	ResourceTypeLease               = "lease"
 	ResourceTypeSaAccess            = "serviceaccountaccess"
 	ResourceTypeCSR                 = "certificatesigningrequest"
+	ResourceTypeRuntimeClass        = "runtimeclass"
 
 	ResourceTypeK8sCA = "k8s/ca.crt"
 )
