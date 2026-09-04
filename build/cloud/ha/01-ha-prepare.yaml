@@ -39,7 +39,7 @@ rules:
     verbs: ["delete"]
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
-    verbs: ["get", "list", "watch", "create", "update"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
   - apiGroups: ["devices.kubeedge.io"]
     resources: ["devices", "devicemodels", "devices/status", "devicemodels/status"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
