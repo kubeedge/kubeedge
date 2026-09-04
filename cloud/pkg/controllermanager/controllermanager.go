@@ -112,7 +112,7 @@ func setupControllers(ctx context.Context, mgr manager.Manager, che cache.Cache)
 	if !features.DefaultFeatureGate.Enabled(features.DisableNodeTaskV1alpha2) {
 		ctls = append(ctls, nodetask.NewImagePrePullJobController(cli, che))
 		ctls = append(ctls, nodetask.NewConfigUpdateJobController(cli, che))
-		ctls = append(ctls, nodetask.NewNodeUpgradeJobController(cli, che))
+		ctls = append(ctls, nodetask.NewNodeUpgradeJobController(cli, che, mgr.GetEventRecorderFor("nodeupgradejob-controller")))
 	} else {
 		klog.V(1).Info("disabled the node task v1alpha2")
 	}
