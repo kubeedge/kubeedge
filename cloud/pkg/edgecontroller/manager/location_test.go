@@ -22,6 +22,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
 )
@@ -241,6 +242,27 @@ func TestIsEdgeNode(t *testing.T) {
 				t.Errorf("Manager.TestIsEdgeNode() case failed: got = %v, want = %v", got, test.want)
 			}
 		})
+	}
+}
+
+func TestPodNode(t *testing.T) {
+	lc := &LocationCache{}
+	pod := v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{UID: types.UID("pod-uid")},
+		Spec:       v1.PodSpec{NodeName: nodes[0]},
+	}
+
+	lc.AddOrUpdatePod(pod)
+	if !lc.IsPodOnNode(pod.UID, pod.Spec.NodeName) {
+		t.Fatalf("expected pod to be located on %q", pod.Spec.NodeName)
+	}
+	if lc.IsPodOnNode(pod.UID, nodes[1]) {
+		t.Fatalf("expected pod not to be located on %q", nodes[1])
+	}
+
+	lc.DeletePod(pod.UID)
+	if lc.IsPodOnNode(pod.UID, pod.Spec.NodeName) {
+		t.Fatalf("expected pod to be removed from location cache")
 	}
 }
 
