@@ -52,13 +52,6 @@ func (c *Controller) Reconcile(ctx context.Context, request controllerruntime.Re
 	return c.syncRules(ctx, acc)
 }
 
-func (c *Controller) filterResource(ctx context.Context, object client.Object) bool {
-	var p = &PolicyMatcher{}
-	matchTarget(ctx, c.Reader, object, p.isMatchServiceAccount)
-	klog.V(4).Infof("filter resource %s/%s, %v", object.GetNamespace(), object.GetName(), p.match)
-	return p.match
-}
-
 func isMatchedRoleRef(roleRef rbacv1.RoleRef, bindingNamespace string, object client.Object) bool {
 	if reflect.TypeOf(object).Elem().Name() != roleRef.Kind {
 		return false
@@ -68,15 +61,6 @@ func isMatchedRoleRef(roleRef rbacv1.RoleRef, bindingNamespace string, object cl
 	} else if roleRef.Kind == "Role" {
 		return object.GetName() == roleRef.Name && bindingNamespace == object.GetNamespace()
 	}
-	return false
-}
-
-type PolicyMatcher struct {
-	match bool
-}
-
-func (pm *PolicyMatcher) isMatchServiceAccount(*policyv1alpha1.ServiceAccountAccess) bool {
-	pm.match = true
 	return false
 }
 
@@ -96,71 +80,76 @@ func matchTarget(ctx context.Context, reader client.Reader, object client.Object
 		return
 	}
 
-	crbl := &rbacv1.ClusterRoleBindingList{}
-	if err := reader.List(ctx, crbl); err != nil {
-		klog.Errorf("failed to list clusterrolebindings, %v", err)
-		return
+	var roleBindingList rbacv1.RoleBindingList
+	var clusterRoleBindingList rbacv1.ClusterRoleBindingList
+	switch obj := object.(type) {
+	case *rbacv1.Role:
+		if err := reader.List(ctx, &roleBindingList, client.InNamespace(obj.Namespace)); err != nil {
+			klog.Errorf("failed to list rolebindings in namespace %s, %v", obj.Namespace, err)
+			return
+		}
+	case *rbacv1.ClusterRole:
+		if err := reader.List(ctx, &roleBindingList); err != nil {
+			klog.Errorf("failed to list rolebindings, %v", err)
+			return
+		}
+		if err := reader.List(ctx, &clusterRoleBindingList); err != nil {
+			klog.Errorf("failed to list clusterrolebindings, %v", err)
+			return
+		}
 	}
 
-	for _, am := range accList.Items {
+	for i := range accList.Items {
+		am := &accList.Items[i]
 		userInfo := serviceaccount.UserInfo(am.Spec.ServiceAccount.Namespace, am.Spec.ServiceAccount.Name, string(am.Spec.ServiceAccount.UID))
+		matched := false
 		switch obj := object.(type) {
 		case *rbacv1.ClusterRoleBinding:
-			_, applies := appliesTo(userInfo, obj.Subjects, "")
-			if applies && !visitor(&am) {
-				return
-			}
+			_, matched = appliesTo(userInfo, obj.Subjects, "")
 		case *rbacv1.RoleBinding:
-			_, applies := appliesTo(userInfo, obj.Subjects, obj.Namespace)
-			if applies && !visitor(&am) {
-				return
-			}
+			_, matched = appliesTo(userInfo, obj.Subjects, obj.Namespace)
 		case *rbacv1.ClusterRole:
-			for _, crb := range crbl.Items {
+			for _, crb := range clusterRoleBindingList.Items {
 				if !isMatchedRoleRef(crb.RoleRef, "", obj) {
 					continue
 				}
-				_, applies := appliesTo(userInfo, crb.Subjects, "")
-				if applies && !visitor(&am) {
-					return
+				if _, applies := appliesTo(userInfo, crb.Subjects, ""); applies {
+					matched = true
+					break
 				}
 			}
-			var roleBindingList = &rbacv1.RoleBindingList{}
-			if err := reader.List(ctx, roleBindingList, &client.ListOptions{Namespace: am.Spec.ServiceAccount.Namespace}); err != nil {
-				klog.Errorf("failed to list rolebindings, %v", err)
-				return
+			if matched {
+				break
 			}
 			for _, rb := range roleBindingList.Items {
 				if !isMatchedRoleRef(rb.RoleRef, rb.Namespace, obj) {
 					continue
 				}
-				_, applies := appliesTo(userInfo, rb.Subjects, rb.Namespace)
-				if applies && !visitor(&am) {
-					return
+				if _, applies := appliesTo(userInfo, rb.Subjects, rb.Namespace); applies {
+					matched = true
+					break
 				}
 			}
 		case *rbacv1.Role:
-			var roleBindingList = &rbacv1.RoleBindingList{}
-			if err := reader.List(ctx, roleBindingList, &client.ListOptions{Namespace: am.Spec.ServiceAccount.Namespace}); err != nil {
-				klog.Errorf("failed to list rolebindings, %v", err)
-				return
-			}
 			for _, rb := range roleBindingList.Items {
 				if !isMatchedRoleRef(rb.RoleRef, rb.Namespace, obj) {
 					continue
 				}
-				_, applies := appliesTo(userInfo, rb.Subjects, rb.Namespace)
-				if applies && !visitor(&am) {
-					return
+				if _, applies := appliesTo(userInfo, rb.Subjects, rb.Namespace); applies {
+					matched = true
+					break
 				}
 			}
+		}
+		if matched && !visitor(am) {
+			return
 		}
 	}
 }
 
-func (c *Controller) mapRolesFunc(_ context.Context, object client.Object) []controllerruntime.Request {
+func (c *Controller) mapRolesFunc(ctx context.Context, object client.Object) []controllerruntime.Request {
 	var p = PolicyRequestVisitor{}
-	matchTarget(context.Background(), c.Reader, object, p.matchRuntimeRequest)
+	matchTarget(ctx, c.Client, object, p.matchRuntimeRequest)
 	klog.V(4).Infof("filter resource %s/%s, %v", object.GetNamespace(), object.GetName(), p.AuthPolicy)
 	return p.AuthPolicy
 }
@@ -254,18 +243,10 @@ func (c *Controller) SetupWithManager(ctx context.Context, mgr controllerruntime
 	}
 	return controllerruntime.NewControllerManagedBy(mgr).
 		For(&policyv1alpha1.ServiceAccountAccess{}).
-		Watches(&rbacv1.ClusterRoleBinding{}, handler.EnqueueRequestsFromMapFunc(c.mapRolesFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
-			return c.filterResource(ctx, object)
-		}))).
-		Watches(&rbacv1.RoleBinding{}, handler.EnqueueRequestsFromMapFunc(c.mapRolesFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
-			return c.filterResource(ctx, object)
-		}))).
-		Watches(&rbacv1.ClusterRole{}, handler.EnqueueRequestsFromMapFunc(c.mapRolesFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
-			return c.filterResource(ctx, object)
-		}))).
-		Watches(&rbacv1.Role{}, handler.EnqueueRequestsFromMapFunc(c.mapRolesFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
-			return c.filterResource(ctx, object)
-		}))).
+		Watches(&rbacv1.ClusterRoleBinding{}, handler.EnqueueRequestsFromMapFunc(c.mapRolesFunc)).
+		Watches(&rbacv1.RoleBinding{}, handler.EnqueueRequestsFromMapFunc(c.mapRolesFunc)).
+		Watches(&rbacv1.ClusterRole{}, handler.EnqueueRequestsFromMapFunc(c.mapRolesFunc)).
+		Watches(&rbacv1.Role{}, handler.EnqueueRequestsFromMapFunc(c.mapRolesFunc)).
 		Watches(&corev1.ServiceAccount{}, handler.EnqueueRequestsFromMapFunc(c.mapObjectFunc), builder.WithPredicates(predicate.NewPredicateFuncs(func(object client.Object) bool {
 			return c.filterObject(ctx, object)
 		}))).
@@ -349,6 +330,7 @@ func (c *Controller) send2Edge(acc *policyv1alpha1.ServiceAccountAccess, targets
 	klog.V(4).Infof("send2Edge for serviceaccount %s/%s: %v (%s)",
 		acc.Namespace, acc.Spec.ServiceAccount.Name, targets, opr)
 	sendObj := acc.DeepCopy()
+	sendObj.SetGroupVersionKind(policyv1alpha1.SchemeGroupVersion.WithKind("ServiceAccountAccess"))
 	for _, node := range targets {
 		resource, err := messagelayer.BuildResource(node, sendObj.Namespace, model.ResourceTypeSaAccess, sendObj.Name)
 		if err != nil {
@@ -385,7 +367,10 @@ func (c *Controller) syncRules(ctx context.Context, acc *policyv1alpha1.ServiceA
 	}
 	userInfo := serviceaccount.UserInfo(newSA.Namespace, newSA.Name, string(newSA.UID))
 	var currentAcc = &policyv1alpha1.ServiceAccountAccess{}
-	c.VisitRulesFor(ctx, userInfo, acc.Namespace, currentAcc)
+	if err := c.visitRulesFor(ctx, userInfo, currentAcc); err != nil {
+		klog.Errorf("failed to collect rules for serviceaccount %s/%s, %v", newSA.Namespace, newSA.Name, err)
+		return controllerruntime.Result{Requeue: true}, err
+	}
 	nodes, err := getNodeListOfServiceAccountAccess(ctx, c.Reader, acc)
 	if err != nil {
 		klog.Errorf("failed to get node list of serviceaccountaccess %s/%s, %v", acc.Namespace, acc.Name, err)
@@ -411,9 +396,7 @@ func (c *Controller) syncRules(ctx context.Context, acc *policyv1alpha1.ServiceA
 		}
 		c.send2Edge(acc, deleteNodes, model.DeleteOperation)
 	}
-	sort.Slice(currentAcc.Spec.AccessRoleBinding, func(i, j int) bool {
-		return currentAcc.Spec.AccessRoleBinding[i].RoleBinding.Name < currentAcc.Spec.AccessRoleBinding[j].RoleBinding.Name
-	})
+	sortAccessRoleBindings(currentAcc.Spec.AccessRoleBinding)
 	sort.Slice(currentAcc.Spec.AccessClusterRoleBinding, func(i, j int) bool {
 		return currentAcc.Spec.AccessClusterRoleBinding[i].ClusterRoleBinding.Name < currentAcc.Spec.AccessClusterRoleBinding[j].ClusterRoleBinding.Name
 	})
@@ -452,6 +435,17 @@ func (c *Controller) syncRules(ctx context.Context, acc *policyv1alpha1.ServiceA
 		}
 	}
 	return controllerruntime.Result{}, nil
+}
+
+func sortAccessRoleBindings(bindings []policyv1alpha1.AccessRoleBinding) {
+	sort.Slice(bindings, func(i, j int) bool {
+		left := bindings[i].RoleBinding
+		right := bindings[j].RoleBinding
+		if left.Namespace != right.Namespace {
+			return left.Namespace < right.Namespace
+		}
+		return left.Name < right.Name
+	})
 }
 
 func equalAccessBindingSlice(a, b interface{}) bool {
@@ -575,11 +569,22 @@ func (c *Controller) GetRoleReferenceRules(ctx context.Context, roleRef rbacv1.R
 	}
 }
 
-func (c *Controller) VisitRulesFor(ctx context.Context, user user.Info, namespace string, acc *policyv1alpha1.ServiceAccountAccess) {
+// VisitRulesFor collects all bindings that apply to a user. The namespace argument is retained for compatibility;
+// RoleBindings are collected across all namespaces because their subjects can reference service accounts elsewhere.
+func (c *Controller) VisitRulesFor(ctx context.Context, user user.Info, _ string, acc *policyv1alpha1.ServiceAccountAccess) {
+	if err := c.visitRulesFor(ctx, user, acc); err != nil {
+		klog.Errorf("failed to collect rules for user %s, %v", user.GetName(), err)
+	}
+}
+
+func (c *Controller) visitRulesFor(ctx context.Context, user user.Info, acc *policyv1alpha1.ServiceAccountAccess) error {
 	crbl := &rbacv1.ClusterRoleBindingList{}
-	if err := c.Reader.List(ctx, crbl); err != nil {
-		klog.Errorf("failed to list clusterrolebindings, %v", err)
-		return
+	if err := c.Client.List(ctx, crbl); err != nil {
+		return fmt.Errorf("failed to list clusterrolebindings: %w", err)
+	}
+	roleBindingList := &rbacv1.RoleBindingList{}
+	if err := c.Client.List(ctx, roleBindingList); err != nil {
+		return fmt.Errorf("failed to list rolebindings: %w", err)
 	}
 	for _, crb := range crbl.Items {
 		_, applies := appliesTo(user, crb.Subjects, "")
@@ -588,8 +593,11 @@ func (c *Controller) VisitRulesFor(ctx context.Context, user user.Info, namespac
 		}
 		rules, err := c.GetRoleReferenceRules(ctx, crb.RoleRef, "")
 		if err != nil {
-			klog.Errorf("failed to get rules for clusterrolebinding %s, %v", crb.Name, err)
-			return
+			if apierrors.IsNotFound(err) {
+				klog.Warningf("skip clusterrolebinding %s because its roleRef cannot be resolved, %v", crb.Name, err)
+				continue
+			}
+			return fmt.Errorf("failed to get rules for clusterrolebinding %s: %w", crb.Name, err)
 		}
 		var accessClusterRoleBinding = policyv1alpha1.AccessClusterRoleBinding{
 			ClusterRoleBinding: crb,
@@ -598,27 +606,24 @@ func (c *Controller) VisitRulesFor(ctx context.Context, user user.Info, namespac
 		acc.Spec.AccessClusterRoleBinding = append(acc.Spec.AccessClusterRoleBinding, accessClusterRoleBinding)
 	}
 
-	if len(namespace) > 0 {
-		var roleBindingList = &rbacv1.RoleBindingList{}
-		if err := c.Reader.List(ctx, roleBindingList, &client.ListOptions{Namespace: namespace}); err != nil {
-			klog.Errorf("failed to list rolebindings, %v", err)
-			return
+	for _, roleBinding := range roleBindingList.Items {
+		_, applies := appliesTo(user, roleBinding.Subjects, roleBinding.Namespace)
+		if !applies {
+			continue
 		}
-		for _, roleBinding := range roleBindingList.Items {
-			_, applies := appliesTo(user, roleBinding.Subjects, namespace)
-			if !applies {
+		rules, err := c.GetRoleReferenceRules(ctx, roleBinding.RoleRef, roleBinding.Namespace)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				klog.Warningf("skip rolebinding %s/%s because its roleRef cannot be resolved, %v", roleBinding.Namespace, roleBinding.Name, err)
 				continue
 			}
-			rules, err := c.GetRoleReferenceRules(ctx, roleBinding.RoleRef, namespace)
-			if err != nil {
-				klog.Errorf("failed to get rules for rolebinding %s, %v", roleBinding.Name, err)
-				return
-			}
-			var accessRoleBinding = policyv1alpha1.AccessRoleBinding{
-				RoleBinding: roleBinding,
-				Rules:       rules,
-			}
-			acc.Spec.AccessRoleBinding = append(acc.Spec.AccessRoleBinding, accessRoleBinding)
+			return fmt.Errorf("failed to get rules for rolebinding %s/%s: %w", roleBinding.Namespace, roleBinding.Name, err)
 		}
+		var accessRoleBinding = policyv1alpha1.AccessRoleBinding{
+			RoleBinding: roleBinding,
+			Rules:       rules,
+		}
+		acc.Spec.AccessRoleBinding = append(acc.Spec.AccessRoleBinding, accessRoleBinding)
 	}
+	return nil
 }

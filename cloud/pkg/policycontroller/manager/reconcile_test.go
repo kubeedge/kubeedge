@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"sort"
@@ -18,9 +19,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/client-go/util/workqueue"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 
 	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/common"
@@ -29,6 +33,23 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 )
+
+type recordingMessageLayer struct {
+	messages []model.Message
+}
+
+func (m *recordingMessageLayer) Send(message model.Message) error {
+	m.messages = append(m.messages, message)
+	return nil
+}
+
+func (*recordingMessageLayer) Receive() (model.Message, error) {
+	return model.Message{}, nil
+}
+
+func (*recordingMessageLayer) Response(model.Message) error {
+	return nil
+}
 
 func TestIntersectSlice(t *testing.T) {
 	tests := []struct {
@@ -136,6 +157,64 @@ func TestSubtractSlice(t *testing.T) {
 	}
 }
 
+func TestSend2EdgeSetsServiceAccountAccessGVK(t *testing.T) {
+	messageLayer := &recordingMessageLayer{}
+	controller := &Controller{MessageLayer: messageLayer}
+	access := &policyv1alpha1.ServiceAccountAccess{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "cilium",
+			Namespace:       "kube-system",
+			UID:             "cilium-uid",
+			ResourceVersion: "2",
+		},
+		Spec: policyv1alpha1.AccessSpec{
+			ServiceAccount: v1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: "cilium", Namespace: "kube-system"}},
+		},
+	}
+
+	controller.send2Edge(access, []string{"edge-node"}, model.UpdateOperation)
+
+	if len(messageLayer.messages) != 1 {
+		t.Fatalf("send2Edge() sent %d messages, want 1", len(messageLayer.messages))
+	}
+	sentAccess, ok := messageLayer.messages[0].Content.(*policyv1alpha1.ServiceAccountAccess)
+	if !ok {
+		t.Fatalf("send2Edge() content type = %T, want *ServiceAccountAccess", messageLayer.messages[0].Content)
+	}
+	wantGVK := policyv1alpha1.SchemeGroupVersion.WithKind("ServiceAccountAccess")
+	if got := sentAccess.GroupVersionKind(); got != wantGVK {
+		t.Fatalf("send2Edge() content GVK = %s, want %s", got, wantGVK)
+	}
+	if got := access.GroupVersionKind(); !got.Empty() {
+		t.Fatalf("send2Edge() mutated source GVK to %s", got)
+	}
+}
+
+func TestSortAccessRoleBindings(t *testing.T) {
+	bindings := []policyv1alpha1.AccessRoleBinding{
+		{RoleBinding: rbacv1.RoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "reader", Namespace: "tenant-b"}}},
+		{RoleBinding: rbacv1.RoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "writer", Namespace: "tenant-a"}}},
+		{RoleBinding: rbacv1.RoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "reader", Namespace: "tenant-a"}}},
+		{RoleBinding: rbacv1.RoleBinding{ObjectMeta: metav1.ObjectMeta{Name: "admin", Namespace: "tenant-a"}}},
+	}
+
+	sortAccessRoleBindings(bindings)
+
+	got := make([]string, 0, len(bindings))
+	for _, binding := range bindings {
+		got = append(got, binding.RoleBinding.Namespace+"/"+binding.RoleBinding.Name)
+	}
+	want := []string{
+		"tenant-a/admin",
+		"tenant-a/reader",
+		"tenant-a/writer",
+		"tenant-b/reader",
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("sortAccessRoleBindings() = %v, want %v", got, want)
+	}
+}
+
 func TestAppliesTo(t *testing.T) {
 	tests := []struct {
 		subjects  []rbacv1.Subject
@@ -205,6 +284,25 @@ func TestAppliesTo(t *testing.T) {
 			appliesTo: true,
 			index:     2,
 			testCase:  "multiple subjects with a service account that matches",
+		},
+		{
+			subjects: []rbacv1.Subject{
+				{Kind: rbacv1.ServiceAccountKind, Name: "default"},
+			},
+			user:      &user.DefaultInfo{Name: "system:serviceaccount:tenant-a:default"},
+			namespace: "tenant-a",
+			appliesTo: true,
+			index:     0,
+			testCase:  "service account subject without namespace defaults to rolebinding namespace",
+		},
+		{
+			subjects: []rbacv1.Subject{
+				{Kind: rbacv1.ServiceAccountKind, Name: "default"},
+			},
+			user:      &user.DefaultInfo{Name: "system:serviceaccount:kube-system:default"},
+			namespace: "tenant-a",
+			appliesTo: false,
+			testCase:  "service account subject without namespace does not match another namespace",
 		},
 		{
 			subjects: []rbacv1.Subject{
@@ -635,7 +733,7 @@ var crbStr2 = `{
     ]
 }`
 
-func TestFilterResource(t *testing.T) {
+func TestMapRolesFuncAndFilterObject(t *testing.T) {
 	var sa1 v1.ServiceAccount
 	err := json.Unmarshal([]byte(saStr1), &sa1)
 	if err != nil {
@@ -681,6 +779,15 @@ func TestFilterResource(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to unmarshal rbWithCr: %v", err)
 	}
+	crossNamespaceRoleBinding := rb1.DeepCopy()
+	crossNamespaceRoleBinding.Name = "rb-cross-namespace"
+	crossNamespaceRoleBinding.Namespace = roleNs.Namespace
+	crossNamespaceRoleBinding.RoleRef.Name = roleNs.Name
+	crossNamespaceRoleBinding.Subjects[0].Namespace = sa1.Namespace
+	crossNamespaceClusterRoleBinding := rbWithCr.DeepCopy()
+	crossNamespaceClusterRoleBinding.Name = "rb-cross-namespace-cluster-role"
+	crossNamespaceClusterRoleBinding.Namespace = roleNs.Namespace
+	crossNamespaceClusterRoleBinding.Subjects[0].Namespace = sa1.Namespace
 	var cr1 rbacv1.ClusterRole
 	err = json.Unmarshal([]byte(crStr1), &cr1)
 	if err != nil {
@@ -813,6 +920,18 @@ func TestFilterResource(t *testing.T) {
 			reconcileResult: []controllerruntime.Request{},
 		},
 		{
+			name: "map role referenced by cross namespace rolebinding",
+			input: []client.Object{&policyv1alpha1.ServiceAccountAccess{
+				ObjectMeta: metav1.ObjectMeta{Name: "sa1", Namespace: "my-namespace"},
+				Spec:       policyv1alpha1.AccessSpec{ServiceAccount: sa1},
+			}, crossNamespaceRoleBinding},
+			rbacObj:    &roleNs,
+			rbacResult: true,
+			reconcileResult: []controllerruntime.Request{
+				{NamespacedName: types.NamespacedName{Name: "sa1", Namespace: "my-namespace"}},
+			},
+		},
+		{
 			name: "filter role failed with nil rolebinding and clusterrolebinding",
 			input: []client.Object{&policyv1alpha1.ServiceAccountAccess{
 				ObjectMeta: metav1.ObjectMeta{Name: "sa1", Namespace: "my-namespace"},
@@ -937,6 +1056,18 @@ func TestFilterResource(t *testing.T) {
 			},
 		},
 		{
+			name: "map clusterrole referenced by cross namespace rolebinding",
+			input: []client.Object{&policyv1alpha1.ServiceAccountAccess{
+				ObjectMeta: metav1.ObjectMeta{Name: "sa1", Namespace: "my-namespace"},
+				Spec:       policyv1alpha1.AccessSpec{ServiceAccount: sa1},
+			}, crossNamespaceClusterRoleBinding},
+			rbacObj:    &cr1,
+			rbacResult: true,
+			reconcileResult: []controllerruntime.Request{
+				{NamespacedName: types.NamespacedName{Name: "sa1", Namespace: "my-namespace"}},
+			},
+		},
+		{
 			name: "filter pod success",
 			input: []client.Object{&policyv1alpha1.ServiceAccountAccess{
 				ObjectMeta: metav1.ObjectMeta{
@@ -996,13 +1127,12 @@ func TestFilterResource(t *testing.T) {
 			Reader: fakeClient,
 		}
 		if tc.rbacObj != nil {
-			got := ctr.filterResource(context.Background(), tc.rbacObj)
-			if !reflect.DeepEqual(got, tc.rbacResult) {
-				t.Errorf("case %q want=%v, got=%v", tc.name, tc.rbacResult, got)
-			}
 			got2 := ctr.mapRolesFunc(context.Background(), tc.rbacObj)
 			if !equality.Semantic.DeepEqual(got2, tc.reconcileResult) {
 				t.Errorf("case %q want=%v, got=%v", tc.name, tc.reconcileResult, got2)
+			}
+			if got := len(got2) > 0; got != tc.rbacResult {
+				t.Errorf("case %q want match=%v, got match=%v", tc.name, tc.rbacResult, got)
 			}
 		}
 		if tc.obj != nil {
@@ -1012,6 +1142,64 @@ func TestFilterResource(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestRoleBindingEventsMapAffectedServiceAccount(t *testing.T) {
+	serviceAccount := v1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{Name: "old-sa", Namespace: "workloads"},
+	}
+	access := &policyv1alpha1.ServiceAccountAccess{
+		ObjectMeta: metav1.ObjectMeta{Name: serviceAccount.Name, Namespace: serviceAccount.Namespace},
+		Spec:       policyv1alpha1.AccessSpec{ServiceAccount: serviceAccount},
+	}
+	oldRoleBinding := &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{Name: "reader", Namespace: "tenant-a"},
+		Subjects: []rbacv1.Subject{{
+			Kind:      rbacv1.ServiceAccountKind,
+			Name:      serviceAccount.Name,
+			Namespace: serviceAccount.Namespace,
+		}},
+		RoleRef: rbacv1.RoleRef{APIGroup: rbacv1.GroupName, Kind: "Role", Name: "reader"},
+	}
+	newRoleBinding := oldRoleBinding.DeepCopy()
+	newRoleBinding.Subjects = nil
+
+	testScheme := runtime.NewScheme()
+	if err := policyv1alpha1.AddToScheme(testScheme); err != nil {
+		t.Fatalf("failed to add policyv1alpha1 scheme: %v", err)
+	}
+	fakeClient := fake.NewClientBuilder().WithScheme(testScheme).WithObjects(access).Build()
+	controller := &Controller{Client: fakeClient, Reader: fakeClient}
+	eventHandler := handler.EnqueueRequestsFromMapFunc(controller.mapRolesFunc)
+	queue := workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[controllerruntime.Request]())
+	defer queue.ShutDown()
+	want := controllerruntime.Request{
+		NamespacedName: types.NamespacedName{Name: access.Name, Namespace: access.Namespace},
+	}
+	assertQueued := func(eventName string) {
+		t.Helper()
+		if queue.Len() != 1 {
+			t.Fatalf("rolebinding %s enqueued %d requests, want 1", eventName, queue.Len())
+		}
+		request, shutdown := queue.Get()
+		if shutdown {
+			t.Fatalf("workqueue shut down before rolebinding %s request was read", eventName)
+		}
+		queue.Done(request)
+		if request != want {
+			t.Errorf("rolebinding %s enqueued %#v, want %#v", eventName, request, want)
+		}
+	}
+
+	eventHandler.Create(context.Background(), event.CreateEvent{Object: oldRoleBinding}, queue)
+	assertQueued("create")
+	eventHandler.Update(context.Background(), event.UpdateEvent{
+		ObjectOld: oldRoleBinding,
+		ObjectNew: newRoleBinding,
+	}, queue)
+	assertQueued("subject removal")
+	eventHandler.Delete(context.Background(), event.DeleteEvent{Object: oldRoleBinding}, queue)
+	assertQueued("delete")
 }
 
 func TestMapObjectFunc(t *testing.T) {
@@ -1376,6 +1564,186 @@ func TestGetNodeListOfServiceAccountAccess(t *testing.T) {
 	}
 	if !equality.Semantic.DeepEqual(got3, []string{"node-1", "node-2"}) {
 		t.Errorf("testcase 3 got %v, want %v", got3, []string{"node-1", "node-2"})
+	}
+}
+
+func TestVisitRulesForCollectsCrossNamespaceRoleBindings(t *testing.T) {
+	const (
+		serviceAccountNamespace = "kube-system"
+		serviceAccountName      = "edge-client"
+	)
+
+	roleRules := []rbacv1.PolicyRule{{
+		APIGroups: []string{""},
+		Resources: []string{"configmaps"},
+		Verbs:     []string{"get"},
+	}}
+	clusterRoleRules := []rbacv1.PolicyRule{{
+		APIGroups: []string{""},
+		Resources: []string{"pods"},
+		Verbs:     []string{"list"},
+	}}
+	role := &rbacv1.Role{
+		ObjectMeta: metav1.ObjectMeta{Name: "configmap-reader", Namespace: "tenant-a"},
+		Rules:      roleRules,
+	}
+	clusterRole := &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{Name: "pod-reader"},
+		Rules:      clusterRoleRules,
+	}
+	serviceAccountSubject := rbacv1.Subject{
+		Kind:      rbacv1.ServiceAccountKind,
+		Name:      serviceAccountName,
+		Namespace: serviceAccountNamespace,
+	}
+	roleBinding := &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{Name: "allow-edge-client", Namespace: "tenant-a"},
+		Subjects:   []rbacv1.Subject{serviceAccountSubject},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: rbacv1.GroupName,
+			Kind:     "Role",
+			Name:     role.Name,
+		},
+	}
+	roleBindingToClusterRole := &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{Name: "allow-edge-client", Namespace: "tenant-b"},
+		Subjects:   []rbacv1.Subject{serviceAccountSubject},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: rbacv1.GroupName,
+			Kind:     "ClusterRole",
+			Name:     clusterRole.Name,
+		},
+	}
+	brokenRoleBinding := &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{Name: "a-broken", Namespace: "tenant-c"},
+		Subjects:   []rbacv1.Subject{serviceAccountSubject},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: rbacv1.GroupName,
+			Kind:     "Role",
+			Name:     "missing",
+		},
+	}
+	nonMatchingRoleBinding := roleBinding.DeepCopy()
+	nonMatchingRoleBinding.Name = "other-service-account"
+	nonMatchingRoleBinding.Subjects[0].Namespace = "tenant-a"
+	clusterRoleBinding := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{Name: "allow-edge-client-cluster-wide"},
+		Subjects:   []rbacv1.Subject{serviceAccountSubject},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: rbacv1.GroupName,
+			Kind:     "ClusterRole",
+			Name:     clusterRole.Name,
+		},
+	}
+
+	testScheme := runtime.NewScheme()
+	if err := rbacv1.AddToScheme(testScheme); err != nil {
+		t.Fatalf("failed to add rbacv1 scheme: %v", err)
+	}
+	fakeClient := fake.NewClientBuilder().WithScheme(testScheme).WithObjects(
+		role,
+		clusterRole,
+		brokenRoleBinding,
+		roleBinding,
+		roleBindingToClusterRole,
+		nonMatchingRoleBinding,
+		clusterRoleBinding,
+	).Build()
+	controller := &Controller{Client: fakeClient, Reader: fakeClient}
+	userInfo := &user.DefaultInfo{
+		Name: "system:serviceaccount:" + serviceAccountNamespace + ":" + serviceAccountName,
+		UID:  "edge-client-uid",
+		Groups: []string{
+			"system:serviceaccounts",
+			"system:serviceaccounts:" + serviceAccountNamespace,
+			user.AllAuthenticated,
+		},
+	}
+	access := &policyv1alpha1.ServiceAccountAccess{}
+
+	controller.VisitRulesFor(context.Background(), userInfo, serviceAccountNamespace, access)
+
+	wantRoleBindings := map[string][]rbacv1.PolicyRule{
+		"tenant-a/allow-edge-client": roleRules,
+		"tenant-b/allow-edge-client": clusterRoleRules,
+	}
+	if len(access.Spec.AccessRoleBinding) != len(wantRoleBindings) {
+		t.Fatalf("VisitRulesFor() collected %d rolebindings, want %d: %#v", len(access.Spec.AccessRoleBinding), len(wantRoleBindings), access.Spec.AccessRoleBinding)
+	}
+	for _, binding := range access.Spec.AccessRoleBinding {
+		key := binding.RoleBinding.Namespace + "/" + binding.RoleBinding.Name
+		wantRules, ok := wantRoleBindings[key]
+		if !ok {
+			t.Errorf("VisitRulesFor() collected unexpected rolebinding %s", key)
+			continue
+		}
+		if !equality.Semantic.DeepEqual(binding.Rules, wantRules) {
+			t.Errorf("VisitRulesFor() rules for %s = %#v, want %#v", key, binding.Rules, wantRules)
+		}
+	}
+	if len(access.Spec.AccessClusterRoleBinding) != 1 {
+		t.Fatalf("VisitRulesFor() collected %d clusterrolebindings, want 1", len(access.Spec.AccessClusterRoleBinding))
+	}
+	if !equality.Semantic.DeepEqual(access.Spec.AccessClusterRoleBinding[0].Rules, clusterRoleRules) {
+		t.Errorf("VisitRulesFor() clusterrolebinding rules = %#v, want %#v", access.Spec.AccessClusterRoleBinding[0].Rules, clusterRoleRules)
+	}
+
+	if err := fakeClient.Delete(context.Background(), roleBinding); err != nil {
+		t.Fatalf("failed to delete cross namespace rolebinding: %v", err)
+	}
+	afterDelete := &policyv1alpha1.ServiceAccountAccess{}
+	if err := controller.visitRulesFor(context.Background(), userInfo, afterDelete); err != nil {
+		t.Fatalf("visitRulesFor() after rolebinding deletion returned error: %v", err)
+	}
+	if len(afterDelete.Spec.AccessRoleBinding) != 1 {
+		t.Fatalf("visitRulesFor() after deletion collected %d rolebindings, want 1: %#v", len(afterDelete.Spec.AccessRoleBinding), afterDelete.Spec.AccessRoleBinding)
+	}
+	remaining := afterDelete.Spec.AccessRoleBinding[0].RoleBinding
+	if remaining.Namespace != "tenant-b" || remaining.Name != "allow-edge-client" {
+		t.Errorf("visitRulesFor() after deletion retained %s/%s, want tenant-b/allow-edge-client", remaining.Namespace, remaining.Name)
+	}
+}
+
+type roleBindingListErrorClient struct {
+	client.Client
+	err error
+}
+
+func (c roleBindingListErrorClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	if _, ok := list.(*rbacv1.RoleBindingList); ok {
+		return c.err
+	}
+	return c.Client.List(ctx, list, opts...)
+}
+
+func TestSyncRulesRequeuesWhenRoleBindingListFails(t *testing.T) {
+	testScheme := runtime.NewScheme()
+	if err := v1.AddToScheme(testScheme); err != nil {
+		t.Fatalf("failed to add core v1 scheme: %v", err)
+	}
+	if err := rbacv1.AddToScheme(testScheme); err != nil {
+		t.Fatalf("failed to add rbacv1 scheme: %v", err)
+	}
+	serviceAccount := &v1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{Name: "edge-client", Namespace: "kube-system", UID: "edge-client-uid"},
+	}
+	fakeClient := fake.NewClientBuilder().WithScheme(testScheme).WithObjects(serviceAccount).Build()
+	listErr := errors.New("rolebinding list failed")
+	controller := &Controller{
+		Client: roleBindingListErrorClient{Client: fakeClient, err: listErr},
+		Reader: fakeClient,
+	}
+	access := &policyv1alpha1.ServiceAccountAccess{
+		ObjectMeta: metav1.ObjectMeta{Name: serviceAccount.Name, Namespace: serviceAccount.Namespace},
+		Spec:       policyv1alpha1.AccessSpec{ServiceAccount: *serviceAccount.DeepCopy()},
+	}
+
+	result, err := controller.syncRules(context.Background(), access)
+	if !errors.Is(err, listErr) {
+		t.Fatalf("syncRules() error = %v, want %v", err, listErr)
+	}
+	if !result.Requeue {
+		t.Fatal("syncRules() did not request a requeue after rolebinding list failure")
 	}
 }
 
