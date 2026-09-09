@@ -340,6 +340,68 @@ func TestNodeSessionSendAckMessage(t *testing.T) {
 	}
 }
 
+func TestNodeSessionSendMessageWithRetryCacheCleanup(t *testing.T) {
+	// sendMessageWithRetry must remove the message ID from ackMessageCache
+	// on every exit path. Without this cleanup, every unacknowledged
+	// message stays in the cache forever and the memory grows.
+	origInterval := sendRetryInterval
+	sendRetryInterval = 10 * time.Millisecond
+	defer func() { sendRetryInterval = origInterval }()
+
+	newSession := func(t *testing.T) (*NodeSession, *mockcon.MockConnection) {
+		t.Helper()
+		mockController := gomock.NewController(t)
+		mockConn := mockcon.NewMockConnection(mockController)
+		session := NewNodeSession(tf.TestNodeID, tf.TestProjectID, mockConn, tf.KeepaliveInterval,
+			common.InitNodeMessagePool(tf.TestNodeID), &fake.Clientset{})
+		return session, mockConn
+	}
+
+	assertCacheEmpty := func(t *testing.T, session *NodeSession, id string) {
+		t.Helper()
+		if _, ok := session.ackMessageCache.Load(id); ok {
+			t.Errorf("ackMessageCache still contains message ID %s", id)
+		}
+	}
+
+	t.Run("remove cache entry after acknowledgement", func(t *testing.T) {
+		session, mockConn := newSession(t)
+		mockConn.EXPECT().WriteMessageAsync(gomock.Any()).DoAndReturn(func(m *beehivemodel.Message) error {
+			session.ReceiveMessageAck(m.GetID())
+			return nil
+		}).AnyTimes()
+
+		msg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "update")
+		if err := session.sendMessageWithRetry(msg, msg); err != nil {
+			t.Errorf("sendMessageWithRetry returned unexpected error: %v", err)
+		}
+		assertCacheEmpty(t, session, msg.GetID())
+	})
+
+	t.Run("remove cache entry after write error", func(t *testing.T) {
+		session, mockConn := newSession(t)
+		mockConn.EXPECT().WriteMessageAsync(gomock.Any()).Return(errors.New("write err")).Times(1)
+
+		msg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "update")
+		if err := session.sendMessageWithRetry(msg, msg); err == nil {
+			t.Error("sendMessageWithRetry returned nil, expected write error")
+		}
+		assertCacheEmpty(t, session, msg.GetID())
+	})
+
+	t.Run("remove cache entry after ack timeout", func(t *testing.T) {
+		session, mockConn := newSession(t)
+		mockConn.EXPECT().WriteMessageAsync(gomock.Any()).Return(nil).AnyTimes()
+
+		msg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "update")
+		err := session.sendMessageWithRetry(msg, msg)
+		if !errors.Is(err, ErrWaitTimeout) {
+			t.Errorf("sendMessageWithRetry returned %v, expected ErrWaitTimeout", err)
+		}
+		assertCacheEmpty(t, session, msg.GetID())
+	})
+}
+
 func normalSimulateMessageFunc(pool *common.NodeMessagePool, messages []*beehivemodel.Message) {
 	for _, message := range messages {
 		enqueueAckMessage(pool, message)
