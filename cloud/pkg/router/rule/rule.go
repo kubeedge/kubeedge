@@ -17,7 +17,32 @@ import (
 var (
 	rules         sync.Map
 	ruleEndpoints sync.Map
+	ruleExecPool  = newWorkerPool(100)
 )
+
+type workerPool struct {
+	jobs chan func()
+}
+
+func newWorkerPool(size int) *workerPool {
+	p := &workerPool{
+		jobs: make(chan func(), 1024),
+	}
+	for i := 0; i < size; i++ {
+		go p.worker()
+	}
+	return p
+}
+
+func (p *workerPool) worker() {
+	for job := range p.jobs {
+		job()
+	}
+}
+
+func (p *workerPool) submit(job func()) {
+	p.jobs <- job
+}
 
 func init() {
 	registerListener()
@@ -110,19 +135,29 @@ func addRule(rule *routerv1.Rule) error {
 
 	ruleKey := getKey(rule.Namespace, rule.Name)
 	if err := source.RegisterListener(func(data interface{}) (interface{}, error) {
-		//TODO Use goroutine pool later
-		var execResult ExecResult
-		resp, err := source.Forward(target, data)
-		if err != nil {
-			// rule.Status.Fail++
-			// record error info for rule
-			errMsg := ErrorMsg{Detail: err.Error(), Timestamp: time.Now()}
-			execResult = ExecResult{RuleID: rule.Name, ProjectID: rule.Namespace, Status: "FAIL", Error: errMsg}
-		} else {
-			execResult = ExecResult{RuleID: rule.Name, ProjectID: rule.Namespace, Status: "SUCCESS"}
+		type result struct {
+			resp interface{}
+			err  error
 		}
-		ResultChannel <- execResult
-		return resp, nil
+		resCh := make(chan result, 1)
+
+		ruleExecPool.submit(func() {
+			var execResult ExecResult
+			resp, err := source.Forward(target, data)
+			if err != nil {
+				// rule.Status.Fail++
+				// record error info for rule
+				errMsg := ErrorMsg{Detail: err.Error(), Timestamp: time.Now()}
+				execResult = ExecResult{RuleID: rule.Name, ProjectID: rule.Namespace, Status: "FAIL", Error: errMsg}
+			} else {
+				execResult = ExecResult{RuleID: rule.Name, ProjectID: rule.Namespace, Status: "SUCCESS"}
+			}
+			ResultChannel <- execResult
+			resCh <- result{resp: resp, err: err}
+		})
+
+		res := <-resCh
+		return res.resp, res.err
 	}); err != nil {
 		klog.Errorf("add rule %s failed, err: %v", ruleKey, err)
 		errMsg := ErrorMsg{Detail: err.Error(), Timestamp: time.Now()}
