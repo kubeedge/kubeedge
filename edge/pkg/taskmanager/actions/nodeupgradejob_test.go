@@ -362,6 +362,24 @@ func TestNodeUpgradeJobReportActionStatus(t *testing.T) {
 			},
 			action: string(operationsv1alpha2.NodeUpgradeJobActionBackUp),
 		},
+		{
+			name:        "backup pre-run failed",
+			resp:        &baseActionResponse{err: errors.New("test error")},
+			action:      string(operationsv1alpha2.NodeUpgradeJobActionBackUp),
+			extendEmpty: true,
+		},
+		{
+			name:        "upgrade pre-run failed",
+			resp:        &baseActionResponse{err: errors.New("test error")},
+			action:      string(operationsv1alpha2.NodeUpgradeJobActionUpgrade),
+			extendEmpty: true,
+		},
+		{
+			name:        "rollback pre-run failed",
+			resp:        &baseActionResponse{err: errors.New("test error")},
+			action:      string(operationsv1alpha2.NodeUpgradeJobActionRollBack),
+			extendEmpty: true,
+		},
 	}
 
 	h := nodeUpgradeJobActionHandler{
@@ -369,10 +387,12 @@ func TestNodeUpgradeJobReportActionStatus(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			var reported bool
 			patches := gomonkey.NewPatches()
 			defer patches.Reset()
 
 			patches.ApplyFunc(message.ReportNodeTaskStatus, func(_res taskmsg.Resource, msgbody taskmsg.UpstreamMessage) {
+				reported = true
 				assert.Equal(t, c.action, msgbody.Action)
 				if c.extendEmpty {
 					assert.Empty(t, msgbody.Extend)
@@ -387,7 +407,10 @@ func TestNodeUpgradeJobReportActionStatus(t *testing.T) {
 				}
 			})
 
-			h.reportActionStatus(jobName, nodeName, c.action, c.resp)
+			require.NotPanics(t, func() {
+				h.reportActionStatus(jobName, nodeName, c.action, c.resp)
+			})
+			assert.True(t, reported)
 		})
 	}
 }
