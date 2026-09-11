@@ -201,6 +201,9 @@ func handleDeviceState(in *pb.ReportDeviceStatesRequest, payload []byte) {
 
 // CreateMessageTwinUpdate create twin update message.
 func CreateMessageTwinUpdate(twin *pb.Twin) ([]byte, error) {
+	if twin == nil {
+		return nil, errors.New("twin must not be nil")
+	}
 	var updateMsg DeviceTwinUpdate
 
 	updateMsg.BaseMessage.Timestamp = getTimestamp()
@@ -215,6 +218,9 @@ func CreateMessageTwinUpdate(twin *pb.Twin) ([]byte, error) {
 
 // CreateMessageStateUpdate create state update message.
 func CreateMessageStateUpdate(in *pb.ReportDeviceStatesRequest) ([]byte, error) {
+	if in == nil {
+		return nil, errors.New("ReportDeviceStatesRequest must not be nil")
+	}
 	var stateMsg DeviceStateUpdate
 	stateMsg.BaseMessage.Timestamp = getTimestamp()
 	stateMsg.State = in.State
