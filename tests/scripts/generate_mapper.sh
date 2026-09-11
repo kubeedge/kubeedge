@@ -60,7 +60,7 @@ docker build -f Dockerfile_nostream -t ${mapper_image} . && echo "successfully b
 docker save -o modbus-mapper.tar ${mapper_image}
 
 if [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
-  # Keep the short mapper image name used by the e2e deployment.
+  # CRI-O resolves the short mapper image name used by the e2e deployment to docker.io/library.
   load_output=$(sudo podman load -i modbus-mapper.tar)
   echo "${load_output}"
   loaded_image=$(printf '%s\n' "${load_output}" | awk -F': ' '/^Loaded image/ {print $2}' | tail -n 1)
@@ -68,8 +68,8 @@ if [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
     echo "failed to detect loaded modbus mapper image name"
     exit 1
   fi
-  if [[ "${loaded_image}" != "${mapper_image}" ]]; then
-    sudo podman tag "${loaded_image}" "${mapper_image}"
+  if [[ "${loaded_image}" != "docker.io/library/${mapper_image}" ]]; then
+    sudo podman tag "${loaded_image}" "docker.io/library/${mapper_image}"
   fi
   echo "successfully import modbus mapper image to CRI-O"
 elif [[ "${CONTAINER_RUNTIME}" = "isulad" ]]; then
