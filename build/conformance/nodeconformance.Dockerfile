@@ -19,16 +19,16 @@ ARG GO_LDFLAGS
 RUN go install github.com/onsi/ginkgo/v2/ginkgo@v2.9.5
 
 COPY . /go/src/github.com/kubeedge/kubeedge
+WORKDIR /go/src/github.com/kubeedge/kubeedge
 
-RUN cp /go/src/github.com/kubeedge/kubeedge/build/conformance/kubernetes/kube_node_conformance_test.go \
-    /go/src/github.com/kubeedge/kubeedge/tests/e2e/
+RUN cp build/conformance/kubernetes/kube_node_conformance_test.go tests/e2e/
 
-RUN cd /go/src/github.com/kubeedge/kubeedge && GOWORK=off go mod vendor
+RUN GOWORK=off go mod vendor
 
-RUN CGO_ENABLED=0 GO111MODULE=off ginkgo build -ldflags "-w -s -extldflags -static" -r /go/src/github.com/kubeedge/kubeedge/tests/e2e
+RUN CGO_ENABLED=0 ginkgo build -ldflags "-w -s -extldflags -static" -r ./tests/e2e
 
-RUN CGO_ENABLED=0 GO111MODULE=off go build -v -o /usr/local/bin/node-e2e-runner -ldflags "$GO_LDFLAGS -w -s" \
-   /go/src/github.com/kubeedge/kubeedge/build/conformance/node-e2e-runner
+RUN CGO_ENABLED=0 go build -v -o /usr/local/bin/node-e2e-runner -ldflags "$GO_LDFLAGS -w -s" \
+   ./build/conformance/node-e2e-runner
 
 FROM alpine:3.21
 
