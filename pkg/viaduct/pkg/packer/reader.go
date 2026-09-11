@@ -4,12 +4,25 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 
 	"k8s.io/klog/v2"
 )
 
 type Reader struct {
 	reader io.Reader
+}
+
+// silentReadErr reports whether a read error is an expected disconnect path
+// that the caller handles and logs itself: EOF (legacy behavior) or a
+// deadline expiry (the designed half-open detection in
+// conn.WSConnection.handleMessage).
+func silentReadErr(err error) bool {
+	if errors.Is(err, io.EOF) {
+		return true
+	}
+	var netErr net.Error
+	return errors.As(err, &netErr) && netErr.Timeout()
 }
 
 func NewReader(r io.Reader) *Reader {
@@ -30,7 +43,7 @@ func (r *Reader) Read() ([]byte, error) {
 	headerBuffer := make([]byte, HeaderSize)
 	_, err := io.ReadFull(r.reader, headerBuffer)
 	if err != nil {
-		if !errors.Is(err, io.EOF) {
+		if !silentReadErr(err) {
 			klog.Error("failed to read package header from buffer")
 		}
 		return nil, err
@@ -46,7 +59,7 @@ func (r *Reader) Read() ([]byte, error) {
 	payloadBuffer := make([]byte, header.PayloadLen)
 	_, err = io.ReadFull(r.reader, payloadBuffer)
 	if err != nil {
-		if !errors.Is(err, io.EOF) {
+		if !silentReadErr(err) {
 			klog.Error("failed to read payload from buffer")
 		}
 		return nil, err
