@@ -283,9 +283,18 @@ func processConfigMapKeyRef(value map[string]interface{}) (*corev1.ConfigMapKeyS
 		return nil, err
 	}
 	if cnOK && ckOK {
+		optional, found, err := unstructured.NestedBool(value, "configMapKeyRef", "optional")
+		if err != nil {
+			return nil, err
+		}
+		var optionalRef *bool
+		if found {
+			optionalRef = &optional
+		}
 		return &corev1.ConfigMapKeySelector{
 			LocalObjectReference: corev1.LocalObjectReference{Name: name},
 			Key:                  key,
+			Optional:             optionalRef,
 		}, nil
 	}
 	return nil, nil
@@ -302,9 +311,18 @@ func processSecretKeyRef(value map[string]interface{}) (*corev1.SecretKeySelecto
 	}
 
 	if snOK && skOK {
+		optional, found, err := unstructured.NestedBool(value, "secretKeyRef", "optional")
+		if err != nil {
+			return nil, err
+		}
+		var optionalRef *bool
+		if found {
+			optionalRef = &optional
+		}
 		return &corev1.SecretKeySelector{
 			LocalObjectReference: corev1.LocalObjectReference{Name: name},
 			Key:                  key,
+			Optional:             optionalRef,
 		}, nil
 	}
 	return nil, nil
