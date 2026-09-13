@@ -21,6 +21,20 @@ spec:
         - name: controller-manager
           image: kubeedge/controller-manager:latest
           imagePullPolicy: IfNotPresent
+          ports:
+            - name: healthz
+              containerPort: 9001
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: healthz
+              scheme: HTTP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+              scheme: HTTP
       restartPolicy: Always
       serviceAccountName: controller-manager
       affinity:
