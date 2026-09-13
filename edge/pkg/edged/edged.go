@@ -517,7 +517,7 @@ func (e *edged) handlePodListFromMetaManager(content []byte, updatesChan chan<- 
 		if filterPodByNodeName(&pod, e.nodeName) {
 			if pod.Annotations[holdUpgradeLabel] == "true" && pod.Status.Phase == v1.PodPending {
 				key := fmt.Sprintf("%s/%s", pod.Namespace, pod.Name)
-				e.heldPodUpdates[key] = append(e.heldPodUpdates[key], kubelettypes.PodUpdate{Op: kubelettypes.SET, Pods: []*v1.Pod{&pod}, Source: kubelettypes.ApiserverSource})
+				e.heldPodUpdates[key] = append(e.heldPodUpdates[key], kubelettypes.PodUpdate{Op: kubelettypes.UPDATE, Pods: []*v1.Pod{&pod}, Source: kubelettypes.ApiserverSource})
 				continue
 			}
 
