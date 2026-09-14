@@ -1,0 +1,55 @@
+# Device: a specific factory floor sensor instance bound to an edge node.
+# The "anomaly-detected" twin property is populated by the edge AI inference engine.
+apiVersion: devices.kubeedge.io/v1beta1
+kind: Device
+metadata:
+  name: factory-sensor-01
+  namespace: default
+  labels:
+    app: predictive-maintenance
+    location: factory-floor-zone-a
+    scenario: embodied-intelligence
+spec:
+  deviceModelRef:
+    name: factory-vibration-temp-sensor
+  protocol:
+    protocolName: virtual-sensor
+    configData:
+      sampleRate: "5s"
+      sensorId: "FAC-SENSOR-01"
+  nodeName: edge-node-01    # <-- replace with your actual edge node name
+status:
+  twins:
+    - propertyName: vibration
+      desired:
+        value: "0.0"
+        metadata:
+          timestamp: "0"
+          type: float
+      reported:
+        value: "0.0"
+        metadata:
+          timestamp: "0"
+          type: float
+    - propertyName: temperature
+      desired:
+        value: "0.0"
+        metadata:
+          timestamp: "0"
+          type: float
+      reported:
+        value: "0.0"
+        metadata:
+          timestamp: "0"
+          type: float
+    - propertyName: anomaly-detected
+      desired:
+        value: "false"
+        metadata:
+          timestamp: "0"
+          type: boolean
+      reported:
+        value: "false"
+        metadata:
+          timestamp: "0"
+          type: boolean
