@@ -33,9 +33,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
+	k8stesting "k8s.io/client-go/testing"
 
 	"github.com/stretchr/testify/require"
 
@@ -1382,4 +1384,47 @@ func TestUnmarshalPodStatusMessage(t *testing.T) {
 	if resSingleInvalid != nil {
 		t.Errorf("expected nil podStatuses on single pod unmarshal error, got %v", resSingleInvalid)
 	}
+}
+
+func TestCreateNodeReservedLabelPatch(t *testing.T) {
+	newNode := func() *corev1.Node {
+		return &corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "edge-node",
+				Labels: map[string]string{
+					"kubernetes.io/os": "linux",
+					"custom-label":     "value",
+				},
+			},
+		}
+	}
+
+	t.Run("patch failure is reported to the caller", func(t *testing.T) {
+		kubeClient := fake.NewSimpleClientset()
+		kubeClient.PrependReactor("patch", "nodes",
+			func(k8stesting.Action) (bool, runtime.Object, error) {
+				return true, nil, errors.New("patch nodes failed")
+			})
+		uc := &UpstreamController{kubeClient: kubeClient}
+
+		node, err := uc.createNode("edge-node", "edge-node", newNode())
+
+		require.Error(t, err, "a failed reserved label patch must not be reported as a successful registration")
+		require.Contains(t, err.Error(), "patch nodes failed")
+		// The node was created, so it is still returned for the caller to report on.
+		require.NotNil(t, node)
+		require.Equal(t, "edge-node", node.Name)
+	})
+
+	t.Run("reserved labels are applied on success", func(t *testing.T) {
+		kubeClient := fake.NewSimpleClientset()
+		uc := &UpstreamController{kubeClient: kubeClient}
+
+		node, err := uc.createNode("edge-node", "edge-node", newNode())
+
+		require.NoError(t, err)
+		require.NotNil(t, node)
+		require.Equal(t, "linux", node.Labels["kubernetes.io/os"])
+		require.Equal(t, "value", node.Labels["custom-label"])
+	})
 }
