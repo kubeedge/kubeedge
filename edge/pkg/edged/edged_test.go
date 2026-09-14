@@ -1,5 +1,5 @@
 /*
-Copyright 2025 The KubeEdge Authors.
+Copyright 2026 The KubeEdge Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package edged
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -94,10 +95,10 @@ func TestHandlePodListFromMetaManagerHoldsPodAsUpdate(t *testing.T) {
 
 	update := (<-updatesChan).(kubelettypes.PodUpdate)
 	if update.Op != kubelettypes.SET {
-		t.Errorf("expected the pod list to be sent as SET, got %v", update.Op)
+		t.Errorf("expected the pod list to be sent as SET, got %s", opName(update.Op))
 	}
 	if len(update.Pods) != 1 || update.Pods[0].Name != runningPod.Name {
-		t.Errorf("expected the pod list to contain only %q, got %v", runningPod.Name, update.Pods)
+		t.Errorf("expected the pod list to contain only %q, got %v", runningPod.Name, podNames(update.Pods))
 	}
 
 	held, exists := e.heldPodUpdates["default/held"]
@@ -108,13 +109,13 @@ func TestHandlePodListFromMetaManagerHoldsPodAsUpdate(t *testing.T) {
 		t.Fatalf("expected 1 held update, got %d", len(held))
 	}
 	if held[0].Op != kubelettypes.UPDATE {
-		t.Errorf("expected the held pod to be queued as UPDATE, got %v, kubelet reads a SET as the full pod list of the source", held[0].Op)
+		t.Errorf("expected the held pod to be queued as UPDATE, got %s, kubelet reads a SET as the full pod list of the source", opName(held[0].Op))
 	}
 	if held[0].Source != kubelettypes.ApiserverSource {
 		t.Errorf("expected source %q, got %q", kubelettypes.ApiserverSource, held[0].Source)
 	}
 	if len(held[0].Pods) != 1 || held[0].Pods[0].Name != heldPod.Name {
-		t.Errorf("expected the held update to carry %q, got %v", heldPod.Name, held[0].Pods)
+		t.Errorf("expected the held update to carry %q, got %v", heldPod.Name, podNames(held[0].Pods))
 	}
 }
 
@@ -143,7 +144,7 @@ func TestUnholdHeldPodFromPodListKeepsOtherPods(t *testing.T) {
 
 	add := receivePodUpdate(t, podCfg)
 	if add.Op != kubelettypes.ADD || len(add.Pods) != 1 || add.Pods[0].Name != runningPod.Name {
-		t.Fatalf("expected %q to be added, got %v with pods %v", runningPod.Name, add.Op, add.Pods)
+		t.Fatalf("expected %q to be added, got %s with pods %v", runningPod.Name, opName(add.Op), podNames(add.Pods))
 	}
 
 	// Replay the held pod, as the unhold-upgrade path in syncPod does.
@@ -153,17 +154,17 @@ func TestUnholdHeldPodFromPodListKeepsOtherPods(t *testing.T) {
 
 	replayed := receivePodUpdate(t, podCfg)
 	if replayed.Op == kubelettypes.REMOVE {
-		t.Fatalf("replaying the held pod removed pods %v", replayed.Pods)
+		t.Fatalf("replaying the held pod removed pods %v", podNames(replayed.Pods))
 	}
 	if replayed.Op != kubelettypes.ADD {
-		t.Fatalf("expected the replayed held pod to be added, got %v", replayed.Op)
+		t.Fatalf("expected the replayed held pod to be added, got %s", opName(replayed.Op))
 	}
 	if len(replayed.Pods) != 1 || replayed.Pods[0].Name != heldPod.Name {
-		t.Fatalf("expected the replay to carry %q, got %v", heldPod.Name, replayed.Pods)
+		t.Fatalf("expected the replay to carry %q, got %v", heldPod.Name, podNames(replayed.Pods))
 	}
 
 	if extra := receiveNoPodUpdate(t, podCfg); extra != nil {
-		t.Fatalf("unexpected extra update after the replay: %v with pods %v", extra.Op, extra.Pods)
+		t.Fatalf("unexpected extra update after the replay: %s with pods %v", opName(extra.Op), podNames(extra.Pods))
 	}
 }
 
@@ -188,4 +189,31 @@ func receiveNoPodUpdate(t *testing.T, podCfg *config.PodConfig) *kubelettypes.Po
 	case <-time.After(time.Second):
 		return nil
 	}
+}
+
+func opName(op kubelettypes.PodOperation) string {
+	switch op {
+	case kubelettypes.SET:
+		return "SET"
+	case kubelettypes.ADD:
+		return "ADD"
+	case kubelettypes.DELETE:
+		return "DELETE"
+	case kubelettypes.REMOVE:
+		return "REMOVE"
+	case kubelettypes.UPDATE:
+		return "UPDATE"
+	case kubelettypes.RECONCILE:
+		return "RECONCILE"
+	default:
+		return fmt.Sprintf("PodOperation(%d)", op)
+	}
+}
+
+func podNames(pods []*v1.Pod) []string {
+	names := make([]string, 0, len(pods))
+	for _, pod := range pods {
+		names = append(names, pod.Namespace+"/"+pod.Name)
+	}
+	return names
 }
