@@ -146,6 +146,8 @@ controllerManager:
 admission:
   enable: false
   replicaCount: 1
+  # If empty, will auto-generate certificates and create a Secret
+  # If set, the existing Secret will be used
   certsSecretName: ""
   image:
     repository: "kubeedge/admission"
