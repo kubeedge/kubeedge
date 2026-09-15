@@ -27,6 +27,44 @@ import (
 	"github.com/kubeedge/api/apis/apps/v1alpha1"
 )
 
+func TestEnvOverridePreservesOptionalReferences(t *testing.T) {
+	for _, selector := range []string{"configMapKeyRef", "secretKeyRef"} {
+		for _, optional := range []string{"true", "false", "omitted"} {
+			t.Run(selector+"/"+optional, func(t *testing.T) {
+				ref := map[string]interface{}{"name": "settings", "key": "mode"}
+				if optional != "omitted" {
+					ref["optional"] = optional == "true"
+				}
+				existing := map[string]interface{}{
+					"name": "MODE", "valueFrom": map[string]interface{}{selector: ref},
+				}
+				obj := &unstructured.Unstructured{Object: map[string]interface{}{
+					"apiVersion": "v1", "kind": "Pod",
+					"spec": map[string]interface{}{"containers": []interface{}{
+						map[string]interface{}{"name": "app", "env": []interface{}{existing}},
+					}},
+				}}
+				err := (&EnvOverrider{}).ApplyOverrides(obj, OverriderInfo{
+					Overriders: &v1alpha1.Overriders{EnvOverriders: []v1alpha1.EnvOverrider{{
+						ContainerName: "app", Operator: v1alpha1.OverriderOpAdd,
+						Value: []corev1.EnvVar{{Name: "EXTRA", Value: "enabled"}},
+					}}},
+				})
+				if !assert.NoError(t, err) {
+					return
+				}
+				containers, _, err := unstructured.NestedSlice(obj.Object, "spec", "containers")
+				if !assert.NoError(t, err) || !assert.Len(t, containers, 1) {
+					return
+				}
+				assert.Equal(t, []interface{}{existing, map[string]interface{}{
+					"name": "EXTRA", "value": "enabled",
+				}}, containers[0].(map[string]interface{})["env"])
+			})
+		}
+	}
+}
+
 func TestReplaceEnv(t *testing.T) {
 	tests := []struct {
 		name          string
