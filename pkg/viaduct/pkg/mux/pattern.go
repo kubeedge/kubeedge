@@ -29,7 +29,15 @@ func NewPattern(resource string) *MessagePattern {
 }
 
 func (pattern *MessagePattern) Res(resource string) *MessagePattern {
+	expression := NewExpression()
+	resExpr := expression.GetExpression(resource)
+	if resExpr == nil {
+		klog.Errorf("bad resource(%s) for expression", resource)
+		return nil
+	}
+
 	pattern.resource = resource
+	pattern.resExpr = resExpr
 	return pattern
 }
 
