@@ -679,8 +679,8 @@ func (m *mockHandlerCenter) DeleteListener(listener *SelectorListener) {
 	}
 }
 
-func (m *mockHandlerCenter) ForResource(_ schema.GroupVersionResource) *CommonResourceEventHandler {
-	return nil
+func (m *mockHandlerCenter) ForResource(_ schema.GroupVersionResource) (*CommonResourceEventHandler, error) {
+	return nil, nil
 }
 
 func (m *mockHandlerCenter) GetListenersForNode(nodeName string) map[string]*SelectorListener {
