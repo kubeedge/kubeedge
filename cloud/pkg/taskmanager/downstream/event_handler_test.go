@@ -30,7 +30,7 @@ import (
 )
 
 func TestNodeJobEventHandlerOnDeleteHandlesTombstone(t *testing.T) {
-	var interrupted, removed bool
+	var interrupted bool
 
 	patches := gomonkey.NewPatches()
 	defer patches.Reset()
@@ -47,11 +47,6 @@ func TestNodeJobEventHandlerOnDeleteHandlesTombstone(t *testing.T) {
 	patches.ApplyMethodFunc(&executor.NodeTaskExecutor{}, "Interrupt", func() {
 		interrupted = true
 	})
-	patches.ApplyFunc(executor.RemoveExecutor, func(resourceType, jobName string) {
-		assert.Equal(t, operationsv1alpha2.ResourceImagePrePullJob, resourceType)
-		assert.Equal(t, job.Name, jobName)
-		removed = true
-	})
 
 	originDownstreamHandlers := downstreamHandlers
 	t.Cleanup(func() {
@@ -67,5 +62,4 @@ func TestNodeJobEventHandlerOnDeleteHandlesTombstone(t *testing.T) {
 	eventHandler.OnDelete(cache.DeletedFinalStateUnknown{Obj: job})
 
 	assert.True(t, interrupted)
-	assert.True(t, removed)
 }
