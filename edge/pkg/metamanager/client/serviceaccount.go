@@ -88,6 +88,14 @@ func requiresRefresh(tr *authenticationv1.TokenRequest) bool {
 }
 
 // KeyFunc keys should be nonconfidential and safe to log
+//
+// Audiences is intentionally excluded from the key: the token is requested
+// with the pod-specified (often empty) Spec.Audiences, but the value that is
+// persisted to the local db is the apiserver's response, whose
+// Spec.Audiences is always populated with the resolved audience. Keying on
+// Audiences makes the persisted entry unreachable by a later lookup on the
+// original request, so the local cache never hits and edged always falls
+// back to a remote fetch, e.g. when the edge node has no network.
 func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
 	var exp int64
 	if tr.Spec.ExpirationSeconds != nil {
@@ -99,7 +107,7 @@ func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
 		ref = *tr.Spec.BoundObjectRef
 	}
 
-	return fmt.Sprintf("%q/%q/%#v/%#v/%#v", name, namespace, tr.Spec.Audiences, exp, ref)
+	return fmt.Sprintf("%q/%q/%#v/%#v", name, namespace, exp, ref)
 }
 
 func getTokenLocally(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
