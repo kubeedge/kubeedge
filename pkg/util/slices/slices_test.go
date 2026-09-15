@@ -44,6 +44,11 @@ func TestRemoveDuplicateElement(t *testing.T) {
 			input:    []string{},
 			expected: []string{},
 		},
+		{
+			name:     "single element",
+			input:    []string{"x"},
+			expected: []string{"x"},
+		},
 	}
 
 	for _, test := range tests {
@@ -54,6 +59,27 @@ func TestRemoveDuplicateElement(t *testing.T) {
 			}
 		})
 	}
+
+	// Test with integers
+	intInput := []int{1, 2, 2, 3, 1, 4}
+	expectedInts := []int{1, 2, 3, 4}
+	assert.Equal(t, expectedInts, RemoveDuplicateElement(intInput))
+
+	// Test with custom comparable struct
+	type testStruct struct {
+		ID   int
+		Name string
+	}
+	structInput := []testStruct{
+		{ID: 1, Name: "alpha"},
+		{ID: 1, Name: "alpha"},
+		{ID: 2, Name: "beta"},
+	}
+	expectedStruct := []testStruct{
+		{ID: 1, Name: "alpha"},
+		{ID: 2, Name: "beta"},
+	}
+	assert.Equal(t, expectedStruct, RemoveDuplicateElement(structInput))
 }
 
 func TestIn(t *testing.T) {
@@ -64,4 +90,11 @@ func TestIn(t *testing.T) {
 	strArr := []string{"a", "b", "c"}
 	assert.True(t, In(strArr, "b"))
 	assert.False(t, In(strArr, "d"))
+
+	type testStruct struct {
+		ID int
+	}
+	structArr := []testStruct{{ID: 10}, {ID: 20}}
+	assert.True(t, In(structArr, testStruct{ID: 10}))
+	assert.False(t, In(structArr, testStruct{ID: 30}))
 }
