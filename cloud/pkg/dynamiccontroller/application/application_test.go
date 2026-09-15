@@ -20,13 +20,17 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"reflect"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/authorization/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -679,8 +683,8 @@ func (m *mockHandlerCenter) DeleteListener(listener *SelectorListener) {
 	}
 }
 
-func (m *mockHandlerCenter) ForResource(_ schema.GroupVersionResource) *CommonResourceEventHandler {
-	return nil
+func (m *mockHandlerCenter) ForResource(_ schema.GroupVersionResource) (*CommonResourceEventHandler, error) {
+	return nil, nil
 }
 
 func (m *mockHandlerCenter) GetListenersForNode(nodeName string) map[string]*SelectorListener {
@@ -688,4 +692,128 @@ func (m *mockHandlerCenter) GetListenersForNode(nodeName string) map[string]*Sel
 		return listeners
 	}
 	return make(map[string]*SelectorListener)
+}
+
+func TestProcessWatchSyncRejectsFailedWatchAppsConcurrently(t *testing.T) {
+	const (
+		nodeName = "edge-node"
+		appCount = 3
+		// delay stands for the time a watch app waits for an informer that never syncs.
+		delay = 500 * time.Millisecond
+	)
+	originalEnableAuthorization := config.Config.EnableAuthorization
+	config.Config.EnableAuthorization = false
+	defer func() {
+		config.Config.EnableAuthorization = originalEnableAuthorization
+	}()
+
+	handlerCenter := &failingHandlerCenter{delay: delay}
+	messageLayer := &recordingMessageLayer{}
+	center := &Center{
+		HandlerCenter: handlerCenter,
+		messageLayer:  messageLayer,
+	}
+
+	start := time.Now()
+	err := center.ProcessWatchSync(newWatchSyncMessage(nodeName, newWatchApps(nodeName, appCount)))
+	elapsed := time.Since(start)
+	require.NoError(t, err)
+
+	// The watch apps wait for their informers at the same time, so the response
+	// does not take one informer sync timeout per failed watch app.
+	assert.Equal(t, int32(appCount), handlerCenter.maxInFlight.Load())
+	assert.Less(t, elapsed, 2*delay)
+
+	require.Len(t, messageLayer.responses, 1)
+	failed, err := metaserver.MsgToApplications(messageLayer.responses[0])
+	require.NoError(t, err)
+	assert.Len(t, failed, appCount)
+	for id, app := range failed {
+		assert.Equal(t, metaserver.Rejected, app.Status, id)
+		assert.Contains(t, app.Reason, "failed waiting for", id)
+	}
+}
+
+func TestProcessWatchSyncRejectsWatchAppOfOtherNode(t *testing.T) {
+	originalEnableAuthorization := config.Config.EnableAuthorization
+	config.Config.EnableAuthorization = true
+	defer func() {
+		config.Config.EnableAuthorization = originalEnableAuthorization
+	}()
+
+	handlerCenter := &failingHandlerCenter{}
+	messageLayer := &recordingMessageLayer{}
+	center := &Center{
+		HandlerCenter: handlerCenter,
+		messageLayer:  messageLayer,
+	}
+
+	apps := newWatchApps("edge-node", 2)
+	for id, app := range newWatchApps("other-node", 1) {
+		apps["other-"+id] = app
+	}
+	err := center.ProcessWatchSync(newWatchSyncMessage("edge-node", apps))
+	require.ErrorContains(t, err, `node name "other-node" is not allowed`)
+	// The whole watch sync is refused before any watch app is processed.
+	assert.Equal(t, int32(0), handlerCenter.calls.Load())
+	assert.Empty(t, messageLayer.responses)
+}
+
+// newWatchApps returns count cluster-scoped watch apps of the node, each for a different resource.
+func newWatchApps(nodeName string, count int) map[string]metaserver.Application {
+	apps := make(map[string]metaserver.Application, count)
+	for i := 0; i < count; i++ {
+		id := fmt.Sprintf("%s-watch-%d", nodeName, i)
+		apps[id] = metaserver.Application{
+			ID:       id,
+			Key:      fmt.Sprintf("/example.com/v1/foos%d/null/null", i),
+			Verb:     metaserver.Watch,
+			Nodename: nodeName,
+			Option:   []byte("{}"),
+		}
+	}
+	return apps
+}
+
+func newWatchSyncMessage(nodeName string, apps map[string]metaserver.Application) model.Message {
+	return *model.NewMessage("").
+		BuildRouter(modules.DynamicControllerModuleName, message.ResourceGroupName,
+			"node/"+nodeName+"/"+metaserver.WatchAppSync, model.UpdateOperation).
+		FillBody(apps)
+}
+
+// failingHandlerCenter rejects every listener after delay, the way a watch app is rejected
+// when the informer of its resource does not sync in time. It records how many listeners
+// are being added at the same time.
+type failingHandlerCenter struct {
+	mockHandlerCenter
+	delay       time.Duration
+	calls       atomic.Int32
+	inFlight    atomic.Int32
+	maxInFlight atomic.Int32
+}
+
+func (h *failingHandlerCenter) AddListener(listener *SelectorListener) error {
+	h.calls.Add(1)
+	current := h.inFlight.Add(1)
+	defer h.inFlight.Add(-1)
+	for {
+		prev := h.maxInFlight.Load()
+		if current <= prev || h.maxInFlight.CompareAndSwap(prev, current) {
+			break
+		}
+	}
+	time.Sleep(h.delay)
+	return fmt.Errorf("failed waiting for %s Informer to sync", listener.gvr)
+}
+
+// recordingMessageLayer records the responses sent to the edge.
+type recordingMessageLayer struct {
+	mockMessageLayer
+	responses []model.Message
+}
+
+func (m *recordingMessageLayer) Response(msg model.Message) error {
+	m.responses = append(m.responses, msg)
+	return nil
 }
