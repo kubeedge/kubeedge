@@ -20,6 +20,9 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"strings"
+
+	"github.com/blang/semver"
 )
 
 // Regexps
@@ -57,4 +60,18 @@ func ValidateImageRepo(image string) bool {
 
 func ValidateVersion(version string) bool {
 	return regexpVersion.MatchString(version)
+}
+
+// IsVersionDowngrade reports whether newVersion is semantically older than oldVersion.
+// Both versions are expected to be in the "vX.Y.Z" form accepted by ValidateVersion.
+func IsVersionDowngrade(oldVersion, newVersion string) (bool, error) {
+	oldSemver, err := semver.Parse(strings.TrimPrefix(oldVersion, "v"))
+	if err != nil {
+		return false, fmt.Errorf("invalid old version %s: %v", oldVersion, err)
+	}
+	newSemver, err := semver.Parse(strings.TrimPrefix(newVersion, "v"))
+	if err != nil {
+		return false, fmt.Errorf("invalid new version %s: %v", newVersion, err)
+	}
+	return newSemver.LT(oldSemver), nil
 }
