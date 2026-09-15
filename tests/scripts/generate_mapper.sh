@@ -60,7 +60,14 @@ docker build -f Dockerfile_nostream -t ${mapper_image} . && echo "successfully b
 docker save -o modbus-mapper.tar ${mapper_image}
 
 if [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
-  # Keep the short mapper image name used by the e2e deployment.
+  # CRI-O resolves the short image name used by the e2e deployment to
+  # docker.io/library/<name>, so the image has to be stored under that name.
+  # A podman tag with a short target name stores localhost/<name> instead,
+  # which CRI-O never finds, so always tag with the fully qualified name.
+  crio_mapper_image=docker.io/library/${mapper_image}
+  # Depending on the podman release, the loaded archive is named either after
+  # the repository:tag it was saved with or localhost/v1.0.0:latest, so take
+  # the name from the load output.
   load_output=$(sudo podman load -i modbus-mapper.tar)
   echo "${load_output}"
   loaded_image=$(printf '%s\n' "${load_output}" | awk -F': ' '/^Loaded image/ {print $2}' | tail -n 1)
@@ -68,8 +75,12 @@ if [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
     echo "failed to detect loaded modbus mapper image name"
     exit 1
   fi
-  if [[ "${loaded_image}" != "${mapper_image}" ]]; then
-    sudo podman tag "${loaded_image}" "${mapper_image}"
+  if [[ "${loaded_image}" != "${crio_mapper_image}" ]]; then
+    sudo podman tag "${loaded_image}" "${crio_mapper_image}"
+  fi
+  if ! sudo podman image exists "${crio_mapper_image}"; then
+    echo "modbus mapper image ${crio_mapper_image} not found in CRI-O storage"
+    exit 1
   fi
   echo "successfully import modbus mapper image to CRI-O"
 elif [[ "${CONTAINER_RUNTIME}" = "isulad" ]]; then
