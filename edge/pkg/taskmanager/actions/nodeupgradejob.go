@@ -322,9 +322,9 @@ func (nodeUpgradeJobActionHandler) reportActionStatus(jobname, nodename, action 
 	}
 	var extend string
 	if resp, ok := resp.(*nodeUpgradeJobActionResponse); ok &&
-		action == string(operationsv1alpha2.NodeUpgradeJobActionBackUp) ||
-		action == string(operationsv1alpha2.NodeUpgradeJobActionUpgrade) ||
-		action == string(operationsv1alpha2.NodeUpgradeJobActionRollBack) {
+		(action == string(operationsv1alpha2.NodeUpgradeJobActionBackUp) ||
+			action == string(operationsv1alpha2.NodeUpgradeJobActionUpgrade) ||
+			action == string(operationsv1alpha2.NodeUpgradeJobActionRollBack)) {
 		extend = taskmsg.FormatNodeUpgradeJobExtend(resp.FromVersion, resp.ToVersion)
 	}
 	body := taskmsg.UpstreamMessage{
