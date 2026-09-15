@@ -35,8 +35,7 @@ func (f *Factory) PassThrough() http.Handler {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		if _, err := w.Write(result); err != nil {
-			// TODO: handle error
-			klog.Error(err)
+			klog.ErrorS(err, "failed to write passthrough response", "path", req.URL.Path, "method", req.Method, "remoteAddr", req.RemoteAddr)
 		}
 	})
 	return h
