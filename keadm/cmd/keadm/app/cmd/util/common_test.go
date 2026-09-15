@@ -188,8 +188,15 @@ func TestGetPackageManager(t *testing.T) {
 	assert.Equal(t, PACMAN, pm)
 
 	patches.Reset()
+	patches.ApplyFunc(GetPackageManager, func() string {
+		return ZYPPER
+	})
 	pm = GetPackageManager()
-	assert.Contains(t, []string{APT, YUM, PACMAN, ""}, pm)
+	assert.Equal(t, ZYPPER, pm)
+
+	patches.Reset()
+	pm = GetPackageManager()
+	assert.Contains(t, []string{APT, YUM, PACMAN, ZYPPER, ""}, pm)
 }
 
 func TestGetLatestVersion(t *testing.T) {
