@@ -65,6 +65,63 @@ func TestEnvOverridePreservesOptionalReferences(t *testing.T) {
 	}
 }
 
+func TestEnvOverridePreservesDownwardAPIReferences(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		selector string
+		ref      map[string]interface{}
+	}{
+		{"field path only", "fieldRef", map[string]interface{}{"fieldPath": "metadata.name"}},
+		{"explicit api version", "fieldRef", map[string]interface{}{"fieldPath": "metadata.name", "apiVersion": "v1"}},
+		{"resource only", "resourceFieldRef", map[string]interface{}{"resource": "limits.cpu"}},
+		{"no divisor", "resourceFieldRef", map[string]interface{}{"resource": "limits.cpu", "containerName": "app"}},
+		{"no container name", "resourceFieldRef", map[string]interface{}{"resource": "limits.cpu", "divisor": "1m"}},
+		{"all fields", "resourceFieldRef", map[string]interface{}{"resource": "limits.cpu", "containerName": "app", "divisor": "1m"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			existing := map[string]interface{}{
+				"name": "MODE", "valueFrom": map[string]interface{}{tc.selector: tc.ref},
+			}
+			obj := &unstructured.Unstructured{Object: map[string]interface{}{
+				"apiVersion": "v1", "kind": "Pod",
+				"spec": map[string]interface{}{"containers": []interface{}{
+					map[string]interface{}{"name": "app", "env": []interface{}{existing}},
+				}},
+			}}
+			err := (&EnvOverrider{}).ApplyOverrides(obj, OverriderInfo{
+				Overriders: &v1alpha1.Overriders{EnvOverriders: []v1alpha1.EnvOverrider{{
+					ContainerName: "app", Operator: v1alpha1.OverriderOpAdd,
+					Value: []corev1.EnvVar{{Name: "EXTRA", Value: "enabled"}},
+				}}},
+			})
+			if !assert.NoError(t, err) {
+				return
+			}
+			containers, _, err := unstructured.NestedSlice(obj.Object, "spec", "containers")
+			if !assert.NoError(t, err) || !assert.Len(t, containers, 1) {
+				return
+			}
+			if tc.selector == "resourceFieldRef" {
+				if _, found := tc.ref["divisor"]; !found {
+					tc.ref["divisor"] = "1"
+				}
+			}
+			assert.Equal(t, []interface{}{existing, map[string]interface{}{
+				"name": "EXTRA", "value": "enabled",
+			}}, containers[0].(map[string]interface{})["env"])
+		})
+	}
+}
+
+func TestProcessResourceFieldRefInvalidDivisor(t *testing.T) {
+	_, err := processResourceFieldRef(map[string]interface{}{
+		"resourceFieldRef": map[string]interface{}{
+			"resource": "limits.cpu", "divisor": "invalid",
+		},
+	})
+	assert.Error(t, err)
+}
+
 func TestReplaceEnv(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -563,7 +620,7 @@ func TestProcessFieldRef(t *testing.T) {
 					"fieldPath": "metadata.name",
 				},
 			},
-			expected:    nil,
+			expected:    &corev1.ObjectFieldSelector{FieldPath: "metadata.name"},
 			expectError: false,
 		},
 		{

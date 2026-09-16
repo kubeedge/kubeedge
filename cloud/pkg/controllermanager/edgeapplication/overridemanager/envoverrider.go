@@ -239,11 +239,11 @@ func processFieldRef(value map[string]interface{}) (*corev1.ObjectFieldSelector,
 	if err != nil {
 		return nil, err
 	}
-	av, faOK, err := unstructured.NestedString(value, "fieldRef", "apiVersion")
+	av, _, err := unstructured.NestedString(value, "fieldRef", "apiVersion")
 	if err != nil {
 		return nil, err
 	}
-	if ffOK && faOK {
+	if ffOK {
 		return &corev1.ObjectFieldSelector{FieldPath: fp, APIVersion: av}, nil
 	}
 	return nil, nil
@@ -254,7 +254,7 @@ func processResourceFieldRef(value map[string]interface{}) (*corev1.ResourceFiel
 	if err != nil {
 		return nil, err
 	}
-	c, rcOK, err := unstructured.NestedString(value, "resourceFieldRef", "containerName")
+	c, _, err := unstructured.NestedString(value, "resourceFieldRef", "containerName")
 	if err != nil {
 		return nil, err
 	}
@@ -263,11 +263,18 @@ func processResourceFieldRef(value map[string]interface{}) (*corev1.ResourceFiel
 		return nil, err
 	}
 
-	if rrOK && rcOK && rdOK {
+	if rrOK {
+		quantity := resource.MustParse("1")
+		if rdOK {
+			quantity, err = resource.ParseQuantity(divisor)
+			if err != nil {
+				return nil, err
+			}
+		}
 		return &corev1.ResourceFieldSelector{
 			ContainerName: c,
 			Resource:      r,
-			Divisor:       resource.MustParse(divisor),
+			Divisor:       quantity,
 		}, nil
 	}
 	return nil, nil
