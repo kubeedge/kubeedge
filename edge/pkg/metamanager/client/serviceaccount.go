@@ -130,7 +130,23 @@ func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
 	return fmt.Sprintf("%s/%d", base, tr.Status.ExpirationTimestamp.UnixNano())
 }
 
-func getTokenLocally(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
+// expired reports whether a token can no longer be used, as distinct from
+// being due for a refresh. requiresRefresh turns true at 80% of the token's
+// lifetime while the token stays usable until its ExpirationTimestamp. A token
+// carrying no expiration timestamp is treated as usable, matching
+// requiresRefresh, which declines to refresh a token whose ExpirationSeconds
+// is nil.
+func expired(tr *authenticationv1.TokenRequest) bool {
+	if tr.Status.ExpirationTimestamp.IsZero() {
+		return false
+	}
+	return time.Now().After(tr.Status.ExpirationTimestamp.Time)
+}
+
+// newestCachedGeneration returns the newest cached generation that has not yet
+// expired. It does not judge whether that generation is due for a refresh,
+// because only the caller knows whether a refresh can succeed.
+func newestCachedGeneration(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
 	prefix := baseKey(name, namespace, tr)
 	ms := dbclient.NewMetaService()
 	metas, err := ms.QueryMetaByKeyPrefix(prefix)
@@ -164,6 +180,15 @@ func getTokenLocally(name, namespace string, tr *authenticationv1.TokenRequest) 
 	}
 	if newest == nil {
 		return nil, fmt.Errorf("no un-expired cached token for %s", prefix)
+	}
+	return newest, nil
+}
+
+func getTokenLocally(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
+	prefix := baseKey(name, namespace, tr)
+	newest, err := newestCachedGeneration(name, namespace, tr)
+	if err != nil {
+		return nil, err
 	}
 
 	if requiresRefresh(newest) {
@@ -202,12 +227,28 @@ func getTokenRemotely(resource string, tr *authenticationv1.TokenRequest, c *ser
 }
 
 func (c *serviceAccountToken) GetServiceAccountToken(namespace string, name string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
-	tokenReq, err := getTokenLocally(name, namespace, tr)
-	if err != nil {
-		resource := fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeServiceAccountToken, name)
-		return getTokenRemotely(resource, tr, c)
+	cached, cacheErr := newestCachedGeneration(name, namespace, tr)
+	if cacheErr == nil && !requiresRefresh(cached) {
+		return cached, nil
 	}
-	return tokenReq, nil
+
+	resource := fmt.Sprintf("%s/%s/%s", namespace, model.ResourceTypeServiceAccountToken, name)
+	refreshed, err := getTokenRemotely(resource, tr, c)
+	if err == nil {
+		return refreshed, nil
+	}
+
+	// The refresh failed, which on an edge node usually means the cloud is
+	// unreachable. newestCachedGeneration only returns a generation that has
+	// not expired, so anything it handed back is still usable. Serving it lets
+	// a disconnected node keep starting pods that mount a service account
+	// token, which is the case edge autonomy exists to cover. Upstream kubelet
+	// makes the same choice in pkg/kubelet/token/token_manager.go.
+	if cacheErr != nil {
+		return nil, err
+	}
+	klog.Errorf("could not refresh token %s, serving the cached token: %v", baseKey(name, namespace, tr), err)
+	return cached, nil
 }
 
 func handleServiceAccountTokenFromMetaDB(content []byte) (*authenticationv1.TokenRequest, error) {
@@ -295,6 +336,16 @@ func CheckTokenExist(token string) bool {
 			return false
 		}
 		if tokenRequest.Status.Token == token {
+			// Cached rows outlive the point at which a refresh becomes due,
+			// and an expired generation survives until the next GC sweep, so
+			// presence alone does not mean the token is still usable. This is
+			// the only check MetaServer has when no public key is available
+			// for signature verification, which is the offline case.
+			if expired(&tokenRequest) {
+				klog.Warningf("service account token matched a cached row but expired at %v",
+					tokenRequest.Status.ExpirationTimestamp)
+				return false
+			}
 			return true
 		}
 	}
