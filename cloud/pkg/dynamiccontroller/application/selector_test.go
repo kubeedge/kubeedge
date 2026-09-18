@@ -17,6 +17,7 @@ limitations under the License.
 package application
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -338,4 +339,117 @@ func TestLabelFieldSelector_MatchObj(t *testing.T) {
 			assert.Equal(tc.expected, result)
 		})
 	}
+}
+
+func TestLabelFieldSelector_MarshalJSON(t *testing.T) {
+	assert := assert.New(t)
+
+	testCases := []struct {
+		name         string
+		selector     LabelFieldSelector
+		expectedJSON string
+	}{
+		{
+			name:         "Valid label and field selectors",
+			selector:     NewSelector("app=myapp", "metadata.name=pod1"),
+			expectedJSON: `{"label":"app=myapp","field":"metadata.name=pod1"}`,
+		},
+		{
+			name:         "Empty selectors marshal as Everything",
+			selector:     NewSelector("", ""),
+			expectedJSON: `{"label":"","field":""}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.selector)
+			assert.NoError(err)
+			assert.JSONEq(tc.expectedJSON, string(data))
+		})
+	}
+}
+
+func TestLabelFieldSelector_UnmarshalJSON(t *testing.T) {
+	assert := assert.New(t)
+
+	testCases := []struct {
+		name          string
+		input         string
+		expectedLabel string
+		expectedField string
+		expectErr     bool
+	}{
+		{
+			name:          "Valid label and field selectors",
+			input:         `{"label":"app=myapp","field":"metadata.name=pod1"}`,
+			expectedLabel: "app=myapp",
+			expectedField: "metadata.name=pod1",
+		},
+		{
+			name:          "Empty strings parse as Everything",
+			input:         `{"label":"","field":""}`,
+			expectedLabel: labels.Everything().String(),
+			expectedField: fields.Everything().String(),
+		},
+		{
+			name:      "Malformed field selector returns error, does not panic",
+			input:     `{"label":"app=myapp","field":"==="}`,
+			expectErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var selector LabelFieldSelector
+			err := json.Unmarshal([]byte(tc.input), &selector)
+
+			if tc.expectErr {
+				assert.Error(err)
+				return
+			}
+
+			assert.NoError(err)
+			assert.Equal(tc.expectedLabel, selector.Label.String())
+			assert.Equal(tc.expectedField, selector.Field.String())
+		})
+	}
+}
+
+func TestLabelFieldSelector_JSONRoundTrip(t *testing.T) {
+	assert := assert.New(t)
+
+	t.Run("Normal selectors round-trip exactly", func(t *testing.T) {
+		original := NewSelector("app=myapp,tier=frontend", "metadata.namespace=default")
+
+		data, err := json.Marshal(original)
+		assert.NoError(err)
+
+		var restored LabelFieldSelector
+		err = json.Unmarshal(data, &restored)
+		assert.NoError(err)
+
+		assert.Equal(original.Label.String(), restored.Label.String())
+		assert.Equal(original.Field.String(), restored.Field.String())
+	})
+
+	t.Run("Nothing selector collapses to Everything after round-trip (known limitation)", func(t *testing.T) {
+		original := LabelFieldSelector{
+			Label: labels.Nothing(),
+			Field: fields.Everything(),
+		}
+
+		// Sanity check on the starting point: Nothing() must reject a  non-empty set before we round-trip it.
+		assert.False(original.Label.Matches(labels.Set{"app": "myapp"}))
+
+		data, err := json.Marshal(original)
+		assert.NoError(err)
+
+		var restored LabelFieldSelector
+		err = json.Unmarshal(data, &restored)
+		assert.NoError(err)
+
+		// Documented limitation: after round-tripping through .String()/Parse(), Nothing() is indistinguishable from Everything() and now matches the same set it previously rejected.
+		assert.True(restored.Label.Matches(labels.Set{"app": "myapp"}))
+	})
 }
