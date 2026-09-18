@@ -19,7 +19,9 @@ package wsclient
 import (
 	"crypto/tls"
 	"fmt"
+	"os"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -249,4 +251,65 @@ func TestReceive(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestSendNilConnection checks that Send fails when the connection was never initialized
+func TestSendNilConnection(t *testing.T) {
+	wcc := newTestWebSocketClient("normal", "/tmp/edge.crt", "/tmp/edge.key")
+	if err := wcc.Send(model.Message{}); err == nil {
+		t.Error("WebSocketClient.Send() expected an error for nil connection, got nil")
+	}
+}
+
+// TestInitCAFailures tests Init against missing and unparsable CA files
+func TestInitCAFailures(t *testing.T) {
+	defer func() { config.Config.TLSCAFile = "/tmp/edge.crt" }()
+
+	junkCAPath := "/tmp/edge-junk-ca.txt"
+	if err := os.WriteFile(junkCAPath, []byte("not a pem block"), 0600); err != nil {
+		t.Fatalf("failed to write junk CA file, err: %v", err)
+	}
+
+	tests := []struct {
+		name        string
+		caFile      string
+		wantErrPart string
+	}{
+		{
+			name:        "TestInitCAFailures: CA file missing",
+			caFile:      "/tmp/nonexistent-ca.crt",
+			wantErrPart: "no such file or directory",
+		},
+		{
+			name:        "TestInitCAFailures: CA file not parsable",
+			caFile:      junkCAPath,
+			wantErrPart: "cannot parse the certificates",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config.Config.TLSCAFile = tt.caFile
+			wcc := newTestWebSocketClient("normal", "/tmp/edge.crt", "/tmp/edge.key")
+			err := wcc.Init()
+			if err == nil || !strings.Contains(err.Error(), tt.wantErrPart) {
+				t.Errorf("WebSocketClient.Init() error = %v, expected to contain %q", err, tt.wantErrPart)
+			}
+		})
+	}
+}
+
+// TestUnInit checks that UnInit closes an initialized connection
+func TestUnInit(t *testing.T) {
+	config.Config.TLSCAFile = "/tmp/edge.crt"
+	wcc := newTestWebSocketClient("normal", "/tmp/edge.crt", "/tmp/edge.key")
+	if err := wcc.Init(); err != nil {
+		t.Fatalf("failed to init, err: %v", err)
+	}
+	wcc.UnInit()
+}
+
+// TestNotify checks the no-op Notify implementation
+func TestNotify(t *testing.T) {
+	wcc := newTestWebSocketClient("normal", "/tmp/edge.crt", "/tmp/edge.key")
+	wcc.Notify(map[string]string{"key": "value"})
 }
