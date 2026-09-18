@@ -61,7 +61,7 @@ func TestBuildResourceForDevice(t *testing.T) {
 				resourceID:   "",
 			},
 			wantResource: "",
-			wantErr:      fmt.Errorf("required parameter are not set (node id, namespace or resource type)"),
+			wantErr:      fmt.Errorf("required parameters are not set (node id or resource type)"),
 		},
 	}
 	for _, tt := range tests {
@@ -233,7 +233,7 @@ func TestBuildResource(t *testing.T) {
 				resourceID:   ResourceID,
 			},
 			"",
-			fmt.Errorf("required parameter are not set (node id, namespace or resource type)"),
+			fmt.Errorf("required parameters are not set (node id, namespace or resource type)"),
 		},
 		{
 			"TestBuildResource(): Case 2: no resourceID.",
@@ -290,7 +290,7 @@ func TestBuildResourceForRouter(t *testing.T) {
 				resourceID:   ResourceID,
 			},
 			"",
-			fmt.Errorf("required parameter are not set (resourceID or resource type)"),
+			fmt.Errorf("required parameters are not set (resourceID or resource type)"),
 		},
 		{
 			"TestBuildResourceForRouter(): Case 2: no resourceID.",
@@ -299,7 +299,7 @@ func TestBuildResourceForRouter(t *testing.T) {
 				resourceID:   "",
 			},
 			"",
-			fmt.Errorf("required parameter are not set (resourceID or resource type)"),
+			fmt.Errorf("required parameters are not set (resourceID or resource type)"),
 		},
 		{
 			"TestBuildResourceForRouter(): Case 3: success.",
