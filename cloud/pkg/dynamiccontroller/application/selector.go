@@ -1,6 +1,9 @@
 package application
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -8,10 +11,50 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
-// TODO: how to solve json marshal unmashal problem against labels.Selector or fields.Selector?
 type LabelFieldSelector struct {
 	Label labels.Selector
 	Field fields.Selector
+}
+
+// MarshalJSON stores selectors by their canonical string forms. The concrete
+// selector implementations keep their state in private fields, so encoding
+// the interface values directly would otherwise lose the selector expression.
+func (lf LabelFieldSelector) MarshalJSON() ([]byte, error) {
+	label, field := "", ""
+	if lf.Label != nil {
+		label = lf.Label.String()
+	}
+	if lf.Field != nil {
+		field = lf.Field.String()
+	}
+	return json.Marshal(struct {
+		Label string `json:"labelSelector"`
+		Field string `json:"fieldSelector"`
+	}{Label: label, Field: field})
+}
+
+// UnmarshalJSON reconstructs selector implementations from their canonical
+// expressions and rejects malformed input instead of silently broadening a
+// selector to match every object.
+func (lf *LabelFieldSelector) UnmarshalJSON(data []byte) error {
+	var encoded struct {
+		Label string `json:"labelSelector"`
+		Field string `json:"fieldSelector"`
+	}
+	if err := json.Unmarshal(data, &encoded); err != nil {
+		return err
+	}
+	label, err := labels.Parse(encoded.Label)
+	if err != nil {
+		return fmt.Errorf("parse labelSelector: %w", err)
+	}
+	field, err := fields.ParseSelector(encoded.Field)
+	if err != nil {
+		return fmt.Errorf("parse fieldSelector: %w", err)
+	}
+	lf.Label = label
+	lf.Field = field
+	return nil
 }
 
 func NewSelector(ls string, fs string) LabelFieldSelector {
