@@ -313,8 +313,12 @@ var _ = GroupDescribe("Application deployment test in E2E scenario", func() {
 
 				ginkgo.By(fmt.Sprintf("wait for pod %s running again", fmt.Sprintf("%s-1", UID)))
 				err = wait.Poll(5*time.Second, 120*time.Second, func() (bool, error) {
+
 					pod, err := clientSet.CoreV1().Pods("default").Get(context.TODO(), deletePodName, metav1.GetOptions{})
 					if err != nil {
+						if errors.IsNotFound(err) {
+							return false, nil
+						}
 						return false, err
 					}
 					if pod.Status.Phase == corev1.PodRunning {
