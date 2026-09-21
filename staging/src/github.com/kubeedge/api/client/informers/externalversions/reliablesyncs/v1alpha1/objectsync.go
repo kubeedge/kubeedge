@@ -62,13 +62,25 @@ func NewFilteredObjectSyncInformer(client versioned.Interface, namespace string,
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ReliablesyncsV1alpha1().ObjectSyncs(namespace).List(context.TODO(), options)
+				return client.ReliablesyncsV1alpha1().ObjectSyncs(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ReliablesyncsV1alpha1().ObjectSyncs(namespace).Watch(context.TODO(), options)
+				return client.ReliablesyncsV1alpha1().ObjectSyncs(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.ReliablesyncsV1alpha1().ObjectSyncs(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.ReliablesyncsV1alpha1().ObjectSyncs(namespace).Watch(ctx, options)
 			},
 		},
 		&apisreliablesyncsv1alpha1.ObjectSync{},
