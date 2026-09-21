@@ -69,7 +69,7 @@ function check_golangci-lint {
 
 function install_golangci-lint {
   echo "installing golangci-lint ."
-  curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v1.64.5
+  GOTOOLCHAIN=go1.25.0 GOBIN="${GOPATH}/bin" go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
   if [[ $? -ne 0 ]]; then
     echo "golangci-lint installed failed, exiting."
     exit 1

@@ -449,6 +449,21 @@ func (mr *MockRuntimeServiceMockRecorder) UpdateContainerResources(arg0, arg1, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateContainerResources", reflect.TypeOf((*MockRuntimeService)(nil).UpdateContainerResources), arg0, arg1, arg2)
 }
 
+// UpdatePodSandboxResources mocks base method.
+func (m *MockRuntimeService) UpdatePodSandboxResources(arg0 context.Context, arg1 *v1.UpdatePodSandboxResourcesRequest) (*v1.UpdatePodSandboxResourcesResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePodSandboxResources", arg0, arg1)
+	ret0, _ := ret[0].(*v1.UpdatePodSandboxResourcesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdatePodSandboxResources indicates an expected call of UpdatePodSandboxResources.
+func (mr *MockRuntimeServiceMockRecorder) UpdatePodSandboxResources(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePodSandboxResources", reflect.TypeOf((*MockRuntimeService)(nil).UpdatePodSandboxResources), arg0, arg1)
+}
+
 // UpdateRuntimeConfig mocks base method.
 func (m *MockRuntimeService) UpdateRuntimeConfig(arg0 context.Context, arg1 *v1.RuntimeConfig) error {
 	m.ctrl.T.Helper()

@@ -591,7 +591,7 @@ func (m *manager) rotateCerts(ctx context.Context) (bool, error) {
 	usages := getUsages(privateKey)
 	// Call the Certificate Signing Request API to get a certificate for the
 	// new private key
-	reqName, reqUID, err := csr.RequestCertificateWithContext(ctx, clientSet, csrPEM, m.name, m.signerName, m.requestedCertificateLifetime, usages, privateKey)
+	reqName, reqUID, err := csr.RequestCertificateWithContext(ctx, clientSet, csrPEM, "", m.signerName, m.requestedCertificateLifetime, usages, privateKey)
 	if err != nil {
 		utilruntime.HandleErrorWithContext(ctx, err, "Failed while requesting a signed certificate from the control plane")
 		if m.certificateRenewFailure != nil {
