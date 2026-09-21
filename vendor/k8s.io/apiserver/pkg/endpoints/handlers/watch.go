@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync/atomic"
 	"time"
 
 	"golang.org/x/net/websocket"
@@ -37,6 +38,7 @@ import (
 	"k8s.io/apiserver/pkg/features"
 	"k8s.io/apiserver/pkg/storage"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
+	compbasemetrics "k8s.io/component-base/metrics"
 )
 
 // nothing will ever be sent down this channel
@@ -64,7 +66,7 @@ func (w *realTimeoutFactory) TimeoutCh() (<-chan time.Time, func() bool) {
 
 // serveWatchHandler returns a handle to serve a watch response.
 // TODO: the functionality in this method and in WatchServer.Serve is not cleanly decoupled.
-func serveWatchHandler(watcher watch.Interface, scope *RequestScope, mediaTypeOptions negotiation.MediaTypeOptions, req *http.Request, w http.ResponseWriter, timeout time.Duration, metricsScope string, initialEventsListBlueprint runtime.Object) (http.Handler, error) {
+func serveWatchHandler(watcher watch.Interface, scope *RequestScope, mediaTypeOptions negotiation.MediaTypeOptions, req *http.Request, w http.ResponseWriter, timeout time.Duration, metricsScope string) (http.Handler, error) {
 	options, err := optionsForTransform(mediaTypeOptions, req)
 	if err != nil {
 		return nil, err
@@ -167,8 +169,6 @@ func serveWatchHandler(watcher watch.Interface, scope *RequestScope, mediaTypeOp
 		Encoder:         encoder,
 		EmbeddedEncoder: embeddedEncoder,
 
-		watchListTransformerFn: newWatchListTransformer(initialEventsListBlueprint, mediaTypeOptions.Convert, negotiatedEncoder).transform,
-
 		MemoryAllocator:      memoryAllocator,
 		TimeoutFactory:       &realTimeoutFactory{timeout},
 		ServerShuttingDownCh: serverShuttingDownCh,
@@ -198,16 +198,35 @@ type WatchServer struct {
 	Encoder runtime.Encoder
 	// used to encode the nested object in the watch stream
 	EmbeddedEncoder runtime.Encoder
-	// watchListTransformerFn a function applied
-	// to watchlist bookmark events that transforms
-	// the embedded object before sending it to a client.
-	watchListTransformerFn watchListTransformerFunction
 
 	MemoryAllocator      runtime.MemoryAllocator
 	TimeoutFactory       TimeoutFactory
 	ServerShuttingDownCh <-chan struct{}
 
 	metricsScope string
+}
+
+// watchEventMetricsRecorder allows the caller to count bytes written and report the size of the event.
+// It is thread-safe, as long as underlying io.Writer is thread-safe.
+// Once all Write calls for a given watch event have finished, RecordEvent must be called.
+type watchEventMetricsRecorder struct {
+	writer      io.Writer
+	countMetric compbasemetrics.CounterMetric
+	sizeMetric  compbasemetrics.ObserverMetric
+	byteCount   atomic.Int64
+}
+
+// Write implements io.Writer.
+func (c *watchEventMetricsRecorder) Write(p []byte) (n int, err error) {
+	n, err = c.writer.Write(p)
+	c.byteCount.Add(int64(n))
+	return
+}
+
+// Record reports the metrics and resets the byte count.
+func (c *watchEventMetricsRecorder) RecordEvent() {
+	c.countMetric.Inc()
+	c.sizeMetric.Observe(float64(c.byteCount.Swap(0)))
 }
 
 // HandleHTTP serves a series of encoded events via HTTP with Transfer-Encoding: chunked.
@@ -246,8 +265,15 @@ func (s *WatchServer) HandleHTTP(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	flusher.Flush()
 
-	kind := s.Scope.Kind
-	watchEncoder := newWatchEncoder(req.Context(), kind, s.EmbeddedEncoder, s.Encoder, framer, s.watchListTransformerFn)
+	gvr := s.Scope.Resource
+
+	recorder := &watchEventMetricsRecorder{
+		writer:      framer,
+		countMetric: metrics.WatchEvents.WithContext(req.Context()).WithLabelValues(gvr.Group, gvr.Version, gvr.Resource),
+		sizeMetric:  metrics.WatchEventsSizes.WithContext(req.Context()).WithLabelValues(gvr.Group, gvr.Version, gvr.Resource),
+	}
+
+	watchEncoder := newWatchEncoder(req.Context(), gvr, s.EmbeddedEncoder, s.Encoder, recorder)
 	ch := s.Watching.ResultChan()
 	done := req.Context().Done()
 
@@ -271,7 +297,6 @@ func (s *WatchServer) HandleHTTP(w http.ResponseWriter, req *http.Request) {
 				// End of results.
 				return
 			}
-			metrics.WatchEvents.WithContext(req.Context()).WithLabelValues(kind.Group, kind.Version, kind.Kind).Inc()
 			isWatchListLatencyRecordingRequired := shouldRecordWatchListLatency(event)
 
 			if err := watchEncoder.Encode(event); err != nil {
@@ -279,6 +304,7 @@ func (s *WatchServer) HandleHTTP(w http.ResponseWriter, req *http.Request) {
 				// client disconnect.
 				return
 			}
+			recorder.RecordEvent()
 
 			if len(ch) == 0 {
 				flusher.Flush()
@@ -315,8 +341,8 @@ func (s *WatchServer) HandleWS(ws *websocket.Conn) {
 
 	framer := newWebsocketFramer(ws, s.UseTextFraming)
 
-	kind := s.Scope.Kind
-	watchEncoder := newWatchEncoder(context.TODO(), kind, s.EmbeddedEncoder, s.Encoder, framer, s.watchListTransformerFn)
+	gvr := s.Scope.Resource
+	watchEncoder := newWatchEncoder(context.TODO(), gvr, s.EmbeddedEncoder, s.Encoder, framer)
 	ch := s.Watching.ResultChan()
 
 	for {
