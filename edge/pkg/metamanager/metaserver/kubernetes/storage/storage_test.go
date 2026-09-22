@@ -616,6 +616,10 @@ func (f *fakeRuntimeService) UpdateContainerResources(ctx context.Context, conta
 	return f.UpdateContainerResourcesF(ctx, containerID, resources)
 }
 
+func (f *fakeRuntimeService) UpdatePodSandboxResources(context.Context, *runtimeapi.UpdatePodSandboxResourcesRequest) (*runtimeapi.UpdatePodSandboxResourcesResponse, error) {
+	return &runtimeapi.UpdatePodSandboxResourcesResponse{}, nil
+}
+
 func (f *fakeRuntimeService) ExecSync(ctx context.Context, containerID string, cmd []string, timeout time.Duration) (stdout []byte, stderr []byte, err error) {
 	return f.ExecSyncF(ctx, containerID, cmd, timeout)
 }

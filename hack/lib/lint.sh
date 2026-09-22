@@ -73,7 +73,7 @@ kubeedge::lint::check() {
     set -o pipefail
 
     echo "check any issue by golangci-lint ..."
-    GOOS="linux" golangci-lint run -v --timeout=12m
+    GOWORK=off GOOS="linux" golangci-lint run -v --timeout=12m
 
     # check codes under staging dir, this will also use .golangci.yaml in the {KUBEEDGE_ROOT} dir
     echo "check any issue by golangci-lint under staging dir ..."

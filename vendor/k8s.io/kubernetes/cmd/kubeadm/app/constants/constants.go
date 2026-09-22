@@ -24,13 +24,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/version"
 	apimachineryversion "k8s.io/apimachinery/pkg/version"
 	componentversion "k8s.io/component-base/version"
 	netutils "k8s.io/utils/net"
+
+	"k8s.io/kubernetes/cmd/kubeadm/app/util/errors"
 )
 
 const (
@@ -210,6 +210,11 @@ const (
 	// built-in ClusterRole.
 	ClusterAdminsGroupAndClusterRoleBinding = "kubeadm:cluster-admins"
 
+	// KubeletAPIAdminClusterRoleBindingName is the name of the ClusterRoleBinding for the apiserver kubelet client
+	KubeletAPIAdminClusterRoleBindingName = "kubeadm:apiserver-kubelet-client"
+	// KubeletAPIAdminClusterRoleName is the name of the built-in ClusterRole for kubelet API access
+	KubeletAPIAdminClusterRoleName = "system:kubelet-api-admin"
+
 	// KubernetesAPICallTimeout specifies how long kubeadm should wait for API calls
 	KubernetesAPICallTimeout = 1 * time.Minute
 	// KubernetesAPICallRetryInterval defines how long kubeadm should wait before retrying a failed API operation
@@ -326,7 +331,7 @@ const (
 	MinExternalEtcdVersion = "3.5.24-0"
 
 	// DefaultEtcdVersion indicates the default etcd version that kubeadm uses
-	DefaultEtcdVersion = "3.5.24-0"
+	DefaultEtcdVersion = "3.6.5-0"
 
 	// Etcd defines variable used internally when referring to etcd component
 	Etcd = "etcd"
@@ -364,7 +369,7 @@ const (
 	CoreDNSImageName = "coredns"
 
 	// CoreDNSVersion is the version of CoreDNS to be deployed if it is used
-	CoreDNSVersion = "v1.11.3"
+	CoreDNSVersion = "v1.12.1"
 
 	// ClusterConfigurationKind is the string kind value for the ClusterConfiguration struct
 	ClusterConfigurationKind = "ClusterConfiguration"
@@ -442,7 +447,7 @@ const (
 	ModeNode string = "Node"
 
 	// PauseVersion indicates the default pause image version for kubeadm
-	PauseVersion = "3.10"
+	PauseVersion = "3.10.1"
 
 	// CgroupDriverSystemd holds the systemd driver type
 	CgroupDriverSystemd = "systemd"
@@ -466,6 +471,9 @@ const (
 	EnvVarJoinDryRunDir = "KUBEADM_JOIN_DRYRUN_DIR"
 	// EnvVarUpgradeDryRunDir has the environment variable for upgrade dry run directory override.
 	EnvVarUpgradeDryRunDir = "KUBEADM_UPGRADE_DRYRUN_DIR"
+
+	// ProbePort is a general named port to be used in pod manifests.
+	ProbePort = "probe-port"
 )
 
 var (
@@ -495,10 +503,10 @@ var (
 
 	// SupportedEtcdVersion lists officially supported etcd versions with corresponding Kubernetes releases
 	SupportedEtcdVersion = map[uint8]string{
-		29: "3.5.24-0",
-		30: "3.5.24-0",
 		31: "3.5.24-0",
 		32: "3.5.24-0",
+		33: "3.5.24-0",
+		34: "3.6.5-0",
 	}
 
 	// KubeadmCertsClusterRoleName sets the name for the ClusterRole that allows

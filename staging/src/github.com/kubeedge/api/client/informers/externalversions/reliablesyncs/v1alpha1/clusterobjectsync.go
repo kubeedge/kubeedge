@@ -61,13 +61,25 @@ func NewFilteredClusterObjectSyncInformer(client versioned.Interface, resyncPeri
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ReliablesyncsV1alpha1().ClusterObjectSyncs().List(context.TODO(), options)
+				return client.ReliablesyncsV1alpha1().ClusterObjectSyncs().List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ReliablesyncsV1alpha1().ClusterObjectSyncs().Watch(context.TODO(), options)
+				return client.ReliablesyncsV1alpha1().ClusterObjectSyncs().Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.ReliablesyncsV1alpha1().ClusterObjectSyncs().List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.ReliablesyncsV1alpha1().ClusterObjectSyncs().Watch(ctx, options)
 			},
 		},
 		&apisreliablesyncsv1alpha1.ClusterObjectSync{},
