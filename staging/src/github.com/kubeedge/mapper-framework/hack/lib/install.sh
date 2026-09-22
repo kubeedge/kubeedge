@@ -75,10 +75,10 @@ See http://golang.org/doc/install for installation instructions."
   local go_version
   IFS=" " read -ra go_version <<< "$(go version)"
   local minimum_go_version
-  minimum_go_version=go1.12.1
+  minimum_go_version=go1.25.14
   if [[ "${minimum_go_version}" != $(echo -e "${minimum_go_version}\n${go_version[2]}" | sort -s -t. -k 1,1 -k 2,2n -k 3,3n | head -n1) && "${go_version[2]}" != "devel" ]]; then
     echo "Detected go version: ${go_version[*]}.
-Kubernetes requires ${minimum_go_version} or greater.
+KubeEdge requires ${minimum_go_version} or greater.
 Please install ${minimum_go_version} or later."
     exit 1
   fi
@@ -91,4 +91,3 @@ verify_docker_installed(){
     exit 1
   }
 }
-
