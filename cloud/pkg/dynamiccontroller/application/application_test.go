@@ -97,13 +97,13 @@ func TestOptionTo(t *testing.T) {
 }
 
 func TestApplicationString(t *testing.T) {
-	app := &metaserver.Application{
+	app := metaserver.NewApplicationForTest(metaserver.Application{
 		ID:       "test-id",
 		Nodename: "test-node",
 		Key:      "apps/v1/deployments/default/nginx",
 		Verb:     metaserver.Get,
 		Status:   metaserver.Approved,
-	}
+	})
 
 	str := app.String()
 
@@ -388,8 +388,8 @@ func TestGetWatchDiff(t *testing.T) {
 	}
 
 	allWatchAppInEdge := map[string]metaserver.Application{
-		"listener1": {ID: "listener1", Nodename: "node1"},
-		"listener3": {ID: "listener3", Nodename: "node1"},
+		"listener1": *metaserver.NewApplicationForTest(metaserver.Application{ID: "listener1", Nodename: "node1"}),
+		"listener3": *metaserver.NewApplicationForTest(metaserver.Application{ID: "listener3", Nodename: "node1"}),
 	}
 
 	added, removed := center.getWatchDiff(allWatchAppInEdge, "node1")
