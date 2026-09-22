@@ -2183,3 +2183,56 @@ func TestSyncRules(t *testing.T) {
 		})
 	}
 }
+
+func TestVisitRulesForSkipsDanglingRoleRef(t *testing.T) {
+	testUser := &user.DefaultInfo{Name: "test-user"}
+	subjects := []rbacv1.Subject{{Kind: rbacv1.UserKind, Name: testUser.Name}}
+
+	clusterRole := rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{Name: "cr1"},
+		Rules:      []rbacv1.PolicyRule{{Verbs: []string{"get"}, APIGroups: []string{""}, Resources: []string{"pods"}}},
+	}
+	danglingCRB := rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{Name: "crb-dangling"},
+		Subjects:   subjects,
+		RoleRef:    rbacv1.RoleRef{APIGroup: rbacv1.GroupName, Kind: "ClusterRole", Name: "missing-cr"},
+	}
+	goodCRB := rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{Name: "crb-good"},
+		Subjects:   subjects,
+		RoleRef:    rbacv1.RoleRef{APIGroup: rbacv1.GroupName, Kind: "ClusterRole", Name: clusterRole.Name},
+	}
+
+	role := rbacv1.Role{
+		ObjectMeta: metav1.ObjectMeta{Name: "r1", Namespace: "ns1"},
+		Rules:      []rbacv1.PolicyRule{{Verbs: []string{"list"}, APIGroups: []string{""}, Resources: []string{"configmaps"}}},
+	}
+	danglingRB := rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{Name: "rb-dangling", Namespace: "ns1"},
+		Subjects:   subjects,
+		RoleRef:    rbacv1.RoleRef{APIGroup: rbacv1.GroupName, Kind: "Role", Name: "missing-role"},
+	}
+	goodRB := rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{Name: "rb-good", Namespace: "ns1"},
+		Subjects:   subjects,
+		RoleRef:    rbacv1.RoleRef{APIGroup: rbacv1.GroupName, Kind: "Role", Name: role.Name},
+	}
+
+	accessScheme := runtime.NewScheme()
+	if err := rbacv1.AddToScheme(accessScheme); err != nil {
+		t.Fatalf("Failed to add rbacv1 scheme: %v", err)
+	}
+	fakeClient := fake.NewClientBuilder().WithScheme(accessScheme).
+		WithObjects(&clusterRole, &danglingCRB, &goodCRB, &role, &danglingRB, &goodRB).Build()
+	ctr := &Controller{Client: fakeClient, Reader: fakeClient}
+
+	acc := &policyv1alpha1.ServiceAccountAccess{}
+	ctr.VisitRulesFor(context.Background(), testUser, "ns1", acc)
+
+	if len(acc.Spec.AccessClusterRoleBinding) != 1 || acc.Spec.AccessClusterRoleBinding[0].ClusterRoleBinding.Name != goodCRB.Name {
+		t.Errorf("expected only the resolvable clusterrolebinding %q to be visited, got %+v", goodCRB.Name, acc.Spec.AccessClusterRoleBinding)
+	}
+	if len(acc.Spec.AccessRoleBinding) != 1 || acc.Spec.AccessRoleBinding[0].RoleBinding.Name != goodRB.Name {
+		t.Errorf("expected only the resolvable rolebinding %q to be visited, got %+v", goodRB.Name, acc.Spec.AccessRoleBinding)
+	}
+}
