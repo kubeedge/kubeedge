@@ -23,11 +23,16 @@ set -o pipefail
 KUBEEDGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 MOUNTPATH="${MOUNTPATH:-/kubeedge}"
 KUBEEDGE_BUILD_IMAGE=${KUBEEDGE_BUILD_IMAGE:-"kubeedge/build-tools:1.23.12-ke1"}
-DOCKER_GID="${DOCKER_GID:-$(grep '^docker:' /etc/group | cut -f3 -d:)}"
+DOCKER_GID="${DOCKER_GID:-$(grep '^docker:' /etc/group 2>/dev/null | cut -f3 -d: || true)}"
 CONTAINER_RUN_OPTIONS="${CONTAINER_RUN_OPTIONS:--it}"
 
+USER_OPTIONS=""
+if [[ -n "${DOCKER_GID}" ]]; then
+    USER_OPTIONS="-u ${UID}:${DOCKER_GID}"
+fi
+
 echo "start building inside container"
-docker run --rm ${CONTAINER_RUN_OPTIONS} -u "${UID}:${DOCKER_GID}" \
+docker run --rm ${CONTAINER_RUN_OPTIONS} ${USER_OPTIONS} \
     --init \
     --sig-proxy=true \
     -e XDG_CACHE_HOME=/tmp/.cache \
