@@ -589,7 +589,7 @@ func (c *Controller) VisitRulesFor(ctx context.Context, user user.Info, namespac
 		rules, err := c.GetRoleReferenceRules(ctx, crb.RoleRef, "")
 		if err != nil {
 			klog.Errorf("failed to get rules for clusterrolebinding %s, %v", crb.Name, err)
-			return
+			continue
 		}
 		var accessClusterRoleBinding = policyv1alpha1.AccessClusterRoleBinding{
 			ClusterRoleBinding: crb,
@@ -612,7 +612,7 @@ func (c *Controller) VisitRulesFor(ctx context.Context, user user.Info, namespac
 			rules, err := c.GetRoleReferenceRules(ctx, roleBinding.RoleRef, namespace)
 			if err != nil {
 				klog.Errorf("failed to get rules for rolebinding %s, %v", roleBinding.Name, err)
-				return
+				continue
 			}
 			var accessRoleBinding = policyv1alpha1.AccessRoleBinding{
 				RoleBinding: roleBinding,
