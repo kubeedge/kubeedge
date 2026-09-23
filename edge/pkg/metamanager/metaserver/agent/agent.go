@@ -207,7 +207,9 @@ func (a *Agent) syncWatchApplications() error {
 		return err
 	}
 
-	klog.Errorf("failed to process watch apps: %+v", failedWatchApps)
+	if len(failedWatchApps) > 0 {
+		klog.Errorf("failed to process watch apps: %+v", failedWatchApps)
+	}
 
 	return nil
 }
