@@ -3,7 +3,6 @@ package listener
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -124,6 +123,8 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	edgeNodeName := uriSections[1]
+	var forwardResp *http.Response
+	var forwardIP string
 	err = retry.Do(
 		func() error {
 			targetCloudCoreIP, err := GetEdgeToCloudCoreIP(r.Context(), edgeNodeName)
@@ -136,93 +137,33 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return fmt.Errorf("failed to get cloudcore localIP with err:%v", err)
 			}
-			if targetCloudCoreIP != localIP {
-				var url string
-				if r.TLS != nil {
-					url = "https://" + targetCloudCoreIP
-				} else {
-					url = "http://" + targetCloudCoreIP
-				}
-				url += ":" + strconv.Itoa(rh.port) + r.RequestURI
-				reqBody := io.NopCloser(bytes.NewBuffer(b))
-				forwardReq, err := http.NewRequest(r.Method, url, reqBody)
-				if err != nil {
-					return fmt.Errorf("failed to create forward request: %v", err)
-				}
-
-				forwardReq.TLS = r.TLS
-				forwardReq.Header = make(http.Header)
-				for key, values := range r.Header {
-					forwardReq.Header[key] = values
-				}
-				return requestForward(targetCloudCoreIP, w, forwardReq)
-			}
-
-			matchPath, exist := rh.matchedPath(r.RequestURI)
-			if !exist {
-				klog.Warningf("URL format incorrect: %s", r.RequestURI)
-				w.WriteHeader(http.StatusNotFound)
-				if _, err := w.Write([]byte("Request error")); err != nil {
-					klog.Errorf("Response write error: %s, %s", r.RequestURI, err.Error())
-				}
-				return nil
-			}
-			v, ok := rh.handlers.Load(matchPath)
-			if !ok {
-				klog.Warningf("No matched handler for path: %s", matchPath)
-				return nil
-			}
-			handle, ok := v.(Handle)
-			if !ok {
-				klog.Errorf("invalid convert to Handle. match path: %s", matchPath)
+			if targetCloudCoreIP == localIP {
 				return nil
 			}
 
-			if isNodeName(uriSections[1]) {
-				params := make(map[string]interface{})
-				msgID := uuid.New().String()
-				params["messageID"] = msgID
-				params["request"] = r
-				params["timeout"] = rh.restTimeout
-				params["data"] = b
-
-				v, err := handle(params)
-				if err != nil {
-					klog.Errorf("handle request error, msg id: %s, err: %v", msgID, err)
-					return nil
-				}
-				response, ok := v.(*http.Response)
-				if !ok {
-					klog.Errorf("response convert error, msg id: %s", msgID)
-					return nil
-				}
-				body, err := io.ReadAll(io.LimitReader(response.Body, MaxMessageBytes))
-				if err != nil {
-					klog.Errorf("response body read error, msg id: %s, reason: %v", msgID, err)
-					return nil
-				}
-				for key, values := range response.Header {
-					for _, value := range values {
-						w.Header().Add(key, value)
-					}
-				}
-
-				if response.StatusCode != http.StatusOK {
-					errMsg := string(body)
-					return errors.New(errMsg)
-				}
-
-				w.WriteHeader(response.StatusCode)
-				if _, err = w.Write(body); err != nil {
-					klog.Errorf("response body write error, msg id: %s, reason: %v", msgID, err)
-					return nil
-				}
-				klog.Infof("response to client, msg id: %s, write result: success", msgID)
-				return nil
+			var url string
+			if r.TLS != nil {
+				url = "https://" + targetCloudCoreIP
+			} else {
+				url = "http://" + targetCloudCoreIP
 			}
-			w.WriteHeader(http.StatusNotFound)
-			_, err = w.Write([]byte("No rule match"))
-			klog.Infof("no rule match, write result: %v", err)
+			url += ":" + strconv.Itoa(rh.port) + r.RequestURI
+			reqBody := io.NopCloser(bytes.NewBuffer(b))
+			forwardReq, err := http.NewRequest(r.Method, url, reqBody)
+			if err != nil {
+				return fmt.Errorf("failed to create forward request: %v", err)
+			}
+
+			forwardReq.TLS = r.TLS
+			forwardReq.Header = make(http.Header)
+			for key, values := range r.Header {
+				forwardReq.Header[key] = values
+			}
+			resp, err := requestForward(targetCloudCoreIP, forwardReq)
+			if err != nil {
+				return err
+			}
+			forwardResp, forwardIP = resp, targetCloudCoreIP
 			return nil
 		},
 		retry.Delay(1*time.Second),
@@ -234,6 +175,88 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, r, http.StatusInternalServerError, err)
 		return
 	}
+
+	if forwardResp != nil {
+		defer func(Body io.ReadCloser) {
+			if err := Body.Close(); err != nil {
+				klog.Errorf("failed to close resp.Body with err:%v", err)
+			}
+		}(forwardResp.Body)
+		for key, values := range forwardResp.Header {
+			for _, value := range values {
+				w.Header().Add(key, value)
+			}
+		}
+		w.WriteHeader(forwardResp.StatusCode)
+		if _, err := io.Copy(w, forwardResp.Body); err != nil {
+			klog.Errorf("failed to copy resp.Body to writer with err:%v", err)
+			return
+		}
+		klog.Infof("forwarded request to %s successfully", forwardIP)
+		return
+	}
+
+	matchPath, exist := rh.matchedPath(r.RequestURI)
+	if !exist {
+		klog.Warningf("URL format incorrect: %s", r.RequestURI)
+		w.WriteHeader(http.StatusNotFound)
+		if _, err := w.Write([]byte("Request error")); err != nil {
+			klog.Errorf("Response write error: %s, %s", r.RequestURI, err.Error())
+		}
+		return
+	}
+	v, ok := rh.handlers.Load(matchPath)
+	if !ok {
+		klog.Warningf("No matched handler for path: %s", matchPath)
+		return
+	}
+	handle, ok := v.(Handle)
+	if !ok {
+		klog.Errorf("invalid convert to Handle. match path: %s", matchPath)
+		return
+	}
+
+	if !isNodeName(uriSections[1]) {
+		w.WriteHeader(http.StatusNotFound)
+		_, err = w.Write([]byte("No rule match"))
+		klog.Infof("no rule match, write result: %v", err)
+		return
+	}
+
+	params := make(map[string]interface{})
+	msgID := uuid.New().String()
+	params["messageID"] = msgID
+	params["request"] = r
+	params["timeout"] = rh.restTimeout
+	params["data"] = b
+
+	v, err = handle(params)
+	if err != nil {
+		klog.Errorf("handle request error, msg id: %s, err: %v", msgID, err)
+		return
+	}
+	response, ok := v.(*http.Response)
+	if !ok {
+		klog.Errorf("response convert error, msg id: %s", msgID)
+		return
+	}
+	body, err := io.ReadAll(io.LimitReader(response.Body, MaxMessageBytes))
+	if err != nil {
+		klog.Errorf("response body read error, msg id: %s, reason: %v", msgID, err)
+		return
+	}
+	for key, values := range response.Header {
+		for _, value := range values {
+			w.Header().Add(key, value)
+		}
+	}
+
+	w.WriteHeader(response.StatusCode)
+	if _, err = w.Write(body); err != nil {
+		klog.Errorf("response body write error, msg id: %s, reason: %v", msgID, err)
+		return
+	}
+	klog.Infof("response to client, msg id: %s, write result: success", msgID)
 }
 
 func (rh *RestHandler) IsMatch(key interface{}, message interface{}) bool {
@@ -265,42 +288,13 @@ func GetEdgeToCloudCoreIP(ctx context.Context, nodeName string) (string, error) 
 	return cloudCoreIP, nil
 }
 
-func requestForward(targetCloudCoreIP string, w http.ResponseWriter, forwardReq *http.Request) error {
+func requestForward(targetCloudCoreIP string, forwardReq *http.Request) (*http.Response, error) {
 	httpClient := &http.Client{}
 	resp, err := httpClient.Do(forwardReq)
 	if err != nil {
-		return fmt.Errorf("failed to forward request: %v", err)
+		return nil, fmt.Errorf("failed to forward request to %s: %v", targetCloudCoreIP, err)
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			klog.Errorf("failed to close resp.Body with err:%v", err)
-		}
-	}(resp.Body)
-
-	for key, values := range resp.Header {
-		for _, value := range values {
-			w.Header().Add(key, value)
-		}
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("error reading body:%v", err)
-		}
-		errMsg := string(bodyBytes)
-		return errors.New(errMsg)
-	}
-
-	w.WriteHeader(resp.StatusCode)
-	_, err = io.Copy(w, resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to copy resp.Body to writer with err:%v", err)
-	}
-
-	klog.Infof("forwarded request to %s successfully", targetCloudCoreIP)
-	return nil
+	return resp, nil
 }
 
 func writeErr(w http.ResponseWriter, r *http.Request, statusCode int, err error) {
