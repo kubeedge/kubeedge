@@ -59,6 +59,13 @@ type NodeUpgradeJobList struct {
 // NodeUpgradeJobSpec is the specification of the desired behavior of the NodeUpgradeJob.
 type NodeUpgradeJobSpec struct {
 	// +Required: Version is the EdgeCore version to upgrade.
+	// Version may be changed after the NodeUpgradeJob is created, but only while
+	// Status.State is still empty, i.e. before the job has started dispatching any
+	// per-node action. This allows retrying a job that failed before it started
+	// without recreating it, while avoiding a version change part-way through a
+	// rollout that could leave some nodes on the old version and others on the new
+	// one. A downgrade (moving to an older version) additionally requires
+	// AllowDowngrade to be set to true.
 	Version string `json:"version,omitempty"`
 
 	// TimeoutSeconds limits the duration of the node upgrade job.
@@ -114,6 +121,49 @@ type NodeUpgradeJobSpec struct {
 	// The default RequireConfirmation value is false.
 	// +optional
 	RequireConfirmation bool `json:"requireConfirmation,omitempty"`
+
+	// AllowDowngrade specifies whether the upgrade job is allowed to downgrade
+	// the EdgeCore version, e.g. from 1.17.0 to 1.16.3.
+	// The default AllowDowngrade value is false.
+	// +optional
+	AllowDowngrade bool `json:"allowDowngrade,omitempty"`
+
+	// Strategy specifies the strategy that the upgrade job uses to roll out the
+	// upgrade across the selected edge nodes.
+	// Note: this field is currently validated and defaulted by the admission
+	// webhook, but the upgrade execution path does not yet change its behavior
+	// based on Strategy.Type. Rollout behavior wiring is tracked as follow-up work.
+	// +optional
+	Strategy *UpdateStrategy `json:"strategy,omitempty"`
+}
+
+// UpdateStrategyType is the type of the upgrade rollout strategy.
+type UpdateStrategyType string
+
+const (
+	// AtOnceUpdateStrategyType upgrades all the selected edge nodes at the same time.
+	AtOnceUpdateStrategyType UpdateStrategyType = "AtOnce"
+	// RollingUpdateStrategyType upgrades the selected edge nodes in batches.
+	RollingUpdateStrategyType UpdateStrategyType = "Rolling"
+	// CanaryUpdateStrategyType upgrades a small subset of the selected edge nodes first.
+	CanaryUpdateStrategyType UpdateStrategyType = "Canary"
+)
+
+// UpdateStrategy defines how the upgrade job rolls out across the selected edge nodes.
+type UpdateStrategy struct {
+	// Type of the upgrade rollout strategy. Can be "AtOnce", "Rolling" or "Canary".
+	// The default Type value is Rolling.
+	// +optional
+	// +kubebuilder:validation:Enum=AtOnce;Rolling;Canary
+	Type UpdateStrategyType `json:"type,omitempty"`
+
+	// MaxUnavailable specifies the max number of edge nodes that can be upgraded
+	// at the same time under the Rolling strategy. It has no effect for the
+	// AtOnce or Canary strategy types.
+	// The default MaxUnavailable value is 1. Must be at least 1.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	MaxUnavailable *int32 `json:"maxUnavailable,omitempty"`
 }
 
 // ImageDigestGatter used to define a method for getting the image digest
