@@ -29,9 +29,9 @@ jobs:
       GOPATH: /home/runner/work/${{ github.repository }}
     steps:
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: 1.23.x
+          go-version: '1.25.14'
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -122,4 +122,3 @@ jobs:
     name: Multiple docker image build
     steps:
       - run: 'echo "only docs modified, no need to trigger CI"'
-
