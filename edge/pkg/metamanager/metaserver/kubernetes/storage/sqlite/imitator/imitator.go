@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -36,9 +37,34 @@ type imitator struct {
 	codec runtime.Codec
 }
 
-// Inject transform the message to watch.event, save internal obj/objs to table meta_v2
-// and trigger the corresponding hook to serve watch
-func (s *imitator) Inject(msg model.Message) {
+// errUnrepresentableEvent marks a watch event that cannot be turned into a meta_v2 row at
+// all: the object carries no group/version/kind, is not unstructured, cannot be encoded, or
+// has an unparsable resourceVersion. It is kept distinct from a cache write failure because
+// it is deterministic - replaying the identical payload fails identically - so refusing to
+// acknowledge the cloud would retry forever and block delivery to edged instead of repairing
+// the local cache.
+var errUnrepresentableEvent = errors.New("event cannot be represented in meta_v2")
+
+// Inject transforms the message to watch event(s), saves the internal obj/objs to table
+// meta_v2 and triggers the corresponding hook to serve watch. It returns an aggregated error
+// if any event fails to be written to the local cache, so the caller can avoid acknowledging
+// the cloud as if the local cache had been updated.
+//
+// Only write failures are propagated, because that is the class a resend can repair:
+// RetryInsertOrReplaceMetaV2 exhausting its retries (a locked or full database, contention)
+// leaves the row unwritten, and the writes are idempotent - InsertOrUpdateObj is an upsert
+// keyed by the object key, DeleteObj a delete-by-key - so replaying the object on the next
+// sync reconcile (see synccontroller) converges the cache. Re-applying an already-stored
+// event only re-triggers its watch hook, which watch consumers tolerate.
+//
+// Events that cannot be represented at all (errUnrepresentableEvent) are logged and skipped
+// instead, which is the pre-existing best-effort behavior. A resend cannot fix them, so
+// propagating them would both loop and stop the message from ever reaching edged. This is
+// the common case rather than a corner case: a message whose payload is a list expands into
+// one event per item, and list items decoded from a cloud message do not repeat their
+// TypeMeta, so none of them can be keyed.
+func (s *imitator) Inject(msg model.Message) error {
+	var errs []error
 	for _, e := range s.Event(&msg) {
 		// save to meta_v2
 		var err error
@@ -49,32 +75,41 @@ func (s *imitator) Inject(msg model.Message) {
 			err = s.DeleteObj(context.TODO(), e.Object)
 		}
 		if err != nil {
+			if errors.Is(err, errUnrepresentableEvent) {
+				klog.Errorf("skip event {type:%v}, err: %v", e.Type, err)
+				continue
+			}
 			key := metaserver.KeyFunc(e.Object)
-			klog.Errorf("failed to serve event {type:%v,key:%v}", e.Type, key)
+			klog.Errorf("failed to serve event {type:%v,key:%v}, err: %v", e.Type, key, err)
+			errs = append(errs, fmt.Errorf("serve event {type:%v,key:%v}: %w", e.Type, key, err))
 			continue
 		}
 		// TODO: move Trigger inside InsertOrUpdateObj and DeleteObj
 		watchhook.Trigger(e)
 	}
+	return errors.Join(errs...)
 }
 
 // TODO: filter out insert or update req that the obj's rev is smaller than the stored
 func (s *imitator) InsertOrUpdateObj(_ context.Context, obj runtime.Object) error {
 	key, err := metaserver.KeyFuncObj(obj)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %v", errUnrepresentableEvent, err)
 	}
 	gvr, ns, name := metaserver.ParseKey(key)
 	unstr, isUnstr := obj.(*unstructured.Unstructured)
 	if !isUnstr {
-		return fmt.Errorf("obj is not unstructured type")
+		return fmt.Errorf("%w: obj is not unstructured type", errUnrepresentableEvent)
 	}
 	buf := bytes.NewBuffer(nil)
 	err = s.codec.Encode(unstr, buf)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: failed to encode obj, key: %s, err: %v", errUnrepresentableEvent, key, err)
 	}
 	objRv, err := s.versioner.ObjectResourceVersion(obj)
+	if err != nil {
+		return fmt.Errorf("%w: failed to get object resource version, key: %s, err: %v", errUnrepresentableEvent, key, err)
+	}
 	m := models.MetaV2{
 		Key:                  key,
 		GroupVersionResource: gvr.String(),
@@ -137,7 +172,7 @@ func (s *imitator) InsertOrUpdatePassThroughObj(_ context.Context, obj []byte, k
 func (s *imitator) DeleteObj(_ context.Context, obj runtime.Object) error {
 	key, err := metaserver.KeyFuncObj(obj)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %v", errUnrepresentableEvent, err)
 	}
 	err = s.Delete(context.TODO(), key)
 	return err
