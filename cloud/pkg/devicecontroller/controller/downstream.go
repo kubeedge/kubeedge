@@ -96,9 +96,34 @@ func (dc *DownstreamController) deviceModelAdded(deviceModel *v1beta1.DeviceMode
 
 // deviceModelUpdated is function to process updated deviceModel
 func (dc *DownstreamController) deviceModelUpdated(deviceModel *v1beta1.DeviceModel) {
-	// nothing to do when deviceModel updated, only add in map
 	deviceModelID := util.GetResourceID(deviceModel.Namespace, deviceModel.Name)
 	dc.deviceModelManager.DeviceModel.Store(deviceModelID, deviceModel)
+
+	// key: NodeName
+	sentNodes := make(map[string]bool)
+
+	dc.deviceManager.Device.Range(func(k, v interface{}) bool {
+		device, ok := v.(*v1beta1.Device)
+		if !ok {
+			return true
+		}
+
+		if isDeviceMatchingModel(device, deviceModel) {
+			if !sentNodes[device.Spec.NodeName] {
+				dc.sendDeviceModelMsg(device, model.UpdateOperation)
+				sentNodes[device.Spec.NodeName] = true
+			}
+		}
+		return true
+	})
+}
+
+// isDeviceMatchingModel checks if the device is using the given deviceModel and scheduled to a node
+func isDeviceMatchingModel(device *v1beta1.Device, deviceModel *v1beta1.DeviceModel) bool {
+	return device.Namespace == deviceModel.Namespace &&
+		device.Spec.DeviceModelRef != nil &&
+		device.Spec.DeviceModelRef.Name == deviceModel.Name &&
+		device.Spec.NodeName != ""
 }
 
 // deviceModelDeleted is function to process deleted deviceModel
