@@ -40,11 +40,11 @@ func (g *RoleGetter) GetRole(ctx context.Context, namespace, name string) (*rbac
 		}
 		for _, rb := range saAccess.Spec.AccessRoleBinding {
 			if rb.RoleBinding.RoleRef.Kind == roleKind && rb.RoleBinding.RoleRef.Name == name &&
-				saAccess.Namespace == namespace {
+				rb.RoleBinding.Namespace == namespace {
 				return &rbacv1.Role{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      rb.RoleBinding.RoleRef.Name,
-						Namespace: saAccess.Namespace,
+						Namespace: rb.RoleBinding.Namespace,
 					},
 					Rules: rb.Rules,
 				}, nil
