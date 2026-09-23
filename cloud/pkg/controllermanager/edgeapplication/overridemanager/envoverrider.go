@@ -239,11 +239,11 @@ func processFieldRef(value map[string]interface{}) (*corev1.ObjectFieldSelector,
 	if err != nil {
 		return nil, err
 	}
-	av, faOK, err := unstructured.NestedString(value, "fieldRef", "apiVersion")
+	av, _, err := unstructured.NestedString(value, "fieldRef", "apiVersion")
 	if err != nil {
 		return nil, err
 	}
-	if ffOK && faOK {
+	if ffOK {
 		return &corev1.ObjectFieldSelector{FieldPath: fp, APIVersion: av}, nil
 	}
 	return nil, nil
@@ -254,7 +254,7 @@ func processResourceFieldRef(value map[string]interface{}) (*corev1.ResourceFiel
 	if err != nil {
 		return nil, err
 	}
-	c, rcOK, err := unstructured.NestedString(value, "resourceFieldRef", "containerName")
+	c, _, err := unstructured.NestedString(value, "resourceFieldRef", "containerName")
 	if err != nil {
 		return nil, err
 	}
@@ -263,11 +263,18 @@ func processResourceFieldRef(value map[string]interface{}) (*corev1.ResourceFiel
 		return nil, err
 	}
 
-	if rrOK && rcOK && rdOK {
+	if rrOK {
+		quantity := resource.MustParse("1")
+		if rdOK {
+			quantity, err = resource.ParseQuantity(divisor)
+			if err != nil {
+				return nil, err
+			}
+		}
 		return &corev1.ResourceFieldSelector{
 			ContainerName: c,
 			Resource:      r,
-			Divisor:       resource.MustParse(divisor),
+			Divisor:       quantity,
 		}, nil
 	}
 	return nil, nil
@@ -283,9 +290,18 @@ func processConfigMapKeyRef(value map[string]interface{}) (*corev1.ConfigMapKeyS
 		return nil, err
 	}
 	if cnOK && ckOK {
+		optional, found, err := unstructured.NestedBool(value, "configMapKeyRef", "optional")
+		if err != nil {
+			return nil, err
+		}
+		var optionalRef *bool
+		if found {
+			optionalRef = &optional
+		}
 		return &corev1.ConfigMapKeySelector{
 			LocalObjectReference: corev1.LocalObjectReference{Name: name},
 			Key:                  key,
+			Optional:             optionalRef,
 		}, nil
 	}
 	return nil, nil
@@ -302,9 +318,18 @@ func processSecretKeyRef(value map[string]interface{}) (*corev1.SecretKeySelecto
 	}
 
 	if snOK && skOK {
+		optional, found, err := unstructured.NestedBool(value, "secretKeyRef", "optional")
+		if err != nil {
+			return nil, err
+		}
+		var optionalRef *bool
+		if found {
+			optionalRef = &optional
+		}
 		return &corev1.SecretKeySelector{
 			LocalObjectReference: corev1.LocalObjectReference{Name: name},
 			Key:                  key,
+			Optional:             optionalRef,
 		}, nil
 	}
 	return nil, nil
