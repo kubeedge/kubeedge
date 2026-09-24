@@ -58,7 +58,18 @@ func (f *Factory) Logs(request *request.RequestInfo) http.Handler {
 
 		logsResponse, res := f.storage.Logs(req.Context(), logsInfo)
 		if res == nil {
-			http.Error(w, "Failed to get logs from edged", http.StatusInternalServerError)
+			logsResBytes, err := json.Marshal(logsResponse)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, err = w.Write(logsResBytes)
+			if err != nil {
+				klog.Warningf("[metaserver/logs] failed to write logs response with err:%v", err)
+				return
+			}
 			return
 		}
 
