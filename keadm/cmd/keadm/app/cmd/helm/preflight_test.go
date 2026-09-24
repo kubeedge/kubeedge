@@ -17,16 +17,31 @@ package helm
 
 import (
 	"errors"
+	"net"
 	"strings"
 	"testing"
+	"time"
 
 	authv1 "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes/fake"
 	clienttesting "k8s.io/client-go/testing"
+
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
+
+func init() {
+	util.PreflightBackoff = wait.Backoff{
+		Steps:    3,
+		Duration: 1 * time.Microsecond,
+		Factor:   2.0,
+	}
+}
 
 func newNode(name string, ready corev1.ConditionStatus) *corev1.Node {
 	return &corev1.Node{
@@ -261,4 +276,73 @@ func TestCheckCloudCorePermissions(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCheckNodeReadinessRetry(t *testing.T) {
+	t.Run("success after transient failure", func(t *testing.T) {
+		cli := fake.NewSimpleClientset()
+		calls := 0
+		cli.PrependReactor("list", "nodes", func(action clienttesting.Action) (bool, runtime.Object, error) {
+			calls++
+			if calls == 1 {
+				return true, nil, &net.OpError{Op: "dial", Net: "tcp", Err: errors.New("connection timeout")} // transient
+			}
+			// return ready node on second call
+			nodes := &corev1.NodeList{
+				Items: []corev1.Node{
+					*newNode("node-1", corev1.ConditionTrue),
+				},
+			}
+			return true, nodes, nil
+		})
+
+		err := checkNodeReadiness(cli)
+		if err != nil {
+			t.Fatalf("expected nil error, got: %v", err)
+		}
+		if calls != 2 {
+			t.Fatalf("expected exactly 2 calls, got: %d", calls)
+		}
+	})
+
+	t.Run("max retries exceeded with transient failures", func(t *testing.T) {
+		cli := fake.NewSimpleClientset()
+		calls := 0
+		cli.PrependReactor("list", "nodes", func(action clienttesting.Action) (bool, runtime.Object, error) {
+			calls++
+			return true, nil, &net.OpError{Op: "dial", Net: "tcp", Err: errors.New("connection timeout")} // transient
+		})
+
+		err := checkNodeReadiness(cli)
+		if err == nil {
+			t.Fatal("expected non-nil error")
+		}
+		if !strings.Contains(err.Error(), "connection timeout") {
+			t.Fatalf("expected connection timeout error, got: %v", err)
+		}
+		if calls != 3 {
+			t.Fatalf("expected exactly 3 calls, got: %d", calls)
+		}
+	})
+
+	t.Run("immediate fail on permanent failure", func(t *testing.T) {
+		cli := fake.NewSimpleClientset()
+		calls := 0
+		cli.PrependReactor("list", "nodes", func(action clienttesting.Action) (bool, runtime.Object, error) {
+			calls++
+			// forbidden is a permanent error
+			return true, nil, apierrors.NewForbidden(schema.GroupResource{Resource: "nodes"}, "", errors.New("denied"))
+		})
+
+		err := checkNodeReadiness(cli)
+		if err == nil {
+			t.Fatal("expected non-nil error")
+		}
+		if !strings.Contains(err.Error(), "forbidden") {
+			t.Fatalf("expected forbidden error, got: %v", err)
+		}
+		if calls != 1 {
+			t.Fatalf("expected exactly 1 call (no retry), got: %d", calls)
+		}
+	})
 }
