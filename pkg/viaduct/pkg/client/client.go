@@ -40,10 +40,10 @@ type Options struct {
 	// transport (handleMessage in pkg/viaduct/pkg/conn/ws.go). It surfaces a
 	// stalled half-open TCP connection as a read error within ReadDeadline
 	// instead of waiting for the kernel TCP retransmission timeout
-	// (tcp_retries2, ~15min on Linux). Currently honored only by the
-	// WebSocket transport; QUIC has the same defect (SetReadDeadline is a
-	// no-op there too) and will be addressed in a separate PR. Zero means
-	// no read deadline (legacy behavior).
+	// (tcp_retries2, ~15min on Linux). Honored by the WebSocket transport
+	// only: QUIC detects a half-open path through the session idle timeout
+	// of the transport itself, so it needs no deadline here. Zero means no
+	// read deadline (legacy behavior).
 	ReadDeadline time.Duration
 	// consumer for raw data
 	Consumer io.Writer
