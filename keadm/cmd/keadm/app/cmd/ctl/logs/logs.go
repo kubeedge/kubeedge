@@ -34,7 +34,56 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
-var edgePodLogsShortDescription = `Get pod logs in edge node`
+var (
+	edgePodLogsShortDescription = `Get pod logs in edge node`
+
+	edgePodLogsLongDescription = `
+Retrieve and stream logs from a pod running on an edge node.
+
+This command communicates with the local MetaService API on the
+edge node to fetch logs from containers. It works similarly to
+'kubectl logs' but operates against the edge node's local MetaManager
+rather than the cloud API server.
+
+Supported flags:
+  -f, --follow            Stream logs as they are produced by the container.
+  -p, --previous          Show logs from the previous instance of the container
+                          if it exists (useful after crashes/restarts).
+  -c, --container string  Print logs of a specific container in the pod.
+  --since string          Only return logs newer than a relative duration
+                          (e.g., 5s, 2m, 3h). Only one of --since or --since-time
+                          can be specified.
+  --since-time string     Only return logs after a specific RFC3339 date.
+  --tail int              Number of lines to display from the end of logs.
+                          Defaults to -1 (all lines) if no selector, otherwise 10.
+  --timestamps            Include timestamps on each line in the output.
+  --limit-bytes int       Maximum bytes of logs to return. Defaults to no limit.
+
+Edge autonomy: This command works even when the cloud connection is
+temporarily lost, as it queries the local MetaService API.
+
+Note: This command must be run directly on the edge node where
+EdgeCore is running.`
+
+	edgePodLogsExample = `
+  # Get logs from a pod in the default namespace
+  keadm ctl logs <pod-name>
+
+  # Get logs from a pod in a specific namespace
+  keadm ctl logs <pod-name> -n <namespace>
+
+  # Stream logs (follow mode)
+  keadm ctl logs <pod-name> -f
+
+  # Get logs from a specific container
+  keadm ctl logs <pod-name> -c <container-name>
+
+  # Get last 50 lines of logs
+  keadm ctl logs <pod-name> --tail 50
+
+  # Get logs from the previous instance of the container
+  keadm ctl logs <pod-name> -p`
+)
 
 // PodLogsOptions defines the options for getting logs of edge pod
 type PodLogsOptions struct {
@@ -61,9 +110,10 @@ type PodLogsOptions struct {
 func NewEdgePodLogs() *cobra.Command {
 	logsOpts := NewLogsPodOpts()
 	cmd := &cobra.Command{
-		Use:   "logs",
-		Short: edgePodLogsShortDescription,
-		Long:  edgePodLogsShortDescription,
+		Use:     "logs",
+		Short:   edgePodLogsShortDescription,
+		Long:    edgePodLogsLongDescription,
+		Example: edgePodLogsExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return fmt.Errorf("no pod specified for logs")
