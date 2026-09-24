@@ -55,6 +55,30 @@ helm upgrade --install cloudcore ./cloudcore --namespace kubeedge --create-names
 - `iptablesManager.affinity`, `iptablesManager.nodeSelector`, `iptablesManager.tolerations`, defines the node scheduling policies.
 - `iptablesManager.resources`, defines the resources limits and requests.
 
+## Troubleshooting CrashLoopBackOff
+
+If the `cloudcore` pod fails to start and enters a `CrashLoopBackOff` state, it is likely due to a configuration, network, or Kubernetes API connectivity issue during early startup. 
+
+To troubleshoot effectively:
+
+1. **View the previous container logs:**
+   Use the `--previous` flag to see the exact error that caused the pod to crash.
+   ```bash
+   kubectl logs -n kubeedge deployment/cloudcore --previous
+   ```
+   > Note: `kubectl describe pod` mainly shows Kubernetes-level events (like image pull errors), while `kubectl logs` will show application-level configuration and initialization errors.
+
+2. **Increase Log Verbosity:**
+   If the default logs do not provide enough context, you can increase the `klog` verbosity (e.g., to level 4 or higher). To do this, configure the `cloudCore.extraArgs` parameter in your `values.yaml` or during the helm upgrade:
+   ```yaml
+   cloudCore:
+     extraArgs:
+     - "-v=4"
+   ```
+   ```bash
+   helm upgrade cloudcore ./cloudcore --namespace kubeedge --set "cloudCore.extraArgs[0]=-v=4"
+   ```
+
 ## Uninstall
 
 ```
