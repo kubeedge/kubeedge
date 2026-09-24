@@ -97,6 +97,18 @@ func (mh *messageHandler) HandleMessage(container *mux.MessageContainer, _ mux.R
 	nodeID := container.Header.Get("node_id")
 	projectID := container.Header.Get("project_id")
 
+	startTime := time.Now()
+	defer func() {
+		duration := time.Since(startTime)
+		if container.Message != nil {
+			klog.V(4).Infof("[messageHandler] Message processing completed for node %s, operation %s, duration: %v", 
+				nodeID, container.Message.Router.Operation, duration)
+		} else {
+			klog.V(4).Infof("[messageHandler] Message processing completed for node %s, duration: %v", 
+				nodeID, duration)
+		}
+	}()
+
 	// validate message
 	if container.Message == nil {
 		klog.Errorf("The message is nil for node: %s", nodeID)
@@ -112,8 +124,13 @@ func (mh *messageHandler) HandleMessage(container *mux.MessageContainer, _ mux.R
 		return
 	}
 
+	klog.V(3).Infof("[messageHandler] Message authorized for node %s, operation: %s, resource: %s", 
+		nodeID, container.Message.Router.Operation, container.Message.Router.Resource)
+
 	// dispatch upstream message
 	mh.MessageDispatcher.DispatchUpstream(container.Message, &hubInfo)
+	
+	klog.V(3).Infof("[messageHandler] Message dispatched for node %s", nodeID)
 }
 
 // HandleConnection is invoked when a new connection is established
