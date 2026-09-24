@@ -74,9 +74,22 @@ func newCloudHub(enable bool) *cloudHub {
 	return ch
 }
 
+func validateConfig(hub *v1alpha1.CloudHub) {
+    if hub.KeepaliveInterval <= 0 {
+        hub.KeepaliveInterval = 30 
+        klog.Warningf("KeepaliveInterval not set, using default value: %d", hub.KeepaliveInterval)
+    }
+    
+    if hub.NodeLimit <= 0 {
+        hub.NodeLimit = 1000 
+        klog.Warningf("NodeLimit not set, using default value: %d", hub.NodeLimit)
+    }
+}
+
 func Register(hub *v1alpha1.CloudHub) {
-	hubconfig.InitConfigure(hub)
-	core.Register(newCloudHub(hub.Enable))
+	validateConfig(hub) 
+    hubconfig.InitConfigure(hub)
+    core.Register(newCloudHub(hub.Enable))
 }
 
 func (ch *cloudHub) Name() string {
