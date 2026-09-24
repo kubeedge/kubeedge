@@ -372,3 +372,191 @@ func NewConfigMapMessage(configMap *v1.ConfigMap, operation string) *beehivemode
 		BuildRouter(modules.EdgeControllerModuleName, "resource", resource, operation).
 		FillBody(configMap)
 }
+
+const (
+	TestClusterNodeName = "cluster-node"
+	TestClusterNodeUID  = "d8e0a2b3-1234-5678-9abc-def012345678"
+)
+
+// NewTestNodeResource creates a cluster-scoped v1.Node for testing non-namespaced resources.
+func NewTestNodeResource(name, UID, resourceVersion string) *v1.Node {
+	return &v1.Node{
+		TypeMeta: v12.TypeMeta{
+			Kind:       "Node",
+			APIVersion: "v1",
+		},
+		ObjectMeta: v12.ObjectMeta{
+			Name:            name,
+			ResourceVersion: resourceVersion,
+			UID:             types.UID(UID),
+		},
+	}
+}
+
+// NewNodeMessage creates a beehive message for a cluster-scoped Node resource.
+// Non-namespaced resources use "null" as the namespace in the resource path.
+func NewNodeMessage(node *v1.Node, operation string) *beehivemodel.Message {
+	resource, err := messagelayer.BuildResource(TestNodeID, "null", "node", node.Name)
+	if err != nil {
+		klog.Warningf("build message resource failed with error: %s", err)
+		return nil
+	}
+	return beehivemodel.NewMessage("").
+		SetResourceVersion(node.ResourceVersion).
+		BuildRouter(modules.EdgeControllerModuleName, "resource", resource, operation).
+		FillBody(node)
+}
+
+// NewClusterObjectSync creates a ClusterObjectSync CR for testing non-namespaced resources.
+func NewClusterObjectSync(object v12.Object, kind string) *v1alpha1.ClusterObjectSync {
+	return &v1alpha1.ClusterObjectSync{
+		ObjectMeta: v12.ObjectMeta{
+			Name: fmt.Sprintf("%s.%s", TestNodeID, object.GetUID()),
+		},
+		Spec: v1alpha1.ObjectSyncSpec{
+			ObjectAPIVersion: "v1",
+			ObjectKind:       kind,
+			ObjectName:       object.GetName(),
+		},
+		Status: v1alpha1.ObjectSyncStatus{
+			ObjectResourceVersion: object.GetResourceVersion(),
+		},
+	}
+}
+
+// ClusterObjectSyncReactor is like ObjectSyncReactor but for cluster-scoped ClusterObjectSync CRs.
+type ClusterObjectSyncReactor struct {
+	clusterObjectSyncs map[string]*v1alpha1.ClusterObjectSync
+	lock               sync.RWMutex
+	errors             []ReactorError
+}
+
+// React handles create/update/get/delete for clusterobjectsyncs.
+func (r *ClusterObjectSyncReactor) React(action core.Action) (handled bool, ret runtime.Object, err error) {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
+	klog.V(4).Infof("cluster reactor got operation %q on %q", action.GetVerb(), action.GetResource())
+
+	// Inject error when requested
+	err = r.injectReactError(action)
+	if err != nil {
+		return true, nil, err
+	}
+
+	switch {
+	case action.Matches("create", "clusterobjectsyncs"):
+		obj := action.(core.UpdateAction).GetObject()
+		cos := obj.(*v1alpha1.ClusterObjectSync)
+
+		_, found := r.clusterObjectSyncs[cos.Name]
+		if found {
+			return true, nil, fmt.Errorf("cannot create clusterObjectSync %s: already exists", cos.Name)
+		}
+
+		r.clusterObjectSyncs[cos.Name] = cos
+		klog.V(4).Infof("created clusterObjectSync %s", cos.Name)
+		return true, cos, nil
+
+	case action.Matches("update", "clusterobjectsyncs"):
+		obj := action.(core.UpdateAction).GetObject()
+		cos := obj.(*v1alpha1.ClusterObjectSync)
+
+		storedCOS, found := r.clusterObjectSyncs[cos.Name]
+		if found {
+			storedVer, _ := strconv.Atoi(storedCOS.ResourceVersion)
+			requestedVer, _ := strconv.Atoi(cos.ResourceVersion)
+			if storedVer != requestedVer {
+				return true, obj, ErrVersionConflict
+			}
+			if reflect.DeepEqual(storedCOS, cos) {
+				return true, cos, nil
+			}
+			cos = cos.DeepCopy()
+			cos.ResourceVersion = strconv.Itoa(storedVer + 1)
+		} else {
+			return true, nil, fmt.Errorf("cannot update clusterObjectSync %s: not found", cos.Name)
+		}
+
+		r.clusterObjectSyncs[cos.Name] = cos
+		klog.V(4).Infof("saved updated clusterObjectSync %s", cos.Name)
+		return true, cos, nil
+
+	case action.Matches("get", "clusterobjectsyncs"):
+		name := action.(core.GetAction).GetName()
+		cos, found := r.clusterObjectSyncs[name]
+		if found {
+			return true, cos.DeepCopy(), nil
+		}
+		return true, nil, apierrors.NewNotFound(action.GetResource().GroupResource(), name)
+
+	case action.Matches("delete", "clusterobjectsyncs"):
+		name := action.(core.DeleteAction).GetName()
+		_, found := r.clusterObjectSyncs[name]
+		if found {
+			delete(r.clusterObjectSyncs, name)
+			return true, nil, nil
+		}
+		return true, nil, fmt.Errorf("cannot delete clusterObjectSync %s: not found", name)
+	}
+
+	return false, nil, nil
+}
+
+func (r *ClusterObjectSyncReactor) injectReactError(action core.Action) error {
+	if len(r.errors) == 0 {
+		return nil
+	}
+	for i, expected := range r.errors {
+		if action.Matches(expected.Verb, expected.Resource) {
+			r.errors = append(r.errors[:i], r.errors[i+1:]...)
+			return expected.Error
+		}
+	}
+	return nil
+}
+
+// AddClusterObjectSyncs adds clusterObjectSyncs into the reactor.
+func (r *ClusterObjectSyncReactor) AddClusterObjectSyncs(syncs []*v1alpha1.ClusterObjectSync) {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	for _, s := range syncs {
+		r.clusterObjectSyncs[s.Name] = s
+	}
+}
+
+// CheckClusterObjectSyncs validates expected vs actual clusterObjectSyncs.
+func (r *ClusterObjectSyncReactor) CheckClusterObjectSyncs(expected []*v1alpha1.ClusterObjectSync) error {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
+	expectedMap := make(map[string]*v1alpha1.ClusterObjectSync)
+	gotMap := make(map[string]*v1alpha1.ClusterObjectSync)
+	for _, c := range expected {
+		c = c.DeepCopy()
+		c.ResourceVersion = ""
+		expectedMap[c.Name] = c
+	}
+	for _, c := range r.clusterObjectSyncs {
+		c = c.DeepCopy()
+		c.ResourceVersion = ""
+		gotMap[c.Name] = c
+	}
+	if !reflect.DeepEqual(expectedMap, gotMap) {
+		return fmt.Errorf("ClusterObjectSync check failed [A-expected, B-got]: %s", diff.ObjectDiff(expectedMap, gotMap))
+	}
+	return nil
+}
+
+// NewClusterObjectSyncReactor creates a ClusterObjectSync reactor.
+func NewClusterObjectSyncReactor(client *fake.Clientset, errors []ReactorError) *ClusterObjectSyncReactor {
+	reactor := &ClusterObjectSyncReactor{
+		clusterObjectSyncs: make(map[string]*v1alpha1.ClusterObjectSync),
+		errors:             errors,
+	}
+	client.AddReactor("create", "clusterobjectsyncs", reactor.React)
+	client.AddReactor("update", "clusterobjectsyncs", reactor.React)
+	client.AddReactor("get", "clusterobjectsyncs", reactor.React)
+	client.AddReactor("delete", "clusterobjectsyncs", reactor.React)
+	return reactor
+}
