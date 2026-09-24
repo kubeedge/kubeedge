@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -32,6 +33,24 @@ import (
 var (
 	DB *sql.DB
 )
+
+// identifierRegexp defines allowed characters in SQL identifiers to prevent
+// SQL injection when table names are derived from user-controlled data such
+// as device names, namespaces, and property names.
+var identifierRegexp = regexp.MustCompile(`^[a-zA-Z0-9_\-/.]+$`)
+
+// sanitizeIdentifier validates that a SQL identifier (table name, column name)
+// contains only safe characters. This prevents SQL injection when identifiers
+// are constructed from user-controlled input.
+func sanitizeIdentifier(name string) error {
+	if name == "" {
+		return fmt.Errorf("identifier must not be empty")
+	}
+	if !identifierRegexp.MatchString(name) {
+		return fmt.Errorf("identifier %q contains invalid characters, only alphanumeric characters, underscores, hyphens, dots, and slashes are allowed", name)
+	}
+	return nil
+}
 
 type DataBaseConfig struct {
 	MySQLClientConfig *MySQLClientConfig `json:"mysqlClientConfig"`
@@ -78,17 +97,20 @@ func (d *DataBaseConfig) CloseSession() {
 
 func (d *DataBaseConfig) AddData(data *common.DataModel) error {
 	tableName := data.Namespace + "/" + data.DeviceName + "/" + data.PropertyName
+	if err := sanitizeIdentifier(tableName); err != nil {
+		return fmt.Errorf("invalid table name: %v", err)
+	}
 	datatime := time.Unix(data.TimeStamp/1e3, 0).Format("2006-01-02 15:04:05")
 
 	createTable := fmt.Sprintf("CREATE TABLE IF NOT EXISTS `%s` (id INT AUTO_INCREMENT PRIMARY KEY, ts  DATETIME NOT NULL,field TEXT)", tableName)
 	_, err := DB.Exec(createTable)
 	if err != nil {
-		return fmt.Errorf("create table into mysql failed with err:%v", err)
+		return fmt.Errorf("create table in mysql failed with err:%v", err)
 	}
 
 	stmt, err := DB.Prepare(fmt.Sprintf("INSERT INTO `%s` (ts,field) VALUES (?,?)", tableName))
 	if err != nil {
-		return fmt.Errorf("prepare parament failed with err:%v", err)
+		return fmt.Errorf("prepare statement failed with err:%v", err)
 	}
 	defer func(stmt *sql.Stmt) {
 		err := stmt.Close()
@@ -98,7 +120,7 @@ func (d *DataBaseConfig) AddData(data *common.DataModel) error {
 	}(stmt)
 	_, err = stmt.Exec(datatime, data.Value)
 	if err != nil {
-		return fmt.Errorf("insert data into msyql failed with err:%v", err)
+		return fmt.Errorf("insert data into mysql failed with err:%v", err)
 	}
 
 	return nil
