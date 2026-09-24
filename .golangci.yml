@@ -1,108 +1,84 @@
-# This file contains all available configuration options
-# with their default values.
-
-# options for analysis running
+version: "2"
 run:
-  # default concurrency is an available CPU number
   concurrency: 4
-
-  # timeout for analysis, e.g. 30s, 5m, default is 1m
   timeout: 10m
-
-  # exit code when at least one issue was found, default is 1
   issues-exit-code: 1
-
-issues:
-  # Which dirs to exclude: issues from them won't be reported.
-  # Can use regexp here: `generated.*`, regexp is applied on full path,
-  # including the path prefix if one is set.
-  # Default dirs are skipped independently of this option's value (see exclude-dirs-use-default).
-  # "/" will be replaced by current OS file path separator to properly work on Windows.
-  # Default: []
-  exclude-dirs:
-    - vendor
-    - fake
-    - externalversions
-  exclude-dirs-use-default: true
-  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
-  max-same-issues: 0
-  # make issues output unique by line, default is true
-  uniq-by-line: true
-
-# output configuration options
 output:
-  # The formats used to render issues.
-  # Formats:
-  # - `colored-line-number`
-  # - `line-number`
-  # - `json`
-  # - `colored-tab`
-  # - `tab`
-  # - `html`
-  # - `checkstyle`
-  # - `code-climate`
-  # - `junit-xml`
-  # - `github-actions`
-  # - `teamcity`
-  # - `sarif`
-  # Output path can be either `stdout`, `stderr` or path to the file to write to.
-  #
-  # For the CLI flag (`--out-format`), multiple formats can be specified by separating them by comma.
-  # The output can be specified for each of them by separating format name and path by colon symbol.
-  # Example: "--out-format=checkstyle:report.xml,json:stdout,colored-line-number"
-  # The CLI flag (`--out-format`) override the configuration file.
-  #
-  # Default:
-  #   formats:
-  #     - format: colored-line-number
-  #       path: stdout
   formats:
-    - format: colored-line-number
+    text:
       path: stdout
-
-  # print lines of code with issue, default is true
-  print-issued-lines: true
-
-  # print linter name in the end of issue text, default is true
-  print-linter-name: true
-
-linters-settings:
-  goimports:
-    local-prefixes: github.com/kubeedge
-
-  misspell:
-    ignore-words:
-      - mosquitto
-      - creater  # creater
-      - resouce  # resource
-  revive:
-    rules:
-      - name: dot-imports
-        severity: warning
-        disabled: false
-        exclude: []
-        arguments:
-          - allowedPackages: ["github.com/onsi/ginkgo/v2","github.com/onsi/gomega"]
-      - name: unused-parameter
-        severity: warning
-        disabled: true
-        arguments:
-          - allowRegex: "^_"
-      - name: unused-receiver
-        severity: warning
-        disabled: true
-        arguments:
-          - allowRegex: "^_"
-
+      print-linter-name: true
+      print-issued-lines: true
 linters:
-  disable-all: true
+  default: none
   enable:
     - errcheck
     - goconst
-    - gofmt
-    - goimports
-    - gosimple
     - govet
     - misspell
     - revive
+    - staticcheck
     - whitespace
+  settings:
+    staticcheck:
+      # gosimple was merged into staticcheck in v2; keep its simplification checks.
+      checks:
+        - S*
+    misspell:
+      ignore-rules:
+        - mosquitto
+        - creater
+        - resouce
+    revive:
+      rules:
+        - name: dot-imports
+          arguments:
+            - allowedPackages:
+                - github.com/onsi/ginkgo/v2
+                - github.com/onsi/gomega
+          severity: warning
+          disabled: false
+        - name: unused-parameter
+          arguments:
+            - allowRegex: ^_
+          severity: warning
+          disabled: true
+        - name: unused-receiver
+          arguments:
+            - allowRegex: ^_
+          severity: warning
+          disabled: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - vendor
+      - fake
+      - externalversions
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-same-issues: 0
+  uniq-by-line: true
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/kubeedge
+  exclusions:
+    generated: lax
+    paths:
+      - vendor
+      - fake
+      - externalversions
+      - third_party$
+      - builtin$
+      - examples$

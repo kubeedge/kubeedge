@@ -49,20 +49,33 @@ function check_kind {
 
 # check if golangci-lint installed
 function check_golangci-lint {
+  GOPATH="${GOPATH:-$(go env GOPATH)}"
   echo "checking golangci-lint"
+  export PATH=$PATH:$GOPATH/bin
+  expectedVersion="2.4.0"
   command -v golangci-lint >/dev/null 2>&1
   if [[ $? -ne 0 ]]; then
-    echo "installing golangci-lint ."
-    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.39.0
-    if [[ $? -ne 0 ]]; then
-      echo "golangci-lint installed failed, exiting."
-      exit 1
-    fi
-
-    export PATH=$PATH:$GOPATH/bin
+    install_golangci-lint
   else
-    echo -n "found golangci-lint, version: " && golangci-lint version
+    version=$(golangci-lint version)
+    if [[ $version =~ $expectedVersion ]]; then
+      echo -n "found golangci-lint, version: " && golangci-lint version
+    else
+      echo "golangci-lint version not matched, now version is $version, begin to install new version $expectedVersion"
+      install_golangci-lint
+    fi
   fi
+}
+
+function install_golangci-lint {
+  echo "installing golangci-lint ."
+  curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ${GOPATH}/bin v2.4.0
+  if [[ $? -ne 0 ]]; then
+    echo "golangci-lint installed failed, exiting."
+    exit 1
+  fi
+
+  export PATH=$PATH:$GOPATH/bin
 }
 
 verify_go_version(){
@@ -75,10 +88,10 @@ See http://golang.org/doc/install for installation instructions."
   local go_version
   IFS=" " read -ra go_version <<< "$(go version)"
   local minimum_go_version
-  minimum_go_version=go1.12.1
+  minimum_go_version=go1.25.14
   if [[ "${minimum_go_version}" != $(echo -e "${minimum_go_version}\n${go_version[2]}" | sort -s -t. -k 1,1 -k 2,2n -k 3,3n | head -n1) && "${go_version[2]}" != "devel" ]]; then
     echo "Detected go version: ${go_version[*]}.
-Kubernetes requires ${minimum_go_version} or greater.
+KubeEdge requires ${minimum_go_version} or greater.
 Please install ${minimum_go_version} or later."
     exit 1
   fi
@@ -91,4 +104,3 @@ verify_docker_installed(){
     exit 1
   }
 }
-

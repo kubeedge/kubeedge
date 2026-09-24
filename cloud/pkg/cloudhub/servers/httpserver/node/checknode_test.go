@@ -93,7 +93,7 @@ func TestCheckNode(t *testing.T) {
 			container.ServeHTTP(httpWriter, httpReq)
 
 			assert.Equal(t, tt.expectedStatus, httpWriter.Code)
-			assert.Contains(t, httpWriter.Body.String(), tt.expectedBody)
+			assert.Equal(t, tt.expectedBody, httpWriter.Body.String())
 		})
 	}
 }

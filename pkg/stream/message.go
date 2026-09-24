@@ -43,6 +43,8 @@ func (m MessageType) String() string {
 		return "DATA"
 	case MessageTypeRemoveConnect:
 		return "REMOVE_CONNECT"
+	case MessageTypeCloseConnect:
+		return "CLOSE_CONNECT"
 	}
 	return "UNKNOWN"
 }

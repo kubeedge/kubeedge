@@ -22,9 +22,9 @@ jobs:
       GOPATH: /home/runner/work/${{ github.repository }}
     steps:
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: 1.23.x
+          go-version: '1.25.14'
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -48,9 +48,9 @@ jobs:
     steps:
       - name: Pull kubeedge/build-tools image
         run: |
-          docker pull kubeedge/build-tools:1.23.12-ke1
+          docker pull kubeedge/build-tools:1.25.14-ke1
           mkdir -p /home/runner/build-tools/
-          docker save kubeedge/build-tools:1.23.12-ke1 > /home/runner/build-tools/build-tools.tar
+          docker save kubeedge/build-tools:1.25.14-ke1 > /home/runner/build-tools/build-tools.tar
 
       - name: Temporarily save kubeedge/build-tools image
         uses: actions/upload-artifact@v4
@@ -114,9 +114,9 @@ jobs:
       GO111MODULE: on
     steps:
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: 1.23.x
+          go-version: '1.25.14'
 
       - uses: actions/cache@v4
         with:
@@ -178,9 +178,9 @@ jobs:
       GO111MODULE: on
     steps:
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: 1.23.x
+          go-version: '1.25.14'
 
       - uses: actions/cache@v4
         with:

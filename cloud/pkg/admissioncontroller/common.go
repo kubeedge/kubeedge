@@ -3,6 +3,7 @@ package admissioncontroller
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 
@@ -62,6 +63,9 @@ func registerMutatingWebhook(client admissionregistrationv1client.MutatingWebhoo
 	return nil
 }
 
+// errNilAdmissionRequest is returned when a decoded AdmissionReview carries no request.
+var errNilAdmissionRequest = errors.New("the request field of the AdmissionReview is nil")
+
 // hookFunc is the type we use for all of our validators and mutators
 type hookFunc func(admissionv1.AdmissionReview) *admissionv1.AdmissionResponse
 
@@ -92,6 +96,11 @@ func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 	if _, _, err := deserializer.Decode(body, nil, &requestedAdmissionReview); err != nil {
 		klog.Errorf("decode failed with error: %v", err)
 		responseAdmissionReview.Response = toAdmissionResponse(err)
+	} else if requestedAdmissionReview.Request == nil {
+		// Every hook dereferences the request, so reject the review here
+		// instead of letting the hook panic on a nil pointer.
+		klog.Errorf("invalid admission review: %v", errNilAdmissionRequest)
+		responseAdmissionReview.Response = toAdmissionResponse(errNilAdmissionRequest)
 	} else {
 		responseAdmissionReview.Response = hook(requestedAdmissionReview)
 		// Return the same UID

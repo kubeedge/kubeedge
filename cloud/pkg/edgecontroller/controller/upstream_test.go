@@ -33,14 +33,20 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
+	k8stesting "k8s.io/client-go/testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	messagelayer "github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
+	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
+	edgectypes "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/types"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 )
 
@@ -858,6 +864,131 @@ func TestUpdateNodeStatus(t *testing.T) {
 	time.Sleep(1000 * time.Millisecond)
 }
 
+// TestUpdateNodeStatusWithGPUAnnotation is a happy-path regression test that verifies
+// the NvidiaGPUStatusAnnotationKey annotation is correctly written to the Node when
+// updateNodeStatus processes a NodeStatusRequest carrying nvidia.com/gpu ExtendResources.
+// It does not exercise the marshal-error branch (json.Marshal on []types.NvidiaGPUStatus
+// cannot realistically fail with the current schema).
+func TestUpdateNodeStatusWithGPUAnnotation(t *testing.T) {
+	setupTest(t)
+
+	nodeName := "test-gpu-node"
+	nodeID := "node-gpu-id"
+
+	node := &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: nodeName,
+		},
+	}
+
+	_, err := UC.kubeClient.CoreV1().Nodes().Create(context.Background(), node, metav1.CreateOptions{})
+	if err != nil {
+		t.Fatalf("Failed to create test node: %v", err)
+	}
+
+	nodeStatusReq := &edgeapi.NodeStatusRequest{
+		Status: corev1.NodeStatus{},
+		ExtendResources: map[corev1.ResourceName][]edgeapi.ExtendResource{
+			"nvidia.com/gpu": {
+				{Name: "GPU-aaa111"},
+				{Name: "GPU-bbb222"},
+			},
+		},
+	}
+
+	nodeStatusData, err := json.Marshal(nodeStatusReq)
+	if err != nil {
+		t.Fatalf("Failed to marshal node status request: %v", err)
+	}
+
+	resource := fmt.Sprintf("node/%s/%s/%s/%s", nodeID, "default", model.ResourceTypeNodeStatus, nodeName)
+
+	msg := model.Message{
+		Header: model.MessageHeader{ID: "test-update-gpu-node-status"},
+		Router: model.MessageRoute{
+			Resource:  resource,
+			Operation: model.UpdateOperation,
+		},
+		Content: string(nodeStatusData),
+	}
+
+	UC.nodeStatusChan <- msg
+
+	// Poll until the annotation appears rather than using a fixed sleep,
+	// so the test is faster when the update is quick and reliable when it is slow.
+	var annotation string
+	require.Eventually(t, func() bool {
+		updatedNode, err := UC.kubeClient.CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
+		if err != nil {
+			return false
+		}
+		val, ok := updatedNode.Annotations[constants.NvidiaGPUStatusAnnotationKey]
+		if !ok || val == "" {
+			return false
+		}
+		annotation = val
+		return true
+	}, 3*time.Second, 50*time.Millisecond,
+		"annotation %q was not set on Node within timeout", constants.NvidiaGPUStatusAnnotationKey)
+
+	var gpuStatuses []struct {
+		ID      string `json:"id"`
+		Healthy bool   `json:"healthy"`
+	}
+	if err := json.Unmarshal([]byte(annotation), &gpuStatuses); err != nil {
+		t.Fatalf("annotation %q is not valid JSON: %v", constants.NvidiaGPUStatusAnnotationKey, err)
+	}
+	if len(gpuStatuses) != 2 {
+		t.Errorf("Expected 2 GPU entries in annotation, got %d", len(gpuStatuses))
+	}
+	for _, gs := range gpuStatuses {
+		if !gs.Healthy {
+			t.Errorf("Expected GPU %q to be marked Healthy=true, got false", gs.ID)
+		}
+	}
+}
+
+// TestSetGPUStatusAnnotation unit-tests setGPUStatusAnnotation directly, covering
+// both the successful-marshal branch and the marshal-failure branch. The latter
+// is unreachable through updateNodeStatus with real input, since
+// []types.NvidiaGPUStatus (string/bool fields only) can never fail to marshal,
+// so the failure is injected via the marshalGPUStatus seam.
+func TestSetGPUStatusAnnotation(t *testing.T) {
+	gpuStatus := []edgectypes.NvidiaGPUStatus{
+		{ID: "GPU-aaa111", Healthy: true},
+	}
+
+	t.Run("marshal succeeds", func(t *testing.T) {
+		node := &corev1.Node{ObjectMeta: metav1.ObjectMeta{Annotations: map[string]string{}}}
+
+		setGPUStatusAnnotation(node, "test-msg-ok", gpuStatus)
+
+		val, ok := node.Annotations[constants.NvidiaGPUStatusAnnotationKey]
+		require.True(t, ok, "expected annotation to be set")
+
+		var got []edgectypes.NvidiaGPUStatus
+		require.NoError(t, json.Unmarshal([]byte(val), &got))
+		require.Equal(t, gpuStatus, got)
+	})
+
+	t.Run("marshal fails", func(t *testing.T) {
+		node := &corev1.Node{ObjectMeta: metav1.ObjectMeta{Annotations: map[string]string{
+			constants.NvidiaGPUStatusAnnotationKey: "pre-existing-value",
+		}}}
+
+		orig := marshalGPUStatus
+		marshalGPUStatus = func(any) ([]byte, error) {
+			return nil, errors.New("injected marshal failure")
+		}
+		defer func() { marshalGPUStatus = orig }()
+
+		setGPUStatusAnnotation(node, "test-msg-fail", gpuStatus)
+
+		require.Equal(t, "pre-existing-value", node.Annotations[constants.NvidiaGPUStatusAnnotationKey],
+			"annotation must be left untouched when marshal fails")
+	})
+}
+
 func TestProcessCSR(t *testing.T) {
 	setupTest(t)
 
@@ -1172,4 +1303,128 @@ func TestUpdatePodStatus(t *testing.T) {
 	if updatedPod.Status.Phase != corev1.PodRunning {
 		t.Errorf("Pod phase mismatch, expected %s, got %s", corev1.PodRunning, updatedPod.Status.Phase)
 	}
+}
+
+func TestUnmarshalPodStatusMessage(t *testing.T) {
+	uc := &UpstreamController{}
+
+	// Case 1: Multi-pod status valid unmarshal
+	multiStatuses := []edgeapi.PodStatusRequest{
+		{Name: "pod1", UID: types.UID("uid-1")},
+		{Name: "pod2", UID: types.UID("uid-2")},
+	}
+	multiData, err := json.Marshal(multiStatuses)
+	if err != nil {
+		t.Fatalf("Failed to marshal multi-pod statuses: %v", err)
+	}
+
+	msgMulti := model.Message{
+		Header: model.MessageHeader{ID: "msg-1"},
+		Router: model.MessageRoute{
+			Resource: "node/node1/default/podstatus",
+		},
+		Content: string(multiData),
+	}
+
+	ns, res := uc.unmarshalPodStatusMessage(msgMulti)
+	if ns != "default" {
+		t.Errorf("expected namespace 'default', got '%s'", ns)
+	}
+	if len(res) != 2 {
+		t.Errorf("expected 2 pod statuses, got %d", len(res))
+	}
+
+	// Case 2: Multi-pod status invalid JSON (verify podStatuses is set to nil)
+	msgMultiInvalid := model.Message{
+		Header: model.MessageHeader{ID: "msg-2"},
+		Router: model.MessageRoute{
+			Resource: "node/node1/default/podstatus",
+		},
+		Content: `{invalid json array}`,
+	}
+
+	_, resInvalid := uc.unmarshalPodStatusMessage(msgMultiInvalid)
+	if resInvalid != nil {
+		t.Errorf("expected nil podStatuses on unmarshal error, got %v", resInvalid)
+	}
+
+	// Case 3: Single-pod status valid unmarshal
+	singleStatus := edgeapi.PodStatusRequest{Name: "pod1", UID: types.UID("uid-1")}
+	singleData, err := json.Marshal(singleStatus)
+	if err != nil {
+		t.Fatalf("Failed to marshal single pod status: %v", err)
+	}
+
+	msgSingle := model.Message{
+		Header: model.MessageHeader{ID: "msg-3"},
+		Router: model.MessageRoute{
+			Resource: "node/node1/default/podstatus/pod1",
+		},
+		Content: string(singleData),
+	}
+
+	nsSingle, resSingle := uc.unmarshalPodStatusMessage(msgSingle)
+	if nsSingle != "default" {
+		t.Errorf("expected namespace 'default', got '%s'", nsSingle)
+	}
+	if len(resSingle) != 1 {
+		t.Errorf("expected 1 pod status, got %d", len(resSingle))
+	}
+
+	// Case 4: Single-pod status invalid JSON
+	msgSingleInvalid := model.Message{
+		Header: model.MessageHeader{ID: "msg-4"},
+		Router: model.MessageRoute{
+			Resource: "node/node1/default/podstatus/pod1",
+		},
+		Content: `invalid json object`,
+	}
+
+	_, resSingleInvalid := uc.unmarshalPodStatusMessage(msgSingleInvalid)
+	if resSingleInvalid != nil {
+		t.Errorf("expected nil podStatuses on single pod unmarshal error, got %v", resSingleInvalid)
+	}
+}
+
+func TestCreateNodeReservedLabelPatch(t *testing.T) {
+	newNode := func() *corev1.Node {
+		return &corev1.Node{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "edge-node",
+				Labels: map[string]string{
+					"kubernetes.io/os": "linux",
+					"custom-label":     "value",
+				},
+			},
+		}
+	}
+
+	t.Run("patch failure is reported to the caller", func(t *testing.T) {
+		kubeClient := fake.NewSimpleClientset()
+		kubeClient.PrependReactor("patch", "nodes",
+			func(k8stesting.Action) (bool, runtime.Object, error) {
+				return true, nil, errors.New("patch nodes failed")
+			})
+		uc := &UpstreamController{kubeClient: kubeClient}
+
+		node, err := uc.createNode("edge-node", "edge-node", newNode())
+
+		require.Error(t, err, "a failed reserved label patch must not be reported as a successful registration")
+		require.Contains(t, err.Error(), "patch nodes failed")
+		// The node was created, so it is still returned for the caller to report on.
+		require.NotNil(t, node)
+		require.Equal(t, "edge-node", node.Name)
+	})
+
+	t.Run("reserved labels are applied on success", func(t *testing.T) {
+		kubeClient := fake.NewSimpleClientset()
+		uc := &UpstreamController{kubeClient: kubeClient}
+
+		node, err := uc.createNode("edge-node", "edge-node", newNode())
+
+		require.NoError(t, err)
+		require.NotNil(t, node)
+		require.Equal(t, "linux", node.Labels["kubernetes.io/os"])
+		require.Equal(t, "value", node.Labels["custom-label"])
+	})
 }
