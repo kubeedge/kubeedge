@@ -26,6 +26,7 @@ import (
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	controllerruntime "sigs.k8s.io/controller-runtime"
@@ -139,6 +140,10 @@ func TestNodeUpgradeJobInitNodesStatus(t *testing.T) {
 		handler.InitNodesStatus(ctx, job)
 		assert.Equal(t, operationsv1alpha2.JobPhaseFailure, job.Status.Phase)
 		assert.Equal(t, "failed to verify node define", job.Status.Reason)
+		cond := meta.FindStatusCondition(job.Status.Conditions, operationsv1alpha2.NodeUpgradeJobConditionFailed)
+		require.NotNil(t, cond)
+		assert.Equal(t, metav1.ConditionTrue, cond.Status)
+		assert.Equal(t, nodeUpgradeJobReasonNodeVerifyFailed, cond.Reason)
 	})
 
 	t.Run("init nodes status successful", func(t *testing.T) {
@@ -162,6 +167,9 @@ func TestNodeUpgradeJobInitNodesStatus(t *testing.T) {
 		handler.InitNodesStatus(ctx, job)
 		assert.Equal(t, operationsv1alpha2.JobPhaseInit, job.Status.Phase)
 		assert.Len(t, job.Status.NodeStatus, 2)
+		cond := meta.FindStatusCondition(job.Status.Conditions, operationsv1alpha2.NodeUpgradeJobConditionInitialized)
+		require.NotNil(t, cond)
+		assert.Equal(t, metav1.ConditionTrue, cond.Status)
 
 		assert.Equal(t, "node1", job.Status.NodeStatus[0].NodeName)
 		assert.Equal(t, operationsv1alpha2.NodeTaskPhasePending, job.Status.NodeStatus[0].Phase)
@@ -256,6 +264,7 @@ func TestNodeUpgradeJobCalculateStatus(t *testing.T) {
 		obj         *operationsv1alpha2.NodeUpgradeJob
 		wantChanged bool
 		wantPhase   operationsv1alpha2.JobPhase
+		wantCond    string
 	}{
 		{
 			name: "some node tasks are in progress",
@@ -278,8 +287,9 @@ func TestNodeUpgradeJobCalculateStatus(t *testing.T) {
 					},
 				},
 			},
-			wantChanged: false,
+			wantChanged: true,
 			wantPhase:   operationsv1alpha2.JobPhaseInProgress,
+			wantCond:    operationsv1alpha2.NodeUpgradeJobConditionInProgress,
 		},
 		{
 			name: "most node task are failure",
@@ -307,6 +317,7 @@ func TestNodeUpgradeJobCalculateStatus(t *testing.T) {
 			},
 			wantChanged: true,
 			wantPhase:   operationsv1alpha2.JobPhaseFailure,
+			wantCond:    operationsv1alpha2.NodeUpgradeJobConditionFailed,
 		},
 		{
 			name: "most node task are successful",
@@ -334,6 +345,7 @@ func TestNodeUpgradeJobCalculateStatus(t *testing.T) {
 			},
 			wantChanged: true,
 			wantPhase:   operationsv1alpha2.JobPhaseCompleted,
+			wantCond:    operationsv1alpha2.NodeUpgradeJobConditionPartiallySucceeded,
 		},
 	}
 
@@ -344,6 +356,9 @@ func TestNodeUpgradeJobCalculateStatus(t *testing.T) {
 			changed := handler.CalculateStatus(ctx, c.obj)
 			assert.Equal(t, c.wantChanged, changed)
 			assert.Equal(t, c.wantPhase, c.obj.Status.Phase)
+			cond := meta.FindStatusCondition(c.obj.Status.Conditions, c.wantCond)
+			require.NotNil(t, cond)
+			assert.Equal(t, metav1.ConditionTrue, cond.Status)
 		})
 	}
 }
@@ -508,6 +523,9 @@ func TestNodeUpgradeJobCheckTimeout(t *testing.T) {
 		assert.True(t, updateJobStatusCalled)
 		assert.Equal(t, operationsv1alpha2.NodeTaskPhaseUnknown, obj.Status.NodeStatus[0].Phase)
 		assert.Equal(t, NodeTaskReasonTimeout, obj.Status.NodeStatus[0].Reason)
+		cond := meta.FindStatusCondition(obj.Status.Conditions, operationsv1alpha2.NodeUpgradeJobConditionTimedOut)
+		require.NotNil(t, cond)
+		assert.Equal(t, metav1.ConditionTrue, cond.Status)
 	})
 
 	t.Run("no any actions, the node task has timed out due to creation time.", func(t *testing.T) {
@@ -557,6 +575,9 @@ func TestNodeUpgradeJobCheckTimeout(t *testing.T) {
 		assert.True(t, updateJobStatusCalled)
 		assert.Equal(t, operationsv1alpha2.NodeTaskPhaseUnknown, obj.Status.NodeStatus[0].Phase)
 		assert.Equal(t, NodeTaskReasonTimeout, obj.Status.NodeStatus[0].Reason)
+		cond := meta.FindStatusCondition(obj.Status.Conditions, operationsv1alpha2.NodeUpgradeJobConditionTimedOut)
+		require.NotNil(t, cond)
+		assert.Equal(t, metav1.ConditionTrue, cond.Status)
 	})
 }
 
