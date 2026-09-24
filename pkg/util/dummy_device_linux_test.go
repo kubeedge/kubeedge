@@ -64,7 +64,7 @@ func TestEnsureDummyDevice(t *testing.T) {
 	t.Run("Device doesn't exist and creation fails", func(t *testing.T) {
 		patches := gomonkey.ApplyFunc((*netlink.Handle).LinkByName,
 			func(_ *netlink.Handle, name string) (netlink.Link, error) {
-				return nil, errors.New("not found")
+				return nil, netlink.LinkNotFoundError{}
 			})
 		patches.ApplyFunc((*netlink.Handle).LinkAdd,
 			func(_ *netlink.Handle, link netlink.Link) error {
@@ -75,6 +75,22 @@ func TestEnsureDummyDevice(t *testing.T) {
 		exists, err := manager.EnsureDummyDevice("dummy0")
 		assert.False(t, exists, "Expected device not to exist")
 		assert.Error(t, err, "Expected error on creation failure")
+	})
+
+	t.Run("Device doesn't exist and creation succeeds", func(t *testing.T) {
+		patches := gomonkey.ApplyFunc((*netlink.Handle).LinkByName,
+			func(_ *netlink.Handle, name string) (netlink.Link, error) {
+				return nil, netlink.LinkNotFoundError{}
+			})
+		patches.ApplyFunc((*netlink.Handle).LinkAdd,
+			func(_ *netlink.Handle, link netlink.Link) error {
+				return nil
+			})
+		defer patches.Reset()
+
+		exists, err := manager.EnsureDummyDevice("dummy0")
+		assert.False(t, exists, "Expected device to not initially exist")
+		assert.NoError(t, err, "Expected no error on successful creation")
 	})
 }
 
