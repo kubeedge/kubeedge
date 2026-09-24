@@ -32,6 +32,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/fifo"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/keeper"
+	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/lane"
 )
 
 var upgrader = websocket.Upgrader{
@@ -457,5 +458,44 @@ func TestSetWriteDeadlinePropagatesToWSConn(t *testing.T) {
 	}
 	if err := conn.wsConn.WriteMessage(websocket.BinaryMessage, []byte("x")); err == nil {
 		t.Fatal("expected immediate write error after past deadline; SetWriteDeadline did not propagate")
+	}
+}
+
+// TestCloseWhileDeliveringDoesNotPanic models the edge's UnInit on a live
+// connection (certificate rotation, module stop) while CloudHub keeps sending:
+// handleMessage delivers into the fifo on its own goroutine while Close runs
+// on the reconnect loop. Before MessageFifo.Close stopped closing the message
+// channel, this crashed the process with "send on closed channel".
+func TestCloseWhileDeliveringDoesNotPanic(t *testing.T) {
+	for i := 0; i < 300; i++ {
+		serverConn, clientConn := wsTestPair(t)
+		conn := NewWSConn(&ConnectionOptions{
+			ConnType:  api.ProtocolTypeWS,
+			ConnUse:   api.UseTypeMessage,
+			Base:      clientConn,
+			State:     &ConnectionState{State: api.StatConnected},
+			AutoRoute: false, // edge setting: messages are queued for ReadMessage
+		})
+		go conn.handleMessage()
+
+		stop := make(chan struct{})
+		go func() {
+			l := lane.NewLane(api.ProtocolTypeWS, serverConn)
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+				}
+				msg := model.NewMessage("").BuildRouter("cloud", "x", "res", "op").FillBody("payload")
+				if err := l.WriteMessage(msg); err != nil {
+					return
+				}
+			}
+		}()
+		time.Sleep(2 * time.Millisecond)
+		_ = conn.Close()
+		close(stop)
+		_ = serverConn.Close()
 	}
 }

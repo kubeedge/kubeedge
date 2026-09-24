@@ -263,3 +263,43 @@ func TestReceive(t *testing.T) {
 		})
 	}
 }
+
+// TestUnInitReleasesBlockedReceive covers the reconnect path end to end over a
+// real QUIC session. EdgeHub's routeToEdge sits in Receive, and UnInit is the
+// only teardown the edge reaches: the reconnect loop calls it on the dead
+// client before connecting again. Receive has to return so that goroutine can
+// exit, otherwise every reconnect leaves one behind, blocked on the previous
+// connection.
+func TestUnInitReleasesBlockedReceive(t *testing.T) {
+	newTestServer(t)
+
+	qc := newTestQuicClient("uninit", "/tmp/edge.crt", "/tmp/edge.key", "/tmp/edge.crt")
+	if err := qc.Init(); err != nil {
+		t.Fatalf("failed to init, err: %v", err)
+	}
+
+	received := make(chan error, 1)
+	go func() {
+		_, err := qc.Receive()
+		received <- err
+	}()
+
+	// Confirm the reader is parked, so the test cannot pass with a teardown
+	// that only makes later reads fail.
+	select {
+	case err := <-received:
+		t.Fatalf("Receive() returned before UnInit, err: %v", err)
+	case <-time.After(200 * time.Millisecond):
+	}
+
+	qc.UnInit()
+
+	select {
+	case err := <-received:
+		if err == nil {
+			t.Error("Receive() returned a nil error after UnInit, want an error")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Receive() is still blocked after UnInit; the reader of the closed connection leaked")
+	}
+}
