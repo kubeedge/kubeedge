@@ -97,9 +97,9 @@ func (h *ImagePrePullJobHandler) UpdateNodeTaskStatus(
 			ExtendInfo:   upmsg.Extend,
 			ActionStatus: &actoinStatus,
 		},
-		Callback: func(err error) {
-			if err != nil {
-				err = fmt.Errorf("failed to update image prepull job status, err: %v", err)
+		Callback: func(callbackErr error) {
+			if callbackErr != nil {
+				err = fmt.Errorf("failed to update image prepull job status, err: %w", callbackErr)
 			}
 			wg.Done()
 		},
