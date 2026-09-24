@@ -31,6 +31,8 @@ type MetaService struct {
 	db *gorm.DB
 }
 
+const metaKeyPrefixCondition = "key = ? OR (key >= ? AND key < ?)"
+
 func NewMetaService() *MetaService {
 	return &MetaService{db: dao.GetDB()}
 }
@@ -104,6 +106,22 @@ func (s *MetaService) QueryMeta(key string, condition string) (*[]string, error)
 		result = append(result, v.Value)
 	}
 	return &result, nil
+}
+
+// QueryAllMetaByKeyPrefix returns a legacy row stored exactly under key and
+// every generation stored under key + "/". The half-open range uses the
+// primary-key index and avoids LIKE wildcard and case-folding semantics.
+func (s *MetaService) QueryAllMetaByKeyPrefix(key string) (*[]models.Meta, error) {
+	generationStart := key + "/"
+	// '/' sorts immediately before '0' under SQLite's default BINARY collation.
+	generationEnd := key + "0"
+
+	var metas []models.Meta
+	err := s.db.Where(metaKeyPrefixCondition, key, generationStart, generationEnd).Find(&metas).Error
+	if err != nil {
+		return nil, err
+	}
+	return &metas, nil
 }
 
 // QueryAllMeta returns all metas for given key and condition
