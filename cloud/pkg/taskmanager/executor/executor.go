@@ -126,7 +126,7 @@ func (executor *NodeTaskExecutor) Execute(ctx context.Context, connectedNodes []
 	tasks := executor.job.Tasks()
 	for i := range tasks {
 		if executor.interrupted.Load() {
-			return
+			break
 		}
 		task := tasks[i]
 		if !task.CanExecute() {
