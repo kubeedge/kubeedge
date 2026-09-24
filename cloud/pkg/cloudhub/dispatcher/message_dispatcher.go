@@ -24,6 +24,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
@@ -295,10 +296,20 @@ func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *be
 	}
 
 	clusterObjectSyncName := synccontroller.BuildObjectSyncName(nodeID, resourceUID)
+	desiredSpec := objectSyncSpecFromMessage(msg, resourceName)
 	clusterObjectSync, err := md.clusterObjectSyncLister.Get(clusterObjectSyncName)
 
 	switch {
 	case err == nil && clusterObjectSync.Status.ObjectResourceVersion != "":
+		if objectSyncSpecNeedsBackfill(clusterObjectSync.Spec, desiredSpec) {
+			clusterObjectSync, err = md.backfillClusterObjectSyncSpec(clusterObjectSync.Name, desiredSpec)
+			if err != nil {
+				klog.ErrorS(err, "Failed to backfill clusterObjectSync spec",
+					"clusterObjectSyncName", clusterObjectSyncName,
+					"resourceName", resourceName)
+				return false
+			}
+		}
 		if synccontroller.CompareResourceVersion(msg.GetResourceVersion(), clusterObjectSync.Status.ObjectResourceVersion) > 0 {
 			return true
 		}
@@ -310,11 +321,7 @@ func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *be
 			ObjectMeta: metav1.ObjectMeta{
 				Name: clusterObjectSyncName,
 			},
-			Spec: v1alpha1.ObjectSyncSpec{
-				ObjectAPIVersion: util.GetMessageAPIVersion(msg),
-				ObjectKind:       util.GetMessageResourceType(msg),
-				ObjectName:       resourceName,
-			},
+			Spec: desiredSpec,
 		}
 
 		clusterObjectSync, err := md.reliableClient.
@@ -359,10 +366,21 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 	}
 
 	objectSyncName := synccontroller.BuildObjectSyncName(nodeID, resourceUID)
+	desiredSpec := objectSyncSpecFromMessage(msg, resourceName)
 	objectSync, err := md.objectSyncLister.ObjectSyncs(resourceNamespace).Get(objectSyncName)
 
 	switch {
 	case err == nil && objectSync.Status.ObjectResourceVersion != "":
+		if objectSyncSpecNeedsBackfill(objectSync.Spec, desiredSpec) {
+			objectSync, err = md.backfillObjectSyncSpec(resourceNamespace, objectSync.Name, desiredSpec)
+			if err != nil {
+				klog.ErrorS(err, "Failed to backfill objectSync spec",
+					"objectSyncName", objectSyncName,
+					"resourceNamespace", resourceNamespace,
+					"resourceName", resourceName)
+				return false
+			}
+		}
 		if synccontroller.CompareResourceVersion(msg.GetResourceVersion(), objectSync.Status.ObjectResourceVersion) > 0 {
 			return true
 		}
@@ -375,11 +393,7 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 				Name:      objectSyncName,
 				Namespace: resourceNamespace,
 			},
-			Spec: v1alpha1.ObjectSyncSpec{
-				ObjectAPIVersion: util.GetMessageAPIVersion(msg),
-				ObjectKind:       util.GetMessageResourceType(msg),
-				ObjectName:       resourceName,
-			},
+			Spec: desiredSpec,
 		}
 
 		objectSyncStatus, err := md.reliableClient.
@@ -414,6 +428,85 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 	}
 
 	return false
+}
+
+func objectSyncSpecFromMessage(msg *beehivemodel.Message, resourceName string) v1alpha1.ObjectSyncSpec {
+	return v1alpha1.ObjectSyncSpec{
+		ObjectAPIVersion: util.GetMessageAPIVersion(msg),
+		ObjectKind:       util.GetMessageResourceType(msg),
+		ObjectName:       resourceName,
+	}
+}
+
+func objectSyncSpecNeedsBackfill(current, desired v1alpha1.ObjectSyncSpec) bool {
+	return (current.ObjectAPIVersion == "" && desired.ObjectAPIVersion != "") ||
+		(current.ObjectKind == "" && desired.ObjectKind != "") ||
+		(current.ObjectName == "" && desired.ObjectName != "")
+}
+
+func fillMissingObjectSyncSpec(current *v1alpha1.ObjectSyncSpec, desired v1alpha1.ObjectSyncSpec) bool {
+	updated := false
+	if current.ObjectAPIVersion == "" && desired.ObjectAPIVersion != "" {
+		current.ObjectAPIVersion = desired.ObjectAPIVersion
+		updated = true
+	}
+	if current.ObjectKind == "" && desired.ObjectKind != "" {
+		current.ObjectKind = desired.ObjectKind
+		updated = true
+	}
+	if current.ObjectName == "" && desired.ObjectName != "" {
+		current.ObjectName = desired.ObjectName
+		updated = true
+	}
+	return updated
+}
+
+func (md *messageDispatcher) backfillObjectSyncSpec(namespace, name string, desiredSpec v1alpha1.ObjectSyncSpec) (*v1alpha1.ObjectSync, error) {
+	var objectSync *v1alpha1.ObjectSync
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		latest, err := md.reliableClient.
+			ReliablesyncsV1alpha1().
+			ObjectSyncs(namespace).
+			Get(context.Background(), name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		latest = latest.DeepCopy()
+		if !fillMissingObjectSyncSpec(&latest.Spec, desiredSpec) {
+			objectSync = latest
+			return nil
+		}
+		objectSync, err = md.reliableClient.
+			ReliablesyncsV1alpha1().
+			ObjectSyncs(namespace).
+			Update(context.Background(), latest, metav1.UpdateOptions{})
+		return err
+	})
+	return objectSync, err
+}
+
+func (md *messageDispatcher) backfillClusterObjectSyncSpec(name string, desiredSpec v1alpha1.ObjectSyncSpec) (*v1alpha1.ClusterObjectSync, error) {
+	var clusterObjectSync *v1alpha1.ClusterObjectSync
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		latest, err := md.reliableClient.
+			ReliablesyncsV1alpha1().
+			ClusterObjectSyncs().
+			Get(context.Background(), name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		latest = latest.DeepCopy()
+		if !fillMissingObjectSyncSpec(&latest.Spec, desiredSpec) {
+			clusterObjectSync = latest
+			return nil
+		}
+		clusterObjectSync, err = md.reliableClient.
+			ReliablesyncsV1alpha1().
+			ClusterObjectSyncs().
+			Update(context.Background(), latest, metav1.UpdateOptions{})
+		return err
+	})
+	return clusterObjectSync, err
 }
 
 func isDeleteMessage(msg *beehivemodel.Message) bool {
