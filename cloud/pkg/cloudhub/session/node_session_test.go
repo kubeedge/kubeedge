@@ -162,6 +162,140 @@ func TestNodeSessionSendNoAckMessage(t *testing.T) {
 	}
 }
 
+func TestNodeSessionConcurrentMessageProcessing(t *testing.T) {
+	tests := []struct {
+		name               string
+		concurrentWriters  int
+		messagesPerWriter  int
+		expectedTotalCount int
+	}{
+		{
+			name:               "10 concurrent writers with 5 messages each",
+			concurrentWriters:  10,
+			messagesPerWriter:  5,
+			expectedTotalCount: 50,
+		},
+		{
+			name:               "5 concurrent writers with 10 messages each",
+			concurrentWriters:  5,
+			messagesPerWriter:  10,
+			expectedTotalCount: 50,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Initialize the node session
+			client := &fake.Clientset{}
+
+			wg := sync.WaitGroup{}
+			stopCh := make(chan struct{})
+
+			session, mockController, mockConn := openNodeSession(t, &wg, stopCh, tf.NormalSendKeepaliveInterval, client)
+			defer mockController.Finish()
+
+			// Track message acknowledgments
+			var ackMutex sync.Mutex
+			ackCount := 0
+
+			mockConn.EXPECT().WriteMessageAsync(gomock.Any()).DoAndReturn(func(msg *beehivemodel.Message) error {
+				ackMutex.Lock()
+				ackCount++
+				ackMutex.Unlock()
+				session.ReceiveMessageAck(msg.GetID())
+				return nil
+			}).AnyTimes()
+
+			mockConn.EXPECT().Close().AnyTimes()
+
+			// Start concurrent writers
+			for i := 0; i < tt.concurrentWriters; i++ {
+				wg.Add(1)
+				go func(writerID int) {
+					defer wg.Done()
+					for j := 0; j < tt.messagesPerWriter; j++ {
+						message := tf.NewPodMessage(
+							tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), 
+							"update",
+						)
+						enqueueAckMessage(session.nodeMessagePool, message)
+						// Small delay to increase chance of interleaving
+						time.Sleep(time.Millisecond * 10)
+					}
+				}(i)
+			}
+
+			// Wait for all messages to be processed
+			time.Sleep(3 * time.Second)
+
+			close(stopCh)
+			session.Terminating()
+			wg.Wait()
+
+			// Verify all messages were processed
+			if ackCount != tt.expectedTotalCount {
+				t.Errorf("Expected %d message acknowledgments, got %d", tt.expectedTotalCount, ackCount)
+			}
+
+			if session.GetTerminateErr() != NoErr {
+				t.Errorf("Expected no error, got %d", session.GetTerminateErr())
+			}
+		})
+	}
+}
+
+func TestNodeSessionMessageQueueStress(t *testing.T) {
+	// This test verifies that the message queue can handle a large number of messages
+	// without panicking or deadlocking
+	client := &fake.Clientset{}
+
+	wg := sync.WaitGroup{}
+	stopCh := make(chan struct{})
+
+	session, mockController, mockConn := openNodeSession(t, &wg, stopCh, tf.NormalSendKeepaliveInterval, client)
+	defer mockController.Finish()
+
+	// Track message acknowledgments
+	var ackMutex sync.Mutex
+	ackCount := 0
+	const totalMessages = 100
+
+	mockConn.EXPECT().WriteMessageAsync(gomock.Any()).DoAndReturn(func(msg *beehivemodel.Message) error {
+		ackMutex.Lock()
+		ackCount++
+		ackMutex.Unlock()
+		session.ReceiveMessageAck(msg.GetID())
+		return nil
+	}).AnyTimes()
+
+	mockConn.EXPECT().Close().AnyTimes()
+
+	// Rapidly enqueue many messages
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < totalMessages; i++ {
+			message := tf.NewPodMessage(
+				tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), 
+				"update",
+			)
+			enqueueAckMessage(session.nodeMessagePool, message)
+		}
+	}()
+
+	// Allow time for processing
+	time.Sleep(5 * time.Second)
+
+	close(stopCh)
+	session.Terminating()
+	wg.Wait()
+
+	// Verify all messages were processed
+	if ackCount != totalMessages {
+		t.Errorf("Expected %d message acknowledgments, got %d", totalMessages, ackCount)
+	}
+}
+
 // Test the real nodeSession SendAckMessage methods with a fake API server
 // and a fake connection. we call func `enqueueAckMessage` to simulate
 // resource update message that comes from edgeController module.
