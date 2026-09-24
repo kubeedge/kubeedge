@@ -10,3 +10,7 @@ At the edge side, there are six major components.
 - ServiceBus: a HTTP client to interact with HTTP servers (REST), offering HTTP client capabilities to components of cloud to reach HTTP servers running at edge.
 - DeviceTwin: responsible for storing device status and syncing device status to the cloud. It also provides query interfaces for applications.
 - MetaManager: the message processor between edged and edgehub. It is also responsible for storing/retrieving metadata to/from a lightweight database (SQLite).
+
+For details on how EdgeHub, CloudHub, and Stream communicate — including port
+maps, data flows, and troubleshooting — see
+[docs/architecture/cloud-edge-communication.md](../docs/architecture/cloud-edge-communication.md).
