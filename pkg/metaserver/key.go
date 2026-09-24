@@ -129,10 +129,11 @@ func ParseKey(key string) (gvr schema.GroupVersionResource, namespace string, na
 	}
 	slices := strings.Split(sl, "/")
 	length := len(slices)
-	if len(slices) == 0 || slices[0] != "" {
-		// klog.Errorf("[metaserver]failed to parse key: format error, %v",key)
+	if slices[0] != "" {
+		klog.Errorf("[metaserver] failed to parse key: format error, missing leading slash in key=%v", key)
 		return
 	}
+
 	var (
 		groupIndex     = 1
 		versionIndex   = 2
@@ -140,7 +141,21 @@ func ParseKey(key string) (gvr schema.GroupVersionResource, namespace string, na
 		namespaceIndex = 4
 		nameIndex      = 5
 	)
-	IndexCheck(length, &groupIndex, &versionIndex, &resourceIndex, &namespaceIndex, &nameIndex)
+	// group, version, and resource are required segments.
+	// If any of them are out of range, the key is structurally malformed.
+	if !IndexCheck(length, groupIndex, versionIndex, resourceIndex) {
+		klog.Errorf("[metaserver] failed to parse key: missing required segments (group/version/resource), key=%v", key)
+		return
+	}
+
+	// namespace and name are optional — short keys like "/core/v1/pods" are valid.
+	// Fall back to index 0 (always "") when out of range; NullNamespace/NullName handling below covers it.
+	if namespaceIndex >= length {
+		namespaceIndex = 0
+	}
+	if nameIndex >= length {
+		nameIndex = 0
+	}
 
 	group := slices[groupIndex]
 	if group == models.GroupCore {
@@ -166,11 +181,16 @@ func ParseKey(key string) (gvr schema.GroupVersionResource, namespace string, na
 	return gvr, namespace, name
 }
 
-// force set index to 0 if out of range
-func IndexCheck(length int, indexes ...*int) {
+// IndexCheck returns false if any of the provided indexes are out of range
+// for a slice of the given length, indicating a malformed key segment.
+// Unlike the previous behavior, it does NOT clamp indexes to 0,
+// because slices[0] is always "" (the empty string before the leading "/")
+// and silently substituting it produces wrong output without any signal to the caller.
+func IndexCheck(length int, indexes ...int) bool {
 	for _, index := range indexes {
-		if *index >= length {
-			*index = 0
+		if index >= length {
+			return false
 		}
 	}
+	return true
 }
