@@ -302,8 +302,15 @@ install_isulad() {
 
   sudo apt-get install -y jq
   sudo sed -i 's#/usr/bin/isulad#/usr/local/bin/isulad#g' ../src/contrib/init/isulad.service
-  sudo sed -i 's#-/etc/sysconfig/iSulad#/etc/isulad/daemon.json#g' ../src/contrib/init/isulad.service
-  TMP_FILE=/home/runner/tmp.json
+
+  # isulad currently requires runc <= v1.1.13
+  sudo wget -q https://github.com/opencontainers/runc/releases/download/v1.1.13/runc.amd64 -O /usr/bin/runc
+  sudo chmod +x /usr/bin/runc
+  if [ -f /usr/local/bin/runc ]; then
+    sudo cp -f /usr/bin/runc /usr/local/bin/runc
+  fi
+
+  TMP_FILE=/tmp/isulad_tmp.json
   ISULAD_CONF_FILE=/etc/isulad/daemon.json
   sudo cat ${ISULAD_CONF_FILE} | sudo jq '.["websocket-server-listening-port"]=10355' >${TMP_FILE} && sudo mv -f ${TMP_FILE} ${ISULAD_CONF_FILE}
   sudo cat ${ISULAD_CONF_FILE} | sudo jq '.["cni-bin-dir"]="/opt/cni/bin"' >${TMP_FILE} && sudo mv -f ${TMP_FILE} ${ISULAD_CONF_FILE}
@@ -313,6 +320,7 @@ install_isulad() {
   sudo cat ${ISULAD_CONF_FILE} | sudo jq '.["pod-sandbox-image"]="kubeedge/pause:3.6"' >${TMP_FILE} && sudo mv -f ${TMP_FILE} ${ISULAD_CONF_FILE}
   sudo cat ${ISULAD_CONF_FILE} | sudo jq '.["registry-mirrors"]=["docker.io"]' >${TMP_FILE} && sudo mv -f ${TMP_FILE} ${ISULAD_CONF_FILE}
   sudo cat ${ISULAD_CONF_FILE} | sudo jq '.["insecure-registries"]=["k8s.gcr.io"]' >${TMP_FILE} && sudo mv -f ${TMP_FILE} ${ISULAD_CONF_FILE}
+  sudo cat ${ISULAD_CONF_FILE} | sudo jq '.["runtimes"]={"runc":{"path":"/usr/bin/runc"}}' >${TMP_FILE} && sudo mv -f ${TMP_FILE} ${ISULAD_CONF_FILE}
   sudo cat /etc/isulad/daemon.json
 
   sudo cp ../src/contrib/init/isulad.service /usr/lib/systemd/system/
@@ -320,6 +328,7 @@ install_isulad() {
   sudo systemctl daemon-reload
   sudo systemctl enable isulad
   sudo systemctl restart isulad
+  sudo isula pull kubeedge/pause:3.6 || true
   cd $CURRENT_PATH
   # clean
   sudo rm -rf $BUILD_DIR
