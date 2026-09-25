@@ -29,6 +29,7 @@ import (
 
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/pkg/nodetask/actionflow"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 	"github.com/kubeedge/kubeedge/pkg/util/execs"
@@ -90,7 +91,7 @@ func (h *configUpdateJobActionHandler) backup(
 
 func (h *configUpdateJobActionHandler) updateConfig(
 	_ctx context.Context,
-	_jobname, _nodename string,
+	jobname, nodename string,
 	specser SpecSerializer,
 ) ActionResponse {
 	resp := new(configUpdateJobActionResponse)
@@ -100,9 +101,22 @@ func (h *configUpdateJobActionHandler) updateConfig(
 		return resp
 	}
 
+	// keadm config-update restarts EdgeCore, which stops this process before the result
+	// of the action is reported. Save a record so that the result can be reported from
+	// the config-update report after EdgeCore is restarted(hub_connected_hooker.go).
+	configUpdateDao := dbclient.NewConfigUpdate()
+	if err := configUpdateDao.Save(jobname, nodename, spec); err != nil {
+		resp.err = fmt.Errorf("failed to save config update record, err: %w", err)
+		return resp
+	}
+
 	args := buildConfigUpdateArgs(spec.UpdateFields)
 	cmd := exec.Command("keadm", args...)
 	out, err := cmd.CombinedOutput()
+	// EdgeCore was not restarted, the result is reported by the action runner.
+	if delErr := configUpdateDao.Delete(); delErr != nil {
+		h.logger.Error(delErr, "failed to delete config update record")
+	}
 	if err != nil {
 		resp.err = fmt.Errorf("update config failed, err: %w, output: %s", err, out)
 		return resp
