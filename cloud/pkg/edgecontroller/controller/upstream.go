@@ -564,9 +564,18 @@ func (uc *UpstreamController) createNode(nodeID, name string, node *v1.Node) (*v
 	node.Annotations[common.EdgeMappingCloudKey] = localIP
 	node, err = uc.kubeClient.CoreV1().Nodes().Create(utilcontext.WithEdgeNode(context.Background(), nodeID), node, metaV1.CreateOptions{})
 	if err == nil && len(kubernetesReversedLabels) > 0 {
-		patchBytes, err := json.Marshal(map[string]interface{}{"metadata": map[string]interface{}{"labels": kubernetesReversedLabels}})
+		// Assign to the enclosing err rather than declaring a new one, so that a
+		// failure to add the reserved labels is reported to the caller instead of
+		// being reported as a successful registration. Keep the created node on
+		// failure, it exists in the cluster even when the patch did not apply.
+		var patchBytes []byte
+		patchBytes, err = json.Marshal(map[string]interface{}{"metadata": map[string]interface{}{"labels": kubernetesReversedLabels}})
 		if err == nil {
-			node, err = uc.kubeClient.CoreV1().Nodes().Patch(context.TODO(), name, patchtypes.MergePatchType, patchBytes, metaV1.PatchOptions{})
+			var patchedNode *v1.Node
+			patchedNode, err = uc.kubeClient.CoreV1().Nodes().Patch(context.TODO(), name, patchtypes.MergePatchType, patchBytes, metaV1.PatchOptions{})
+			if err == nil {
+				node = patchedNode
+			}
 		}
 	}
 	return node, err

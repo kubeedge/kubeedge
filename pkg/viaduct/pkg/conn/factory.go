@@ -2,6 +2,7 @@ package conn
 
 import (
 	"io"
+	"time"
 
 	"k8s.io/klog/v2"
 
@@ -30,6 +31,12 @@ type ConnectionOptions struct {
 	AutoRoute bool
 	// OnReadTransportErr
 	OnReadTransportErr func(nodeID, projectID string)
+	// ReadDeadlineInterval is applied by handleMessage to the underlying
+	// connection on every iteration so a stalled half-open TCP socket
+	// surfaces as a read error within this interval. Zero means no read
+	// deadline (legacy behavior). The duration semantics distinguish this
+	// from WSConnection.ReadDeadline (a time.Time absolute deadline).
+	ReadDeadlineInterval time.Duration
 }
 
 // get connection interface by ConnTye

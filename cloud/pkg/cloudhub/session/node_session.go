@@ -125,10 +125,14 @@ func (ns *NodeSession) KeepAliveMessage() {
 
 // ReceiveMessageAck receive the message ack from edge node
 func (ns *NodeSession) ReceiveMessageAck(parentID string) {
-	ackChan, exist := ns.ackMessageCache.Load(parentID)
+	// LoadAndDelete is atomic, so that only one caller can obtain the ack channel
+	// and close it. The same message is resent several times by sendMessageWithRetry,
+	// hence duplicated acks carrying the same parentID are expected, and they may be
+	// handled concurrently. A separate Load and Delete would let two of them close
+	// the same channel and panic.
+	ackChan, exist := ns.ackMessageCache.LoadAndDelete(parentID)
 	if exist {
 		close(ackChan.(chan struct{}))
-		ns.ackMessageCache.Delete(parentID)
 	}
 }
 

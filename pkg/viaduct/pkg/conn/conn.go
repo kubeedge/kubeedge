@@ -10,7 +10,7 @@ import (
 )
 
 // connection states
-// TODO: add connection state filed
+// TODO: add connection state field
 type ConnectionState struct {
 	State            string
 	Headers          http.Header

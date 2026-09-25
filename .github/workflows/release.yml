@@ -60,7 +60,7 @@ jobs:
       - name: Making and packaging
         run: |
           if [ "${{ matrix.os }}" == "linux" ]; then
-            docker pull kubeedge/build-tools:1.23.12-ke1
+            docker pull kubeedge/build-tools:1.25.14-ke1
             BUILD_CONTAINER=true
           else
             BUILD_CONTAINER=false

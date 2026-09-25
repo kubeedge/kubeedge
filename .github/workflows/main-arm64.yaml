@@ -27,15 +27,15 @@ permissions:
 jobs:
   image-prepare:
     if: ${{ github.repository == 'kubeedge/kubeedge' }}
-    runs-on: openeuler-linux-arm64
+    runs-on: ubuntu-22.04-arm
     timeout-minutes: 30
     name: Prepare kubeedge/build-tools image
     steps:
       - name: Pull kubeedge/build-tools image
         run: |
-          docker pull kubeedge/build-tools:1.22.9-ke1
+          docker pull kubeedge/build-tools:1.25.14-ke1
           mkdir -p /home/runner/build-tools/
-          docker save kubeedge/build-tools:1.22.9-ke1 > /home/runner/build-tools/build-tools.tar
+          docker save kubeedge/build-tools:1.25.14-ke1 > /home/runner/build-tools/build-tools.tar
 
       - name: Temporarily save kubeedge/build-tools image
         uses: actions/upload-artifact@v4
@@ -45,7 +45,7 @@ jobs:
 
   docker_build:
     if: ${{ github.repository == 'kubeedge/kubeedge' }}
-    runs-on: openeuler-linux-arm64
+    runs-on: ubuntu-22.04-arm
     timeout-minutes: 40
     name: Multiple build
     needs: image-prepare

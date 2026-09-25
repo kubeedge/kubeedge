@@ -3,6 +3,7 @@ package admissioncontroller
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -167,6 +168,25 @@ func TestServe(t *testing.T) {
 			},
 			Body: io.NopCloser(bytes.NewReader([]byte(raw))),
 		}, hookfn)
+	})
+
+	t.Run("nil admission request", func(t *testing.T) {
+		assert := assert.New(t)
+
+		w := httpfake.NewResponseWriter()
+		raw := "{\"apiVersion\": \"admission.k8s.io/v1\", \"kind\": \"AdmissionReview\"}"
+		serve(w, &http.Request{
+			Header: map[string][]string{
+				"Content-Type": {"application/json"},
+			},
+			Body: io.NopCloser(bytes.NewReader([]byte(raw))),
+		}, hookfn)
+
+		responseAdmissionReview := admissionv1.AdmissionReview{}
+		assert.NoError(json.Unmarshal(w.Body, &responseAdmissionReview))
+		assert.NotNil(responseAdmissionReview.Response)
+		assert.False(responseAdmissionReview.Response.Allowed)
+		assert.Equal(errNilAdmissionRequest.Error(), responseAdmissionReview.Response.Result.Message)
 	})
 
 	t.Run("handle hook func", func(_ *testing.T) {

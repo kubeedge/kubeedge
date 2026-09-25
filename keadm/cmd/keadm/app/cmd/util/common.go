@@ -76,6 +76,7 @@ const (
 	APT    string = "apt"
 	YUM    string = "yum"
 	PACMAN string = "pacman"
+	ZYPPER string = "zypper"
 
 	EdgeCoreSELinuxLabel = "system_u:object_r:bin_t:s0"
 )
@@ -109,7 +110,7 @@ func (co *Common) SetOSInterface(intf types.OSTypeInstaller) {
 
 // GetPackageManager get package manager of OS
 func GetPackageManager() string {
-	cmd := execs.NewCommand("command -v apt || command -v yum || command -v pacman")
+	cmd := execs.NewCommand("command -v apt || command -v yum || command -v pacman || command -v zypper")
 	err := cmd.Exec()
 	if err != nil {
 		fmt.Println(err)
@@ -122,6 +123,8 @@ func GetPackageManager() string {
 		return YUM
 	} else if strings.HasSuffix(cmd.GetStdOut(), PACMAN) {
 		return PACMAN
+	} else if strings.HasSuffix(cmd.GetStdOut(), ZYPPER) {
+		return ZYPPER
 	} else {
 		return ""
 	}
@@ -136,9 +139,11 @@ func GetOSInterface() types.OSTypeInstaller {
 		return &RpmOS{}
 	case PACMAN:
 		return &PacmanOS{}
+	case ZYPPER:
+		return &ZypperOS{}
 	default:
-		fmt.Println("Failed to detect supported package manager command(apt, yum, pacman), exit")
-		panic("Failed to detect supported package manager command(apt, yum, pacman), exit")
+		fmt.Println("Failed to detect supported package manager command(apt, yum, pacman, zypper), exit")
+		panic("Failed to detect supported package manager command(apt, yum, pacman, zypper), exit")
 	}
 }
 
