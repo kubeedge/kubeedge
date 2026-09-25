@@ -17,8 +17,20 @@ limitations under the License.
 package actions
 
 import (
+	"context"
+	"errors"
+	"os/exec"
+	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/agiledragon/gomonkey/v2"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"k8s.io/klog/v2"
+
+	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 )
 
 const (
@@ -84,4 +96,108 @@ func TestBuildConfigUpdateArgsEmptyFields(t *testing.T) {
 	if args[0] != testConfigUpdateCommand || args[1] != testConfigUpdateSetFlag || args[2] != "" {
 		t.Fatalf("unexpected args for empty update fields: %v", args)
 	}
+}
+
+func TestConfigUpdateJobUpdateConfig(t *testing.T) {
+	var (
+		ctx      = context.TODO()
+		jobName  = "test-job"
+		nodeName = "test-node"
+		spec     = &operationsv1alpha2.ConfigUpdateJobSpec{
+			UpdateFields: map[string]string{"modules.edgehub.heartbeat": "20"},
+		}
+		specser = &cachedSpecSerializer{spec: spec}
+		h       = configUpdateJobActionHandler{logger: klog.Background()}
+	)
+
+	t.Run("failed to save config update record", func(t *testing.T) {
+		var runCmdCalled bool
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.ConfigUpdate)(nil)), "Save",
+			func(string, string, *operationsv1alpha2.ConfigUpdateJobSpec) error {
+				return errors.New("test error")
+			})
+		patches.ApplyMethod(reflect.TypeOf((*exec.Cmd)(nil)), "CombinedOutput",
+			func(*exec.Cmd) ([]byte, error) {
+				runCmdCalled = true
+				return nil, nil
+			})
+
+		resp := h.updateConfig(ctx, jobName, nodeName, specser)
+		require.ErrorContains(t, resp.Error(), "failed to save config update record")
+		assert.False(t, runCmdCalled)
+	})
+
+	t.Run("edgecore is not restarted", func(t *testing.T) {
+		for _, tc := range []struct {
+			name   string
+			cmdErr error
+		}{
+			{name: "config update successful"},
+			{name: "config update failed", cmdErr: errors.New("exit status 1")},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				var (
+					savedJob, savedNode string
+					savedSpec           *operationsv1alpha2.ConfigUpdateJobSpec
+					deleteCalled        bool
+				)
+				patches := gomonkey.NewPatches()
+				defer patches.Reset()
+
+				patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.ConfigUpdate)(nil)), "Save",
+					func(jobname, nodename string, spec *operationsv1alpha2.ConfigUpdateJobSpec) error {
+						savedJob, savedNode, savedSpec = jobname, nodename, spec
+						return nil
+					})
+				patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.ConfigUpdate)(nil)), "Delete",
+					func() error {
+						deleteCalled = true
+						return nil
+					})
+				patches.ApplyMethod(reflect.TypeOf((*exec.Cmd)(nil)), "CombinedOutput",
+					func(*exec.Cmd) ([]byte, error) {
+						// The record must be saved before keadm config-update restarts edgecore.
+						assert.Equal(t, jobName, savedJob)
+						return []byte("output"), tc.cmdErr
+					})
+
+				resp := h.updateConfig(ctx, jobName, nodeName, specser)
+				if tc.cmdErr != nil {
+					require.ErrorContains(t, resp.Error(), "update config failed")
+				} else {
+					require.NoError(t, resp.Error())
+				}
+				assert.Equal(t, jobName, savedJob)
+				assert.Equal(t, nodeName, savedNode)
+				assert.Equal(t, spec, savedSpec)
+				// The action reports the result itself, so the record is no longer needed.
+				assert.True(t, deleteCalled)
+			})
+		}
+	})
+
+	t.Run("failed to delete config update record", func(t *testing.T) {
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.ConfigUpdate)(nil)), "Save",
+			func(string, string, *operationsv1alpha2.ConfigUpdateJobSpec) error {
+				return nil
+			})
+		patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.ConfigUpdate)(nil)), "Delete",
+			func() error {
+				return errors.New("test error")
+			})
+		patches.ApplyMethod(reflect.TypeOf((*exec.Cmd)(nil)), "CombinedOutput",
+			func(*exec.Cmd) ([]byte, error) {
+				return nil, nil
+			})
+
+		// The record is only used after a restart, failing to delete it must not fail the action.
+		resp := h.updateConfig(ctx, jobName, nodeName, specser)
+		require.NoError(t, resp.Error())
+	})
 }
