@@ -46,7 +46,7 @@ func NewCloudReset() *cobra.Command {
 
 	var cmd = &cobra.Command{
 		Use:     "cloud",
-		Short:   "Teardowns CloudCore component",
+		Short:   "Tears down CloudCore component",
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
