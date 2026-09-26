@@ -75,7 +75,7 @@ ifeq ($(HELP),y)
 verify:
 	@echo "$$VERIFY_HELP_INFO"
 else
-verify:verify-golang verify-vendor verify-codegen verify-vendor-licenses verify-crds
+verify:verify-golang verify-vendor verify-codegen verify-vendor-licenses verify-crds verify-apidocs
 endif
 
 .PHONY: verify-golang
@@ -93,6 +93,9 @@ verify-vendor-licenses:
 .PHONY: verify-crds
 verify-crds:
 	hack/verify-crds.sh
+.PHONY: verify-apidocs
+verify-apidocs:
+	hack/verify-apidoc.sh
 
 
 define TEST_HELP_INFO
