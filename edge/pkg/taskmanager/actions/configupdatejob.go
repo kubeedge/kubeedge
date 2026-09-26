@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"sort"
 	"strings"
@@ -31,7 +32,6 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/pkg/nodetask/actionflow"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
-	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
 func newConfigUpdateJobRunner() *ActionRunner {
@@ -79,8 +79,10 @@ func (h *configUpdateJobActionHandler) backup(
 	_specser SpecSerializer,
 ) ActionResponse {
 	resp := new(configUpdateJobActionResponse)
-	cmdStr := execs.NewCommand("keadm backup edge")
-	err := cmdStr.Exec()
+	cmd := exec.Command("keadm", "backup", "edge")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
 	if err != nil {
 		resp.err = err
 		return resp
@@ -116,8 +118,10 @@ func (h *configUpdateJobActionHandler) rollback(
 	specser SpecSerializer,
 ) ActionResponse {
 	resp := new(configUpdateJobActionResponse)
-	cmdStr := execs.NewCommand("keadm rollback edge")
-	resp.err = cmdStr.Exec()
+	cmd := exec.Command("keadm", "rollback", "edge")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	resp.err = cmd.Run()
 	return resp
 }
 
