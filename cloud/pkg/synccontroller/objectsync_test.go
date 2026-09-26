@@ -148,13 +148,23 @@ func TestGCOrphanedObjectSync(t *testing.T) {
 func TestSendEvents(t *testing.T) {
 	tests := []struct {
 		name              string
+		nodeName          string
 		ExpectedOperation string
+		expectMsg         bool
 		ObjectSyncs       *v1alpha1.ObjectSync
 	}{
 		{
 			name:              "test sendEvents",
-			ObjectSyncs:       tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod"),
+			nodeName:          tf.TestNodeID,
 			ExpectedOperation: model.UpdateOperation,
+			expectMsg:         true,
+			ObjectSyncs:       tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod"),
+		},
+		{
+			name:        "test sendEvents when buildEdgeControllerMessage fails (nil msg)",
+			nodeName:    "",
+			expectMsg:   false,
+			ObjectSyncs: tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod"),
 		},
 	}
 	cloudHub := &common.ModuleInfo{
@@ -167,10 +177,14 @@ func TestSendEvents(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tmp := tt.ObjectSyncs.DeepCopy()
-			go sendEvents(tf.TestNodeID, tt.ObjectSyncs, "pod", "2", tmp)
-			message, _ := beehiveContext.Receive(modules.CloudHubModuleName)
-			if !reflect.DeepEqual(message.GetOperation(), tt.ExpectedOperation) {
-				t.Errorf("sendEvents() = %v, want %v", message.GetResource(), tt.ExpectedOperation)
+			if tt.expectMsg {
+				go sendEvents(tt.nodeName, tt.ObjectSyncs, "pod", "2", tmp)
+				message, _ := beehiveContext.Receive(modules.CloudHubModuleName)
+				if !reflect.DeepEqual(message.GetOperation(), tt.ExpectedOperation) {
+					t.Errorf("sendEvents() = %v, want %v", message.GetResource(), tt.ExpectedOperation)
+				}
+			} else {
+				sendEvents(tt.nodeName, tt.ObjectSyncs, "pod", "2", tmp)
 			}
 		})
 	}
