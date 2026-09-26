@@ -42,7 +42,9 @@ func RuleContains(rulePath, rule2Path string) bool {
 		return true
 	}
 
-	if len(path2) == 0 {
+	// a rule with more segments can not contain a rule with fewer segments,
+	// e.g., /a/b does not contain /a
+	if len(path2) == 0 || len(path2) < len(path1) {
 		return false
 	}
 
