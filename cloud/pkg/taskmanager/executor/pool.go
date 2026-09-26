@@ -16,6 +16,8 @@ limitations under the License.
 
 package executor
 
+import "context"
+
 type Pool struct {
 	pool chan struct{}
 }
@@ -31,6 +33,20 @@ func NewPool(size int) *Pool {
 
 func (p *Pool) Acquire() {
 	p.pool <- struct{}{}
+}
+
+// AcquireWithContext acquires a slot from the pool. It returns false without
+// acquiring a slot if stop is closed or ctx is canceled before a slot becomes
+// available.
+func (p *Pool) AcquireWithContext(ctx context.Context, stop <-chan struct{}) bool {
+	select {
+	case p.pool <- struct{}{}:
+		return true
+	case <-stop:
+		return false
+	case <-ctx.Done():
+		return false
+	}
 }
 
 func (p *Pool) Release() {
