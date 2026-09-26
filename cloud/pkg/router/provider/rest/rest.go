@@ -115,8 +115,11 @@ func (r *Rest) Forward(target provider.Target, data interface{}) (interface{}, e
 	res["header"] = request.Header
 	res["method"] = request.Method
 	stop := make(chan struct{})
-	respch := make(chan interface{})
-	errch := make(chan error)
+	// respch and errch are buffered so the worker goroutine can always deliver
+	// its result and exit, even after Forward has returned on timeout or client
+	// disconnect; with unbuffered channels it would block forever and leak.
+	respch := make(chan interface{}, 1)
+	errch := make(chan error, 1)
 	go func() {
 		resp, err := target.GoToTarget(res, stop)
 		if err != nil {
@@ -175,20 +178,29 @@ func (r *Rest) Forward(target provider.Target, data interface{}) (interface{}, e
 		if !ok {
 			return nil, errors.New("failed to get timer channel")
 		}
-		stop <- struct{}{}
+		signalStop(stop)
 		httpResponse.StatusCode = http.StatusRequestTimeout
 		httpResponse.Body = io.NopCloser(strings.NewReader("wait to get response time out"))
 		klog.Warningf("operation timeout, msg id: %s, write result: get response timeout", messageID)
-	case _, ok := <-request.Context().Done():
-		if !ok {
-			return nil, errors.New("failed to get request close channel")
-		}
+	case <-request.Context().Done():
+		// Done() is closed on cancellation, so a two-value receive here always
+		// reports the channel as closed; handle the disconnect directly.
 		timer.Stop()
 		klog.Warningf("Client disconnected for handling resource, msg id: %s", messageID)
-		stop <- struct{}{}
+		signalStop(stop)
 		return nil, errors.New("client disconnected for handling resource")
 	}
 	return httpResponse, nil
+}
+
+// signalStop notifies the target to stop without blocking. The rest and eventbus
+// targets ignore the stop channel, so a plain blocking send would hang Forward
+// forever; the non-blocking send still reaches a target that is waiting on stop.
+func signalStop(stop chan struct{}) {
+	select {
+	case stop <- struct{}{}:
+	default:
+	}
 }
 
 func (r *Rest) GoToTarget(data map[string]interface{}, _ chan struct{}) (interface{}, error) {
