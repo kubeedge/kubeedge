@@ -195,8 +195,9 @@ func (s *TunnelServer) Start() {
 	}
 
 	tunnelServer := &http.Server{
-		Addr:    fmt.Sprintf(":%d", streamconfig.Config.TunnelPort),
-		Handler: s.container,
+		Addr:              fmt.Sprintf(":%d", streamconfig.Config.TunnelPort),
+		Handler:           s.container,
+		ReadHeaderTimeout: 10 * time.Second,
 		TLSConfig: &tls.Config{
 			ClientCAs:    pool,
 			Certificates: []tls.Certificate{certificate},

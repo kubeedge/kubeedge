@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
@@ -184,6 +185,7 @@ func (p *Proxy) runUDSMasterServer(ctx context.Context, o *options.ProxyRunOptio
 			Handler: &server.Tunnel{
 				Server: s,
 			},
+			ReadHeaderTimeout: 10 * time.Second,
 		}
 		stop = func() {
 			err := server.Shutdown(ctx)
@@ -270,6 +272,7 @@ func (p *Proxy) runMTLSMasterServer(ctx context.Context, o *options.ProxyRunOpti
 			Handler: &server.Tunnel{
 				Server: s,
 			},
+			ReadHeaderTimeout: 10 * time.Second,
 		}
 		// http-connect
 		server := &http.Server{
@@ -278,7 +281,8 @@ func (p *Proxy) runMTLSMasterServer(ctx context.Context, o *options.ProxyRunOpti
 			Handler: &server.Tunnel{
 				Server: s,
 			},
-			TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
+			TLSNextProto:      make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
+			ReadHeaderTimeout: 10 * time.Second,
 		}
 
 		stop = func() {
@@ -347,9 +351,10 @@ func (p *Proxy) runAdminServer(o *options.ProxyRunOptions) {
 		}
 	}
 	adminServer := &http.Server{
-		Addr:           fmt.Sprintf("127.0.0.1:%d", o.AdminPort),
-		Handler:        muxHandler,
-		MaxHeaderBytes: 1 << 20,
+		Addr:              fmt.Sprintf("127.0.0.1:%d", o.AdminPort),
+		Handler:           muxHandler,
+		MaxHeaderBytes:    1 << 20,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	go func() {
@@ -380,9 +385,10 @@ func (p *Proxy) runHealthServer(o *options.ProxyRunOptions, server *server.Proxy
 	muxHandler.HandleFunc("/healthz", livenessHandler)
 	muxHandler.HandleFunc("/ready", readinessHandler)
 	healthServer := &http.Server{
-		Addr:           fmt.Sprintf(":%d", o.HealthPort),
-		Handler:        muxHandler,
-		MaxHeaderBytes: 1 << 20,
+		Addr:              fmt.Sprintf(":%d", o.HealthPort),
+		Handler:           muxHandler,
+		MaxHeaderBytes:    1 << 20,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	go func() {

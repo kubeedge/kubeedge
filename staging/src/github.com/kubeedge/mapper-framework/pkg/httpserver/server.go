@@ -52,10 +52,11 @@ func NewRestServer(devPanel global.DevPanel, httpPort string, options ...Option)
 func (rs *RestServer) StartServer() {
 	rs.InitRouter()
 	rs.server = &http.Server{
-		Addr:         rs.IP + ":" + rs.Port,
-		WriteTimeout: rs.WriteTimeout,
-		ReadTimeout:  rs.ReadTimeout,
-		Handler:      rs.Router,
+		Addr:              rs.IP + ":" + rs.Port,
+		WriteTimeout:      rs.WriteTimeout,
+		ReadTimeout:       rs.ReadTimeout,
+		ReadHeaderTimeout: 10 * time.Second,
+		Handler:           rs.Router,
 	}
 	if rs.CaCertFilePath == "" && (rs.KeyFilePath == "" || rs.CertFilePath == "") {
 		// insecure

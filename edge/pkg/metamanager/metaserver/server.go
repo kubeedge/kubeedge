@@ -131,8 +131,9 @@ func (ls *MetaServer) startHTTPServer(stopChan <-chan struct{}) {
 	h := ls.BuildBasicHandler()
 	h = BuildHandlerChain(h, ls)
 	s := http.Server{
-		Addr:    metaserverconfig.Config.Server,
-		Handler: h,
+		Addr:              metaserverconfig.Config.Server,
+		Handler:           h,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	go func() {
@@ -160,9 +161,10 @@ func (ls *MetaServer) startHTTPSServer(addr string, stopChan <-chan struct{}) {
 	h := ls.BuildBasicHandler()
 	h = BuildHandlerChain(h, ls)
 	s := http.Server{
-		Addr:      addr,
-		Handler:   h,
-		TLSConfig: tlsConfig,
+		Addr:              addr,
+		Handler:           h,
+		TLSConfig:         tlsConfig,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	go func() {
