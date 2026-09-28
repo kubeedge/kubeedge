@@ -1352,8 +1352,10 @@ func TestGetNodeListOfServiceAccountAccess(t *testing.T) {
 	if err := v1.AddToScheme(v1Scheme); err != nil {
 		t.Errorf("Failed to add access scheme: %v", err)
 	}
-	withScheme := fake.NewClientBuilder().WithScheme(v1Scheme).WithIndex(&v1.Pod{}, "spec.serviceAccountName", pdStrategyTypeIndexer)
-	fakeClient := withScheme.Build()
+	newClientBuilder := func() *fake.ClientBuilder {
+		return fake.NewClientBuilder().WithScheme(v1Scheme).WithIndex(&v1.Pod{}, "spec.serviceAccountName", pdStrategyTypeIndexer)
+	}
+	fakeClient := newClientBuilder().Build()
 	got, err := getNodeListOfServiceAccountAccess(context.Background(), fakeClient, saa)
 	if err != nil {
 		t.Errorf("fakeClient get node list error = %v", err)
@@ -1361,7 +1363,7 @@ func TestGetNodeListOfServiceAccountAccess(t *testing.T) {
 	if !equality.Semantic.DeepEqual(got, []string{}) {
 		t.Errorf("testcase 1 got %v, want %v", got, []string{})
 	}
-	fakeClient2 := withScheme.WithObjects(&podList.Items[0]).WithLists(nodeList).Build()
+	fakeClient2 := newClientBuilder().WithObjects(&podList.Items[0]).WithLists(nodeList).Build()
 	got2, err := getNodeListOfServiceAccountAccess(context.Background(), fakeClient2, saa)
 	if err != nil {
 		t.Errorf("fakeClient2 get node list error = %v", err)
@@ -1369,7 +1371,10 @@ func TestGetNodeListOfServiceAccountAccess(t *testing.T) {
 	if !equality.Semantic.DeepEqual(got2, []string{"node-1"}) {
 		t.Errorf("testcase 2 got %v, want %v", got2, []string{"node-1"})
 	}
-	fakeClient3 := withScheme.WithObjects(&podList.Items[1]).WithObjects(&podList.Items[2]).Build()
+	fakeClient3 := newClientBuilder().
+		WithObjects(&podList.Items[0], &podList.Items[1], &podList.Items[2]).
+		WithLists(nodeList).
+		Build()
 	got3, err := getNodeListOfServiceAccountAccess(context.Background(), fakeClient3, saa)
 	if err != nil {
 		t.Errorf("fakeClient3 get node list error = %v", err)
@@ -1435,6 +1440,11 @@ func TestSyncRules(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to unmarshal role1: %v", err)
 	}
+	sa1.TypeMeta = metav1.TypeMeta{}
+	sa2.TypeMeta = metav1.TypeMeta{}
+	crb1.TypeMeta = metav1.TypeMeta{}
+	rb1.TypeMeta = metav1.TypeMeta{}
+	rb2.TypeMeta = metav1.TypeMeta{}
 	nodeList := &v1.NodeList{
 		Items: []v1.Node{
 			{

@@ -202,12 +202,10 @@ func ConvertConfigEdgedFlagToConfigKubeletFlag(in *v1alpha2.TailoredKubeletFlag,
 	out.MinimumGCAge = in.MinimumGCAge
 	out.MaxPerPodContainerCount = in.MaxPerPodContainerCount
 	out.MaxContainerCount = in.MaxContainerCount
-	out.RegisterSchedulable = in.RegisterSchedulable
 	out.SeccompDefault = in.SeccompDefault
 	out.WindowsPriorityClass = in.WindowsPriorityClass
 	out.WindowsService = in.WindowsService
 
 	// container-runtime-specific options
 	out.RuntimeCgroups = in.RuntimeCgroups
-	out.PodSandboxImage = in.PodSandboxImage
 }

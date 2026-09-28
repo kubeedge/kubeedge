@@ -144,12 +144,26 @@ func (s *store) GuaranteedUpdate(context.Context, string, runtime.Object, bool, 
 	panic("Do not call this function")
 }
 
+func (s *store) Stats(context.Context) (storage.Stats, error) {
+	return storage.Stats{}, ErrCountUnsupported
+}
+
 func (s *store) Count(_ string) (int64, error) {
 	return 0, ErrCountUnsupported
 }
 
 func (s *store) RequestWatchProgress(context.Context) error {
 	panic("Do not call this function")
+}
+
+func (s *store) GetCurrentResourceVersion(context.Context) (uint64, error) {
+	return s.client.GetRevision(), nil
+}
+
+func (s *store) SetKeysFunc(storage.KeysFunc) {}
+
+func (s *store) CompactRevision() int64 {
+	return 0
 }
 
 func (s *store) ReadinessCheck() error {
