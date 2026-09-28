@@ -69,11 +69,66 @@ func TestExecutorOperation(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, exec)
 
-	RemoveExecutor(job.ResourceType(), job.Name())
+	RemoveExecutor(job.ResourceType(), job.Name(), exec)
 
 	exec, err = GetExecutor(job.ResourceType(), job.Name())
 	assert.Equal(t, ErrExecutorNotExists, err)
 	assert.Nil(t, exec)
+}
+
+func TestRemoveExecutor_DoesNotEvictNewerExecutor(t *testing.T) {
+	job, err := wrap.WithEventObj(&operationsv1alpha2.ImagePrePullJob{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "stale-evict-test-job",
+		},
+		Spec: operationsv1alpha2.ImagePrePullJobSpec{
+			ImagePrePullTemplate: operationsv1alpha2.ImagePrePullTemplate{
+				Concurrency: 2,
+			},
+		},
+	})
+	assert.NoError(t, err)
+
+	updateFun := func(_ctx context.Context, _job wrap.NodeJob, _task wrap.NodeJobTask) {}
+	ctx := context.TODO()
+
+	// Simulate executor A being created, then interrupted and removed early,
+	// before its Execute() goroutine has actually finished running.
+	execA, loaded, err := NewNodeTaskExecutor(ctx, job, updateFun)
+	assert.NoError(t, err)
+	assert.False(t, loaded)
+	assert.NotNil(t, execA)
+
+	RemoveExecutor(job.ResourceType(), job.Name(), execA)
+
+	check, err := GetExecutor(job.ResourceType(), job.Name())
+	assert.Equal(t, ErrExecutorNotExists, err)
+	assert.Nil(t, check)
+
+	// Simulate the job being re-triggered while A's goroutine is still winding
+	// down: a new executor B gets registered under the same key.
+	execB, loaded, err := NewNodeTaskExecutor(ctx, job, updateFun)
+	assert.NoError(t, err)
+	assert.False(t, loaded)
+	assert.NotNil(t, execB)
+	assert.NotSame(t, execA, execB)
+
+	// A's goroutine finally finishes and fires its own deferred RemoveExecutor
+	// with its own (now stale) reference. Before the fix, this deleted B's
+	// entry purely by key. After the fix, CompareAndDelete refuses because
+	// the stored value is execB, not execA.
+	RemoveExecutor(job.ResourceType(), job.Name(), execA)
+
+	// B must still be discoverable — it's the executor actually running now.
+	check, err = GetExecutor(job.ResourceType(), job.Name())
+	assert.NoError(t, err)
+	assert.Same(t, execB, check)
+
+	// B removes itself correctly when it's actually done.
+	RemoveExecutor(job.ResourceType(), job.Name(), execB)
+	check, err = GetExecutor(job.ResourceType(), job.Name())
+	assert.Equal(t, ErrExecutorNotExists, err)
+	assert.Nil(t, check)
 }
 
 func TestExecute(t *testing.T) {
