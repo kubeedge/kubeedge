@@ -236,6 +236,9 @@ func CheckDisk() error {
 	if err != nil {
 		return err
 	}
+	if len(parts) == 0 {
+		return errors.New("no disk partitions found")
+	}
 
 	diskInfo, err := disk.Usage(parts[0].Mountpoint)
 	if err != nil {
@@ -243,7 +246,7 @@ func CheckDisk() error {
 	}
 
 	fmt.Printf("Disk total: %.2f MB, Allowed > %v MB\n", float32(diskInfo.Total)/common.MB, common.AllowedValueDisk/common.MB)
-	fmt.Printf("Disk Free total: %.2f MB, Allowed > %vMB\n", float32(diskInfo.Free)/common.MB, common.AllowedCurrentValueDisk/common.MB)
+	fmt.Printf("Disk Free total: %.2f MB, Allowed > %v MB\n", float32(diskInfo.Free)/common.MB, common.AllowedCurrentValueDisk/common.MB)
 	fmt.Printf("Disk usage rate: %.2f, Allowed rate < %v\n", diskInfo.UsedPercent/100, common.AllowedCurrentValueDiskRate)
 
 	if diskInfo.Total < common.AllowedValueDisk ||
