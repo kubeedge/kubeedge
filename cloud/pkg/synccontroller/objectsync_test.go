@@ -145,6 +145,63 @@ func TestGCOrphanedObjectSync(t *testing.T) {
 	}
 }
 
+// The fabricated delete body must carry the GVK from the ObjectSync spec.
+// Without it the edge cannot decode the message into an unstructured object, so
+// the delete is never applied to meta_v2 and the object is stranded there.
+func TestGCOrphanedObjectSyncStampsGVK(t *testing.T) {
+	cloudHub := &common.ModuleInfo{
+		ModuleName: modules.CloudHubModuleName,
+		ModuleType: common.MsgCtxTypeChannel,
+	}
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+	beehiveContext.AddModule(cloudHub)
+	beehiveContext.AddModuleGroup(modules.CloudHubModuleName, modules.CloudHubModuleGroup)
+	client.DefaultGetRestMapper = func() (mapper meta.RESTMapper, err error) { return nil, nil }
+
+	tests := []struct {
+		name       string
+		apiVersion string
+		kind       string
+	}{
+		{name: "core group object", apiVersion: "v1", kind: "Pod"},
+		{name: "crd object", apiVersion: "policy.kubeedge.io/v1alpha1", kind: "ServiceAccountAccess"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sync := tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), tt.kind)
+			sync.Spec.ObjectAPIVersion = tt.apiVersion
+
+			testController := newSyncController(true)
+			go testController.gcOrphanedObjectSync(sync)
+			message, _ := beehiveContext.Receive(modules.CloudHubModuleName)
+
+			obj, ok := message.GetContent().(*unstructured.Unstructured)
+			if !ok {
+				t.Fatalf("message content is %T, want *unstructured.Unstructured", message.GetContent())
+			}
+			if got := obj.GetAPIVersion(); got != tt.apiVersion {
+				t.Errorf("apiVersion = %q, want %q", got, tt.apiVersion)
+			}
+			if got := obj.GetKind(); got != tt.kind {
+				t.Errorf("kind = %q, want %q", got, tt.kind)
+			}
+			// the parts that already worked must keep working
+			if got := obj.GetName(); got != tf.TestPodName {
+				t.Errorf("name = %q, want %q", got, tf.TestPodName)
+			}
+			if got := string(obj.GetUID()); got != tf.TestPodUID {
+				t.Errorf("uid = %q, want %q", got, tf.TestPodUID)
+			}
+			// the stub must stay spec-less: edged keys its full re-list fallback
+			// off an empty PodSpec
+			if _, found, _ := unstructured.NestedMap(obj.Object, "spec"); found {
+				t.Errorf("stub unexpectedly carries a spec: %v", obj.Object)
+			}
+		})
+	}
+}
+
 func TestSendEvents(t *testing.T) {
 	tests := []struct {
 		name              string

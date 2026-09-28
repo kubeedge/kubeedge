@@ -98,7 +98,11 @@ func (sctl *SyncController) gcOrphanedClusterObjectSyncImpl(sync *v1alpha1.Clust
 	nodeName := getNodeNameFunc(sync.Name)
 	klog.V(4).Infof("%s: %s has been deleted in K8s, send the delete event to edge in sync loop", resourceType, sync.Spec.ObjectName)
 
+	// See gcOrphanedObjectSync: the fabricated body needs its GVK, or the edge
+	// cannot store the delete and the object is stranded in meta_v2.
 	object := &unstructured.Unstructured{}
+	object.SetAPIVersion(sync.Spec.ObjectAPIVersion)
+	object.SetKind(sync.Spec.ObjectKind)
 	object.SetName(sync.Spec.ObjectName)
 	object.SetUID(types.UID(getObjectUIDFunc(sync.Name)))
 	if msg := buildEdgeControllerMessageFunc(nodeName, models.NullNamespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, object); msg != nil {
