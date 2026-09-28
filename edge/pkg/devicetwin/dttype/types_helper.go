@@ -74,8 +74,7 @@ func DeviceTwinToMsgTwin(deviceTwins []models.DeviceTwin) map[string]*MsgTwin {
 			expectedValue := &TwinValue{Value: &expected}
 			if twin.ExpectedMeta != "" {
 				if err := json.Unmarshal([]byte(twin.ExpectedMeta), &expectedMeta); err != nil {
-					// TODO: handle error
-					klog.Error(err)
+					klog.Errorf("Failed to unmarshal expected meta for twin %s: %v", twin.Name, err)
 				}
 				expectedValue.Metadata = &expectedMeta
 			}
@@ -85,8 +84,7 @@ func DeviceTwinToMsgTwin(deviceTwins []models.DeviceTwin) map[string]*MsgTwin {
 			actualValue := &TwinValue{Value: &actual}
 			if twin.ActualMeta != "" {
 				if err := json.Unmarshal([]byte(twin.ActualMeta), &actualMeta); err != nil {
-					// TODO: handle error
-					klog.Error(err)
+					klog.Errorf("Failed to unmarshal actual meta for twin %s: %v", twin.Name, err)
 				}
 				actualValue.Metadata = &actualMeta
 			}
@@ -95,15 +93,13 @@ func DeviceTwinToMsgTwin(deviceTwins []models.DeviceTwin) map[string]*MsgTwin {
 
 		if twin.ExpectedVersion != "" {
 			if err := json.Unmarshal([]byte(twin.ExpectedVersion), &expectedVersion); err != nil {
-				// TODO: handle error
-				klog.Error(err)
+				klog.Errorf("Failed to unmarshal expected version for twin %s: %v", twin.Name, err)
 			}
 			msgTwin.ExpectedVersion = &expectedVersion
 		}
 		if twin.ActualVersion != "" {
 			if err := json.Unmarshal([]byte(twin.ActualVersion), &actualVersion); err != nil {
-				// TODO: handle error
-				klog.Error(err)
+				klog.Errorf("Failed to unmarshal actual version for twin %s: %v", twin.Name, err)
 			}
 			msgTwin.ActualVersion = &actualVersion
 		}
@@ -133,8 +129,7 @@ func CopyMsgTwin(msgTwin *MsgTwin, noVersion bool) MsgTwin {
 	var result MsgTwin
 	payload, _ := json.Marshal(msgTwin)
 	if err := json.Unmarshal(payload, &result); err != nil {
-		// TODO: handle error
-		klog.Error(err)
+		klog.Errorf("Failed to copy msg twin: %v", err)
 	}
 	if noVersion {
 		result.ActualVersion = nil
@@ -148,8 +143,7 @@ func CopyMsgAttr(msgAttr *MsgAttr) MsgAttr {
 	var result MsgAttr
 	payload, _ := json.Marshal(msgAttr)
 	if err := json.Unmarshal(payload, &result); err != nil {
-		// TODO: handle error
-		klog.Error(err)
+		klog.Errorf("Failed to copy msg attr: %v", err)
 	}
 	return result
 }
