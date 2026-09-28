@@ -11,6 +11,7 @@ func TestFileIsExist(t *testing.T) {
 
 	ef, err := os.CreateTemp(dir, "CheckFileIsExist")
 	if err == nil {
+		ef.Close()
 		if !FileIsExist(ef.Name()) {
 			t.Fatalf("file %v should exist", ef.Name())
 		}
