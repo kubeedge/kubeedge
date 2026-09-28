@@ -128,5 +128,5 @@ func (h *ConfigUpdateJobHandler) UpdateNodeTaskStatus(
 			}
 		},
 	}
-	status.GetConfigeUpdateJobStatusUpdater().UpdateStatus(opts)
+	status.GetConfigUpdateJobStatusUpdater().UpdateStatus(opts)
 }
