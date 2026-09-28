@@ -178,7 +178,7 @@ func (s *StreamServer) getMetrics(r *restful.Request, w *restful.Response) {
 		}
 	}()
 
-	sessionKey := strings.Split(r.Request.Host, ":")[0]
+	sessionKey := getAddressHost(r.Request.Host)
 	if forwardedURI := r.Request.Header.Get("X-Forwarded-Uri"); forwardedURI != "" {
 		if t := strings.Split(forwardedURI, "/"); strings.HasPrefix(forwardedURI, "/api/v1/nodes/") && len(t) > 6 {
 			sessionKey = t[4]
