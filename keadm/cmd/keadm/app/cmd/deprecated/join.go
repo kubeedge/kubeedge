@@ -60,7 +60,7 @@ func NewDeprecatedEdgeJoin() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "join",
-		Short:   "Deprecated: Bootstraps edge component. Checks and install (if required) the pre-requisites. Execute it on any edge node machine you wish to join",
+		Short:   "Deprecated: Bootstraps edge component. Checks and installs (if required) the pre-requisites. Execute it on any edge node machine you wish to join",
 		Long:    edgeJoinLongDescription,
 		Example: fmt.Sprintf(edgeJoinExample, types.DefaultKubeEdgeVersion),
 		RunE: func(cmd *cobra.Command, args []string) error {

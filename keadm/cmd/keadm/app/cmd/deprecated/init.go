@@ -56,7 +56,7 @@ func NewDeprecatedCloudInit() *cobra.Command {
 
 	var cmd = &cobra.Command{
 		Use:     "init",
-		Short:   "Deprecated: Bootstraps cloud component. Checks and install (if required) the pre-requisites.",
+		Short:   "Deprecated: Bootstraps cloud component. Checks and installs (if required) the pre-requisites.",
 		Long:    cloudInitLongDescription,
 		Example: fmt.Sprintf(cloudInitExample, types.DefaultKubeEdgeVersion),
 		RunE: func(cmd *cobra.Command, args []string) error {
