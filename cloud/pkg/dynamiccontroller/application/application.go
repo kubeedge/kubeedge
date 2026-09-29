@@ -388,7 +388,10 @@ func applicationToListener(app *metaserver.Application) (*SelectorListener, erro
 	}
 
 	gvr, namespace, _ := metaserver.ParseKey(app.Key)
-	selector := NewSelector(option.LabelSelector, option.FieldSelector)
+	selector, err := NewSelector(option.LabelSelector, option.FieldSelector)
+	if err != nil {
+		return nil, err
+	}
 	if namespace != "" {
 		selector.Field = fields.AndSelectors(selector.Field, fields.OneTermEqualSelector("metadata.namespace", namespace))
 	}
