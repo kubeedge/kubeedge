@@ -238,19 +238,20 @@ func TestUnstructuredAttr(t *testing.T) {
 		Kind:    "Pod",
 	})
 	uns.SetLabels(map[string]string{
-		"metadata.name":       "uns1",
-		"metadata.namespaces": "test",
+		"metadata.name":      "uns1",
+		"metadata.namespace": "test",
 	})
 	_ = unstructured.SetNestedField(uns.Object, "node1", "spec", "nodeName")
 	type args struct {
 		obj runtime.Object
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    labels.Set
-		want1   fields.Set
-		wantErr bool
+		name          string
+		args          args
+		want          labels.Set
+		want1         fields.Set
+		fieldSelector string
+		wantErr       bool
 	}{
 		{
 			name: "TestUnstructuredAttr(): Case 1: Deployment",
@@ -267,11 +268,12 @@ func TestUnstructuredAttr(t *testing.T) {
 			args: args{obj: uns},
 			want: uns.GetLabels(),
 			want1: map[string]string{
-				"metadata.name":       "uns1",
-				"metadata.namespaces": "test",
-				"spec.nodeName":       "node1",
+				"metadata.name":      "uns1",
+				"metadata.namespace": "test",
+				"spec.nodeName":      "node1",
 			},
-			wantErr: false,
+			fieldSelector: "metadata.namespace=test",
+			wantErr:       false,
 		},
 	}
 	for _, tt := range tests {
@@ -286,6 +288,15 @@ func TestUnstructuredAttr(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got1, tt.want1) {
 				t.Errorf("UnstructuredAttr() got1 = %v, want %v", got1, tt.want1)
+			}
+			if tt.fieldSelector != "" {
+				selector, err := fields.ParseSelector(tt.fieldSelector)
+				if err != nil {
+					t.Fatalf("ParseSelector(%q) error = %v", tt.fieldSelector, err)
+				}
+				if !selector.Matches(got1) {
+					t.Errorf("field selector %q does not match fields %v", tt.fieldSelector, got1)
+				}
 			}
 		})
 	}
