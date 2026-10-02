@@ -122,3 +122,49 @@ func getMockServer(_ *testing.T) *httptest.Server {
 	}))
 	return ts
 }
+
+func TestGetURLClientTimeoutDefaults(t *testing.T) {
+	tests := map[string]struct {
+		option             *URLClientOption
+		wantHandshake      time.Duration
+		wantResponseHeader time.Duration
+	}{
+		"nil option": {
+			option:             nil,
+			wantHandshake:      30 * time.Second,
+			wantResponseHeader: 60 * time.Second,
+		},
+		"both unset": {
+			option:             &URLClientOption{},
+			wantHandshake:      30 * time.Second,
+			wantResponseHeader: 60 * time.Second,
+		},
+		"only response header set": {
+			option:             &URLClientOption{ResponseHeaderTimeout: 5 * time.Second},
+			wantHandshake:      30 * time.Second,
+			wantResponseHeader: 5 * time.Second,
+		},
+		"only handshake set": {
+			option:             &URLClientOption{HandshakeTimeout: 5 * time.Second},
+			wantHandshake:      5 * time.Second,
+			wantResponseHeader: 60 * time.Second,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			client, err := GetURLClient(tt.option)
+			if err != nil {
+				t.Fatalf("GetURLClient error: %v", err)
+			}
+			if client.options.HandshakeTimeout != tt.wantHandshake {
+				t.Errorf("HandshakeTimeout: got %v, want %v",
+					client.options.HandshakeTimeout, tt.wantHandshake)
+			}
+			if client.options.ResponseHeaderTimeout != tt.wantResponseHeader {
+				t.Errorf("ResponseHeaderTimeout: got %v, want %v",
+					client.options.ResponseHeaderTimeout, tt.wantResponseHeader)
+			}
+		})
+	}
+}
