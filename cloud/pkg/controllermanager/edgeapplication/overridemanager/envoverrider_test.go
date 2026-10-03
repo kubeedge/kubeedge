@@ -97,6 +97,7 @@ func TestReplaceEnv(t *testing.T) {
 			result := replaceEnv(tt.curEnv, tt.replaceValues)
 
 			assert.Equal(t, len(tt.expected), len(result), "Expected same number of env vars")
+			assert.Equal(t, tt.expected, result, "Expected environment variable order and values to be deterministic")
 
 			resultMap := make(map[string]string)
 			for _, env := range result {

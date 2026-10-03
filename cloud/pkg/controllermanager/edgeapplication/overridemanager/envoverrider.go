@@ -156,22 +156,31 @@ func overrideEnv(curEnv []corev1.EnvVar, envOverrider *v1alpha1.EnvOverrider) ([
 }
 
 func replaceEnv(curEnv []corev1.EnvVar, replaceValues []corev1.EnvVar) []corev1.EnvVar {
-	newEnv := make([]corev1.EnvVar, 0, len(curEnv))
-	currentMap := make(map[string]corev1.EnvVar)
-
-	// Populate current map with existing environment variables
-	for _, envVar := range curEnv {
-		currentMap[envVar.Name] = envVar
-	}
-
-	// Replace or add new environment variables
+	replacements := make(map[string]corev1.EnvVar, len(replaceValues))
 	for _, replaceVar := range replaceValues {
-		currentMap[replaceVar.Name] = replaceVar
+		replacements[replaceVar.Name] = replaceVar
 	}
 
-	// Convert map back to slice
-	for _, envVar := range currentMap {
+	newEnv := make([]corev1.EnvVar, 0, len(curEnv)+len(replaceValues))
+	applied := make(map[string]struct{}, len(replaceValues))
+	for _, envVar := range curEnv {
+		if replacement, ok := replacements[envVar.Name]; ok {
+			newEnv = append(newEnv, replacement)
+			applied[envVar.Name] = struct{}{}
+			continue
+		}
 		newEnv = append(newEnv, envVar)
+	}
+
+	// Append new variables in the order supplied by the overrider. This keeps
+	// generated Kubernetes manifests stable across reconciliations.
+	for _, replaceVar := range replaceValues {
+		if _, ok := applied[replaceVar.Name]; !ok {
+			if _, exists := replacements[replaceVar.Name]; exists {
+				newEnv = append(newEnv, replaceVar)
+				applied[replaceVar.Name] = struct{}{}
+			}
+		}
 	}
 
 	return newEnv
