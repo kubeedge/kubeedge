@@ -4,12 +4,15 @@ import (
 	cliflag "k8s.io/component-base/cli/flag"
 )
 
+// ControllerManagerOptions holds the configuration for the controller manager.
 type ControllerManagerOptions struct {
 	UseServerSideApply     bool
 	HealthProbeBindAddress string
 	FeatureGates           []string
 }
 
+// NewControllerManagerOptions creates a new ControllerManagerOptions with
+// default configuration values.
 func NewControllerManagerOptions() *ControllerManagerOptions {
 	return &ControllerManagerOptions{}
 }
