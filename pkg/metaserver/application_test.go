@@ -72,7 +72,9 @@ func TestNewApplication(t *testing.T) {
 
 	for _, test := range cases {
 		app, err := NewApplication(test.ctx, test.key, test.verb, test.nodename, test.subresource, test.option, test.reqBody)
-		assert.NoError(t, err)
+		if !assert.NoError(t, err) {
+			continue
+		}
 		assert.Equal(t, test.key, app.Key)
 		assert.Equal(t, test.verb, app.Verb)
 		assert.Equal(t, test.nodename, app.Nodename)
@@ -239,7 +241,9 @@ func TestOptionTo(t *testing.T) {
 	for _, test := range cases {
 		var result map[string]string
 		err := test.app.OptionTo(&result)
-		assert.NoError(t, err)
+		if !assert.NoError(t, err) {
+			continue
+		}
 		assert.Equal(t, test.stdResult, result)
 	}
 
@@ -263,7 +267,9 @@ func TestReqBodyTo(t *testing.T) {
 	for _, test := range cases {
 		var result map[string]string
 		err := test.app.ReqBodyTo(&result)
-		assert.NoError(t, err)
+		if !assert.NoError(t, err) {
+			continue
+		}
 		assert.Equal(t, result, test.stdResult)
 	}
 
@@ -288,7 +294,9 @@ func TestRespBodyTo(t *testing.T) {
 	for _, test := range cases {
 		var result map[string]string
 		err := test.app.RespBodyTo(&result)
-		assert.NoError(t, err)
+		if !assert.NoError(t, err) {
+			continue
+		}
 		assert.Equal(t, test.expected, result)
 	}
 
