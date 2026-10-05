@@ -71,8 +71,9 @@ func (b CloudInitUpdateBase) HasSets(key string) bool {
 
 // InitOptions defines cloud init flags
 type InitOptions struct {
-	Manifests string
-	SkipCRDs  bool
+	Manifests           string
+	SkipCRDs            bool
+	SkipPreflightChecks bool
 	CloudInitUpdateBase
 }
 
@@ -170,6 +171,7 @@ type Keadm struct {
 	ArchGroup         []string          `yaml:"archGroup"`
 	OfflinePackageDir *string           `yaml:"offlinePackageDir,omitempty"`
 	CmdTplArgs        map[string]string `yaml:"cmdTplArgs,omitempty"`
+	KeadmBinDir       *string           `yaml:"keadmBinDir,omitempty"`
 }
 
 // Download defines the url and enable flag
@@ -180,10 +182,11 @@ type Download struct {
 
 // Node defines the node information used in batch-process config file
 type Node struct {
-	NodeName string  `yaml:"nodeName"`
-	KeadmCmd string  `yaml:"keadmCmd"`
-	CopyFrom *string `yaml:"copyFrom,omitempty"`
-	SSH      SSH     `yaml:"ssh"`
+	NodeName    string  `yaml:"nodeName"`
+	KeadmCmd    string  `yaml:"keadmCmd"`
+	CopyFrom    *string `yaml:"copyFrom,omitempty"`
+	SSH         SSH     `yaml:"ssh"`
+	KeadmBinDir *string `yaml:"keadmBinDir,omitempty"`
 }
 
 // SSH defines the ssh information used in batch-process config file

@@ -16,6 +16,9 @@ const (
 	PayloadLenSize   = 4
 	HeaderSize       = VersionSize + PackageTypeSize + PackageFlagsSize + PayloadLenSize
 
+	// MaxPayloadLen limits the maximum viaduct payload size accepted by the packer.
+	MaxPayloadLen uint32 = 32 * 1024 * 1024
+
 	// filed offsets
 	VersionOffset     = 0
 	PackageTypeOffset = VersionSize

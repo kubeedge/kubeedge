@@ -77,16 +77,17 @@ func (f *FilterImpl) FilterResource(_ string, obj runtime.Object) {
 		eps.Endpoints[0].Addresses = eps.Endpoints[0].Addresses[:1]
 		eps.Endpoints[0].Addresses[0] = defaultMetaServerIP
 		for i := range eps.Ports {
-			if *(eps.Ports[i].Name) != defaultEndpointSlicePortName {
+			if eps.Ports[i].Name == nil || *eps.Ports[i].Name != defaultEndpointSlicePortName {
 				continue
 			}
-			*(eps.Ports[i].Port) = defaultMetaServerPort
-			unstrRaw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&eps)
-			if err != nil {
-				klog.Errorf("default endpointslice %v convert to unstructure error: %v", eps.Name, err)
-				return
-			}
-			unstruct.SetUnstructuredContent(unstrRaw)
+			port := f.port
+			eps.Ports[i].Port = &port
 		}
+		unstrRaw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&eps)
+		if err != nil {
+			klog.Errorf("default endpointslice %v convert to unstructure error: %v", eps.Name, err)
+			return
+		}
+		unstruct.SetUnstructuredContent(unstrRaw)
 	}
 }

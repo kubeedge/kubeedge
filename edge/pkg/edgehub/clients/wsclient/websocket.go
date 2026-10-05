@@ -73,6 +73,7 @@ func (wsc *WebSocketClient) Init() error {
 
 	option := wsclient.Options{
 		HandshakeTimeout: wsc.config.HandshakeTimeout,
+		ReadDeadline:     wsc.config.ReadDeadline,
 		TLSConfig:        tlsConfig,
 		Type:             api.ProtocolTypeWS,
 		Addr:             wsc.config.URL,

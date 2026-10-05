@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/beego/beego/v2/client/orm"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
@@ -15,8 +14,8 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
 	eventconfig "github.com/kubeedge/kubeedge/edge/pkg/eventbus/config"
-	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/dao"
 	mqttBus "github.com/kubeedge/kubeedge/edge/pkg/eventbus/mqtt"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/pkg/features"
 )
 
@@ -25,6 +24,7 @@ var mqttServer *mqttBus.Server
 // eventbus struct
 type eventbus struct {
 	enable bool
+	ebs    *dbclient.EventBusService
 }
 
 var _ core.Module = (*eventbus)(nil)
@@ -32,6 +32,7 @@ var _ core.Module = (*eventbus)(nil)
 func newEventbus(enable bool) *eventbus {
 	return &eventbus{
 		enable: enable,
+		ebs:    dbclient.NewEventBusService(),
 	}
 }
 
@@ -39,7 +40,6 @@ func newEventbus(enable bool) *eventbus {
 func Register(eventbus *v1alpha2.EventBus, nodeName string) {
 	eventconfig.InitConfigure(eventbus, nodeName)
 	core.Register(newEventbus(eventbus.Enable))
-	orm.RegisterModel(new(dao.SubTopics))
 }
 
 func (*eventbus) Name() string {
@@ -208,7 +208,7 @@ func (eb *eventbus) subscribe(topic string) {
 		}
 	}
 
-	err := dao.InsertTopics(topic)
+	err := eb.ebs.InsertTopics(topic)
 	if err != nil {
 		klog.Errorf("Insert topic %s failed, %v", topic, err)
 	}
@@ -227,7 +227,7 @@ func (eb *eventbus) unsubscribe(topic string) {
 		}
 	}
 
-	err := dao.DeleteTopicsByKey(topic)
+	err := eb.ebs.DeleteTopicsByKey(topic)
 	if err != nil {
 		klog.Errorf("Delete topic %s failed, %v", topic, err)
 	}

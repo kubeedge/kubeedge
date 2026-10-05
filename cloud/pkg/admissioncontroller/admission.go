@@ -135,6 +135,7 @@ func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) (*t
 
 		return &tls.Config{
 			Certificates: []tls.Certificate{sCert},
+			MinVersion:   tls.VersionTLS12,
 		}, nil
 	}
 
@@ -146,6 +147,7 @@ func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) (*t
 
 		return &tls.Config{
 			Certificates: []tls.Certificate{sCert},
+			MinVersion:   tls.VersionTLS12,
 		}, nil
 	}
 	return nil, errors.New("tls: failed to find any tls config data")

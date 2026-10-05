@@ -41,8 +41,8 @@ kubeedge::golang::verify_golang_version() {
 	  exit 1
   fi
 
-  if [ $Y -lt 21 ] ; then
-	  echo "go minor version must >= 21, now is $Y"
+  if [ $Y -lt 25 ] ; then
+	  echo "go minor version must >= 25, now is $Y"
 	  exit 1
   fi
 }
@@ -59,10 +59,10 @@ kubeedge::version::get_version_info() {
 
   GIT_VERSION=$(git describe --tags --abbrev=14 "${GIT_COMMIT}^{commit}" 2>/dev/null)
   if [[ -z "${GIT_VERSION}" ]]; then
-    echo 
-    echo "⚠️  No git tags found."
-    echo "⚠️  Falling back to default version: v0.0.0"
-    echo "⚠️  To avoid this, consider running: git fetch --tags"
+    echo >&2
+    echo "⚠️  No git tags found." >&2
+    echo "⚠️  Falling back to default version: v0.0.0" >&2
+    echo "⚠️  To avoid this, consider running: git fetch --tags" >&2
 
     GIT_VERSION="v0.0.0"
   fi

@@ -4,6 +4,15 @@ This method will guide you to deploy the edge part into a k8s cluster,
 so you need to login to the k8s master node (or where else if you can
 operate the cluster with `kubectl`).
 
+### Flannel on edge nodes
+
+Flannel is a standard CNI plugin, but KubeEdge does not bundle or manage Flannel on edge nodes. Flannel can be healthy on cloud Kubernetes nodes while edge pods still lack networking because edge nodes:
+
+- do not automatically run the Flannel DaemonSet (it only runs on nodes that can schedule it; edge nodes may be tainted or isolated);
+- may be in different network planes or behind NAT, so Flannel overlay traffic (e.g., VXLAN/UDP port 8472) can be blocked.
+
+If you want Flannel on edge nodes, install the CNI binaries and config on each edge node, ensure the Flannel agent runs there (DaemonSet with proper tolerations/selectors or a host-level service), and verify the required overlay ports are reachable between edge nodes.
+
 The manifests and scripts in `github.com/kubeedge/kubeedge/build/edge/kubernetes`
 will be used, so place these files to somewhere you can kubectl with.
 

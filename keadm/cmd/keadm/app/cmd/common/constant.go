@@ -61,7 +61,8 @@ const (
 // Cloud init flag names
 const (
 	// FlagNameSkipCRDs skip CRDs
-	FlagNameSkipCRDs = "skip-crds"
+	FlagNameSkipCRDs            = "skip-crds"
+	FlagNameSkipPreflightChecks = "skip-preflight-checks"
 
 	// FlagNameMaster sets the address of K8s master
 	// Deprecated: only used in deprecated/init.go
@@ -126,7 +127,7 @@ const (
 	DefaultK8SMinimumVersion = 11
 
 	// DefaultKubeEdgeVersion is the default KubeEdge version, it must have no prefix 'v'
-	DefaultKubeEdgeVersion = "1.22.0"
+	DefaultKubeEdgeVersion = "1.23.0"
 
 	// Helm action
 	HelmInstallAction  = "install"

@@ -48,7 +48,7 @@ func NewAccessRoleControllerManager(ctx context.Context, kubeCfg *rest.Config) (
 		// TODO: /healthz
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create controller manager, %v", err)
+		return nil, fmt.Errorf("failed to create controller manager: %w", err)
 	}
 
 	if err := setupControllers(ctx, controllerManager); err != nil {
@@ -68,7 +68,7 @@ func setupControllers(ctx context.Context, mgr manager.Manager) error {
 
 	klog.Info("setup policy controller")
 	if err := pc.SetupWithManager(ctx, mgr); err != nil {
-		return fmt.Errorf("failed to setup nodegroup controller, %v", err)
+		return fmt.Errorf("failed to setup policy controller: %w", err)
 	}
 	return nil
 }
@@ -99,6 +99,7 @@ func (pc *policyController) Enable() bool {
 	return kefeatures.DefaultFeatureGate.Enabled(kefeatures.RequireAuthorization)
 }
 
+// RestartPolicy returns nil to use the default restart policy.
 func (pc *policyController) RestartPolicy() *core.ModuleRestartPolicy {
 	return nil
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 // PersistentVolumesGetter is interface to get client PersistentVolumes
@@ -49,7 +49,7 @@ func (c *persistentvolumes) Delete(string) error {
 }
 
 func (c *persistentvolumes) Get(name string, _ metav1.GetOptions) (*api.PersistentVolume, error) {
-	resource := fmt.Sprintf("%s/%s/%s", v2.NullNamespace, "persistentvolume", name)
+	resource := fmt.Sprintf("%s/%s/%s", models.NullNamespace, "persistentvolume", name)
 	pvMsg := message.BuildMsg(modules.MetaGroup, "", modules.EdgedModuleName, resource, model.QueryOperation, nil)
 	msg, err := c.send.SendSync(pvMsg)
 	if err != nil {

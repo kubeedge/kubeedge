@@ -13,10 +13,11 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	messagepkg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 const (
@@ -40,6 +41,16 @@ var (
 	//twinActionCallBack map for action to callback
 	twinActionCallBack         map[string]CallBack
 	initTwinActionCallBackOnce sync.Once
+
+	// TwinServiceFactory is a function variable that can be mocked in tests
+	TwinServiceFactory = func() interface {
+		DeviceTwinTrans(adds []models.DeviceTwin, deletes []models.DeviceDelete, updates []models.DeviceTwinUpdate) error
+		QueryDevice(key string, condition string) ([]models.Device, error)
+		QueryDeviceAttr(key, condition string) (*[]models.DeviceAttr, error)
+		QueryDeviceTwin(key, condition string) (*[]models.DeviceTwin, error)
+	} {
+		return dbclient.NewDeviceService()
+	}
 )
 
 // TwinWorker deal twin event
@@ -215,7 +226,7 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 	}
 	if len(add) != 0 || len(deletes) != 0 || len(update) != 0 {
 		for i := 1; i <= dtcommon.RetryTimes; i++ {
-			err = dtclient.DeviceTwinTrans(add, deletes, update)
+			err = TwinServiceFactory().DeviceTwinTrans(add, deletes, update)
 			if err == nil {
 				break
 			}
@@ -234,7 +245,7 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 		if err := dealUpdateResult(context, deviceID, eventID, dtcommon.InternalErrorCode, err, updateResult); err != nil {
 			klog.Errorf("failed to send error update result for device %s: %v", deviceID, err)
 		}
-		if err != nil { // The error returned by dtclient.DeviceTwinTrans()
+		if err != nil { // The error returned by TwinServiceFactory().DeviceTwinTrans()
 			return err
 		}
 	}
@@ -502,7 +513,7 @@ func dealTwinDelete(returnResult *dttype.DealTwinResult, deviceID string, key st
 	}
 
 	if isChange {
-		update = append(update, dtclient.DeviceTwinUpdate{DeviceID: deviceID, Name: key, Cols: cols})
+		update = append(update, models.DeviceTwinUpdate{DeviceID: deviceID, Name: key, Cols: cols})
 		returnResult.Update = update
 		if dealType == RestDealType {
 			returnResult.Result[key] = nil
@@ -750,7 +761,7 @@ func dealTwinCompare(returnResult *dttype.DealTwinResult, deviceID string, key s
 		}
 	}
 	if isChange {
-		update = append(update, dtclient.DeviceTwinUpdate{DeviceID: deviceID, Name: key, Cols: cols})
+		update = append(update, models.DeviceTwinUpdate{DeviceID: deviceID, Name: key, Cols: cols})
 		returnResult.Update = update
 		current := dttype.CopyMsgTwin(twin, true)
 		document[key].CurrentState = &current
@@ -914,7 +925,7 @@ func dealTwinAdd(returnResult *dttype.DealTwinResult, deviceID string, key strin
 	}
 
 	if isChange {
-		twins[key] = dttype.DeviceTwinToMsgTwin([]dtclient.DeviceTwin{deviceTwin})[key]
+		twins[key] = dttype.DeviceTwinToMsgTwin([]models.DeviceTwin{deviceTwin})[key]
 		add := returnResult.Add
 		add = append(add, deviceTwin)
 		returnResult.Add = add
@@ -946,9 +957,9 @@ func dealTwinAdd(returnResult *dttype.DealTwinResult, deviceID string, key strin
 
 // DealMsgTwin get diff while updating twin
 func DealMsgTwin(context *dtcontext.DTContext, deviceID string, msgTwins map[string]*dttype.MsgTwin, dealType int) dttype.DealTwinResult {
-	add := make([]dtclient.DeviceTwin, 0)
-	deletes := make([]dtclient.DeviceDelete, 0)
-	update := make([]dtclient.DeviceTwinUpdate, 0)
+	add := make([]models.DeviceTwin, 0)
+	deletes := make([]models.DeviceDelete, 0)
+	update := make([]models.DeviceTwinUpdate, 0)
 	result := make(map[string]*dttype.MsgTwin)
 	syncResult := make(map[string]*dttype.MsgTwin)
 	document := make(map[string]*dttype.TwinDoc)

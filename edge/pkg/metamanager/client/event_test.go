@@ -17,9 +17,11 @@ limitations under the License.
 package client
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -29,112 +31,455 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
+const testEventName = "test-event"
+
 func TestNewEvents(t *testing.T) {
-	assert := assert.New(t)
+	mockSend := newMockSend()
 
-	s := newSend()
+	events := newEvents(testNamespace, mockSend)
 
-	events := newEvents(namespace, s)
-
-	assert.NotNil(events)
-	assert.Equal(namespace, events.namespace)
-	assert.IsType(&send{}, events.send)
+	assert.NotNil(t, events)
+	assert.Equal(t, testNamespace, events.namespace)
+	assert.Equal(t, mockSend, events.send)
 }
 
-func TestEventInterface(t *testing.T) {
-	assert := assert.New(t)
-
-	s := newSend()
-
-	e := newEvents(namespace, s)
-
-	t.Run("Create method", func(t *testing.T) {
-		evt := &corev1.Event{
-			ObjectMeta: metav1.ObjectMeta{Name: "CreateEvent", Namespace: namespace},
-		}
-		event, err := e.Create(evt, metav1.CreateOptions{})
-
-		assert.NoError(err)
-		assert.Equal(event, evt)
-	})
-
-	t.Run("Update method", func(t *testing.T) {
-		evt := &corev1.Event{
-			ObjectMeta: metav1.ObjectMeta{Name: "UpdateEvent", Namespace: namespace},
-		}
-		event, err := e.Update(evt, metav1.UpdateOptions{})
-
-		assert.NoError(err)
-		assert.Equal(event, evt)
-	})
-
-	t.Run("Patch method", func(t *testing.T) {
-		event, err := e.Patch("PatchSth", types.JSONPatchType, []byte("{\"key\": \"val\"}"), metav1.PatchOptions{})
-
-		assert.NoError(err)
-		assert.Equal(*event, corev1.Event{})
-	})
-
-	t.Run("Delete method", func(t *testing.T) {
-		err := e.Delete("DeleteSth", metav1.DeleteOptions{})
-
-		assert.NoError(err)
-	})
-
-	t.Run("Get method", func(t *testing.T) {
-		event, err := e.Get("GetSth", metav1.GetOptions{})
-
-		assert.NoError(err)
-		assert.Equal(*event, corev1.Event{})
-	})
-
-	t.Run("Apply method", func(t *testing.T) {
-		event, err := e.Apply(&appcorev1.EventApplyConfiguration{}, metav1.ApplyOptions{})
-
-		assert.NoError(err)
-		assert.Equal(*event, corev1.Event{})
-	})
-}
-
-func TestEventExtensionInterface(t *testing.T) {
-	assert := assert.New(t)
-	mockSend := &mockSendInterface{}
-	mockEvent := newEvents(namespace, mockSend)
-	mockSend.sendFunc = func(message *model.Message) {
-		assert.Equal(modules.MetaGroup, message.GetGroup())
-		assert.Equal(modules.EdgedModuleName, message.GetSource())
-		assert.NotEmpty(message.GetID())
-		assert.Equal("test-namespace/event/test-event", message.GetResource())
+func TestEvents_Create(t *testing.T) {
+	testCases := []struct {
+		name      string
+		event     *corev1.Event
+		expectErr bool
+	}{
+		{
+			name: "Create Event Success",
+			event: &corev1.Event{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testEventName,
+					Namespace: testNamespace,
+				},
+				Type:   corev1.EventTypeNormal,
+				Reason: "TestReason",
+			},
+			expectErr: false,
+		},
+		{
+			name:      "Create with nil Event",
+			event:     nil,
+			expectErr: false,
+		},
 	}
 
-	t.Run("CreateWithEventNamespace", func(t *testing.T) {
-		evt := &corev1.Event{ObjectMeta: metav1.ObjectMeta{
-			Name:         "test-event",
-			GenerateName: "",
-			Namespace:    namespace,
-		}}
-		result, err := mockEvent.CreateWithEventNamespace(evt)
-		assert.Equal(err, nil)
-		assert.Equal(result, evt)
-	})
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			eventsClient := newEvents(testNamespace, mockSend)
 
-	t.Run("UpdateWithEventNamespace", func(t *testing.T) {
-		evt := &corev1.Event{ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-event",
-			Namespace: namespace,
-		}}
-		result, err := mockEvent.UpdateWithEventNamespace(evt)
-		assert.Equal(err, nil)
-		assert.Equal(result, evt)
-	})
+			result, err := eventsClient.Create(test.event, metav1.CreateOptions{})
 
-	t.Run("PatchWithEventNamespace", func(t *testing.T) {
-		evt := &corev1.Event{ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-event",
-			Namespace: namespace,
-		}}
-		result, err := mockEvent.PatchWithEventNamespace(evt, []byte("{\"key\": \"val\"}"))
-		assert.Equal(err, nil)
-		assert.Equal(result, evt)
-	})
+			if test.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, test.event, result)
+			}
+		})
+	}
+}
+
+func TestEvents_Update(t *testing.T) {
+	testCases := []struct {
+		name      string
+		event     *corev1.Event
+		expectErr bool
+	}{
+		{
+			name: "Update Event Success",
+			event: &corev1.Event{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testEventName,
+					Namespace: testNamespace,
+				},
+				Type:   corev1.EventTypeWarning,
+				Reason: "UpdatedReason",
+			},
+			expectErr: false,
+		},
+		{
+			name:      "Update with nil Event",
+			event:     nil,
+			expectErr: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			eventsClient := newEvents(testNamespace, mockSend)
+
+			result, err := eventsClient.Update(test.event, metav1.UpdateOptions{})
+
+			if test.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, test.event, result)
+			}
+		})
+	}
+}
+
+func TestEvents_Patch(t *testing.T) {
+	testCases := []struct {
+		name      string
+		eventName string
+		patchType types.PatchType
+		patchData []byte
+		expectErr bool
+	}{
+		{
+			name:      "Patch Event Success",
+			eventName: testEventName,
+			patchType: types.JSONPatchType,
+			patchData: []byte(`[{"op":"replace","path":"/reason","value":"PatchedReason"}]`),
+			expectErr: false,
+		},
+		{
+			name:      "Patch with empty name",
+			eventName: "",
+			patchType: types.JSONPatchType,
+			patchData: []byte(`[{"op":"replace","path":"/reason","value":"PatchedReason"}]`),
+			expectErr: false,
+		},
+		{
+			name:      "Patch with invalid patch data",
+			eventName: testEventName,
+			patchType: types.JSONPatchType,
+			patchData: []byte(`invalid`),
+			expectErr: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			eventsClient := newEvents(testNamespace, mockSend)
+
+			result, err := eventsClient.Patch(test.eventName, test.patchType, test.patchData, metav1.PatchOptions{})
+
+			if test.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+			}
+		})
+	}
+}
+
+func TestEvents_Delete(t *testing.T) {
+	testCases := []struct {
+		name      string
+		eventName string
+		expectErr bool
+	}{
+		{
+			name:      "Delete Event Success",
+			eventName: testEventName,
+			expectErr: false,
+		},
+		{
+			name:      "Delete with empty name",
+			eventName: "",
+			expectErr: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			eventsClient := newEvents(testNamespace, mockSend)
+
+			err := eventsClient.Delete(test.eventName, metav1.DeleteOptions{})
+
+			if test.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestEvents_Get(t *testing.T) {
+	testCases := []struct {
+		name      string
+		eventName string
+		expectErr bool
+	}{
+		{
+			name:      "Get Event Success",
+			eventName: testEventName,
+			expectErr: false,
+		},
+		{
+			name:      "Get with empty name",
+			eventName: "",
+			expectErr: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			eventsClient := newEvents(testNamespace, mockSend)
+
+			result, err := eventsClient.Get(test.eventName, metav1.GetOptions{})
+
+			if test.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				require.NotNil(t, result)
+				assert.Equal(t, &corev1.Event{}, result)
+			}
+		})
+	}
+}
+
+func TestEvents_Apply(t *testing.T) {
+	testCases := []struct {
+		name      string
+		config    *appcorev1.EventApplyConfiguration
+		expectErr bool
+	}{
+		{
+			name:      "Apply Event Config Success",
+			config:    &appcorev1.EventApplyConfiguration{},
+			expectErr: false,
+		},
+		{
+			name:      "Apply with nil config",
+			config:    nil,
+			expectErr: false,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			eventsClient := newEvents(testNamespace, mockSend)
+
+			result, err := eventsClient.Apply(test.config, metav1.ApplyOptions{})
+
+			if test.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				require.NotNil(t, result)
+			}
+		})
+	}
+}
+
+func TestEvents_CreateWithEventNamespace(t *testing.T) {
+	testCases := []struct {
+		name      string
+		eventName string
+		event     *corev1.Event
+		respFunc  func(*model.Message) (*model.Message, error)
+		expectErr bool
+		errMsg    string
+	}{
+		{
+			name:      "Create Event Success",
+			eventName: testEventName,
+			event: &corev1.Event{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testEventName,
+					Namespace: testNamespace,
+				},
+				Type:    corev1.EventTypeNormal,
+				Reason:  "TestReason",
+				Message: "Test message",
+			},
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				resp := model.NewMessage(message.GetID())
+				resp.Content = "OK"
+				return resp, nil
+			},
+			expectErr: false,
+		},
+		{
+			name:      "Create Event Network Error",
+			eventName: testEventName,
+			event: &corev1.Event{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testEventName,
+					Namespace: testNamespace,
+				},
+			},
+			respFunc: func(message *model.Message) (*model.Message, error) {
+				return nil, fmt.Errorf("network error")
+			},
+			expectErr: true,
+			errMsg:    "send error",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			mockSend.sendFunc = func(message *model.Message) {
+				assert.Equal(t, modules.MetaGroup, message.GetGroup())
+				assert.Equal(t, modules.EdgedModuleName, message.GetSource())
+				assert.NotEmpty(t, message.GetID())
+				assert.Equal(t, fmt.Sprintf("%s/event/%s", testNamespace, test.eventName), message.GetResource())
+				assert.Equal(t, model.InsertOperation, message.GetOperation())
+			}
+
+			eventsClient := newEvents(testNamespace, mockSend)
+			result, err := eventsClient.CreateWithEventNamespace(test.event)
+
+			if test.expectErr {
+				// CreateWithEventNamespace doesn't return error, it just sends
+				assert.NoError(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, test.event, result)
+			}
+		})
+	}
+}
+
+func TestEvents_UpdateWithEventNamespace(t *testing.T) {
+	testCases := []struct {
+		name  string
+		event *corev1.Event
+	}{
+		{
+			name: "Update Event Success",
+			event: &corev1.Event{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testEventName,
+					Namespace: testNamespace,
+				},
+				Type:   corev1.EventTypeWarning,
+				Reason: "UpdatedReason",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			mockSend.sendFunc = func(message *model.Message) {
+				assert.Equal(t, modules.MetaGroup, message.GetGroup())
+				assert.Equal(t, modules.EdgedModuleName, message.GetSource())
+				assert.NotEmpty(t, message.GetID())
+				assert.Equal(t, fmt.Sprintf("%s/event/%s", testNamespace, testEventName), message.GetResource())
+				assert.Equal(t, model.UpdateOperation, message.GetOperation())
+			}
+
+			eventsClient := newEvents(testNamespace, mockSend)
+			result, err := eventsClient.UpdateWithEventNamespace(test.event)
+
+			assert.NoError(t, err)
+			assert.Equal(t, test.event, result)
+		})
+	}
+}
+
+func TestEvents_PatchWithEventNamespace(t *testing.T) {
+	patchData := []byte(`[{"op":"replace","path":"/message","value":"Patched message"}]`)
+
+	testCases := []struct {
+		name      string
+		event     *corev1.Event
+		patchData []byte
+	}{
+		{
+			name: "Patch Event Success",
+			event: &corev1.Event{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testEventName,
+					Namespace: testNamespace,
+				},
+			},
+			patchData: patchData,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockSend := &mockSendInterface{}
+			mockSend.sendSyncFunc = func(message *model.Message) (*model.Message, error) {
+				assert.Equal(t, modules.MetaGroup, message.GetGroup())
+				assert.Equal(t, modules.EdgedModuleName, message.GetSource())
+				assert.NotEmpty(t, message.GetID())
+				assert.Equal(t, fmt.Sprintf("%s/event/%s", testNamespace, testEventName), message.GetResource())
+				assert.Equal(t, model.PatchOperation, message.GetOperation())
+
+				resp := model.NewMessage(message.GetID())
+				resp.Content = test.event
+				return resp, nil
+			}
+
+			eventsClient := newEvents(testNamespace, mockSend)
+			result, err := eventsClient.PatchWithEventNamespace(test.event, test.patchData)
+
+			assert.NoError(t, err)
+			assert.Equal(t, test.event, result)
+		})
+	}
+}
+
+func TestEvents_Interface(t *testing.T) {
+	// Verify that events implements EventsInterface
+	var _ EventsInterface = &events{}
+
+	mockSend := newMockSend()
+	eventsClient := newEvents(testNamespace, mockSend)
+
+	var _ EventsInterface = eventsClient
+	assert.NotNil(t, eventsClient)
+}
+
+func TestEvents_WithDifferentEventTypes(t *testing.T) {
+	testCases := []struct {
+		name      string
+		eventType string
+		reason    string
+	}{
+		{
+			name:      "Normal Event",
+			eventType: corev1.EventTypeNormal,
+			reason:    "PodCreated",
+		},
+		{
+			name:      "Warning Event",
+			eventType: corev1.EventTypeWarning,
+			reason:    "BackOff",
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			event := &corev1.Event{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      testEventName,
+					Namespace: testNamespace,
+				},
+				Type:   test.eventType,
+				Reason: test.reason,
+			}
+
+			mockSend := newMockSend()
+			eventsClient := newEvents(testNamespace, mockSend)
+
+			result, err := eventsClient.Create(event, metav1.CreateOptions{})
+
+			assert.NoError(t, err)
+			assert.Equal(t, test.eventType, result.Type)
+			assert.Equal(t, test.reason, result.Reason)
+		})
+	}
 }

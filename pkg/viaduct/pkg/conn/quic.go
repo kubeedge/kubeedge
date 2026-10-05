@@ -101,8 +101,7 @@ func (conn *QuicConnection) serveControlLan() {
 	}
 }
 
-// ServeSession accept streams from remote peer
-// then, receive messages from the steam
+// serveSession accepts streams from the remote peer and receives messages from each stream.
 func (conn *QuicConnection) serveSession() {
 	for {
 		stream, err := conn.session.AcceptStream()
@@ -290,6 +289,9 @@ func (conn *QuicConnection) WriteMessageSync(msg *model.Message) (*model.Message
 
 	// receive response
 	response, err := conn.syncKeeper.WaitResponse(msg, conn.writeDeadline)
+	if err != nil {
+		return nil, err
+	}
 	return &response, nil
 }
 

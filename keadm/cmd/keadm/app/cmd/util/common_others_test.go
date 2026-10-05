@@ -1092,6 +1092,10 @@ func TestGetOSInterfaceOthers(t *testing.T) {
 			expectedType:   "*util.PacmanOS",
 		},
 		{
+			packageManager: ZYPPER,
+			expectedType:   "*util.ZypperOS",
+		},
+		{
 			packageManager: "Unknown",
 			wantErr:        true,
 		},
@@ -1107,7 +1111,7 @@ func TestGetOSInterfaceOthers(t *testing.T) {
 			if tt.wantErr {
 				defer func() {
 					errmsg := recover().(string)
-					assert.Equal(t, "Failed to detect supported package manager command(apt, yum, pacman), exit", errmsg)
+					assert.Equal(t, "Failed to detect supported package manager command(apt, yum, pacman, zypper), exit", errmsg)
 				}()
 			}
 			result := GetOSInterface()
@@ -1235,6 +1239,7 @@ func TestGetPackageManagerOthers(t *testing.T) {
 		aptExists    bool
 		yumExists    bool
 		pacmanExists bool
+		zypperExists bool
 		expected     string
 	}{
 		{
@@ -1243,6 +1248,14 @@ func TestGetPackageManagerOthers(t *testing.T) {
 			yumExists:    false,
 			pacmanExists: false,
 			expected:     "",
+		},
+		{
+			name:         "Zypper package manager found",
+			aptExists:    false,
+			yumExists:    false,
+			pacmanExists: false,
+			zypperExists: true,
+			expected:     ZYPPER,
 		},
 	}
 
@@ -1257,14 +1270,22 @@ func TestGetPackageManagerOthers(t *testing.T) {
 			})
 
 			patches.ApplyMethod(mockCmd, "Exec", func(cmd *execs.Command) error {
-				if (tt.aptExists && cmd.GetCommand() == "bash -c which apt") ||
-					(tt.yumExists && cmd.GetCommand() == "bash -c which yum") ||
-					(tt.pacmanExists && cmd.GetCommand() == "bash -c which pacman") {
-					cmd.ExitCode = 0
-					return nil
+				switch {
+				case tt.aptExists:
+					cmd.StdOut = []byte("/usr/bin/apt")
+				case tt.yumExists:
+					cmd.StdOut = []byte("/usr/bin/yum")
+				case tt.pacmanExists:
+					cmd.StdOut = []byte("/usr/bin/pacman")
+				case tt.zypperExists:
+					cmd.StdOut = []byte("/usr/bin/zypper")
+				default:
+					cmd.ExitCode = 1
+					return fmt.Errorf("command not found")
 				}
-				cmd.ExitCode = 1
-				return fmt.Errorf("command not found")
+
+				cmd.ExitCode = 0
+				return nil
 			})
 
 			result := GetPackageManager()

@@ -17,7 +17,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
-	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
@@ -101,7 +101,7 @@ func (sctl *SyncController) gcOrphanedClusterObjectSyncImpl(sync *v1alpha1.Clust
 	object := &unstructured.Unstructured{}
 	object.SetName(sync.Spec.ObjectName)
 	object.SetUID(types.UID(getObjectUIDFunc(sync.Name)))
-	if msg := buildEdgeControllerMessageFunc(nodeName, v2.NullNamespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, object); msg != nil {
+	if msg := buildEdgeControllerMessageFunc(nodeName, models.NullNamespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, object); msg != nil {
 		sendToEdge(commonconst.DefaultContextSendModuleName, *msg)
 	} else {
 		if err := deleteClusterObjectSyncFunc(sctl, sync.Name); err != nil {
@@ -125,7 +125,7 @@ func sendClusterObjectSyncEvent(nodeName string, sync *v1alpha1.ClusterObjectSyn
 	if compareResourceVersionFunc(objectResourceVersion, sync.Status.ObjectResourceVersion) > 0 {
 		// trigger the update event
 		klog.V(4).Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event", objectResourceVersion, resourceType, sync.Status.ObjectResourceVersion)
-		msg := buildEdgeControllerMessageFunc(nodeName, v2.NullNamespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)
+		msg := buildEdgeControllerMessageFunc(nodeName, models.NullNamespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)
 		sendToEdge(commonconst.DefaultContextSendModuleName, *msg)
 	}
 }

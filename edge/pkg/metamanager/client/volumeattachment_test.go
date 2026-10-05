@@ -13,9 +13,9 @@ func TestNewVolumeAttachments(t *testing.T) {
 	assert := assert.New(t)
 	sendInterface := newSend()
 
-	va := newVolumeAttachments(namespace, sendInterface)
+	va := newVolumeAttachments(testNamespace, sendInterface)
 	assert.NotNil(va)
-	assert.Equal(namespace, va.namespace)
+	assert.Equal(testNamespace, va.namespace)
 	assert.Equal(sendInterface, va.send)
 }
 

@@ -7,6 +7,9 @@ on:
     paths:
       - 'build/docker/build-tools/build-tools.dockerfile'
 
+permissions:
+  contents: read
+
 jobs:
   publish-image-to-dockerhub:
     name: publish to DockerHub

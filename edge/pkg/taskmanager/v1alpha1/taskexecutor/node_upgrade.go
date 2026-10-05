@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -31,7 +32,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/types"
 	commontypes "github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
-	daov2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/pkg/containers"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 	"github.com/kubeedge/kubeedge/pkg/version"
@@ -86,10 +87,48 @@ func initUpgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 		return
 	}
 
-	upgradedao := daov2.NewUpgradeV1alpha1()
+	upgradedao := dbclient.NewUpgradeV1alpha1()
 	err = upgradedao.Save(&taskReq)
 	if err != nil {
 		return
+	}
+	if upgradeReq.RequireConfirmation {
+		dbc := dbclient.NewMetaV2Service()
+		var upgradeJobReqDB = commontypes.NodeUpgradeJobRequest{
+			UpgradeID:           upgradeReq.UpgradeID,
+			HistoryID:           upgradeReq.HistoryID,
+			Version:             upgradeReq.Version,
+			UpgradeTool:         upgradeReq.UpgradeTool,
+			Image:               upgradeReq.Image,
+			ImageDigest:         upgradeReq.ImageDigest,
+			RequireConfirmation: upgradeReq.RequireConfirmation,
+		}
+		if err = dbc.SaveNodeUpgradeJobRequestToMetaV2(upgradeJobReqDB); err != nil {
+			event.Action = api.ActionFailure
+			event.Msg = err.Error()
+		}
+		e, _ := GetExecutor(TaskUpgrade)
+		var taskReqDB = types.NodeTaskRequest{
+			TaskID: e.Name(),
+			Type:   "Confirm",
+			State:  string(api.NodeUpgrading),
+			Item:   "Wait for a confirm for upgrade request on the edge site.",
+		}
+		if err = dbc.SaveNodeTaskRequestToMetaV2(taskReqDB); err != nil {
+			event.Action = api.ActionFailure
+			event.Msg = err.Error()
+		}
+		return fsm.Event{
+			Type:   "Confirm",
+			Action: api.ActionConfirmation,
+			Msg:    "Wait for a confirm for upgrade request on the edge site.",
+		}
+	}
+	if upgradeReq.Version == version.Get().String() {
+		return fsm.Event{
+			Type:   "Upgrading",
+			Action: api.ActionSuccess,
+		}
 	}
 
 	if upgradeReq.RequireConfirmation {
@@ -128,7 +167,7 @@ func upgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 	// The NodeTaskRequest of v1alpha1 upgrade node job only needs data when confirming.
 	// The edgecore process will be interrupted when keadm executes the upgrade command,
 	// so the data needs to be cleaned up in advance.
-	upgradedao := daov2.NewUpgradeV1alpha1()
+	upgradedao := dbclient.NewUpgradeV1alpha1()
 	if err := upgradedao.Delete(); err != nil {
 		return
 	}
@@ -153,19 +192,40 @@ func upgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 
 func keadmUpgrade(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) error {
 	klog.Infof("Begin to run upgrade command")
-	upgradeCmd := fmt.Sprintf("keadm upgrade edge --upgradeID %s --historyID %s --fromVersion %s --toVersion %s --config %s --image %s > /tmp/keadm.log 2>&1",
-		upgradeReq.UpgradeID, upgradeReq.HistoryID, version.Get(), upgradeReq.Version, opts.ConfigFile, upgradeReq.Image)
 
-	// run upgrade cmd to upgrade edge node
-	// use nohup command to start a child progress
-	command := fmt.Sprintf("nohup %s &", upgradeCmd)
-	cmd := exec.Command("bash", "-c", command)
-	s, err := cmd.CombinedOutput()
+	logFile, err := os.OpenFile("/tmp/keadm.log", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
-		return fmt.Errorf("run upgrade command %s failed: %v, %s", command, err, s)
+		return fmt.Errorf("failed to open keadm log file: %w", err)
 	}
-	klog.Infof("!!! Finish upgrade from Version %s to %s ...", version.Get(), upgradeReq.Version)
+	defer logFile.Close()
+
+	args := buildKeadmUpgradeArgs(upgradeReq, opts)
+
+	cmd := exec.Command("nohup", append([]string{"keadm"}, args...)...)
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to start keadm upgrade command: %w", err)
+	}
+	if err := cmd.Process.Release(); err != nil {
+		return fmt.Errorf("failed to release keadm upgrade process: %w", err)
+	}
+
+	klog.Infof("Started keadm upgrade from Version %s to %s ...", version.Get().String(), upgradeReq.Version)
 	return nil
+}
+
+func buildKeadmUpgradeArgs(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) []string {
+	return []string{
+		"upgrade", "edge",
+		"--upgradeID", upgradeReq.UpgradeID,
+		"--historyID", upgradeReq.HistoryID,
+		"--fromVersion", version.Get().String(),
+		"--toVersion", upgradeReq.Version,
+		"--config", opts.ConfigFile,
+		"--image", upgradeReq.Image,
+	}
 }
 
 func prepareKeadm(upgradeReq *commontypes.NodeUpgradeJobRequest) error {

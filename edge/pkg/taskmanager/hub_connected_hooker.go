@@ -27,7 +27,7 @@ import (
 
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	daov2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/taskmanager/actions"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 	upgradeedge "github.com/kubeedge/kubeedge/pkg/upgrade/edge"
@@ -46,7 +46,7 @@ func ReportUpgradeStatus(ctx context.Context) error {
 		return fmt.Errorf("failed to parse json reporter info, err: %v", err)
 	}
 
-	upgrede := daov2.NewUpgrade()
+	upgrede := dbclient.NewUpgrade()
 	jobname, nodename, spec, err := upgrede.Get()
 	if err != nil {
 		return fmt.Errorf("failed to get upgrade record, err: %v", err)
@@ -100,7 +100,7 @@ func ReportUpgradeStatus(ctx context.Context) error {
 		// Remove the upgrade status record when the final action is completed.
 		// - The upgrade command is successful;
 		// - The rollback command is finished;
-		upgradeDao := daov2.NewUpgrade()
+		upgradeDao := dbclient.NewUpgrade()
 		if err := upgradeDao.Delete(); err != nil {
 			logger.Error(err, "failed to delete upgrade record")
 		}

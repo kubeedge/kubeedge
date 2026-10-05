@@ -24,10 +24,13 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
+
+	securejoin "github.com/cyphar/filepath-securejoin"
 
 	"github.com/blang/semver"
 	"github.com/spf13/pflag"
@@ -73,6 +76,7 @@ const (
 	APT    string = "apt"
 	YUM    string = "yum"
 	PACMAN string = "pacman"
+	ZYPPER string = "zypper"
 
 	EdgeCoreSELinuxLabel = "system_u:object_r:bin_t:s0"
 )
@@ -106,7 +110,7 @@ func (co *Common) SetOSInterface(intf types.OSTypeInstaller) {
 
 // GetPackageManager get package manager of OS
 func GetPackageManager() string {
-	cmd := execs.NewCommand("command -v apt || command -v yum || command -v pacman")
+	cmd := execs.NewCommand("command -v apt || command -v yum || command -v pacman || command -v zypper")
 	err := cmd.Exec()
 	if err != nil {
 		fmt.Println(err)
@@ -119,6 +123,8 @@ func GetPackageManager() string {
 		return YUM
 	} else if strings.HasSuffix(cmd.GetStdOut(), PACMAN) {
 		return PACMAN
+	} else if strings.HasSuffix(cmd.GetStdOut(), ZYPPER) {
+		return ZYPPER
 	} else {
 		return ""
 	}
@@ -133,9 +139,11 @@ func GetOSInterface() types.OSTypeInstaller {
 		return &RpmOS{}
 	case PACMAN:
 		return &PacmanOS{}
+	case ZYPPER:
+		return &ZypperOS{}
 	default:
-		fmt.Println("Failed to detect supported package manager command(apt, yum, pacman), exit")
-		panic("Failed to detect supported package manager command(apt, yum, pacman), exit")
+		fmt.Println("Failed to detect supported package manager command(apt, yum, pacman, zypper), exit")
+		panic("Failed to detect supported package manager command(apt, yum, pacman, zypper), exit")
 	}
 }
 
@@ -228,7 +236,12 @@ func DecompressTarGz(gzFilePath, dest string) error {
 	}
 	defer reader.Close()
 
-	err = os.MkdirAll(dest, os.ModePerm)
+	absDest, err := filepath.Abs(dest)
+	if err != nil {
+		return err
+	}
+
+	err = os.MkdirAll(absDest, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -252,7 +265,23 @@ func DecompressTarGz(gzFilePath, dest string) error {
 			continue
 		}
 
-		target := filepath.Join(dest, header.Name)
+		if header.Name == "" {
+			return fmt.Errorf("tar entry name is empty")
+		}
+
+		entryName := strings.ReplaceAll(header.Name, "\\", "/")
+		entryName = path.Clean(entryName)
+		if len(entryName) >= 2 && entryName[1] == ':' && ((entryName[0] >= 'a' && entryName[0] <= 'z') || (entryName[0] >= 'A' && entryName[0] <= 'Z')) {
+			return fmt.Errorf("tar entry %q attempts path traversal outside %s", header.Name, absDest)
+		}
+		if path.IsAbs(entryName) || entryName == ".." || strings.HasPrefix(entryName, "../") {
+			return fmt.Errorf("tar entry %q attempts path traversal outside %s", header.Name, absDest)
+		}
+
+		target, err := securejoin.SecureJoin(absDest, entryName)
+		if err != nil {
+			return err
+		}
 		switch header.Typeflag {
 		case tar.TypeDir:
 			if _, err := os.Stat(target); err != nil {

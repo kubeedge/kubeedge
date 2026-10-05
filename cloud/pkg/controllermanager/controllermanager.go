@@ -2,11 +2,9 @@ package controllermanager
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -14,8 +12,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 	controllerruntime "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -62,48 +58,17 @@ func NewControllerManager(ctx context.Context, kubeCfg *rest.Config, healthProbe
 		return nil, fmt.Errorf("failed to add readyz check, err: %v", err)
 	}
 
-	che, err := newAndStartCache(ctx, kubeCfg)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := setupControllers(ctx, mgr, che); err != nil {
+	if err := setupControllers(ctx, mgr); err != nil {
 		return nil, err
 	}
 	return mgr, nil
 }
 
-func newAndStartCache(ctx context.Context, kubeCfg *rest.Config,
-) (che cache.Cache, err error) {
-	che, err = cache.New(kubeCfg, cache.Options{
-		// Register resources that need to be cached.
-		ByObject: map[client.Object]cache.ByObject{
-			&corev1.Node{}: {},
-		},
-	})
-	if err != nil {
-		err = fmt.Errorf("failed to create the cache, err: %v", err)
-		return
-	}
-	go func() {
-		err = che.Start(ctx)
-	}()
-	synced := che.WaitForCacheSync(ctx)
-	if err != nil {
-		err = fmt.Errorf("failed to start the cache, err: %v", err)
-		return
-	}
-	if !synced {
-		err = errors.New("could not sync the cache")
-		return
-	}
-	return
-}
-
-func setupControllers(ctx context.Context, mgr manager.Manager, che cache.Cache) error {
+func setupControllers(ctx context.Context, mgr manager.Manager) error {
 	serializer := json.NewSerializerWithOptions(json.DefaultMetaFactory,
 		kubeedgeScheme, kubeedgeScheme, json.SerializerOptions{Yaml: true})
 	cli := mgr.GetClient()
+	che := mgr.GetCache()
 
 	ctls := []Controller{
 		nodegroup.NewController(cli),

@@ -8,7 +8,7 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
-// TODO: how to solve json marshal unmashal problem against labels.Selector or fields.Selector?
+// TODO: how to solve json marshal unmarshal problem against labels.Selector or fields.Selector?
 type LabelFieldSelector struct {
 	Label labels.Selector
 	Field fields.Selector

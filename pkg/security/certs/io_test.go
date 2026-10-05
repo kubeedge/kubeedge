@@ -2,6 +2,7 @@ package certs
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -20,5 +21,15 @@ func TestReadWrite(t *testing.T) {
 	// Clean
 	if err := os.RemoveAll("testdata"); err != nil {
 		t.Fatalf("failed to clean testdata, err: %v", err)
+	}
+}
+
+func TestReadPEMFileNoBlock(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "invalid.crt")
+	if err := os.WriteFile(file, []byte("not a pem block"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ReadPEMFile(file); err == nil {
+		t.Fatal("expected error when file contains no PEM block, got nil")
 	}
 }

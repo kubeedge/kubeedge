@@ -85,7 +85,7 @@ func ConvertDevice(device *v1beta1.Device) (*pb.Device, error) {
 		for k, v := range device.Spec.Protocol.ConfigData.Data {
 			anyValue, err := dataToAny(v)
 			if err != nil {
-				return nil, fmt.Errorf("failed to convert protocol config data: %v", err)
+				return nil, fmt.Errorf("failed to convert protocol config data: %w", err)
 			}
 			configAnyData[k] = anyValue
 		}
@@ -96,7 +96,7 @@ func ConvertDevice(device *v1beta1.Device) (*pb.Device, error) {
 	for i := range device.Spec.Properties {
 		property, err := convertDeviceProperty(&device.Spec.Properties[i])
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert property: %v", err)
+			return nil, fmt.Errorf("failed to convert property: %w", err)
 		}
 		edgePropertyVisitors = append(edgePropertyVisitors, property)
 	}
@@ -128,7 +128,7 @@ func convertDeviceProperty(prop *v1beta1.DeviceProperty) (*pb.DeviceProperty, er
 	item := new(pb.DeviceProperty)
 	propertyData, err := json.Marshal(prop)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal property: %v", err)
+		return nil, fmt.Errorf("failed to marshal property: %w", err)
 	}
 
 	err = json.Unmarshal(propertyData, item)
@@ -138,11 +138,29 @@ func convertDeviceProperty(prop *v1beta1.DeviceProperty) (*pb.DeviceProperty, er
 		for k, v := range prop.Visitors.ConfigData.Data {
 			anyValue, err := dataToAny(v)
 			if err != nil {
-				return nil, fmt.Errorf("failed to convert visitor config data: %v", err)
+				return nil, fmt.Errorf("failed to convert visitor config data: %w", err)
 			}
 			configAnyData[k] = anyValue
 		}
 		item.Visitors.ConfigData.Data = configAnyData
+	}
+
+	if prop.PushMethod != nil && prop.PushMethod.AnomalyDetection != nil && prop.PushMethod.AnomalyDetection.Data != nil {
+		anomalyDetectionAnyData := make(map[string]*anypb.Any)
+		for k, v := range prop.PushMethod.AnomalyDetection.Data {
+			anyValue, err := dataToAny(v)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert anomaly detection data: %v", err)
+			}
+			anomalyDetectionAnyData[k] = anyValue
+		}
+		if item.PushMethod == nil {
+			item.PushMethod = &pb.PushMethod{}
+		}
+		if item.PushMethod.AnomalyDetection == nil {
+			item.PushMethod.AnomalyDetection = &pb.AnomalyDetection{}
+		}
+		item.PushMethod.AnomalyDetection.Data = anomalyDetectionAnyData
 	}
 
 	return item, nil

@@ -3,6 +3,7 @@ package manager
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 )
 
@@ -37,6 +38,9 @@ func (c *CommonResourceEventHandler) OnUpdate(_, newObj interface{}) {
 
 // OnDelete handle Delete event
 func (c *CommonResourceEventHandler) OnDelete(obj interface{}) {
+	if tombstone, ok := obj.(cache.DeletedFinalStateUnknown); ok {
+		obj = tombstone.Obj
+	}
 	c.obj2Event(watch.Deleted, obj)
 }
 

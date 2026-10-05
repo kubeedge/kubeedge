@@ -1,4 +1,4 @@
-FROM golang:1.21.11-bullseye AS builder
+FROM golang:1.25.14-bookworm AS builder
 
 WORKDIR /build
 
@@ -8,7 +8,7 @@ ENV GO111MODULE=on \
 COPY . .
 
 RUN apt-get update && \
-    apt-get install -y bzip2 curl upx-ucl gcc-aarch64-linux-gnu libc6-dev-arm64-cross gcc-arm-linux-gnueabi libc6-dev-armel-cross libva-dev libva-drm2 libx11-dev libvdpau-dev libxext-dev libsdl1.2-dev libxcb1-dev libxau-dev libxdmcp-dev yasm
+    apt-get install -y bzip2 curl gcc-aarch64-linux-gnu libc6-dev-arm64-cross gcc-arm-linux-gnueabi libc6-dev-armel-cross libva-dev libva-drm2 libx11-dev libvdpau-dev libxext-dev libsdl1.2-dev libxcb1-dev libxau-dev libxdmcp-dev yasm
 
 RUN curl -sLO https://ffmpeg.org/releases/ffmpeg-4.1.6.tar.bz2 && \
     tar -jx --strip-components=1 -f ffmpeg-4.1.6.tar.bz2 &&  \
@@ -17,12 +17,13 @@ RUN curl -sLO https://ffmpeg.org/releases/ffmpeg-4.1.6.tar.bz2 && \
 
 RUN GOOS=linux go build -o main cmd/main.go
 
-FROM ubuntu:18.04
+# Match the builder's libc for the CGO-enabled streaming binary.
+FROM debian:bookworm
 
 RUN mkdir -p kubeedge
 
 RUN apt-get update && \
-    apt-get install -y bzip2 curl upx-ucl gcc-aarch64-linux-gnu libc6-dev-arm64-cross gcc-arm-linux-gnueabi libc6-dev-armel-cross libva-dev libva-drm2 libx11-dev libvdpau-dev libxext-dev libsdl1.2-dev libxcb1-dev libxau-dev libxdmcp-dev yasm
+    apt-get install -y build-essential pkg-config bzip2 curl gcc-aarch64-linux-gnu libc6-dev-arm64-cross gcc-arm-linux-gnueabi libc6-dev-armel-cross libva-dev libva-drm2 libx11-dev libvdpau-dev libxext-dev libsdl1.2-dev libxcb1-dev libxau-dev libxdmcp-dev yasm
 
 RUN curl -sLO https://ffmpeg.org/releases/ffmpeg-4.1.6.tar.bz2 && \
     tar -jx --strip-components=1 -f ffmpeg-4.1.6.tar.bz2 &&  \

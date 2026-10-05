@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -18,12 +19,17 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator"
 	patchutil "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/util"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
+
+// ErrCountUnsupported is returned by Count to signal that the operation is
+// not implemented by this SQLite-backed store. Callers can test for it with
+// errors.Is.
+var ErrCountUnsupported = errors.New("Count is not supported by the edge SQLite store")
 
 /*
 This file is designed to encapsulate the Imitator as Store.Interface,
@@ -138,8 +144,8 @@ func (s *store) GuaranteedUpdate(context.Context, string, runtime.Object, bool, 
 	panic("Do not call this function")
 }
 
-func (s *store) Count(string) (int64, error) {
-	panic("implement me")
+func (s *store) Count(_ string) (int64, error) {
+	return 0, ErrCountUnsupported
 }
 
 func (s *store) RequestWatchProgress(context.Context) error {
@@ -168,7 +174,7 @@ func newStore() *store {
 func MergePatchedResource(ctx context.Context, originalObj *unstructured.Unstructured, resourceTypePatch string) error {
 	resKey := fmt.Sprintf("%s/%s/%s", originalObj.GetNamespace(), resourceTypePatch, originalObj.GetName())
 	var metas *[]string
-	metas, err := dao.QueryMeta("key", resKey)
+	metas, err := dbclient.NewMetaService().QueryMeta("key", resKey)
 	if err != nil {
 		return err
 	}

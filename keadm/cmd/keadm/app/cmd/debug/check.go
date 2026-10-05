@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/spf13/cobra"
+	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 
 	"github.com/kubeedge/api/apis/common/constants"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -48,12 +50,17 @@ and maintenance personnel to locate the problem`
         # Check whether the number of free processes on the node meets requirements.
         keadm debug check pid
 
-        # Check whether runtime(Docker) is installed on the node.
+        # Check whether the container runtime can work.
         keadm debug check runtime
 `
 )
 
 type CheckObject common.CheckObject
+
+type runtimeStatusChecker interface {
+	Connect() error
+	IsRunning() error
+}
 
 // NewCheck returns KubeEdge edge check command.
 func NewCheck() *cobra.Command {
@@ -95,6 +102,9 @@ func NewSubEdgeCheck(object CheckObject) *cobra.Command {
 		cmd.Flags().StringVarP(&co.CloudHubServer, "cloud-hub-server", "s", co.CloudHubServer, "specify cloudhub server")
 		cmd.Flags().StringVarP(&co.Config, common.EdgecoreConfig, "c", co.Config,
 			fmt.Sprintf("Specify configuration file, default is %s", constants.EdgecoreConfigPath))
+	case common.ArgCheckRuntime:
+		cmd.Flags().StringVarP(&co.Config, common.EdgecoreConfig, "c", co.Config,
+			fmt.Sprintf("Specify configuration file, default is %s", constants.EdgecoreConfigPath))
 	}
 
 	return cmd
@@ -130,7 +140,7 @@ func (co *CheckObject) ExecuteCheck(use string, ob *common.CheckOptions) {
 	case common.ArgCheckNetwork:
 		err = CheckNetWork(ob.IP, ob.Timeout, ob.CloudHubServer, ob.EdgecoreServer, ob.Config)
 	case common.ArgCheckRuntime:
-		err = CheckRuntime()
+		err = CheckRuntime(ob.Config)
 	case common.ArgCheckPID:
 		err = CheckPid()
 	}
@@ -174,7 +184,7 @@ func CheckAll(ob *common.CheckOptions) error {
 		return err
 	}
 
-	err = CheckRuntime()
+	err = CheckRuntime(ob.Config)
 	if err != nil {
 		return err
 	}
@@ -342,9 +352,53 @@ func CheckHTTP(url string) error {
 	return nil
 }
 
-func CheckRuntime() error {
-	// TODO: check runtime status
+func CheckRuntime(config string) error {
+	endpoint, err := getRuntimeEndpoint(config)
+	if err != nil {
+		return err
+	}
+	return checkRuntimeEndpoint(endpoint, utilruntime.NewContainerRuntime(endpoint))
+}
+
+func checkRuntimeEndpoint(endpoint string, containerRuntime runtimeStatusChecker) error {
+	if err := containerRuntime.Connect(); err != nil {
+		return fmt.Errorf("could not connect to the container runtime: %v", err)
+	}
+
+	if err := containerRuntime.IsRunning(); err != nil {
+		return err
+	}
+	fmt.Printf("check runtime endpoint %s success\n", endpoint)
 	return nil
+}
+
+func getRuntimeEndpoint(config string) (string, error) {
+	endpoint := constants.DefaultRemoteRuntimeEndpoint
+	if config == "" {
+		return endpoint, nil
+	}
+
+	if _, err := os.Stat(config); err != nil {
+		if os.IsNotExist(err) {
+			if config == constants.EdgecoreConfigPath {
+				return endpoint, nil
+			}
+			return "", fmt.Errorf("edgecore config %s does not exist", config)
+		}
+		return "", fmt.Errorf("stat edgecore config %s failed: %v", config, err)
+	}
+
+	edgeConfig, err := util.ParseEdgecoreConfig(config)
+	if err != nil {
+		return "", fmt.Errorf("parse Edgecore config failed: %w", err)
+	}
+	if edgeConfig.Modules == nil || edgeConfig.Modules.Edged == nil || edgeConfig.Modules.Edged.TailoredKubeletConfig == nil {
+		return endpoint, nil
+	}
+	if edgeConfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint != "" {
+		endpoint = edgeConfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint
+	}
+	return endpoint, nil
 }
 
 func CheckPid() error {

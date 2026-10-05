@@ -1,11 +1,11 @@
 module github.com/kubeedge/beehive
 
-go 1.23
+go 1.25.14
 
 require (
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.10.0
-	k8s.io/klog/v2 v2.130.1
+	k8s.io/klog/v2 v2.140.0
 	sigs.k8s.io/yaml v1.4.0
 )
 

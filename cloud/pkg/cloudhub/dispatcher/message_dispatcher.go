@@ -40,7 +40,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller"
 	taskutil "github.com/kubeedge/kubeedge/cloud/pkg/taskmanager/v1alpha1/util"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
-	v2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
@@ -216,9 +216,13 @@ func (md *messageDispatcher) PubToController(info *model.HubInfo, msg *beehivemo
 func (md *messageDispatcher) enqueueNoAckMessage(nodeID string, msg *beehivemodel.Message) {
 	nodeMessagePool := md.GetNodeMessagePool(nodeID)
 
-	messageKey, _ := common.NoAckMessageKeyFunc(msg)
+	messageKey, err := common.NoAckMessageKeyFunc(msg)
+	if err != nil {
+		klog.Errorf("failed to get key for no-ack message, err: %v", err)
+		return
+	}
 	if err := nodeMessagePool.NoAckMessageStore.Add(msg); err != nil {
-		klog.Errorf("failed to add msg: %v", err)
+		klog.Errorf("failed to add message %v to NoAckMessageStore, err: %v", msg, err)
 		return
 	}
 	nodeMessagePool.NoAckMessageQueue.Add(messageKey)
@@ -275,7 +279,7 @@ func (md *messageDispatcher) enqueueAckMessage(nodeID string, msg *beehivemodel.
 	// If the message doesn't exist in the store, then compare it with
 	// the version stored in the objectSync or clusterObjectSync.
 	resourceNamespace, _ := messagelayer.GetNamespace(*msg)
-	if resourceNamespace == v2.NullNamespace {
+	if resourceNamespace == models.NullNamespace {
 		shouldEnqueue = md.enqueueNonNamespacedResource(nodeID, msg)
 	} else {
 		shouldEnqueue = md.enqueueNamespacedResource(nodeID, msg)
@@ -302,7 +306,6 @@ func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *be
 	case err != nil && apierrors.IsNotFound(err):
 		// If clusterObjectSync is not exist, this indicates that the message is coming
 		// for the first time, We create clusterObjectSync for the resource directly.
-
 		clusterObjectSync := &v1alpha1.ClusterObjectSync{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: clusterObjectSyncName,
@@ -367,7 +370,6 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 	case err != nil && apierrors.IsNotFound(err):
 		// If objectSync is not exist, this indicates that the message is coming
 		// for the first time, We create objectSync for the resource directly.
-
 		objectSync := &v1alpha1.ObjectSync{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      objectSyncName,
@@ -480,7 +482,7 @@ func noAckRequired(msg *beehivemodel.Message) bool {
 	default:
 		if msg.GetSource() == modules.EdgeControllerModuleName {
 			resourceType, _ := messagelayer.GetResourceType(*msg)
-			if resourceType == beehivemodel.ResourceTypeNode ||
+			if resourceType == beehivemodel.ResourceTypeNode && msg.GetOperation() != beehivemodel.UpdateOperation ||
 				resourceType == beehivemodel.ResourceTypeLease ||
 				resourceType == beehivemodel.ResourceTypeNodePatch ||
 				resourceType == beehivemodel.ResourceTypePodPatch ||

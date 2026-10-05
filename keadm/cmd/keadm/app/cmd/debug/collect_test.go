@@ -562,6 +562,24 @@ func TestExecuteCollect(t *testing.T) {
 	})
 	defer collectSystemSuccessPatch.Reset()
 
+	parseConfigPatch.Reset()
+	parseConfigErrorPatch := gomonkey.ApplyFunc(util.ParseEdgecoreConfig, func(configPath string) (*v1alpha2.EdgeCoreConfig, error) {
+		return nil, errors.New("config parse failed")
+	})
+	defer parseConfigErrorPatch.Reset()
+
+	err = ExecuteCollect(opts)
+	assert.Error(err)
+	assert.Contains(err.Error(), "fail to load edgecore config")
+	assert.Contains(err.Error(), "config parse failed")
+
+	parseConfigErrorPatch.Reset()
+	parseConfigSuccessPatch := gomonkey.ApplyFunc(util.ParseEdgecoreConfig, func(configPath string) (*v1alpha2.EdgeCoreConfig, error) {
+		assert.Equal(opts.Config, configPath)
+		return config, nil
+	})
+	defer parseConfigSuccessPatch.Reset()
+
 	compressPatch.Reset()
 	compressErrorPatch := gomonkey.ApplyFunc(util.Compress, func(zipName string, sources []string) error {
 		return errors.New("compression failed")

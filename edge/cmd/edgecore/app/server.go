@@ -20,7 +20,6 @@ import (
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2/validation"
 	"github.com/kubeedge/beehive/pkg/core"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
-	"github.com/kubeedge/kubeedge/edge/pkg/common/dbm"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin"
 	"github.com/kubeedge/kubeedge/edge/pkg/edged"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub"
@@ -28,6 +27,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/edgestream"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/edge/pkg/servicebus"
 	"github.com/kubeedge/kubeedge/edge/pkg/taskmanager"
 	"github.com/kubeedge/kubeedge/edge/test"
@@ -200,16 +200,46 @@ func environmentCheck(skipCheck bool) error {
 
 // registerModules register all the modules started in edgecore
 func registerModules(c *v1alpha2.EdgeCoreConfig) {
+	dao.Init(
+		c.DataBase.DataSource,
+		c.Modules.DeviceTwin,
+		c.Modules.EventBus,
+		c.Modules.MetaManager,
+		c.Modules.ServiceBus,
+	)
+	// register all modules
 	devicetwin.Register(c.Modules.DeviceTwin, c.Modules.Edged.HostnameOverride)
 	edged.Register(c.Modules.Edged)
 	edgehub.Register(c.Modules.EdgeHub, c.Modules.Edged.HostnameOverride)
 	eventbus.Register(c.Modules.EventBus, c.Modules.Edged.HostnameOverride)
 	metamanager.Register(c.Modules.MetaManager)
-	servicebus.Register(c.Modules.ServiceBus)
+	servicebus.Register(c.Modules.ServiceBus, buildServiceBusTLSOptions(c.Modules.ServiceBus))
 	edgestream.Register(c.Modules.EdgeStream, c.Modules.Edged.HostnameOverride, c.Modules.Edged.NodeIP)
 	taskmanager.Register(c.Modules.TaskManager)
 	test.Register(c.Modules.DBTest)
+}
 
-	// Note: Need to put it to the end, and wait for all models to register before executing
-	dbm.InitDBConfig(c.DataBase.DriverName, c.DataBase.AliasName, c.DataBase.DataSource)
+// buildServiceBusTLSOptions builds ServiceBus TLS options from the config.
+// TLS is considered intended when either TLSCertFile or TLSPrivateKeyFile is
+// non-empty.  An incomplete pair (one field set, the other empty) is signalled
+// by returning TLSEnabled=true with the partial paths, causing buildTLSConfig
+// to return a clear error rather than silently falling back to plain HTTP.
+// Both fields empty (the default) preserves the plain-HTTP behaviour.
+// The EdgeHub client certificate CANNOT be reused: it carries only
+// ExtKeyUsageClientAuth and has no ServiceBus SANs.
+func buildServiceBusTLSOptions(sb *v1alpha2.ServiceBus) servicebus.TLSOptions {
+	if sb == nil {
+		return servicebus.TLSOptions{}
+	}
+	// Either field being non-empty means the operator intends TLS.
+	// Pass whatever is configured; buildTLSConfig will fail clearly if the
+	// pair is incomplete (e.g. cert set but key empty, or vice versa).
+	if sb.TLSCertFile != "" || sb.TLSPrivateKeyFile != "" {
+		return servicebus.TLSOptions{
+			TLSEnabled: true,
+			CertFile:   sb.TLSCertFile,
+			KeyFile:    sb.TLSPrivateKeyFile,
+		}
+	}
+	return servicebus.TLSOptions{}
 }

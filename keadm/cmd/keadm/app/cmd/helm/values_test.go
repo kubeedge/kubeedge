@@ -19,6 +19,8 @@ import (
 	"os"
 	"reflect"
 	"testing"
+
+	"sigs.k8s.io/yaml"
 )
 
 func TestOptionsWithEmptyValues(t *testing.T) {
@@ -236,5 +238,88 @@ func TestReadFile(t *testing.T) {
 	_, err := readFile(filePath)
 	if err == nil {
 		t.Fatalf("Expected error when has special strings")
+	}
+}
+
+func TestMergeSetsToBytes(t *testing.T) {
+	tests := []struct {
+		name    string
+		data    []byte
+		sets    []string
+		wantMap map[string]interface{}
+		wantErr bool
+	}{
+		{
+			name:    "merge with additional key",
+			data:    []byte("foo: bar\n"),
+			sets:    []string{"baz=qux"},
+			wantMap: map[string]interface{}{"foo": "bar", "baz": "qux"},
+		},
+		{
+			name:    "override existing key",
+			data:    []byte("foo: bar\n"),
+			sets:    []string{"foo=new"},
+			wantMap: map[string]interface{}{"foo": "new"},
+		},
+		{
+			name: "nested key merge",
+			data: []byte("a:\n  b: 1\n"),
+			sets: []string{"a.c=2"},
+			wantMap: map[string]interface{}{
+				"a": map[string]interface{}{
+					"b": float64(1),
+					"c": float64(2),
+				},
+			},
+		},
+		{
+			name:    "empty data with sets",
+			data:    []byte("{}\n"),
+			sets:    []string{"key=value"},
+			wantMap: map[string]interface{}{"key": "value"},
+		},
+		{
+			name:    "empty sets, data unchanged",
+			data:    []byte("foo: bar\n"),
+			sets:    nil,
+			wantMap: map[string]interface{}{"foo": "bar"},
+		},
+		{
+			name:    "invalid yaml data",
+			data:    []byte("invalid: : yaml"),
+			sets:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "invalid set format",
+			data:    []byte("foo: bar\n"),
+			sets:    []string{"invalid set without equals"},
+			wantErr: true,
+		},
+		{
+			name:    "multiple sets",
+			data:    []byte("existing: value\n"),
+			sets:    []string{"new1=val1", "new2=val2"},
+			wantMap: map[string]interface{}{"existing": "value", "new1": "val1", "new2": "val2"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotBytes, err := MergeSetsToBytes(tt.data, tt.sets)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("MergeSetsToBytes() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.wantErr {
+				return
+			}
+			var gotMap map[string]interface{}
+			if err := yaml.Unmarshal(gotBytes, &gotMap); err != nil {
+				t.Fatalf("failed to unmarshal result: %v", err)
+			}
+			if !reflect.DeepEqual(gotMap, tt.wantMap) {
+				t.Errorf("MergeSetsToBytes() gotMap = %v, want %v", gotMap, tt.wantMap)
+			}
+		})
 	}
 }

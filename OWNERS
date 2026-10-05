@@ -1,5 +1,6 @@
 approvers:
   - chendave
+  - DoisLONG
   - fisherxu
   - kadisi
   - kevin-wangzefeng
@@ -12,6 +13,7 @@ approvers:
 reviewers:
   - chendave
   - daixiang0
+  - DoisLONG
   - fisherxu
   - fujitatomoya
   - GsssC

@@ -20,14 +20,12 @@ import (
 	"context"
 	"crypto/tls"
 	stdx509 "crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"net/http"
 
 	"k8s.io/apiserver/pkg/authentication/request/x509"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
 	"k8s.io/kubernetes/cmd/kubeadm/app/constants"
 
@@ -83,13 +81,13 @@ func (r *cloudhubAuthorizer) admitMessage(message beehivemodel.Message, hubInfo 
 
 	attrs, err := getAuthorizerAttributes(message.Router, hubInfo)
 	if err != nil {
-		return fmt.Errorf("node %q transfer message failed: %v", hubInfo.NodeID, err)
+		return fmt.Errorf("node %q transfer message failed: %w", hubInfo.NodeID, err)
 	}
 
 	ctx := request.WithUser(context.TODO(), attrs.GetUser())
 	authorized, reason, err := r.authz.Authorize(ctx, attrs)
 	if err != nil {
-		return fmt.Errorf("node %q authz failed: %v", hubInfo.NodeID, err)
+		return fmt.Errorf("node %q authz failed: %w", hubInfo.NodeID, err)
 	}
 
 	if authorized != authorizer.DecisionAllow {
@@ -111,18 +109,22 @@ func (r *cloudhubAuthorizer) authenticateConnection(connection conn.Connection) 
 		return fmt.Errorf("node %q: no client certificate provided", nodeID)
 	case 1:
 	default:
-		return fmt.Errorf("node %q: immediate certificates are not supported", nodeID)
+		return fmt.Errorf("node %q: intermediate certificates are not supported", nodeID)
 	}
 
 	options := x509.DefaultVerifyOptions()
 	// ca cloud be available util CloudHub starts
 	options.Roots = stdx509.NewCertPool()
-	options.Roots.AppendCertsFromPEM(pem.EncodeToMemory(&pem.Block{Type: certutil.CertificateBlockType, Bytes: hubconfig.Config.Ca}))
+	caCert, err := stdx509.ParseCertificate(hubconfig.Config.Ca)
+	if err != nil {
+		return fmt.Errorf("node %q: failed to parse CA certificate: %w", nodeID, err)
+	}
+	options.Roots.AddCert(caCert)
 
 	authenticator := x509.New(options, x509.CommonNameUserConversion)
 	resp, ok, err := authenticator.AuthenticateRequest(&http.Request{TLS: &tls.ConnectionState{PeerCertificates: peerCerts}})
 	if err != nil || !ok {
-		return fmt.Errorf("node %q: unable to verify peer connection by client certificates: %v", nodeID, err)
+		return fmt.Errorf("node %q: unable to verify peer connection by client certificates: %w", nodeID, err)
 	}
 
 	if resp.User.GetName() != constants.NodesUserPrefix+nodeID {

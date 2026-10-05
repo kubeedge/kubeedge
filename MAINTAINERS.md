@@ -27,6 +27,7 @@ describes the mission, scope, and objectives of the KubeEdge Technical Steering 
 | Maintainer          | GitHub ID         | Affiliation                             | Email                     |
 |---------------------|-------------------|-----------------------------------------|---------------------------|
 | Ce Zheng            | @zc2638           | DaoCloud                                | <zc2638@qq.com>           |
+| Chuanhao Jin        | @DoisLONG         | Bluedot                                 | <15221580643@163.com>     |
 | Dave Chen           | @chendave         | Arm                                     | <dave.chen@arm.com>       |
 | Fei Xu              | @fisherxu         | Huawei                                  | <xufei40@huawei.com>      |
 | Jiawei Liu          | @JiaweiGithub     | DaoCloud                                | <jiawei.liu@daocloud.io>  |

@@ -66,7 +66,8 @@ func (c *WSClient) Connect() (conn.Connection, error) {
 				Headers:          c.exOpts.Header.Clone(),
 				PeerCertificates: peerCerts,
 			},
-			AutoRoute: c.options.AutoRoute,
+			AutoRoute:            c.options.AutoRoute,
+			ReadDeadlineInterval: c.options.ReadDeadline,
 		}), nil
 	}
 

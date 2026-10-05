@@ -30,9 +30,13 @@ import (
 func initForOS(opts *options.EdgeCoreOptions) error {
 	flagset := flag.NewFlagSet("log", flag.ExitOnError)
 	klog.InitFlags(flagset)
+	// Opt into the new klog behavior so that -stderrthreshold is honored even
+	// when -logtostderr=true (the default).
+	// Ref: kubernetes/klog#212, kubernetes/klog#432
 	args := map[string]string{
-		"log_file":    opts.LogFilePath,
-		"logtostderr": "false",
+		"legacy_stderr_threshold_behavior": "false",
+		"log_file":                         opts.LogFilePath,
+		"logtostderr":                      "false",
 	}
 	for k, v := range args {
 		if err := flagset.Set(k, v); err != nil {

@@ -35,9 +35,15 @@ func main() {
 	flags.AddFlagSet(o.Flags())
 	local := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	klog.InitFlags(local)
+	// Opt into the new klog behavior so that -stderrthreshold is honored even
+	// when -logtostderr=true (the default).
+	// Ref: kubernetes/klog#212, kubernetes/klog#432
+	if err := local.Set("legacy_stderr_threshold_behavior", "false"); err != nil {
+		fmt.Fprintf(os.Stderr, "error setting legacy_stderr_threshold_behavior: %v\n", err)
+	}
 	err := local.Set("v", "4")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error setting klog flags: %v", err)
+		fmt.Fprintf(os.Stderr, "error setting klog flags: %v\n", err)
 	}
 	local.VisitAll(func(fl *flag.Flag) {
 		fl.Name = util.Normalize(fl.Name)

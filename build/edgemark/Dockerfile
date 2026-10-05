@@ -1,4 +1,4 @@
-ARG BUILD_FROM=golang:1.23.12-alpine3.21
+ARG BUILD_FROM=golang:1.25.14-alpine3.23
 
 FROM ${BUILD_FROM} AS builder
 

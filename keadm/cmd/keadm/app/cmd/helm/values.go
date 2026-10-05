@@ -129,3 +129,22 @@ func readFile(filePath string) ([]byte, error) {
 	}
 	return os.ReadFile(filePath)
 }
+
+func MergeSetsToBytes(data []byte, sets []string) ([]byte, error) {
+	valuesMap := make(map[string]interface{})
+	var originalMap map[string]interface{}
+	if err := yaml.Unmarshal(data, &originalMap); err != nil {
+		return nil, err
+	}
+	for _, set := range sets {
+		if err := strvals.ParseInto(set, valuesMap); err != nil {
+			return nil, err
+		}
+	}
+	mergedMap := mergeMaps(originalMap, valuesMap)
+	mergedData, err := yaml.Marshal(mergedMap)
+	if err != nil {
+		return nil, err
+	}
+	return mergedData, nil
+}

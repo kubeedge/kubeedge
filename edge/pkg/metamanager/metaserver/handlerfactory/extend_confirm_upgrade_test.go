@@ -35,7 +35,7 @@ import (
 	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	commonmsg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
-	daov2 "github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/v2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/taskmanager/actions"
 	"github.com/kubeedge/kubeedge/edge/pkg/taskmanager/v1alpha1/taskexecutor"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
@@ -52,7 +52,7 @@ func TestConfirmUpgrade(t *testing.T) {
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
-		patches.ApplyMethodFunc(reflect.TypeOf((*daov2.Upgrade)(nil)), "Get",
+		patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.Upgrade)(nil)), "Get",
 			func() (string, string, *operationsv1alpha2.NodeUpgradeJobSpec, error) {
 				return "", "", nil, errors.New("get upgrade spec failed")
 			})
@@ -69,7 +69,7 @@ func TestConfirmUpgrade(t *testing.T) {
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
-		patches.ApplyMethodFunc(reflect.TypeOf((*daov2.Upgrade)(nil)), "Get",
+		patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.Upgrade)(nil)), "Get",
 			func() (string, string, *operationsv1alpha2.NodeUpgradeJobSpec, error) {
 				return jobName, nodeName, &operationsv1alpha2.NodeUpgradeJobSpec{}, nil
 			})
@@ -90,11 +90,11 @@ func TestConfirmUpgrade(t *testing.T) {
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
-		patches.ApplyMethodFunc(reflect.TypeOf((*daov2.Upgrade)(nil)), "Get",
+		patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.Upgrade)(nil)), "Get",
 			func() (string, string, *operationsv1alpha2.NodeUpgradeJobSpec, error) {
 				return jobName, nodeName, nil, nil
 			})
-		patches.ApplyMethodFunc(reflect.TypeOf((*daov2.UpgradeV1alpha1)(nil)), "Get",
+		patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.UpgradeV1alpha1)(nil)), "Get",
 			func() (*types.NodeTaskRequest, error) {
 				return nil, errors.New("get upgrade request failed")
 			})
@@ -110,11 +110,11 @@ func TestConfirmUpgrade(t *testing.T) {
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
-		patches.ApplyMethodFunc(reflect.TypeOf((*daov2.Upgrade)(nil)), "Get",
+		patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.Upgrade)(nil)), "Get",
 			func() (string, string, *operationsv1alpha2.NodeUpgradeJobSpec, error) {
 				return jobName, nodeName, nil, nil
 			})
-		patches.ApplyMethodFunc(reflect.TypeOf((*daov2.UpgradeV1alpha1)(nil)), "Get",
+		patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.UpgradeV1alpha1)(nil)), "Get",
 			func() (*types.NodeTaskRequest, error) {
 				return nil, nil
 			})
@@ -131,11 +131,11 @@ func TestConfirmUpgrade(t *testing.T) {
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
-		patches.ApplyMethodFunc(reflect.TypeOf((*daov2.Upgrade)(nil)), "Get",
+		patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.Upgrade)(nil)), "Get",
 			func() (string, string, *operationsv1alpha2.NodeUpgradeJobSpec, error) {
 				return jobName, nodeName, nil, nil
 			})
-		patches.ApplyMethodFunc(reflect.TypeOf((*daov2.UpgradeV1alpha1)(nil)), "Get",
+		patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.UpgradeV1alpha1)(nil)), "Get",
 			func() (*types.NodeTaskRequest, error) {
 				return &types.NodeTaskRequest{}, nil
 			})

@@ -17,7 +17,8 @@ import (
 	"github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
 
 // PodsGetter is interface to get pods
@@ -184,9 +185,9 @@ func updatePodDB(resource string, pod *corev1.Pod) error {
 	podKey := strings.Replace(resource,
 		constants.ResourceSep+model.ResourceTypePodPatch+constants.ResourceSep,
 		constants.ResourceSep+model.ResourceTypePod+constants.ResourceSep, 1)
-	meta := &dao.Meta{
+	meta := &models.Meta{
 		Key:   podKey,
 		Type:  model.ResourceTypePod,
 		Value: string(podContent)}
-	return dao.InsertOrUpdate(meta)
+	return dbclient.NewMetaService().InsertOrUpdate(meta)
 }

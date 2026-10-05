@@ -49,3 +49,8 @@ func (c *CustomizedClient) GetDeviceStates() (string, error) {
 	// TODO: GetDeviceStates
 	return common.DeviceStatusOK, nil
 }
+
+func (c *CustomizedClient) AnomalyDetectionProcess(req *AnomalyDetectionRequest) error {
+	// TODO: add the code to process anomaly detection
+	return nil
+}

@@ -96,6 +96,9 @@ func addInitOtherFlags(cmd *cobra.Command, initOpts *types.InitOptions) {
 
 	cmd.Flags().StringVar(&initOpts.ImageRepository, types.FlagNameImageRepository, initOpts.ImageRepository,
 		"Choose a container image repository to pull the image of the kubedge component.")
+
+	cmd.Flags().BoolVar(&initOpts.SkipPreflightChecks, types.FlagNameSkipPreflightChecks, initOpts.SkipPreflightChecks,
+		"Skip pre-flight checks on the Kubernetes cluster health before installing cloudcore.")
 }
 
 func addHelmValueOptionsFlags(cmd *cobra.Command, initOpts *types.InitOptions) {

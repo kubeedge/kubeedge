@@ -26,9 +26,9 @@ func TestNewNodeStatus(t *testing.T) {
 	assert := assert.New(t)
 
 	s := newSend()
-	ns := newNodeStatus(namespace, s)
+	ns := newNodeStatus(testNamespace, s)
 
 	assert.NotNil(ns)
-	assert.Equal(namespace, ns.namespace)
+	assert.Equal(testNamespace, ns.namespace)
 	assert.IsType(&send{}, ns.send)
 }

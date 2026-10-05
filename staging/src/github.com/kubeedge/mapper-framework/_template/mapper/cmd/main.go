@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 
 	"k8s.io/klog/v2"
 
@@ -18,6 +19,10 @@ func main() {
 	var c *config.Config
 
 	klog.InitFlags(nil)
+	// Opt into the new klog behavior so that -stderrthreshold is honored even
+	// when -logtostderr=true (the default).
+	// Ref: kubernetes/klog#212, kubernetes/klog#432
+	_ = flag.CommandLine.Set("legacy_stderr_threshold_behavior", "false")
 	defer klog.Flush()
 
 	if c, err = config.Parse(); err != nil {

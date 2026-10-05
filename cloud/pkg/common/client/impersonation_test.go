@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	authenticationv1 "k8s.io/api/authentication/v1"
+	"k8s.io/client-go/rest"
 
 	ctxutl "github.com/kubeedge/kubeedge/cloud/pkg/common/context"
 )
@@ -64,4 +65,155 @@ func TestRoundTrip(t *testing.T) {
 			assert.NoError(t, err)
 		})
 	}
+}
+
+func TestHttpClientFor(t *testing.T) {
+	cases := []struct {
+		name                string
+		enableImpersonation bool
+	}{
+		{name: "impersonation enabled", enableImpersonation: true},
+		{name: "impersonation disabled", enableImpersonation: false},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			cfg := &rest.Config{
+				Host: "http://localhost:6443",
+			}
+			client, err := httpClientFor(cfg, c.enableImpersonation)
+			assert.NoError(t, err)
+			assert.NotNil(t, client)
+
+			rt, ok := client.Transport.(*impersonationRoundTripper)
+			assert.True(t, ok)
+			assert.Equal(t, c.enableImpersonation, rt.enable)
+		})
+	}
+}
+
+func invalidTLSConfig() *rest.Config {
+	return &rest.Config{
+		Host: "http://localhost:6443",
+		TLSClientConfig: rest.TLSClientConfig{
+			CertData: []byte("invalid-cert"),
+			KeyData:  []byte("invalid-key"),
+		},
+	}
+}
+
+func TestHttpClientFor_TransportError(t *testing.T) {
+	cfg := invalidTLSConfig()
+	client, err := httpClientFor(cfg, false)
+	assert.Error(t, err)
+	assert.Nil(t, client)
+}
+
+func TestNewForK8sConfigOrDie(t *testing.T) {
+	cases := []struct {
+		name                string
+		enableImpersonation bool
+	}{
+		{name: "impersonation enabled", enableImpersonation: true},
+		{name: "impersonation disabled", enableImpersonation: false},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			cfg := &rest.Config{
+				Host: "http://localhost:6443",
+			}
+			assert.NotPanics(t, func() {
+				cs := newForK8sConfigOrDie(cfg, c.enableImpersonation)
+				assert.NotNil(t, cs)
+			})
+		})
+	}
+}
+
+func TestNewForK8sConfigOrDie_WithUserAgent(t *testing.T) {
+	cfg := &rest.Config{
+		Host:      "http://localhost:6443",
+		UserAgent: "custom-agent/1.0",
+	}
+	assert.NotPanics(t, func() {
+		cs := newForK8sConfigOrDie(cfg, false)
+		assert.NotNil(t, cs)
+	})
+}
+
+func TestNewForK8sConfigOrDie_PanicOnTransportError(t *testing.T) {
+	cfg := invalidTLSConfig()
+	assert.Panics(t, func() {
+		newForK8sConfigOrDie(cfg, false)
+	})
+}
+
+func TestNewForDynamicConfigOrDie(t *testing.T) {
+	cases := []struct {
+		name                string
+		enableImpersonation bool
+	}{
+		{name: "impersonation enabled", enableImpersonation: true},
+		{name: "impersonation disabled", enableImpersonation: false},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			cfg := &rest.Config{
+				Host: "http://localhost:6443",
+			}
+			assert.NotPanics(t, func() {
+				cs := newForDynamicConfigOrDie(cfg, c.enableImpersonation)
+				assert.NotNil(t, cs)
+			})
+		})
+	}
+}
+
+func TestNewForDynamicConfigOrDie_PanicOnTransportError(t *testing.T) {
+	cfg := invalidTLSConfig()
+	assert.Panics(t, func() {
+		newForDynamicConfigOrDie(cfg, false)
+	})
+}
+
+func TestNewForCrdConfigOrDie(t *testing.T) {
+	cases := []struct {
+		name                string
+		enableImpersonation bool
+	}{
+		{name: "impersonation enabled", enableImpersonation: true},
+		{name: "impersonation disabled", enableImpersonation: false},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			cfg := &rest.Config{
+				Host: "http://localhost:6443",
+			}
+			assert.NotPanics(t, func() {
+				cs := newForCrdConfigOrDie(cfg, c.enableImpersonation)
+				assert.NotNil(t, cs)
+			})
+		})
+	}
+}
+
+func TestNewForCrdConfigOrDie_WithUserAgent(t *testing.T) {
+	cfg := &rest.Config{
+		Host:      "http://localhost:6443",
+		UserAgent: "custom-agent/1.0",
+	}
+	assert.NotPanics(t, func() {
+		cs := newForCrdConfigOrDie(cfg, false)
+		assert.NotNil(t, cs)
+	})
+}
+
+func TestNewForCrdConfigOrDie_PanicOnTransportError(t *testing.T) {
+	cfg := invalidTLSConfig()
+	assert.Panics(t, func() {
+		newForCrdConfigOrDie(cfg, false)
+	})
 }

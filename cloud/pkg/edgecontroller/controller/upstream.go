@@ -564,12 +564,39 @@ func (uc *UpstreamController) createNode(nodeID, name string, node *v1.Node) (*v
 	node.Annotations[common.EdgeMappingCloudKey] = localIP
 	node, err = uc.kubeClient.CoreV1().Nodes().Create(utilcontext.WithEdgeNode(context.Background(), nodeID), node, metaV1.CreateOptions{})
 	if err == nil && len(kubernetesReversedLabels) > 0 {
-		patchBytes, err := json.Marshal(map[string]interface{}{"metadata": map[string]interface{}{"labels": kubernetesReversedLabels}})
+		// Assign to the enclosing err rather than declaring a new one, so that a
+		// failure to add the reserved labels is reported to the caller instead of
+		// being reported as a successful registration. Keep the created node on
+		// failure, it exists in the cluster even when the patch did not apply.
+		var patchBytes []byte
+		patchBytes, err = json.Marshal(map[string]interface{}{"metadata": map[string]interface{}{"labels": kubernetesReversedLabels}})
 		if err == nil {
-			node, err = uc.kubeClient.CoreV1().Nodes().Patch(context.TODO(), name, patchtypes.MergePatchType, patchBytes, metaV1.PatchOptions{})
+			var patchedNode *v1.Node
+			patchedNode, err = uc.kubeClient.CoreV1().Nodes().Patch(context.TODO(), name, patchtypes.MergePatchType, patchBytes, metaV1.PatchOptions{})
+			if err == nil {
+				node = patchedNode
+			}
 		}
 	}
 	return node, err
+}
+
+// marshalGPUStatus marshals GPU status entries to JSON. It is a package-level
+// variable, rather than a direct call to json.Marshal, so tests can substitute
+// a failing implementation: []types.NvidiaGPUStatus only has string/bool
+// fields and can never actually fail to marshal.
+var marshalGPUStatus = json.Marshal
+
+// setGPUStatusAnnotation marshals gpuStatus and stores it under
+// constants.NvidiaGPUStatusAnnotationKey on node. If marshalling fails, it
+// logs a warning and leaves the existing annotation value untouched.
+func setGPUStatusAnnotation(node *v1.Node, msgID string, gpuStatus []types.NvidiaGPUStatus) {
+	data, err := marshalGPUStatus(gpuStatus)
+	if err != nil {
+		klog.Warningf("message: %s, marshal GPU status failed: %v", msgID, err)
+		return
+	}
+	node.Annotations[constants.NvidiaGPUStatusAnnotationKey] = string(data)
 }
 
 // updateNodeStatus update node status
@@ -676,8 +703,7 @@ func (uc *UpstreamController) updateNodeStatus() {
 							gpuStatus = append(gpuStatus, types.NvidiaGPUStatus{ID: er.Name, Healthy: true})
 						}
 						if len(gpuStatus) > 0 {
-							data, _ := json.Marshal(gpuStatus)
-							getNode.Annotations[constants.NvidiaGPUStatusAnnotationKey] = string(data)
+							setGPUStatusAnnotation(getNode, msg.GetID(), gpuStatus)
 						}
 					}
 					data, err := json.Marshal(v)
@@ -1474,13 +1500,18 @@ func (uc *UpstreamController) unmarshalPodStatusMessage(msg model.Message) (ns s
 
 	if name, _ := messagelayer.GetResourceName(msg); name == "" {
 		// multi pod status in one message
-		_ = json.Unmarshal(data, &podStatuses)
+		err = json.Unmarshal(data, &podStatuses)
+		if err != nil {
+			klog.Warningf("message: %s process failure, unmarshal content data with error: %s", msg.GetID(), err)
+			podStatuses = nil
+		}
 		return
 	}
 
 	// one pod status per message
 	var status edgeapi.PodStatusRequest
 	if err := json.Unmarshal(data, &status); err != nil {
+		klog.Warningf("message: %s process failure, unmarshal content data with error: %s", msg.GetID(), err)
 		return
 	}
 	podStatuses = append(podStatuses, status)

@@ -203,7 +203,7 @@ func (cs *controllerServer) DeleteVolume(_ context.Context, req *csi.DeleteVolum
 		return nil, fmt.Errorf("content type %T is not string", result.GetContent())
 	}
 
-	if msg.GetOperation() == model.ResponseErrorOperation {
+	if result.GetOperation() == model.ResponseErrorOperation {
 		klog.Errorf("delete volume with error: %s", data)
 		return nil, errors.New(data)
 	}
@@ -286,7 +286,7 @@ func (cs *controllerServer) ControllerPublishVolume(_ context.Context, req *csi.
 		return nil, fmt.Errorf("content type %T is not string", result.GetContent())
 	}
 
-	if msg.GetOperation() == model.ResponseErrorOperation {
+	if result.GetOperation() == model.ResponseErrorOperation {
 		klog.Errorf("controller publish volume with error: %s", data)
 		return nil, errors.New(data)
 	}
@@ -369,7 +369,7 @@ func (cs *controllerServer) ControllerUnpublishVolume(_ context.Context, req *cs
 		return nil, fmt.Errorf("content type %T is not string", result.GetContent())
 	}
 
-	if msg.GetOperation() == model.ResponseErrorOperation {
+	if result.GetOperation() == model.ResponseErrorOperation {
 		klog.Errorf("controller Unpublish Volume with error: %s", data)
 		return nil, errors.New(data)
 	}

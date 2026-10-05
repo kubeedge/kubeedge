@@ -96,7 +96,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	edgeconfig, err := util.ParseEdgecoreConfig(collectOptions.Config)
 
 	if err != nil {
-		fmt.Printf("fail to load edgecore config: %s", err.Error())
+		return fmt.Errorf("fail to load edgecore config: %w", err)
 	}
 	err = collectEdgecoreData(fmt.Sprintf("%s/edgecore", tmpName), edgeconfig, collectOptions)
 	if err != nil {

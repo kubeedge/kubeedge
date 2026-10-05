@@ -3,6 +3,7 @@ package lane
 import (
 	"errors"
 	"io"
+	"net"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -30,7 +31,11 @@ func NewWSLane(van interface{}) *WSLane {
 func (l *WSLane) Read(p []byte) (int, error) {
 	_, msgData, err := l.conn.ReadMessage()
 	if err != nil {
-		if !errors.Is(err, io.EOF) {
+		// A deadline expiry is the designed half-open detection path when a
+		// read deadline is armed (see conn.WSConnection.handleMessage); it
+		// is reported there, not here.
+		var netErr net.Error
+		if !errors.Is(err, io.EOF) && !(errors.As(err, &netErr) && netErr.Timeout()) {
 			klog.Errorf("read message error(%+v)", err)
 		}
 		return len(msgData), err
