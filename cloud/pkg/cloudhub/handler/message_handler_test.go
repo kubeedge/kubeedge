@@ -309,7 +309,9 @@ func TestHandleConnectionSuccessLifecycle(t *testing.T) {
 
 	assert.GreaterOrEqual(t, d.addedPools, 1)
 	assert.GreaterOrEqual(t, d.deletedPools, 1)
-	assert.GreaterOrEqual(t, d.publishCount, 2)
+	assert.Eventually(t, func() bool {
+		return d.publishCount >= 2
+	}, 2*time.Second, 20*time.Millisecond)
 }
 
 func TestOnEdgeNodeConnectAndDisconnect(t *testing.T) {
