@@ -17,6 +17,7 @@ limitations under the License.
 package synccontroller
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 
@@ -27,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic/fake"
+	"k8s.io/client-go/tools/cache"
 
 	"github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/common"
@@ -248,6 +250,64 @@ func TestManageObjectSync(t *testing.T) {
 			message, _ := beehiveContext.Receive(modules.CloudHubModuleName)
 			if !reflect.DeepEqual(message.GetOperation(), tt.ExpectedOperation) {
 				t.Errorf("manageObjectSyncs() = %v, want %v", message.GetOperation(), tt.ExpectedOperation)
+			}
+		})
+	}
+}
+
+// TestReconcileObjectSyncResolvesResource checks that the lister of the object
+// recorded in a namespaced ObjectSync is looked up with the resource served by
+// the API server, which the string rules get wrong for kinds like Gateway.
+func TestReconcileObjectSyncResolvesResource(t *testing.T) {
+	newSync := func(kind, apiVersion string) *v1alpha1.ObjectSync {
+		return &v1alpha1.ObjectSync{
+			ObjectMeta: v1.ObjectMeta{Name: "node1.12345", Namespace: "default"},
+			Spec: v1alpha1.ObjectSyncSpec{
+				ObjectName:       "test-object",
+				ObjectKind:       kind,
+				ObjectAPIVersion: apiVersion,
+			},
+			Status: v1alpha1.ObjectSyncStatus{ObjectResourceVersion: "500"},
+		}
+	}
+	tests := []struct {
+		name        string
+		sync        *v1alpha1.ObjectSync
+		resourceFor func(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error)
+		expectedGVR schema.GroupVersionResource
+	}{
+		{
+			name: "resource served by the API server",
+			sync: newSync("Gateway", "networking.istio.io/v1alpha3"),
+			resourceFor: func(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
+				return gvk.GroupVersion().WithResource("gateways"), nil
+			},
+			expectedGVR: schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1alpha3", Resource: "gateways"},
+		},
+		{
+			name: "fall back to the local mapping when the API server does not know the kind",
+			sync: newSync("ConfigMap", "v1"),
+			resourceFor: func(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
+				return schema.GroupVersionResource{}, errors.New("no matches for kind")
+			},
+			expectedGVR: schema.GroupVersionResource{Version: "v1", Resource: "configmaps"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var listerGVR schema.GroupVersionResource
+			ctrl := &SyncController{
+				informerManager: MockInformerManager{
+					getListerMockFunc: func(gvr schema.GroupVersionResource) (cache.GenericLister, error) {
+						listerGVR = gvr
+						return nil, errors.New("stop here")
+					},
+					resourceForMockFunc: tt.resourceFor,
+				},
+			}
+			ctrl.reconcileObjectSync(tt.sync)
+			if listerGVR != tt.expectedGVR {
+				t.Errorf("lister requested for %v, want %v", listerGVR, tt.expectedGVR)
 			}
 		})
 	}

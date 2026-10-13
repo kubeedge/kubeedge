@@ -34,6 +34,7 @@ import (
 	crdClientset "github.com/kubeedge/api/client/clientset/versioned"
 	kubeedgefake "github.com/kubeedge/api/client/clientset/versioned/fake"
 	crdinformers "github.com/kubeedge/api/client/informers/externalversions"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 type fakeManager struct {
@@ -117,6 +118,11 @@ func (fm *fakeManager) GetLister(gvr schema.GroupVersionResource) (cache.Generic
 		return nil, err
 	}
 	return informerPair.Lister, nil
+}
+
+// ResourceFor return the GVR of the given GVK
+func (fm *fakeManager) ResourceFor(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
+	return util.ResourceFor(gvk), nil
 }
 
 func (fm *fakeManager) EdgeNode() cache.SharedIndexInformer {

@@ -43,6 +43,8 @@ func SetMetaType(obj runtime.Object) error {
 // Sometimes, we need guess kind according to resource:
 // 1. In most cases, is like pods to Pod,
 // 2. In some unusual cases, requires special treatment like endpoints to Endpoints
+// The guess is wrong for multi-word kinds and irregular plurals, use KindFor instead,
+// which only falls back to this function for resources it has never seen.
 func UnsafeResourceToKind(r string) string {
 	if len(r) == 0 {
 		return r
@@ -75,6 +77,9 @@ func UnsafeResourceToKind(r string) string {
 	return k
 }
 
+// UnsafeKindToResource guesses the resource of a kind. The guess is wrong for irregular
+// plurals, use ResourceFor instead, which only falls back to this function for kinds it
+// has never seen.
 func UnsafeKindToResource(k string) string {
 	if len(k) == 0 {
 		return k
