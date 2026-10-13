@@ -65,7 +65,12 @@ func (l *SelectorListener) sendObj(event watch.Event, messageLayer messagelayer.
 	if namespace == "" {
 		namespace = models.NullNamespace
 	}
-	kind := util.UnsafeResourceToKind(l.gvr.Resource)
+	// The object carries its real kind, the resource of the listener only
+	// tells it for the types known to the RESTMapper.
+	kind := event.Object.GetObjectKind().GroupVersionKind().Kind
+	if kind == "" {
+		kind = util.KindFor(l.gvr).Kind
+	}
 	resourceType := strings.ToLower(kind)
 	resource, err := messagelayer.BuildResource(l.nodeName, namespace, resourceType, accessor.GetName())
 	if err != nil {
