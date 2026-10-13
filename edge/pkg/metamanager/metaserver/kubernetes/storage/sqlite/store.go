@@ -136,7 +136,7 @@ func (s *store) GetList(ctx context.Context, key string, opts storage.ListOption
 	unstrList.SetResourceVersion(rv)
 	unstrList.SetSelfLink(key)
 	gvr, _, _ := metaserver.ParseKey(key)
-	unstrList.SetGroupVersionKind(gvr.GroupVersion().WithKind(util.UnsafeResourceToKind(gvr.Resource) + "List"))
+	unstrList.SetGroupVersionKind(util.ListKindFor(gvr))
 	return nil
 }
 
