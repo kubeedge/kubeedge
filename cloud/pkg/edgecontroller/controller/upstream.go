@@ -384,7 +384,7 @@ func (uc *UpstreamController) updateRuleStatus() {
 				FailMessages:    rule.Status.FailMessages,
 				Errors:          rule.Status.Errors,
 			}
-			body, err := json.Marshal(newStatus)
+			body, err := json.Marshal(map[string]*rulesv1.RuleStatus{"status": newStatus})
 			if err != nil {
 				klog.Warningf("message: %s process failure, content marshal err: %s", msg.GetID(), err)
 				continue
