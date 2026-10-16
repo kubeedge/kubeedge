@@ -22,6 +22,7 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"sync"
 
 	"github.com/emicklei/go-restful"
 	"k8s.io/klog/v2"
@@ -40,6 +41,9 @@ type ContainerMetricsConnection struct {
 	session      *Session
 	edgePeerStop chan struct{}
 	closeChan    chan bool
+
+	peerDoneOnce    sync.Once
+	metricsComplete bool // written before edgePeerStop is closed
 }
 
 func (ms *ContainerMetricsConnection) String() string {
@@ -59,12 +63,15 @@ func (ms *ContainerMetricsConnection) GetMessageID() uint64 {
 }
 
 func (ms *ContainerMetricsConnection) SetEdgePeerDone() {
-	select {
-	case <-ms.closeChan:
-		return
-	case ms.EdgePeerDone() <- struct{}{}:
-		klog.V(6).Infof("success send channel deleting connection with messageID %v", ms.MessageID)
-	}
+	ms.setEdgePeerDone(false)
+}
+
+// setEdgePeerDone records the first outcome without waiting for Serve.
+func (ms *ContainerMetricsConnection) setEdgePeerDone(success bool) {
+	ms.peerDoneOnce.Do(func() {
+		ms.metricsComplete = success
+		close(ms.edgePeerStop)
+	})
 }
 
 func (ms *ContainerMetricsConnection) EdgePeerDone() chan struct{} {
@@ -121,6 +128,9 @@ func (ms *ContainerMetricsConnection) Serve() error {
 			klog.Infof("%s send close message to edge successfully", ms.String())
 			return nil
 		case <-ms.EdgePeerDone():
+			if ms.metricsComplete {
+				return nil
+			}
 			klog.V(6).Infof("%s find edge peer done, so stop this connection", ms.String())
 			return fmt.Errorf("%s find edge peer done, so stop this connection", ms.String())
 		}
