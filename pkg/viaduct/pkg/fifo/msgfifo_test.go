@@ -17,10 +17,14 @@ limitations under the License.
 package fifo
 
 import (
+	"io"
+	"os"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/comm"
@@ -116,6 +120,134 @@ func TestMessageFifo_Close(t *testing.T) {
 	assert.NotPanics(t, func() {
 		f.Close()
 	})
+}
+
+// TestMessageFifo_Close_ReleasesBlockedGet covers the reason Close exists: a
+// caller already parked in Get has to be released, otherwise the reader of a
+// torn-down connection never returns.
+func TestMessageFifo_Close_ReleasesBlockedGet(t *testing.T) {
+	f := NewMessageFifo()
+
+	released := make(chan error, 1)
+	go func() {
+		var msg model.Message
+		released <- f.Get(&msg)
+	}()
+
+	select {
+	case <-released:
+		t.Fatal("Get returned before Close")
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	f.Close()
+
+	select {
+	case err := <-released:
+		assert.Error(t, err)
+	case <-time.After(time.Second):
+		t.Fatal("Get is still blocked after Close")
+	}
+}
+
+// TestMessageFifo_Close_ConcurrentWithPut covers the Put/Close overlap: Put
+// runs on a connection read loop while Close runs on the teardown path, and
+// an unsynchronized close of the channel panics with "send on closed channel".
+func TestMessageFifo_Close_ConcurrentWithPut(t *testing.T) {
+	assert.NotPanics(t, func() {
+		for i := 0; i < 100; i++ {
+			f := NewMessageFifo()
+			var wg sync.WaitGroup
+			wg.Add(2)
+			go func() {
+				defer wg.Done()
+				for j := 0; j < 50; j++ {
+					f.Put(&model.Message{Header: model.MessageHeader{ID: "concurrent"}})
+				}
+			}()
+			go func() {
+				defer wg.Done()
+				f.Close()
+			}()
+			wg.Wait()
+		}
+	})
+}
+
+// TestMessageFifo_Put_DropsAfterClose covers Put after Close: it must return
+// without sending, because the channel is closed and a send would panic.
+func TestMessageFifo_Put_DropsAfterClose(t *testing.T) {
+	f := NewMessageFifo()
+	f.Close()
+
+	for i := 0; i < 100; i++ {
+		f.Put(&model.Message{Header: model.MessageHeader{ID: "late"}})
+	}
+
+	var msg model.Message
+	assert.Error(t, f.Get(&msg))
+}
+
+// TestMessageFifo_Put_ReturnsWhenClosedDuringOverflow runs several producers
+// (one per QUIC stream) through the overflow path while Close lands. Producers
+// have to stay serialized there: one that blocked on its send while holding
+// the lock would also keep Close from returning, so Close runs behind the
+// timeout too.
+func TestMessageFifo_Put_ReturnsWhenClosedDuringOverflow(t *testing.T) {
+	// Every overflow logs a warning and this test overflows tens of
+	// thousands of times, which would bury the rest of the -v output.
+	klog.LogToStderr(false)
+	klog.SetOutput(io.Discard)
+	t.Cleanup(func() {
+		klog.Flush()
+		klog.SetOutput(os.Stderr)
+		klog.LogToStderr(true)
+	})
+
+	for round := 0; round < 50; round++ {
+		f := NewMessageFifo()
+		for i := 0; i < comm.MessageFiFoSizeMax; i++ {
+			f.Put(&model.Message{Header: model.MessageHeader{ID: "fill"}})
+		}
+
+		var wg sync.WaitGroup
+		for p := 0; p < 4; p++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for j := 0; j < 500; j++ {
+					f.Put(&model.Message{Header: model.MessageHeader{ID: "late"}})
+				}
+			}()
+		}
+		time.Sleep(time.Millisecond) // let the producers reach the overflow path
+
+		finished := make(chan struct{})
+		go func() {
+			f.Close()
+			wg.Wait()
+			close(finished)
+		}()
+		select {
+		case <-finished:
+		case <-time.After(3 * time.Second):
+			t.Fatalf("round %d: a producer is still blocked in Put after Close", round)
+		}
+	}
+}
+
+// TestMessageFifo_Close_DrainsBufferedMessages documents that a close does not
+// discard messages that were already delivered into the fifo.
+func TestMessageFifo_Close_DrainsBufferedMessages(t *testing.T) {
+	f := NewMessageFifo()
+	f.Put(&model.Message{Header: model.MessageHeader{ID: "buffered"}})
+	f.Close()
+
+	var msg model.Message
+	assert.NoError(t, f.Get(&msg))
+	assert.Equal(t, "buffered", msg.Header.ID)
+
+	assert.Error(t, f.Get(&msg))
 }
 
 func TestMessageFifo_Get_Blocking(t *testing.T) {
