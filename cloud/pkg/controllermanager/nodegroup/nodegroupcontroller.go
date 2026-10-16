@@ -408,6 +408,11 @@ func IfMatchNodeGroup(node *corev1.Node, nodegroup *appsv1alpha1.NodeGroup) bool
 			return true
 		}
 	}
+	// A nil selector matches every node, return false when MatchLabels is nil
+	// to select the same nodes as getNodesByLabels.
+	if nodegroup.Spec.MatchLabels == nil {
+		return false
+	}
 	// check if labels of this node selected by nodegroup.Spec.MatchLabels
 	selector := labels.SelectorFromSet(nodegroup.Spec.MatchLabels)
 	return selector.Matches(labels.Set(node.Labels))
