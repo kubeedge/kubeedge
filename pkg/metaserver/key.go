@@ -38,7 +38,7 @@ func KeyFuncObj(obj runtime.Object) (string, error) {
 	}
 	group := gvk.Group
 	version := gvk.Version
-	resource := util.UnsafeKindToResource(gvk.Kind)
+	resource := util.ResourceFor(gvk).Resource
 	namespace := accessor.GetNamespace()
 	name := accessor.GetName()
 

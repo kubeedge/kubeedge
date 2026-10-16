@@ -11,6 +11,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
@@ -22,6 +23,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator/watchhook"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 // imitator is a storage based on metav2 that imitate the behavior of etcd
@@ -60,6 +62,11 @@ func (s *imitator) Inject(msg model.Message) {
 
 // TODO: filter out insert or update req that the obj's rev is smaller than the stored
 func (s *imitator) InsertOrUpdateObj(_ context.Context, obj runtime.Object) error {
+	// The key is computed under the lock: a mapping change, and the migration
+	// of the objects it moves, happen under the same lock, see initRESTMapper.
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
 	key, err := metaserver.KeyFuncObj(obj)
 	if err != nil {
 		return err
@@ -83,13 +90,17 @@ func (s *imitator) InsertOrUpdateObj(_ context.Context, obj runtime.Object) erro
 		ResourceVersion:      objRv,
 		Value:                buf.String(),
 	}
-	return s.insertOrReplaceMetaV2(m, objRv)
+	return s.insertOrReplaceMetaV2Locked(m, objRv)
 }
 
 func (s *imitator) insertOrReplaceMetaV2(m models.MetaV2, objRv uint64) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+	return s.insertOrReplaceMetaV2Locked(m, objRv)
+}
 
+// insertOrReplaceMetaV2Locked must be called with s.lock held.
+func (s *imitator) insertOrReplaceMetaV2Locked(m models.MetaV2, objRv uint64) error {
 	err := dbclient.NewMetaV2Service().RetryInsertOrReplaceMetaV2(&m, 3)
 	if err != nil {
 		klog.Errorf("failed to access database after retries: %v", err)
@@ -101,6 +112,56 @@ func (s *imitator) insertOrReplaceMetaV2(m models.MetaV2, objRv uint64) error {
 	}
 	klog.V(4).Infof("[metaserver]successfully insert or update obj:%v", m.Key)
 	return nil
+}
+
+// beforeMigrate is called by migrateResourceLocked before it reads the objects
+// to move. It lets tests interleave other operations with a migration.
+var beforeMigrate = func() {}
+
+// migrateResourceLocked moves the objects of gvk saved under oldGVR to newGVR.
+// It is called when the authoritative resource of gvk becomes known, so that
+// objects saved under a guessed resource, e.g. gatewaies for Gateway, are
+// served again. It runs with s.lock held, as the change locker of the
+// RESTMapper, so that no object is written or deleted between the mapping
+// change and the move.
+func (s *imitator) migrateResourceLocked(gvk schema.GroupVersionKind, oldGVR, newGVR schema.GroupVersionResource) {
+	beforeMigrate()
+
+	service := dbclient.NewMetaV2Service()
+	results, err := service.RawMetaByGVRNN(oldGVR, models.NullNamespace, models.NullName)
+	if err != nil {
+		klog.Errorf("[metaserver] failed to query objects of %s to move them to %s: %v", oldGVR.String(), newGVR.String(), err)
+		return
+	}
+
+	var oldKeys []string
+	var moved []models.MetaV2
+	for _, result := range *results {
+		obj := new(unstructured.Unstructured)
+		if err := runtime.DecodeInto(s.codec, []byte(result.Value), obj); err != nil {
+			klog.Warningf("[metaserver] failed to decode object %s: %v", result.Key, err)
+			continue
+		}
+		if obj.GroupVersionKind() != gvk {
+			continue
+		}
+		key, err := metaserver.KeyFuncObj(obj)
+		if err != nil || key == result.Key {
+			continue
+		}
+		oldKeys = append(oldKeys, result.Key)
+		result.Key = key
+		result.GroupVersionResource = newGVR.String()
+		moved = append(moved, result)
+	}
+	if len(moved) == 0 {
+		return
+	}
+	if err := service.MoveMetaV2(oldKeys, moved); err != nil {
+		klog.Errorf("[metaserver] failed to move objects of %s from %s to %s: %v", gvk.String(), oldGVR.String(), newGVR.String(), err)
+		return
+	}
+	klog.Infof("[metaserver] moved %d objects of %s from %s to %s", len(moved), gvk.String(), oldGVR.String(), newGVR.String())
 }
 
 func (s *imitator) GetPassThroughObj(_ context.Context, key string) ([]byte, error) {
@@ -135,12 +196,64 @@ func (s *imitator) InsertOrUpdatePassThroughObj(_ context.Context, obj []byte, k
 }
 
 func (s *imitator) DeleteObj(_ context.Context, obj runtime.Object) error {
+	// The key is computed under the lock, like in InsertOrUpdateObj, so that a
+	// delete concurrent with a mapping change cannot miss the object and let
+	// the migration move it to the new resource.
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
 	key, err := metaserver.KeyFuncObj(obj)
 	if err != nil {
 		return err
 	}
-	err = s.Delete(context.TODO(), key)
-	return err
+	if err := dbclient.NewMetaV2Service().DeleteByKey(key); err != nil {
+		klog.Errorf("[imitator] delete error: %v", err)
+		return err
+	}
+	return nil
+}
+
+// listKindKeyPrefix is the key prefix of the list kinds saved in meta_v2. It is
+// not an API path, so it never collides with a pass-through request.
+const listKindKeyPrefix = "/kubeedge.io/metaserver/listkinds/"
+
+// saveListKind saves the list kind of gvr, so that it is known when listing
+// from the local storage after a restart, before the cloud returns a list of
+// gvr again. Only list kinds that differ from <kind>List need to be saved.
+func (s *imitator) saveListKind(mapper *util.RESTMapper) util.ListKindLearnedFunc {
+	return func(gvr schema.GroupVersionResource, listKind string) {
+		if listKind == mapper.KindFor(gvr).Kind+"List" {
+			return
+		}
+		m := models.MetaV2{
+			Key:   listKindKeyPrefix + gvr.Group + "/" + gvr.Version + "/" + gvr.Resource,
+			Value: listKind,
+		}
+		if err := s.insertOrReplaceMetaV2(m, 0); err != nil {
+			klog.Warningf("[metaserver] failed to save list kind %s of %s: %v", listKind, gvr.String(), err)
+		}
+	}
+}
+
+// loadListKinds teaches mapper the list kinds saved by saveListKind.
+func loadListKinds(mapper *util.RESTMapper) int {
+	saved, err := dbclient.NewMetaV2Service().ListMetaV2ByKeyPrefix(listKindKeyPrefix)
+	if err != nil {
+		klog.Errorf("failed to load saved list kinds: %v", err)
+		return 0
+	}
+	loaded := 0
+	for _, m := range *saved {
+		parts := strings.SplitN(strings.TrimPrefix(m.Key, listKindKeyPrefix), "/", 3)
+		if len(parts) != 3 {
+			continue
+		}
+		gvr := schema.GroupVersionResource{Group: parts[0], Version: parts[1], Resource: parts[2]}
+		if mapper.RegisterListKind(gvr, m.Value) {
+			loaded++
+		}
+	}
+	return loaded
 }
 
 func (s *imitator) Get(_ context.Context, key string) (Resp, error) {
