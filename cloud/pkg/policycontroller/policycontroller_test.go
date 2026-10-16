@@ -252,6 +252,38 @@ func TestNewAccessRoleControllerManager(t *testing.T) {
 	}
 }
 
+func TestPolicyControllerManagerOptionsEnableLeaderElection(t *testing.T) {
+	t.Setenv("POD_NAMESPACE", "edge-system")
+
+	opts := newAccessRoleControllerManagerOptions()
+
+	if !opts.LeaderElection {
+		t.Fatal("expected policycontroller manager to enable leader election")
+	}
+	if opts.LeaderElectionID != policyControllerLeaderElectionID {
+		t.Fatalf("LeaderElectionID = %q, want %q", opts.LeaderElectionID, policyControllerLeaderElectionID)
+	}
+	if opts.LeaderElectionNamespace != "edge-system" {
+		t.Fatalf("LeaderElectionNamespace = %q, want %q", opts.LeaderElectionNamespace, "edge-system")
+	}
+}
+
+func TestPolicyControllerLeaderElectionNamespaceFallsBackToSystemNamespace(t *testing.T) {
+	t.Setenv("POD_NAMESPACE", "")
+
+	if got := policyControllerLeaderElectionNamespace(); got != "kubeedge" {
+		t.Fatalf("policyControllerLeaderElectionNamespace() = %q, want %q", got, "kubeedge")
+	}
+}
+
+func TestPolicyControllerLeaderElectionNamespaceUsesPodNamespace(t *testing.T) {
+	t.Setenv("POD_NAMESPACE", "custom-kubeedge")
+
+	if got := policyControllerLeaderElectionNamespace(); got != "custom-kubeedge" {
+		t.Fatalf("policyControllerLeaderElectionNamespace() = %q, want %q", got, "custom-kubeedge")
+	}
+}
+
 func TestSetupControllers(t *testing.T) {
 	setupFunc := reflect.ValueOf(setupControllers)
 	if !setupFunc.IsValid() {
