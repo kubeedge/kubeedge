@@ -181,7 +181,7 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 					return nil
 				}
 			case pptv.PushMethod.Otel != nil:
-				dbMethodName = common.PushMethodOTEL
+				pushMethodName = common.PushMethodOTEL
 				pushMethod, err = json.Marshal(pptv.PushMethod.Otel)
 				if err != nil {
 					klog.Errorf("err: %+v", err)
