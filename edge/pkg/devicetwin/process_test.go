@@ -611,3 +611,21 @@ func Test_classifyMsg(t *testing.T) {
 		})
 	}
 }
+
+func TestClassifyMetaDeviceUpdate(t *testing.T) {
+	for _, resource := range []string{"default/device/d1", "other/device/d1", "default/device/updated"} {
+		t.Run(resource, func(t *testing.T) {
+			message := &dttype.DTMessage{
+				Msg: model.NewMessage("").
+					BuildRouter("metamanager", DeviceTwinModuleName, resource, model.UpdateOperation).
+					FillBody(map[string]string{"name": "device"}),
+			}
+			if !classifyMsg(message) {
+				t.Fatal("canonical device update was not classified")
+			}
+			if message.Action != dtcommon.MetaDeviceOperation {
+				t.Errorf("action = %q, want %q", message.Action, dtcommon.MetaDeviceOperation)
+			}
+		})
+	}
+}
