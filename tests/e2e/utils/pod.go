@@ -28,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
 
@@ -147,67 +146,27 @@ func WaitForPodsRunning(c clientset.Interface, podList *v1.PodList, timeout time
 		Fatalf("podList should not be empty")
 	}
 
-	podRunningCount := 0
-	for _, pod := range podList.Items {
-		if pod.Status.Phase == v1.PodRunning {
-			podRunningCount++
+	gomega.Eventually(func() int {
+		var count int
+		for i := range podList.Items {
+			pod := &podList.Items[i]
+			current, err := GetPod(c, pod.Namespace, pod.Name)
+			if err != nil {
+				Errorf("get pod %s/%s error: %v", pod.Namespace, pod.Name, err)
+				continue
+			}
+
+			pod.Status = current.Status
+			if pod.Status.Phase == v1.PodRunning {
+				count++
+				continue
+			}
+
+			Infof("Pod %s/%s is still %s", pod.Namespace, pod.Name, pod.Status.Phase)
 		}
-	}
 
-	if podRunningCount == len(podList.Items) {
-		Infof("All pods come into running status")
-		return
-	}
+		return count
+	}, timeout, 4*time.Second).Should(gomega.Equal(len(podList.Items)), "not all pods reached the Running phase")
 
-	// define signal
-	signal := make(chan struct{})
-
-	// define list watcher
-	listWatcher := cache.NewListWatchFromClient(c.CoreV1().RESTClient(), "pods", v1.NamespaceAll, fields.Everything())
-
-	// new controller
-	_, controller := cache.NewInformer(listWatcher, &v1.Pod{}, 0,
-		cache.ResourceEventHandlerFuncs{
-			// receive update events
-			UpdateFunc: func(oldObj, newObj interface{}) {
-				// check update obj
-				p, ok := newObj.(*v1.Pod)
-				if !ok {
-					Fatalf("Failed to cast observed object to pod")
-				}
-
-				// calculate the pods in running status
-				count := 0
-				for i := range podList.Items {
-					// update pod status in podList
-					if podList.Items[i].Name == p.Name {
-						Infof("PodName: %s PodStatus: %s", p.Name, p.Status.Phase)
-						podList.Items[i].Status = p.Status
-					}
-					// check if the pod is in running status
-					if podList.Items[i].Status.Phase == v1.PodRunning {
-						count++
-					}
-				}
-
-				// send an end signal when all pods are in running status
-				if len(podList.Items) == count {
-					signal <- struct{}{}
-				}
-			},
-		},
-	)
-
-	// run controller
-	podChan := make(chan struct{})
-	go controller.Run(podChan)
-	defer close(podChan)
-
-	// wait for a signal or timeout
-	select {
-	case <-signal:
-		Infof("All pods come into running status")
-	case <-time.After(timeout):
-		Fatalf("Wait for pods come into running status timeout: %v", timeout)
-	}
+	Infof("All pods come into running status")
 }
