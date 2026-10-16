@@ -1,0 +1,175 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Edge-cloud collaborative framework for embodied AI applications based on KubeEdge</title>
+  <desc id="desc">Architecture showing an edge embodied AI device, the KubeEdge collaboration layer, and a cloud Kubernetes AI training pipeline. Hard samples flow from edge to cloud, cloud training and evaluation produce a new model, and KubeEdge distributes the updated model back to edge nodes.</desc>
+  <defs>
+    <marker id="arrow-blue" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#1769d2"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#f06a00"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#2e7d32"/>
+    </marker>
+    <marker id="arrow-gray" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#65758a"/>
+    </marker>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; fill: #17233c; }
+      .title { font-size: 34px; font-weight: 800; }
+      .subtitle { font-size: 16px; font-weight: 600; fill: #47566b; }
+      .panel-title { font-size: 26px; font-weight: 800; }
+      .panel-subtitle { font-size: 13px; font-weight: 600; fill: #506078; }
+      .box-title { font-size: 18px; font-weight: 800; }
+      .box-text { font-size: 14px; font-weight: 600; fill: #41516a; }
+      .small { font-size: 13px; font-weight: 600; fill: #42516a; }
+      .legend { font-size: 14px; font-weight: 700; }
+      .edge-panel { fill: #edf6ff; stroke: #1769d2; stroke-width: 2; }
+      .kube-panel { fill: #fff7ec; stroke: #ff7a00; stroke-width: 2; }
+      .cloud-panel { fill: #effaf0; stroke: #2e7d32; stroke-width: 2; }
+      .white-blue { fill: #fff; stroke: #8cc6ff; stroke-width: 1.5; }
+      .white-orange { fill: #fff; stroke: #ffae4d; stroke-width: 1.5; }
+      .white-green { fill: #fff; stroke: #9bd59f; stroke-width: 1.5; }
+      .soft-orange { fill: #fffaf3; stroke: #ff9c2a; stroke-width: 1.5; }
+      .blue-line { fill: none; stroke: #1769d2; stroke-width: 3; marker-end: url(#arrow-blue); }
+      .orange-line { fill: none; stroke: #f06a00; stroke-width: 3; marker-end: url(#arrow-orange); }
+      .green-line { fill: none; stroke: #2e7d32; stroke-width: 3; marker-end: url(#arrow-green); }
+      .gray-line { fill: none; stroke: #65758a; stroke-width: 3; stroke-dasharray: 8 8; marker-end: url(#arrow-gray); }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#ffffff"/>
+  <text class="title" x="32" y="48">Edge-cloud collaborative self-evolution architecture based on KubeEdge</text>
+  <text class="subtitle" x="32" y="80">Real-environment perception, hard-sample feedback, cloud training, KubeEdge delivery, and edge capability enhancement</text>
+
+  <rect class="edge-panel" x="24" y="118" width="470" height="690" rx="16"/>
+  <rect class="kube-panel" x="565" y="118" width="470" height="690" rx="16"/>
+  <rect class="cloud-panel" x="1105" y="118" width="470" height="690" rx="16"/>
+
+  <text class="panel-title" x="56" y="162">Edge: Embodied AI Device</text>
+  <text class="panel-subtitle" x="56" y="190">Robot / inspection vehicle / mobile platform / edge camera</text>
+
+  <rect class="white-blue" x="56" y="224" width="376" height="92" rx="8"/>
+  <text class="box-title" x="80" y="258">Robot / Inspection Vehicle</text>
+  <text class="box-text" x="80" y="286">Moves and senses in the physical environment</text>
+
+  <rect class="white-blue" x="56" y="352" width="376" height="96" rx="8"/>
+  <text class="box-title" x="80" y="386">Camera and Sensors</text>
+  <text class="box-text" x="80" y="414">Low light, occlusion, viewpoint changes, complex background</text>
+
+  <rect class="white-blue" x="56" y="486" width="376" height="110" rx="8"/>
+  <text class="box-title" x="80" y="520">Local AI Inference Service</text>
+  <text class="box-text" x="80" y="550">YOLO / ONNX Runtime / Triton / FastAPI</text>
+  <text class="box-text" x="80" y="576">Model v1.0 first, then switch to Model v2.0</text>
+
+  <rect class="soft-orange" x="56" y="636" width="180" height="112" rx="8"/>
+  <text class="box-title" x="82" y="672">Hard Samples</text>
+  <text class="box-text" x="82" y="704">Missed detection</text>
+  <text class="box-text" x="82" y="730">Low confidence</text>
+
+  <rect class="soft-orange" x="256" y="636" width="176" height="112" rx="8"/>
+  <text class="box-title" x="282" y="672">Local Cache</text>
+  <text class="box-text" x="282" y="704">Valuable samples</text>
+  <text class="box-text" x="282" y="730">Weak-network buffer</text>
+
+  <rect x="106" y="770" width="290" height="42" rx="21" fill="#1769d2"/>
+  <text x="162" y="797" font-size="14" font-weight="700" fill="#fff">Local autonomy under weak networks</text>
+
+  <path class="blue-line" d="M244 316 L244 346"/>
+  <path class="blue-line" d="M244 448 L244 480"/>
+  <path class="orange-line" d="M208 596 L158 630"/>
+  <path class="orange-line" d="M236 692 L250 692"/>
+  <path class="gray-line" d="M58 274 C20 390 70 510 134 630"/>
+
+  <text class="panel-title" x="596" y="162">KubeEdge Collaboration Layer</text>
+  <text class="panel-subtitle" x="596" y="190">Edge autonomy, status sync, application orchestration, model delivery</text>
+
+  <rect class="white-orange" x="600" y="224" width="180" height="96" rx="8"/>
+  <text class="box-title" x="626" y="260">CloudCore</text>
+  <text class="box-text" x="626" y="288">Cloud-side control channel</text>
+
+  <rect class="white-orange" x="820" y="224" width="180" height="96" rx="8"/>
+  <text class="box-title" x="846" y="260">EdgeHub</text>
+  <text class="box-text" x="846" y="288">Message and status sync</text>
+
+  <rect class="white-orange" x="600" y="360" width="180" height="100" rx="8"/>
+  <text class="box-title" x="626" y="396">EdgeCore</text>
+  <text class="box-text" x="626" y="424">Manage edge workloads</text>
+
+  <rect class="white-orange" x="820" y="360" width="180" height="100" rx="8"/>
+  <text class="box-title" x="846" y="396">MetaManager</text>
+  <text class="box-text" x="846" y="424">Offline metadata and autonomy</text>
+
+  <rect class="white-orange" x="600" y="506" width="400" height="104" rx="8"/>
+  <text class="box-title" x="626" y="542">Deployment / EdgeApplication / NodeGroup</text>
+  <text class="box-text" x="626" y="572">Deliver model service to selected edge nodes</text>
+
+  <rect class="white-orange" x="600" y="658" width="400" height="108" rx="8"/>
+  <text class="box-title" x="626" y="694">DeviceTwin / Status Sync</text>
+  <text class="box-text" x="626" y="724">Sync device state, model version, and workload status</text>
+
+  <path class="blue-line" d="M780 272 L812 272"/>
+  <path class="blue-line" d="M690 320 L690 352"/>
+  <path class="blue-line" d="M910 320 L910 352"/>
+  <path class="blue-line" d="M800 506 C760 488 720 476 690 466"/>
+  <path class="blue-line" d="M780 706 L812 706"/>
+
+  <text class="small" x="748" y="632">KubeEdge delivers Model v2.0 or a new inference image to selected edge nodes</text>
+  <text class="small" x="566" y="796">Upload valuable hard samples only when the network is available</text>
+
+  <text class="panel-title" x="1136" y="162">Cloud: Kubernetes and AI Pipeline</text>
+  <text class="panel-subtitle" x="1136" y="190">Dataset collection, training, evaluation, and version management</text>
+
+  <rect class="white-green" x="1140" y="224" width="376" height="82" rx="8"/>
+  <text class="box-title" x="1166" y="258">Kubernetes API Server</text>
+  <text class="box-text" x="1166" y="286">Declare workloads and rollout policies</text>
+
+  <rect class="white-green" x="1140" y="342" width="180" height="100" rx="8"/>
+  <text class="box-title" x="1166" y="378">Sample Receiver</text>
+  <text class="box-text" x="1166" y="408">Receive hard samples</text>
+
+  <rect class="white-green" x="1340" y="342" width="176" height="100" rx="8"/>
+  <text class="box-title" x="1366" y="378">Dataset Storage</text>
+  <text class="box-text" x="1366" y="408">Raw and feedback data</text>
+
+  <rect class="white-green" x="1140" y="482" width="180" height="100" rx="8"/>
+  <text class="box-title" x="1166" y="518">Training / Fine-tuning</text>
+  <text class="box-text" x="1166" y="548">Generate Model v2.0</text>
+
+  <rect class="white-green" x="1340" y="482" width="176" height="100" rx="8"/>
+  <text class="box-title" x="1366" y="518">Model Evaluation</text>
+  <text class="box-text" x="1366" y="548">Compare v1.0 and v2.0</text>
+
+  <rect class="white-green" x="1140" y="622" width="180" height="100" rx="8"/>
+  <text class="box-title" x="1166" y="658">Model Registry</text>
+  <text class="box-text" x="1166" y="688">Versions and metrics</text>
+
+  <rect class="white-green" x="1340" y="622" width="176" height="100" rx="8"/>
+  <text class="box-title" x="1366" y="658">Model Packaging</text>
+  <text class="box-text" x="1366" y="688">Model file or image</text>
+
+  <path class="green-line" d="M1320 392 L1332 392"/>
+  <path class="green-line" d="M1428 442 L1428 474"/>
+  <path class="green-line" d="M1340 532 L1328 532"/>
+  <path class="green-line" d="M1230 582 L1230 614"/>
+  <path class="green-line" d="M1320 672 L1332 672"/>
+
+  <text class="small" x="1146" y="766">Cloud aggregates data, trains Model v2.0, evaluates difficult scenes, and records version metadata</text>
+
+  <path class="orange-line" d="M344 692 C540 780 900 562 1132 392"/>
+  <path class="blue-line" d="M1338 672 C1240 780 1130 648 1008 558"/>
+  <path class="blue-line" d="M1140 266 C1088 266 1040 270 1008 272"/>
+  <path class="blue-line" d="M600 410 C516 420 500 504 440 538"/>
+  <path class="blue-line" d="M600 712 C420 818 306 808 232 810"/>
+
+  <rect x="24" y="846" width="1552" height="40" rx="10" fill="#f7f9fc" stroke="#d8e0ea"/>
+  <text class="legend" x="56" y="872">Legend</text>
+  <path class="orange-line" d="M190 866 L280 866"/>
+  <text class="legend" x="306" y="872">Hard sample upload</text>
+  <path class="green-line" d="M486 866 L576 866"/>
+  <text class="legend" x="602" y="872">Cloud training and evaluation</text>
+  <path class="blue-line" d="M846 866 L936 866"/>
+  <text class="legend" x="962" y="872">KubeEdge model delivery and status sync</text>
+  <path class="gray-line" d="M1328 866 L1418 866"/>
+  <text class="legend" x="1444" y="872">Closed-loop validation</text>
+</svg>
