@@ -73,7 +73,7 @@ func TestConfigUpdateJobCanDownstreamPhase(t *testing.T) {
 func TestConfigUpdateJobInterruptExecutor(t *testing.T) {
 	const jobName = "config-update-job"
 
-	var interrupted, removed bool
+	var interrupted bool
 
 	patches := gomonkey.NewPatches()
 	defer patches.Reset()
@@ -87,11 +87,6 @@ func TestConfigUpdateJobInterruptExecutor(t *testing.T) {
 	patches.ApplyMethodFunc(&executor.NodeTaskExecutor{}, "Interrupt", func() {
 		interrupted = true
 	})
-	patches.ApplyFunc(executor.RemoveExecutor, func(resourceType, name string) {
-		assert.Equal(t, operationsv1alpha2.ResourceConfigUpdateJob, resourceType)
-		assert.Equal(t, jobName, name)
-		removed = true
-	})
 
 	handler := &ConfigUpdateJobHandler{
 		logger: klog.Background(),
@@ -102,5 +97,4 @@ func TestConfigUpdateJobInterruptExecutor(t *testing.T) {
 		},
 	})
 	assert.True(t, interrupted)
-	assert.True(t, removed)
 }

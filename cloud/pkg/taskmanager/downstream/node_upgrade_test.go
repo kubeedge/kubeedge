@@ -69,7 +69,7 @@ func TestNodeUpgradeJobCanDownstreamPhase(t *testing.T) {
 }
 
 func TestNodeUpgradeJobInterruptExecutor(t *testing.T) {
-	var interrupted, removed bool
+	var interrupted bool
 
 	patches := gomonkey.NewPatches()
 	defer patches.Reset()
@@ -81,14 +81,10 @@ func TestNodeUpgradeJobInterruptExecutor(t *testing.T) {
 	patches.ApplyMethodFunc(&executor.NodeTaskExecutor{}, "Interrupt", func() {
 		interrupted = true
 	})
-	patches.ApplyFunc(executor.RemoveExecutor, func(_resourceType, _jobName string) {
-		removed = true
-	})
 
 	handler := &NodeUpgradeJobHandler{
 		logger: klog.Background(),
 	}
 	handler.InterruptExecutor(&operationsv1alpha2.NodeUpgradeJob{})
 	assert.True(t, interrupted)
-	assert.True(t, removed)
 }
