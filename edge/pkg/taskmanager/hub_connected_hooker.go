@@ -45,6 +45,9 @@ func ReportUpgradeStatus(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse json reporter info, err: %v", err)
 	}
+	if info.EventType == upgradeedge.EventTypeConfigUpdate {
+		return reportConfigUpdateStatus(ctx, info)
+	}
 
 	upgrede := dbclient.NewUpgrade()
 	jobname, nodename, spec, err := upgrede.Get()
@@ -104,6 +107,62 @@ func ReportUpgradeStatus(ctx context.Context) error {
 		if err := upgradeDao.Delete(); err != nil {
 			logger.Error(err, "failed to delete upgrade record")
 		}
+	}
+	return nil
+}
+
+// reportConfigUpdateStatus reports the result of the Update action of ConfigUpdateJob.
+// keadm config-update restarts EdgeCore before the action can report its result,
+// so the result is taken from the config-update report after EdgeCore is restarted.
+func reportConfigUpdateStatus(ctx context.Context, info upgradeedge.JSONReporterInfo) error {
+	logger := klog.FromContext(ctx).WithName("report-config-update-status")
+	configUpdateDao := dbclient.NewConfigUpdate()
+	jobname, nodename, spec, err := configUpdateDao.Get()
+	if err != nil {
+		return fmt.Errorf("failed to get config update record, err: %v", err)
+	}
+	if jobname == "" || nodename == "" {
+		// The result has already been reported by the Update action because EdgeCore
+		// was not restarted, or keadm config-update was not run by a ConfigUpdateJob.
+		// Remove the report file, otherwise it is parsed on every connection to the cloud.
+		logger.Info("no config update record found, skip report config update status")
+		if err := upgradeedge.RemoveJSONReporterInfo(); err != nil {
+			logger.Error(err, "failed to remove json reporter info")
+		}
+		return nil
+	}
+
+	res := taskmsg.Resource{
+		APIVersion:   operationsv1alpha2.SchemeGroupVersion.String(),
+		ResourceType: operationsv1alpha2.ResourceConfigUpdateJob,
+		JobName:      jobname,
+		NodeName:     nodename,
+	}
+	body := taskmsg.UpstreamMessage{
+		Action:     string(operationsv1alpha2.ConfigUpdateJobActionUpdate),
+		Succ:       info.Success,
+		Reason:     info.ErrorMessage,
+		FinishTime: time.Now().UTC().Format(time.RFC3339),
+	}
+	message.ReportNodeTaskStatus(res, body)
+
+	if err := upgradeedge.RemoveJSONReporterInfo(); err != nil {
+		logger.Error(err, "failed to remove json reporter info")
+	}
+	if err := configUpdateDao.Delete(); err != nil {
+		logger.Error(err, "failed to delete config update record")
+	}
+
+	// Run rollback after config update failed, as the action flow does when EdgeCore
+	// is not restarted. Rollback command will interrupt the edgecore process,
+	// so put it at the end of the function.
+	if !info.Success {
+		specData, err := json.Marshal(spec)
+		if err != nil {
+			return fmt.Errorf("failed to marshal spec to json, err: %v", err)
+		}
+		actions.GetRunner(operationsv1alpha2.ResourceConfigUpdateJob).
+			RunAction(ctx, jobname, nodename, string(operationsv1alpha2.ConfigUpdateJobActionRollBack), specData)
 	}
 	return nil
 }
