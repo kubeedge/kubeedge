@@ -111,14 +111,14 @@ func (mh *MessageHandler) DelCallback(messageID string) {
 
 func (mh *MessageHandler) callback(message *model.Message) {
 	pID := message.GetParentID()
-	v, exist := mh.callbackHandlers.Load(pID)
-	if exist {
-		callback, ok := v.(func(message *model.Message))
-		if !ok {
-			klog.Warningf("invalid convert to model.Message")
-			return
-		}
-		callback(message)
+	v, exist := mh.callbackHandlers.LoadAndDelete(pID)
+	if !exist {
+		return
 	}
-	mh.callbackHandlers.Delete(pID)
+	callback, ok := v.(func(message *model.Message))
+	if !ok {
+		klog.Warningf("invalid convert to model.Message")
+		return
+	}
+	callback(message)
 }
