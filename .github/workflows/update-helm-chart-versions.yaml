@@ -1,0 +1,53 @@
+name: Update Helm Chart Versions
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to set (e.g. 1.21.0)'
+        required: true
+        type: string
+
+jobs:
+  update-versions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Update versions
+        working-directory: manifests/charts/cloudcore
+        run: |
+          chmod +x ./update-versions.sh
+          ./update-versions.sh ${{ github.event.inputs.version }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: "chore: update cloudcore helm chart version to v${{ github.event.inputs.version }}"
+          commit-message: "chore: update cloudcore helm chart version to v${{ github.event.inputs.version }}"
+          branch: "update-helm-chart-version"
+          base: "master"
+          delete-branch: true
+          body: |
+            ## Helm Chart Version Update
+            
+            Updates the following version references:
+            
+            - Chart.yaml: version and appVersion updated to ${{ github.event.inputs.version }}
+            - values.yaml:
+              - appVersion
+              - cloudcore image tag
+              - iptables-manager image tag
+              - controller-manager image tag
+
+permissions:
+  contents: write
+  pull-requests: write
