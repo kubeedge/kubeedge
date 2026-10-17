@@ -105,7 +105,11 @@ func parseResource(message *model.Message) (string, string, string) {
 		klog.Errorf("failed to get resource %s name and namespace", resource)
 		return "", "", ""
 	}
-	return client.KeyFunc(trTokens[2], trTokens[0], &tokenReq), resType, ""
+	// resID must stay non-empty so that processQuery looks the token up by its
+	// key. Querying by type returns every cached token on the node, and the
+	// caller accepts a single row only, so a node running more than one
+	// token-mounting pod cannot read any token back while it is offline.
+	return client.KeyFunc(trTokens[2], trTokens[0], &tokenReq), resType, trTokens[2]
 }
 
 // is resource type require remote query
