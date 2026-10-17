@@ -1,0 +1,56 @@
+/*
+Copyright 2023 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// To regenerate api.ds.pb.go run hack/generate-ds.sh
+syntax = "proto3";
+
+//option go_package = "path;name";
+option go_package = "./;v1beta1";
+package ds.v1beta1;
+
+import "google/protobuf/timestamp.proto";
+
+// DataStubService defines the service for data stub
+service DataStubService {
+    // PushDeviceData is used to push data to the data stub
+    rpc PushDeviceData(PushDeviceDataRequest) returns (PushDeviceDataResponse) {}
+}
+
+// PushDeviceDataRequest is the request for PushDeviceData
+message PushDeviceDataRequest {
+    Device device = 1;
+    DeviceProperty property = 2;
+    string qos = 3; // RT | BT
+
+}
+
+// Device is the device information
+message Device {
+    string name = 1;
+    string modelName = 2;
+}
+
+// DeviceProperty is the device property
+message DeviceProperty {
+    string name = 1;
+    string value = 2;
+    string type = 3;
+    google.protobuf.Timestamp timestamp = 4;
+}
+
+// PushDeviceDataResponse is the response for PushDeviceData
+message PushDeviceDataResponse {
+}
