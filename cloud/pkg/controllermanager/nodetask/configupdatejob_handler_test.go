@@ -445,6 +445,13 @@ func TestConfigUpdateJobCheckTimeout(t *testing.T) {
 		assert.ErrorContains(t, err, "failed to get")
 	})
 
+	t.Run("job is not found", func(t *testing.T) {
+		// The job is deleted, so the client has no object for it.
+		handler := NewConfigUpdateJobReconcileHandler(fakeConfigUpdateJobClient(), nil)
+		err := handler.CheckTimeout(ctx, jobName)
+		require.NoError(t, err)
+	})
+
 	noTimeoutCases := []struct {
 		name string
 		job  *operationsv1alpha2.ConfigUpdateJob
