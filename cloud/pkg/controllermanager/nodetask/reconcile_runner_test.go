@@ -105,6 +105,47 @@ func TestRunReconcile(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 0, handler.called["CalculateStatus"])
 	})
+
+	t.Run("job is gone before calculating status", func(t *testing.T) {
+		// RunReconcile starts a timeout job for the job in progress, release it so it
+		// does not leak into other tests through the global timeout jobs map.
+		t.Cleanup(func() {
+			ReleaseTimeoutJob[operationsv1alpha2.ImagePrePullJob](ctx, req.Name, operationsv1alpha2.ResourceImagePrePullJob)
+		})
+		handler := &goneAfterFirstGetHandler{
+			fakeReconcileHandler: fakeReconcileHandler{
+				obj: &operationsv1alpha2.ImagePrePullJob{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:       "test-job",
+						Finalizers: []string{operationsv1alpha2.FinalizerImagePrePullJob},
+					},
+					Status: operationsv1alpha2.ImagePrePullJobStatus{
+						Phase: operationsv1alpha2.JobPhaseInProgress,
+					},
+				},
+			},
+		}
+		err := RunReconcile(ctx, req, handler)
+		assert.NoError(t, err)
+		assert.Equal(t, 2, handler.called["GetJob"])
+		assert.Equal(t, 0, handler.called["CalculateStatus"])
+		assert.Equal(t, 0, handler.called["UpdateJobStatus"])
+	})
+}
+
+// goneAfterFirstGetHandler returns the job only on the first GetJob call,
+// as if the job is deleted while it is being reconciled.
+type goneAfterFirstGetHandler struct {
+	fakeReconcileHandler
+}
+
+func (h *goneAfterFirstGetHandler) GetJob(ctx context.Context, req controllerruntime.Request,
+) (*operationsv1alpha2.ImagePrePullJob, error) {
+	job, err := h.fakeReconcileHandler.GetJob(ctx, req)
+	if h.called["GetJob"] > 1 {
+		return nil, nil
+	}
+	return job, err
 }
 
 type fakeReconcileHandler struct {
