@@ -159,12 +159,26 @@ const (
 	NodeUpgradeJobActionRollBack            NodeUpgradeJobAction = "RollBack"
 )
 
+const (
+	NodeUpgradeJobConditionInitialized         = "Initialized"
+	NodeUpgradeJobConditionInProgress          = "InProgress"
+	NodeUpgradeJobConditionWaitingConfirmation = "WaitingConfirmation"
+	NodeUpgradeJobConditionTimedOut            = "TimedOut"
+	NodeUpgradeJobConditionPartiallySucceeded  = "PartiallySucceeded"
+	NodeUpgradeJobConditionCompleted           = "Completed"
+	NodeUpgradeJobConditionFailed              = "Failed"
+)
+
 // NodeUpgradeJobStatus stores the status of NodeUpgradeJob.
 // contains multiple edge nodes upgrade status.
 // +kubebuilder:validation:Type=object
 type NodeUpgradeJobStatus struct {
 	// Phase represents for the phase of the NodeUpgradeJob
 	Phase JobPhase `json:"phase"`
+
+	// Conditions represents the latest available observations of the NodeUpgradeJob lifecycle.
+	// +optional
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 
 	// NodeStatus contains upgrade Status for each edge node.
 	NodeStatus []NodeUpgradeJobNodeTaskStatus `json:"nodeStatus,omitempty"`

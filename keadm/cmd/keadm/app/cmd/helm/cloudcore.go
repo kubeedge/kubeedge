@@ -167,6 +167,14 @@ func (c *CloudCoreHelmTool) Install(opts *types.InitOptions) error {
 	}
 	rel, err := client.Run(renderer.chart, vals)
 	if err != nil {
+		if rel != nil {
+			klog.Warningf("installation failed, attempting Helm cleanup")
+			uninstaller := action.NewUninstall(helper.GetConfig())
+			uninstaller.KeepHistory = false
+			if _, uninstallErr := uninstaller.Run(rel.Name); uninstallErr != nil {
+				klog.Warningf("cleanup failed: %v", uninstallErr)
+			}
+		}
 		return fmt.Errorf("failed to install release %s, err: %v",
 			renderer.componentName, err)
 	}
