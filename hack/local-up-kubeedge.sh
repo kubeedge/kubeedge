@@ -321,6 +321,21 @@ function healthcheck {
   fi
 }
 
+# Copy files from a kind node container using whichever container CLI is available.
+# kind nodes are Docker or Podman containers; detect the appropriate CLI.
+function kind_container_cp {
+  local src="$1"
+  local dst="$2"
+  if command -v docker &>/dev/null; then
+    docker cp "$src" "$dst"
+  elif command -v podman &>/dev/null; then
+    podman cp "$src" "$dst"
+  else
+    echo "Error: neither docker nor podman CLI found. kind requires one of these to manage node containers."
+    exit 1
+  fi
+}
+
 function generate_streamserver_cert {
   CA_PATH=${CA_PATH:-/tmp/etc/kubeedge/ca}
   CERT_PATH=${CERT_PATH:-/tmp/etc/kubeedge/certs}
@@ -341,8 +356,8 @@ function generate_streamserver_cert {
     mkdir -p $CERT_PATH
   fi
 
-  docker cp ${CLUSTER_NAME}-control-plane:/etc/kubernetes/pki/ca.crt $K8SCA_FILE
-  docker cp ${CLUSTER_NAME}-control-plane:/etc/kubernetes/pki/ca.key $K8SCA_KEY_FILE
+  kind_container_cp ${CLUSTER_NAME}-control-plane:/etc/kubernetes/pki/ca.crt $K8SCA_FILE
+  kind_container_cp ${CLUSTER_NAME}-control-plane:/etc/kubernetes/pki/ca.key $K8SCA_KEY_FILE
   cp /tmp/etc/kubernetes/pki/ca.crt /tmp/etc/kubeedge/ca/streamCA.crt
 
   SUBJECTALTNAME="subjectAltName = IP.1:127.0.0.1"
