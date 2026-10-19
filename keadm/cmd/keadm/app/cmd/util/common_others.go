@@ -19,13 +19,16 @@ limitations under the License.
 package util
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/blang/semver"
+	"github.com/coreos/go-systemd/v22/dbus"
 	"k8s.io/klog/v2"
 
 	apiconsts "github.com/kubeedge/api/apis/common/constants"
@@ -119,12 +122,30 @@ func KillKubeEdgeBinary(proc string) error {
 		if running, err := isEdgeCoreServiceRunning(apiconsts.KubeEdgeBinaryName); err == nil && running {
 			serviceName = apiconsts.KubeEdgeBinaryName
 		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+		defer cancel()
+
+		conn, err := dbus.NewSystemConnectionContext(ctx)
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+
 		if systemdExist && serviceName != "" {
-			binExec = fmt.Sprintf("sudo systemctl stop %s.service && sudo systemctl disable %s.service", serviceName, serviceName)
+			unitName := fmt.Sprintf("%s.service", serviceName)
+			err = DisableAndStopSystemdUnit(ctx, conn, unitName, true)
+			if err != nil {
+				binExec = fmt.Sprintf("pkill %s", proc)
+			} else {
+				fmt.Println(proc, "is stopped")
+				return nil
+			}
 		} else {
 			binExec = fmt.Sprintf("pkill %s", proc)
 		}
 	}
+
 	cmd := execs.NewCommand(binExec)
 	if err := cmd.Exec(); err != nil {
 		return err
@@ -200,17 +221,43 @@ func retryDownload(filename, checksumFilename string, version semver.Version, ta
 }
 
 func isEdgeCoreServiceRunning(serviceName string) (bool, error) {
-	serviceRunning := fmt.Sprintf("systemctl list-unit-files | grep enabled | grep %s ", serviceName)
-	cmd := execs.NewCommand(serviceRunning)
-	err := cmd.Exec()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+	defer cancel()
 
-	if cmd.ExitCode == 0 {
-		return true, nil
-	} else if cmd.ExitCode == 1 {
-		return false, nil
+	d, err := dbus.NewSystemConnectionContext(ctx)
+	if err != nil {
+		return false, err
 	}
 
-	return false, err
+	defer d.Close()
+
+	unitName := fmt.Sprintf("%s.service", serviceName)
+
+	results, err := d.ListUnitsByPatternsContext(ctx, []string{}, []string{unitName})
+
+	for result := range results {
+		name := results[result].Name
+
+		if name != unitName && name != serviceName {
+			continue
+		}
+
+		// running
+		if results[result].SubState == "running" {
+			fmt.Printf("%s is running\n", unitName)
+			return true, nil
+		}
+
+		// enabled but not running
+		if results[result].ActiveState == "active" {
+			fmt.Printf("%s is enabled but not running\n", unitName)
+			return true, nil
+		}
+
+		return false, fmt.Errorf("%s is not running: %s", unitName, results[result].LoadState)
+	}
+
+	return false, fmt.Errorf("service %s not found", unitName)
 }
 
 // runEdgeCore starts edgecore with logs being captured
@@ -225,8 +272,27 @@ func runEdgeCore() error {
 
 	var binExec string
 	if systemdExist {
-		binExec = fmt.Sprintf("sudo ln /etc/kubeedge/%s.service /etc/systemd/system/%s.service && sudo systemctl daemon-reload && sudo systemctl enable %s && sudo systemctl start %s",
-			types.EdgeCore, types.EdgeCore, types.EdgeCore, types.EdgeCore)
+		unitName := string(types.EdgeCore) + ".service"
+
+		src := filepath.Join(apiconsts.KubeEdgePath, unitName)
+		dst := filepath.Join("/etc/systemd/system", unitName)
+
+		if _, err := os.Stat(src); err == nil {
+			if err := os.Link(src, dst); err != nil && !os.IsExist(err) {
+				klog.Warningf("failed to link service file %s to %s: %v", src, dst, err)
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+		defer cancel()
+
+		err = EnableAndRunSystemdUnit(ctx, unitName, true)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("KubeEdge edgecore is running, For logs visit: journalctl -u %s -xe\n", unitName)
+		return nil
 	} else {
 		binExec = fmt.Sprintf("%s/%s > %skubeedge/edge/%s.log 2>&1 &", apiconsts.KubeEdgeUsrBinPath, apiconsts.KubeEdgeBinaryName, apiconsts.KubeEdgePath, apiconsts.KubeEdgeBinaryName)
 	}
@@ -237,12 +303,8 @@ func runEdgeCore() error {
 	}
 	fmt.Println(cmd.GetStdOut())
 
-	if systemdExist {
-		fmt.Printf("KubeEdge edgecore is running, For logs visit: journalctl -u %s.service -xe\n", types.EdgeCore)
-	} else {
-		fmt.Println("KubeEdge edgecore is running, For logs visit: ",
-			filepath.Join(apiconsts.KubeEdgeLogPath, apiconsts.KubeEdgeBinaryName+".log"))
-	}
+	fmt.Println("KubeEdge edgecore is running, For logs visit: ",
+		filepath.Join(apiconsts.KubeEdgeLogPath, apiconsts.KubeEdgeBinaryName+".log"))
 	return nil
 }
 
