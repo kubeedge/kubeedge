@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -135,23 +136,19 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		return err
 	}
 	topic := dtcommon.DeviceETPrefix + device.ID + dtcommon.DeviceETStateUpdateResultSuffix
-	err = context.Send(device.ID,
+	if err = context.Send(device.ID,
 		dtcommon.SendToEdge,
 		dtcommon.CommModule,
-		context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, payload))
-	if err != nil {
-		// TODO: handle error
-		klog.Error(err)
+		context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, payload)); err != nil {
+		return err
 	}
 
 	msgResource := "device/" + device.ID + dtcommon.DeviceETStateUpdateSuffix
-	err = context.Send(deviceID,
+	if err = context.Send(deviceID,
 		dtcommon.SendToCloud,
 		dtcommon.CommModule,
-		context.BuildModelMessage("resource", "", msgResource, model.UpdateOperation, string(payload)))
-	if err != nil {
-		// TODO: handle error
-		klog.Error(err)
+		context.BuildModelMessage("resource", "", msgResource, model.UpdateOperation, string(payload))); err != nil {
+		return err
 	}
 	return nil
 }
@@ -171,13 +168,10 @@ func dealDeviceAttrUpdate(context *dtcontext.DTContext, resource string, msg int
 	deviceID := resource
 
 	context.Lock(deviceID)
-	if _, err = UpdateDeviceAttr(context, deviceID, updatedDevice.Attributes,
-		dttype.BaseMessage{EventID: updatedDevice.EventID}, 0); err != nil {
-		// TODO: handle error
-		klog.Error(err)
-	}
+	_, err = UpdateDeviceAttr(context, deviceID, updatedDevice.Attributes,
+		dttype.BaseMessage{EventID: updatedDevice.EventID}, 0)
 	context.Unlock(deviceID)
-	return nil
+	return err
 }
 
 // UpdateDeviceAttr update device attributes
@@ -194,7 +188,7 @@ func UpdateDeviceAttr(context *dtcontext.DTContext, deviceID string, attributes 
 	}
 	dealAttrResult := DealMsgAttr(context, Device.ID, attributes, dealType)
 	if dealAttrResult.Err != nil {
-		return nil, nil
+		return nil, dealAttrResult.Err
 	}
 	add, deviceAttrDelete, update, result := dealAttrResult.Add, dealAttrResult.Delete, dealAttrResult.Update, dealAttrResult.Result
 	if len(add) != 0 || len(deviceAttrDelete) != 0 || len(update) != 0 {
@@ -209,25 +203,22 @@ func UpdateDeviceAttr(context *dtcontext.DTContext, deviceID string, attributes 
 		baseMessage.Timestamp = now
 
 		if err != nil {
-			if err := SyncDeviceFromSqlite(context, deviceID); err != nil {
-				// TODO: handle error
-				klog.Error(err)
+			if syncErr := SyncDeviceFromSqlite(context, deviceID); syncErr != nil {
+				utilruntime.HandleError(fmt.Errorf("restore device %q from sqlite after attr persistence failure: %w", deviceID, syncErr))
 			}
 			klog.Errorf("Update device failed due to writing sql error: %v", err)
-		} else {
-			klog.Infof("Send update attributes of device %s event to edge app", deviceID)
-			payload, err := dttype.BuildDeviceAttrUpdate(baseMessage, result)
-			if err != nil {
-				//todo
-				klog.Errorf("Build device attribute update failed: %v", err)
-			}
-			topic := dtcommon.DeviceETPrefix + deviceID + dtcommon.DeviceETUpdatedSuffix
-			err = context.Send(deviceID, dtcommon.SendToEdge, dtcommon.CommModule,
-				context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, payload))
-			if err != nil {
-				// TODO: handle error
-				klog.Error(err)
-			}
+			return nil, err
+		}
+		klog.Infof("Send update attributes of device %s event to edge app", deviceID)
+		payload, buildErr := dttype.BuildDeviceAttrUpdate(baseMessage, result)
+		if buildErr != nil {
+			klog.Errorf("Build device attribute update failed: %v", buildErr)
+			return nil, fmt.Errorf("build device attr update for device %q: %w", deviceID, buildErr)
+		}
+		topic := dtcommon.DeviceETPrefix + deviceID + dtcommon.DeviceETUpdatedSuffix
+		if sendErr := context.Send(deviceID, dtcommon.SendToEdge, dtcommon.CommModule,
+			context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, payload)); sendErr != nil {
+			utilruntime.HandleError(fmt.Errorf("send device attr update notification for device %q: %w", deviceID, sendErr))
 		}
 	}
 
