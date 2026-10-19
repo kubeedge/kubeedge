@@ -24,18 +24,22 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
+	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
-func (c *CloudCoreHelmTool) runPreflightChecks(kubeConfig string, skip bool) error {
-	if skip {
+func (c *CloudCoreHelmTool) runPreflightChecks(opts *types.InitOptions) error {
+	if opts == nil {
+		return fmt.Errorf("pre-flight check failed: init options are nil")
+	}
+	if opts.SkipPreflightChecks {
 		fmt.Println("Skipping pre-flight checks.")
 		return nil
 	}
 
 	fmt.Println("Running pre-flight checks...")
 
-	cli, err := util.KubeClient(kubeConfig)
+	cli, err := util.KubeClient(opts.KubeConfig)
 	if err != nil {
 		return fmt.Errorf("pre-flight check failed: cannot create kube client, err: %v", err)
 	}
@@ -46,7 +50,9 @@ func (c *CloudCoreHelmTool) runPreflightChecks(kubeConfig string, skip bool) err
 	if err := checkCoreDNS(cli); err != nil {
 		return err
 	}
-	if err := checkCloudCorePermissions(cli); err != nil {
+
+	rbacChecks := util.RequiredPermissions(opts)
+	if err := util.CheckKubernetesPermissions(cli, rbacChecks); err != nil {
 		return err
 	}
 

@@ -106,7 +106,7 @@ func (c *CloudCoreHelmTool) Install(opts *types.InitOptions) error {
 	if err := c.Common.OSTypeInstaller.IsK8SComponentInstalled(c.Common.KubeConfig, c.Common.Master); err != nil {
 		return fmt.Errorf("failed to verify k8s component installed, err: %v", err)
 	}
-	if err := c.runPreflightChecks(opts.KubeConfig, opts.SkipPreflightChecks); err != nil {
+	if err := c.runPreflightChecks(opts); err != nil {
 		return err
 	}
 
