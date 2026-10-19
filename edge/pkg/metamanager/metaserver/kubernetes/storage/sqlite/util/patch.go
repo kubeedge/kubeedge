@@ -48,7 +48,7 @@ func StrategicPatchObject(
 	schemaReferenceObj runtime.Object,
 	validationDirective string,
 ) error {
-	originalObjMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(originalObject)
+	originalObjMapCopy, err := runtime.DefaultUnstructuredConverter.ToUnstructured(originalObject.DeepCopyObject())
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func StrategicPatchObject(
 		}
 	}
 
-	return applyPatchToObject(requestContext, defaulter, originalObjMap, patchMap, objToUpdate, schemaReferenceObj, strictErrs, validationDirective)
+	return applyPatchToObject(requestContext, defaulter, originalObjMapCopy, patchMap, objToUpdate, schemaReferenceObj, strictErrs, validationDirective)
 }
 
 // applyPatchToObject applies a strategic merge patch of <patchMap> to
