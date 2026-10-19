@@ -75,10 +75,20 @@ func TestTimeoutJob(t *testing.T) {
 			nodeJobName: "test-job",
 			handler:     fakeHandler,
 			ticker:      time.NewTicker(1 * time.Second),
+			stopCh:      make(chan struct{}),
 		}
-		go job.Run(ctx)
+		done := make(chan struct{})
+		go func() {
+			job.Run(ctx)
+			close(done)
+		}()
 		time.Sleep(1200 * time.Millisecond)
 		job.Stop(ctx)
+		select {
+		case <-done:
+		case <-time.After(time.Second):
+			t.Fatal("Run did not return after Stop")
+		}
 		assert.True(t, job.IsStopped())
 		assert.Equal(t, 1, fakeHandler.called["CheckTimeout"])
 	})
