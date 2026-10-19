@@ -298,7 +298,21 @@ func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *be
 	clusterObjectSync, err := md.clusterObjectSyncLister.Get(clusterObjectSyncName)
 
 	switch {
-	case err == nil && clusterObjectSync.Status.ObjectResourceVersion != "":
+	case err == nil:
+		if clusterObjectSync.Status.ObjectResourceVersion == "" {
+			clusterObjectSyncStatus := clusterObjectSync.DeepCopy()
+			clusterObjectSyncStatus.Status.ObjectResourceVersion = "0"
+			_, err = md.reliableClient.
+				ReliablesyncsV1alpha1().
+				ClusterObjectSyncs().
+				UpdateStatus(context.Background(), clusterObjectSyncStatus, metav1.UpdateOptions{})
+			if err != nil {
+				klog.ErrorS(err, "Failed to update clusterObjectSync",
+					"clusterObjectSyncName", clusterObjectSyncName,
+					"resourceName", resourceName)
+			}
+			return true
+		}
 		if synccontroller.CompareResourceVersion(msg.GetResourceVersion(), clusterObjectSync.Status.ObjectResourceVersion) > 0 {
 			return true
 		}
@@ -325,7 +339,7 @@ func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *be
 			klog.ErrorS(err, "Failed to create clusterObjectSync",
 				"clusterObjectSyncName", clusterObjectSyncName,
 				"resourceName", resourceName)
-			return false
+			return true
 		}
 
 		clusterObjectSync.Status.ObjectResourceVersion = "0"
@@ -337,7 +351,7 @@ func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *be
 			klog.ErrorS(err, "Failed to update clusterObjectSync",
 				"clusterObjectSyncName", clusterObjectSyncName,
 				"resourceName", resourceName)
-			return false
+			return true
 		}
 
 		return true
@@ -362,7 +376,22 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 	objectSync, err := md.objectSyncLister.ObjectSyncs(resourceNamespace).Get(objectSyncName)
 
 	switch {
-	case err == nil && objectSync.Status.ObjectResourceVersion != "":
+	case err == nil:
+		if objectSync.Status.ObjectResourceVersion == "" {
+			objectSyncStatus := objectSync.DeepCopy()
+			objectSyncStatus.Status.ObjectResourceVersion = "0"
+			_, err = md.reliableClient.
+				ReliablesyncsV1alpha1().
+				ObjectSyncs(resourceNamespace).
+				UpdateStatus(context.Background(), objectSyncStatus, metav1.UpdateOptions{})
+			if err != nil {
+				klog.ErrorS(err, "Failed to update objectSync",
+					"objectSyncName", objectSyncName,
+					"resourceNamespace", resourceNamespace,
+					"resourceName", resourceName)
+			}
+			return true
+		}
 		if synccontroller.CompareResourceVersion(msg.GetResourceVersion(), objectSync.Status.ObjectResourceVersion) > 0 {
 			return true
 		}
@@ -391,7 +420,7 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 				"objectSyncName", objectSyncName,
 				"resourceNamespace", resourceNamespace,
 				"resourceName", resourceName)
-			return false
+			return true
 		}
 
 		objectSyncStatus.Status.ObjectResourceVersion = "0"
@@ -404,7 +433,7 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 				"objectSyncName", objectSyncName,
 				"resourceNamespace", resourceNamespace,
 				"resourceName", resourceName)
-			return false
+			return true
 		}
 
 		return true
