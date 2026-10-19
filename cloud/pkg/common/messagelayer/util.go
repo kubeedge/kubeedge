@@ -48,7 +48,7 @@ const (
 // BuildResource return a string as "beehive/pkg/core/model".Message.Router.Resource
 func BuildResource(nodeID, namespace, resourceType, resourceID string) (resource string, err error) {
 	if namespace == "" || resourceType == "" || nodeID == "" {
-		err = fmt.Errorf("required parameter are not set (node id, namespace or resource type)")
+		err = fmt.Errorf("required parameters are not set (node id, namespace or resource type)")
 		return
 	}
 
@@ -111,7 +111,7 @@ func GetResourceName(msg model.Message) (string, error) {
 // BuildResourceForRouter return a string as "beehive/pkg/core/model".Message.Router.Resource
 func BuildResourceForRouter(resourceType, resourceID string) (string, error) {
 	if resourceID == "" || resourceType == "" {
-		return "", fmt.Errorf("required parameter are not set (resourceID or resource type)")
+		return "", fmt.Errorf("required parameters are not set (resourceID or resource type)")
 	}
 	return pkgutil.ConcatStrings(resourceType, constants.ResourceSep, resourceID), nil
 }
@@ -119,7 +119,7 @@ func BuildResourceForRouter(resourceType, resourceID string) (string, error) {
 // BuildResourceForDevice return a string as "beehive/pkg/core/model".Message.Router.Resource
 func BuildResourceForDevice(nodeID, resourceType, resourceID string) (resource string, err error) {
 	if nodeID == "" || resourceType == "" {
-		err = fmt.Errorf("required parameter are not set (node id, namespace or resource type)")
+		err = fmt.Errorf("required parameters are not set (node id or resource type)")
 		return
 	}
 	resource = fmt.Sprintf("%s%s%s%s%s", ResourceNode, constants.ResourceSep, nodeID, constants.ResourceSep, resourceType)
