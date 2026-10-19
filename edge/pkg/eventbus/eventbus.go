@@ -127,9 +127,17 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 		resource := accessInfo.GetResource()
 		switch operation {
 		case messagepkg.OperationSubscribe:
+			if err := mqttBus.ValidateMQTTTopicName(resource); err != nil {
+				klog.Warningf("Invalid MQTT topic name for subscribe, rejected: %v", err)
+				continue
+			}
 			eb.subscribe(resource)
 			klog.Infof("Edge-hub-cli subscribe topic to %s", resource)
 		case messagepkg.OperationUnsubscribe:
+			if err := mqttBus.ValidateMQTTTopicName(resource); err != nil {
+				klog.Warningf("Invalid MQTT topic name for unsubscribe, rejected: %v", err)
+				continue
+			}
 			eb.unsubscribe(resource)
 			klog.Infof("Edge-hub-cli unsubscribe topic to %s", resource)
 		case messagepkg.OperationMessage:
@@ -153,6 +161,10 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 				klog.Errorf("marshal message %v error: %v", topic, err)
 				continue
 			}
+			if err := mqttBus.ValidateMQTTTopicName(topic); err != nil {
+				klog.Warningf("Invalid MQTT topic name for message publish, rejected: %v", err)
+				continue
+			}
 			eb.publish(topic, payload)
 		case messagepkg.OperationPublish:
 			topic := resource
@@ -165,6 +177,10 @@ func (eb *eventbus) pubCloudMsgToEdge() {
 					continue
 				}
 				payload = []byte(content)
+			}
+			if err := mqttBus.ValidateMQTTTopicName(topic); err != nil {
+				klog.Warningf("Invalid MQTT topic name for publish, rejected: %v", err)
+				continue
 			}
 			eb.publish(topic, payload)
 		case messagepkg.OperationGetResult:
