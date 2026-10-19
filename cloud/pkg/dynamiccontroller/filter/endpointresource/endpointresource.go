@@ -89,6 +89,9 @@ func filterEndpointSlice(targetNode string, obj runtime.Object) {
 	}
 	var epsTmp []discovery.Endpoint
 	for _, ep := range epSlice.Endpoints {
+		if ep.NodeName == nil {
+			continue
+		}
 		if filter.IsBelongToSameGroup(targetNode, *ep.NodeName) {
 			epsTmp = append(epsTmp, ep)
 		}
