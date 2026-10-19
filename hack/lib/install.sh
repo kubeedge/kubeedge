@@ -192,7 +192,11 @@ EOF'
 }
 
 function install_docker() {
-  CRIDOCKERD_VERSION=$(curl -s "https://api.github.com/repos/Mirantis/cri-dockerd/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+  # Under `set -e -o pipefail`, a rate-limited/empty response from the GitHub
+  # API makes `grep` (and thus this pipeline) exit non-zero, which would abort
+  # the script here before the fallback below ever runs. `|| true` keeps that
+  # failure local so the fallback version is actually reached.
+  CRIDOCKERD_VERSION=$(curl -s "https://api.github.com/repos/Mirantis/cri-dockerd/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || true)
   if [ -z "$CRIDOCKERD_VERSION" ]; then
       CRIDOCKERD_VERSION="v0.3.21"
   fi

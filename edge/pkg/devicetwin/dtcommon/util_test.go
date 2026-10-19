@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/api/apis/devices/v1beta1"
@@ -331,6 +332,38 @@ func TestConvertDevice(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "non-nil DeviceModelRef",
+			device: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-device-with-model",
+				},
+				Spec: v1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{
+						Name: "test-model-ref",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid protocol config data",
+			device: &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-device-valid-config",
+				},
+				Spec: v1beta1.DeviceSpec{
+					Protocol: v1beta1.ProtocolConfig{
+						ConfigData: &v1beta1.CustomizedValue{
+							Data: map[string]interface{}{
+								"validKey": "validValue",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "device with invalid configData type",
 			device: &v1beta1.Device{
 				ObjectMeta: metav1.ObjectMeta{
@@ -550,6 +583,22 @@ func TestConvertDeviceModel(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "marshal error case",
+			model: &v1beta1.DeviceModel{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-model-marshal-error",
+				},
+				Spec: v1beta1.DeviceModelSpec{
+					ProtocolConfigData: &v1beta1.CustomizedValue{
+						Data: map[string]interface{}{
+							"invalid": make(chan int),
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range cases {
@@ -599,6 +648,25 @@ func TestConvertDeviceProperty(t *testing.T) {
 			errMsg:  "failed to marshal property",
 		},
 		{
+			name: "unmarshal error case",
+			prop: &v1beta1.DeviceProperty{
+				Name: "test-prop-unmarshal-error",
+				Visitors: v1beta1.VisitorConfig{
+					ProtocolName: "modbus",
+					ConfigData: &v1beta1.CustomizedValue{
+						// The "data" key here collides with pb.CustomizedValue's own
+						// "data" field (map[string]*anypb.Any), so the round-trip
+						// json.Unmarshal fails to unmarshal this string into that map.
+						Data: map[string]interface{}{
+							"data": "this-should-be-a-map-not-a-string",
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "failed to unmarshal property",
+		},
+		{
 			name: "visitor config data conversion error",
 			prop: &v1beta1.DeviceProperty{
 				Name: "test-prop",
@@ -626,6 +694,35 @@ func TestConvertDeviceProperty(t *testing.T) {
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "successful conversion with anomaly detection data",
+			prop: &v1beta1.DeviceProperty{
+				Name: "test-prop-anomaly",
+				PushMethod: &v1beta1.PushMethod{
+					AnomalyDetection: &v1beta1.AnomalyDetectionConfig{
+						Data: map[string]interface{}{
+							"threshold": "validValue",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "anomaly detection data conversion error",
+			prop: &v1beta1.DeviceProperty{
+				Name: "test-prop-anomaly-error",
+				PushMethod: &v1beta1.PushMethod{
+					AnomalyDetection: &v1beta1.AnomalyDetectionConfig{
+						Data: map[string]interface{}{
+							"bad": struct{}{},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "failed to convert anomaly detection data",
 		},
 	}
 
