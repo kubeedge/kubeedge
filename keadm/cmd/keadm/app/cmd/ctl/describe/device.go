@@ -74,9 +74,9 @@ func NewDescribeDeviceOptions() *DeviceDescribeOptions {
 
 func AddDescribeDeviceFlags(cmd *cobra.Command, options *DeviceDescribeOptions) {
 	cmd.Flags().StringVarP(&options.Namespace, common.FlagNameNamespace, "n", "default", "If present, the namespace scope for this CLI request")
-	cmd.Flags().StringVar(&options.LabelSelector, common.FlagNameLabelSelector, "", "Selector (label query) to filter on")
+	cmd.Flags().StringVarP(&options.LabelSelector, common.FlagNameLabelSelector, "l", "", "Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)")
 	cmd.Flags().BoolVarP(&options.AllNamespaces, common.FlagNameAllNamespaces, "A", false, "If present, list the requested object(s) across all namespaces")
-	cmd.Flags().BoolVar(&options.ShowEvents, common.FlagNameShowEvents, false, "If present, list the requested object(s) across all namespaces")
+	cmd.Flags().BoolVar(&options.ShowEvents, common.FlagNameShowEvents, false, "If present, display events related to the described object.")
 	cmd.Flags().Int64Var(&options.ChunkSize, common.FlagNameChunkSize, 500, "If non-zero, split output into chunks of this many bytes")
 }
 
