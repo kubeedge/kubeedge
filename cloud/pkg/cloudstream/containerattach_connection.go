@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"time"
 
 	"github.com/emicklei/go-restful"
 	"k8s.io/klog/v2"
@@ -94,14 +95,42 @@ func (ah *ContainerAttachConnection) SendConnection() (stream.EdgedConnection, e
 	return connector, nil
 }
 
+// SendConnectionWithRetry attempts to send connection with retry mechanism
+func (ah *ContainerAttachConnection) SendConnectionWithRetry(maxRetries int, retryDelay time.Duration) (stream.EdgedConnection, error) {
+	var connector stream.EdgedConnection
+	var err error
+
+	for i := 0; i < maxRetries; i++ {
+		connector, err = ah.SendConnection()
+		if err == nil {
+			return connector, nil
+		}
+
+		klog.Warningf("%s failed to send connection (attempt %d/%d): %v", ah.String(), i+1, maxRetries, err)
+		
+		if i < maxRetries-1 {
+			select {
+			case <-ah.ctx.Done():
+				return nil, fmt.Errorf("context cancelled during retry")
+			case <-ah.EdgePeerDone():
+				return nil, fmt.Errorf("edge peer done during retry")
+			case <-time.After(retryDelay):
+				// Continue to next retry
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("failed to send connection after %d attempts: %v", maxRetries, err)
+}
+
 func (ah *ContainerAttachConnection) Serve() error {
 	defer func() {
 		close(ah.closeChan)
 		klog.V(6).Infof("%s stop successfully", ah.String())
 	}()
 
-	// first send connect message
-	connector, err := ah.SendConnection()
+	// first send connect message with retry mechanism
+	connector, err := ah.SendConnectionWithRetry(3, time.Second*2)
 	if err != nil {
 		klog.Errorf("%s send %s info error %v", ah.String(), stream.MessageTypeAttachConnect, err)
 		return err
@@ -115,11 +144,23 @@ func (ah *ContainerAttachConnection) Serve() error {
 				return
 			}
 			klog.Warningf("%v failed send %s message to edge, err: %v", ah, msg.MessageType, err)
+			
+			// Wait before retry
+			select {
+			case <-ah.ctx.Done():
+				return
+			case <-ah.EdgePeerDone():
+				return
+			case <-time.After(time.Second * time.Duration(retry+1)):
+				// Continue to next retry
+			}
 		}
 		klog.Errorf("max retry count reached when send %s message to edge", msg.MessageType)
 	}
 
 	var data [256]byte
+	readTimeout := time.Second * 30
+	
 	for {
 		select {
 		case <-ah.ctx.Done():
@@ -131,26 +172,63 @@ func (ah *ContainerAttachConnection) Serve() error {
 			return fmt.Errorf("%s find edge peer done, so stop this connection", ah.String())
 		default:
 		}
-		func() {
-			n, err := ah.Conn.Read(data[:])
-			if err != nil {
-				if !errors.Is(err, io.EOF) {
-					klog.Errorf("%s failed to read from client: %v", ah.String(), err)
-					return
-				}
+		
+		// Set read timeout to detect stale connections
+		if err := ah.Conn.SetReadDeadline(time.Now().Add(readTimeout)); err != nil {
+			klog.Warningf("%s failed to set read deadline: %v", ah.String(), err)
+		}
+		
+		n, err := ah.Conn.Read(data[:])
+		if err != nil {
+			if errors.Is(err, io.EOF) {
 				klog.V(6).Infof("%s read EOF from client", ah.String())
 				sendCloseMessage()
-				return
+				return nil
 			}
-			if n <= 0 {
-				return
+			
+			// Check for timeout error
+			var netErr net.Error
+			if errors.As(err, &netErr) && netErr.Timeout() {
+				klog.V(6).Infof("%s read timeout, continuing", ah.String())
+				continue
 			}
-			msg := stream.NewMessage(connector.GetMessageID(), stream.MessageTypeData, data[:n])
-			if err := ah.WriteToTunnel(msg); err != nil {
-				klog.Errorf("%s failed to write to tunnel server, err: %v", ah.String(), err)
-				return
-			}
-		}()
+			
+			klog.Errorf("%s failed to read from client: %v", ah.String(), err)
+			sendCloseMessage()
+			return fmt.Errorf("read from client failed: %v", err)
+		}
+		
+		if n <= 0 {
+			continue
+		}
+		
+		msg := stream.NewMessage(connector.GetMessageID(), stream.MessageTypeData, data[:n])
+		if err := ah.WriteToTunnel(msg); err != nil {
+			klog.Errorf("%s failed to write to tunnel server, err: %v", ah.String(), err)
+			sendCloseMessage()
+			return fmt.Errorf("write to tunnel failed: %v", err)
+		}
+	}
+}
+
+// IsConnectionActive checks if the connection is still active
+func (ah *ContainerAttachConnection) IsConnectionActive() bool {
+	select {
+	case <-ah.closeChan:
+		return false
+	case <-ah.edgePeerStop:
+		return false
+	default:
+		return true
+	}
+}
+
+// GetConnectionStats returns basic connection statistics
+func (ah *ContainerAttachConnection) GetConnectionStats() map[string]interface{} {
+	return map[string]interface{}{
+		"message_id":   ah.MessageID,
+		"active":       ah.IsConnectionActive(),
+		"session_type": "container_attach",
 	}
 }
 
