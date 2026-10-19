@@ -15,6 +15,8 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/util/execs"
 	"github.com/kubeedge/kubeedge/pkg/util/files"
+
+	"k8s.io/klog/v2"
 )
 
 var (
@@ -79,7 +81,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 		return err
 	}
 
-	fmt.Println("Start collecting data")
+	klog.Info("Start collecting data")
 	// create tmp direction
 	tmpName, timenow, err := makeDirTmp()
 	if err != nil {
@@ -89,7 +91,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 
 	err = collectSystemData(fmt.Sprintf("%s/system", tmpName))
 	if err != nil {
-		fmt.Printf("collect System data failed")
+		klog.Errorf("collect system data failed: %v", err)
 	}
 	printDetail("collect systemd data finish")
 
@@ -100,7 +102,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	}
 	err = collectEdgecoreData(fmt.Sprintf("%s/edgecore", tmpName), edgeconfig, collectOptions)
 	if err != nil {
-		fmt.Printf("collect edgecore data failed")
+		klog.Errorf("collect edgecore data failed: %v", err)
 	}
 	printDetail("collect edgecore data finish")
 
@@ -121,7 +123,7 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 
 	printDetail("Remove tmp data finish")
 
-	fmt.Printf("Data collected successfully, path: %s\n", zipName)
+	klog.Infof("Data collected successfully, path: %s", zipName)
 	return nil
 }
 
@@ -301,6 +303,6 @@ func ExecuteShell(cmdStr string, tmpPath string) error {
 
 func printDetail(msg string) {
 	if printDeatilFlag {
-		fmt.Println(msg)
+		klog.Info(msg)
 	}
 }
