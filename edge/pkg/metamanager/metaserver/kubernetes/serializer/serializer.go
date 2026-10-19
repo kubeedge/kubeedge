@@ -7,6 +7,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
+	"k8s.io/apimachinery/pkg/runtime/serializer/protobuf"
+	"k8s.io/kubernetes/pkg/api/legacyscheme"
 )
 
 // NewUnstructuredNegotiatedSerializer returns a simple, negotiated serializer
@@ -44,6 +46,20 @@ func (f WithoutConversionCodecFactory) SupportedMediaTypes() []runtime.Serialize
 			MediaTypeSubType: "yaml",
 			EncodesAsText:    true,
 			Serializer:       json.NewSerializerWithOptions(json.DefaultMetaFactory, f.creator, f.typer, json.SerializerOptions{Yaml: true}),
+		},
+		{
+			MediaType:        "application/vnd.kubernetes.protobuf",
+			MediaTypeType:    "application",
+			MediaTypeSubType: "vnd.kubernetes.protobuf",
+			EncodesAsText:    false,
+
+			Serializer:       protobuf.NewSerializer(legacyscheme.Scheme, legacyscheme.Scheme),
+			StrictSerializer: protobuf.NewSerializer(legacyscheme.Scheme, legacyscheme.Scheme),
+			StreamSerializer: &runtime.StreamSerializerInfo{
+				EncodesAsText: false,
+				Serializer:    protobuf.NewRawSerializer(legacyscheme.Scheme, legacyscheme.Scheme),
+				Framer:        protobuf.LengthDelimitedFramer,
+			},
 		},
 	}
 }
