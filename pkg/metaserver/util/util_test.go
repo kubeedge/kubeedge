@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 )
 
@@ -45,6 +46,14 @@ func TestGetMessageAPIVerison(t *testing.T) {
 					Content: "content",
 				}},
 			want: "",
+		},
+		{
+			name: "TestGetMessageAPIVerison(): Case 3: KubeEdge CRD without TypeMeta",
+			args: args{
+				msg: &beehiveModel.Message{
+					Content: &policyv1alpha1.ServiceAccountAccess{},
+				}},
+			want: "policy.kubeedge.io/v1alpha1",
 		},
 	}
 	for _, tt := range tests {
@@ -85,6 +94,14 @@ func TestGetMessageResourceType(t *testing.T) {
 					Content: "content",
 				}},
 			want: "",
+		},
+		{
+			name: "TestGetMessageResourceType(): Case 3: KubeEdge CRD without TypeMeta",
+			args: args{
+				msg: &beehiveModel.Message{
+					Content: &policyv1alpha1.ServiceAccountAccess{},
+				}},
+			want: "ServiceAccountAccess",
 		},
 	}
 	for _, tt := range tests {
