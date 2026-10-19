@@ -19,7 +19,7 @@ package restart
 import "github.com/spf13/cobra"
 
 var (
-	edgeRestartShortDescription = `Restart resources in edge node`
+	edgeRestartShortDescription = `Restart resources on an edge node`
 )
 
 // NewEdgeRestart returns KubeEdge restart edge resources command.

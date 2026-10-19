@@ -36,7 +36,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
-var edgeDescribeDeviceShortDescription = `Describe device in edge node`
+var edgeDescribeDeviceShortDescription = `Describe device on an edge node`
 
 type DeviceDescribeOptions struct {
 	Namespace     string
