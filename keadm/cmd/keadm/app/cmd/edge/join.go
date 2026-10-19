@@ -59,7 +59,7 @@ func NewEdgeJoin() *cobra.Command {
 	step := common.NewStep()
 	cmd := &cobra.Command{
 		Use:          "join",
-		Short:        "Bootstraps edge component. Checks and install (if required) the pre-requisites. Execute it on any edge node machine you wish to join",
+		Short:        "Bootstraps edge component. Checks and installs (if required) the pre-requisites. Execute it on any edge node machine you wish to join",
 		Long:         edgeJoinDescription,
 		Example:      edgeJoinExample,
 		SilenceUsage: true,
