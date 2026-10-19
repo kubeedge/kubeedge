@@ -22,6 +22,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -163,6 +164,9 @@ func cleanDirectories() error {
 	}
 
 	for _, dir := range dirToClean {
+		if err := unmountIfNeeded(dir); err != nil {
+			fmt.Printf("Failed to unmount directory %s: %v\n", dir, err)
+		}
 		if err := phases.CleanDir(dir); err != nil {
 			fmt.Printf("Failed to delete directory %s: %v\n", dir, err)
 		}
@@ -177,4 +181,33 @@ func addResetFlags(cmd *cobra.Command, resetOpts *common.ResetOptions) {
 		"Reset the node without prompting for confirmation, and continue even if running edgecore not found")
 	cmd.Flags().StringVar(&resetOpts.Endpoint, common.FlagNameRemoteRuntimeEndpoint, resetOpts.Endpoint,
 		"Use this key to set container runtime endpoint")
+}
+
+func unmountIfNeeded(path string) error {
+	// try native windows command
+	openFiles := exec.Command("cmd", "/C", "openfiles /query /fo table | findstr /I " + path)
+    if err := openFiles.Run(); err == nil {
+		// means the path is open
+		// close open files
+		closeCmd := exec.Command("cmd", "/C", "openfiles /disconnect /a /op " + path)
+        if err := closeCmd.Run(); err != nil {
+            fmt.Printf("Warning: Failed to close open files for %s: %v\n", path, err)
+        }
+	}
+
+	// try handle.exe if avaliable
+    if handleExists := exec.Command("where", "handle.exe").Run(); handleExists == nil {
+        cmd := exec.Command("cmd", "/C", "handle.exe", "-nobanner", path)
+        if err := cmd.Run(); err != nil {
+            fmt.Printf("Warning: Failed to check handles using handle.exe for %s: %v\n", path, err)
+        }
+    }
+
+	// dismount
+    dismountCmd := exec.Command("cmd", "/C", "mountvol", path, "/D")
+    if err := dismountCmd.Run(); err != nil {
+        // same as before Ignoring dismount errors as the path might not be mounted
+        fmt.Printf("Warning: Failed to dismount %s: %v\n", path, err)
+    }
+    return nil
 }
