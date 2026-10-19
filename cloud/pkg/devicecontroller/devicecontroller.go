@@ -1,6 +1,7 @@
 package devicecontroller
 
 import (
+	"fmt"
 	"time"
 
 	"k8s.io/klog/v2"
@@ -28,11 +29,11 @@ func newDeviceController(enable bool) *DeviceController {
 	}
 	downstream, err := controller.NewDownstreamController(informers.GetInformersManager().GetKubeEdgeInformerFactory())
 	if err != nil {
-		klog.Exitf("New downstream controller failed with error: %s", err)
+		panic(fmt.Sprintf("New downstream controller failed with error: %s", err))
 	}
 	upstream, err := controller.NewUpstreamController(downstream)
 	if err != nil {
-		klog.Exitf("New upstream controller failed with error: %s", err)
+		panic(fmt.Sprintf("New upstream controller failed with error: %s", err))
 	}
 	return &DeviceController{
 		downstream: downstream,
@@ -68,12 +69,12 @@ func (dc *DeviceController) RestartPolicy() *core.ModuleRestartPolicy {
 // Start controller
 func (dc *DeviceController) Start() {
 	if err := dc.downstream.Start(); err != nil {
-		klog.Exitf("Start downstream failed with error: %s", err)
+		panic(fmt.Sprintf("Start downstream failed with error: %s", err))
 	}
 	// wait for downstream controller to start and load deviceModels and devices
 	// TODO think about sync
 	time.Sleep(1 * time.Second)
 	if err := dc.upstream.Start(); err != nil {
-		klog.Exitf("Start upstream failed with error: %s", err)
+		panic(fmt.Sprintf("Start upstream failed with error: %s", err))
 	}
 }
