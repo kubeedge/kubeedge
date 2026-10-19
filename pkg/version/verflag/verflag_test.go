@@ -17,8 +17,11 @@ limitations under the License.
 package verflag
 
 import (
+	"os"
+	"os/exec"
 	"testing"
 
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -124,4 +127,61 @@ func TestVersionValue_String(t *testing.T) {
 func TestVersionValue_Type(t *testing.T) {
 	v := VersionFalse
 	assert.Equal(t, "version", v.Type())
+}
+
+func TestAddFlags(t *testing.T) {
+	fs := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	
+	AddFlags(fs)
+
+	vFlag := fs.Lookup(versionFlagName)
+	if vFlag == nil {
+		t.Errorf("expected '%s' flag to be registered in the FlagSet", versionFlagName)
+	}
+}
+
+func TestPrintAndExitIfRequested(t *testing.T) {
+	// Subprocess test for VersionRaw
+	t.Run("ExitWithVersionRaw", func(t *testing.T) {
+		if os.Getenv("TEST_EXIT_RAW") == "1" {
+			v := VersionRaw
+			versionFlag = &v
+			PrintAndExitIfRequested()
+			return
+		}
+
+		cmd := exec.Command(os.Args[0], "-test.run=TestPrintAndExitIfRequested/ExitWithVersionRaw")
+		cmd.Env = append(os.Environ(), "TEST_EXIT_RAW=1")
+		err := cmd.Run()
+
+		if err != nil {
+			t.Fatalf("process exited with error %v, want exit status 0", err)
+		}
+	})
+
+	// Subprocess test for VersionTrue
+	t.Run("ExitWithVersionTrue", func(t *testing.T) {
+		if os.Getenv("TEST_EXIT_TRUE") == "1" {
+			v := VersionTrue
+			versionFlag = &v
+			PrintAndExitIfRequested()
+			return
+		}
+
+		cmd := exec.Command(os.Args[0], "-test.run=TestPrintAndExitIfRequested/ExitWithVersionTrue")
+		cmd.Env = append(os.Environ(), "TEST_EXIT_TRUE=1")
+		err := cmd.Run()
+
+		if err != nil {
+			t.Fatalf("process exited with error %v, want exit status 0", err)
+		}
+	})
+
+	// Test no-exit path
+	t.Run("NoExit", func(t *testing.T) {
+		v := VersionFalse
+		versionFlag = &v
+		// This should not exit, so it will just return normally
+		PrintAndExitIfRequested()
+	})
 }
