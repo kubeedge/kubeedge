@@ -92,7 +92,12 @@ func (lm *listenerManager) GetListenersForNode(nodeName string) map[string]*Sele
 		return nil
 	}
 
-	return listeners
+	// Return a shallow copy so callers can safely iterate without holding the lock.
+	copied := make(map[string]*SelectorListener, len(listeners))
+	for k, v := range listeners {
+		copied[k] = v
+	}
+	return copied
 }
 
 func (lm *listenerManager) GetListenersForGVR(gvr schema.GroupVersionResource) map[string]*SelectorListener {
@@ -104,5 +109,10 @@ func (lm *listenerManager) GetListenersForGVR(gvr schema.GroupVersionResource) m
 		return nil
 	}
 
-	return listeners
+	// Return a shallow copy so callers can safely iterate without holding the lock.
+	copied := make(map[string]*SelectorListener, len(listeners))
+	for k, v := range listeners {
+		copied[k] = v
+	}
+	return copied
 }
