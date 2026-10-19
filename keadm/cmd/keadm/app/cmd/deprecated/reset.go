@@ -60,7 +60,7 @@ func NewDeprecatedKubeEdgeReset() *cobra.Command {
 
 	var cmd = &cobra.Command{
 		Use:     "reset",
-		Short:   "Deprecated: Teardowns KubeEdge (cloud & edge) component",
+		Short:   "Deprecated: Tears down KubeEdge (cloud & edge) component",
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
