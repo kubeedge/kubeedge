@@ -38,7 +38,6 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/nodetask/actionflow"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 	upgradeedge "github.com/kubeedge/kubeedge/pkg/upgrade/edge"
-	"github.com/kubeedge/kubeedge/pkg/util/execs"
 	"github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 
@@ -214,10 +213,11 @@ func (h *nodeUpgradeJobActionHandler) backup(
 	_specser SpecSerializer,
 ) ActionResponse {
 	resp := new(nodeUpgradeJobActionResponse)
-	cmdline := "keadm backup edge"
-	cmd := execs.NewCommand(cmdline)
-	h.logger.V(2).Info("run backup cmd", "cmd", cmdline)
-	if err := cmd.Exec(); err != nil {
+	cmd := exec.Command("keadm", "backup", "edge")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	h.logger.V(2).Info("run backup cmd", "cmd", "keadm", "args", []string{"backup", "edge"})
+	if err := cmd.Run(); err != nil {
 		resp.err = err
 		return resp
 	}
@@ -296,10 +296,18 @@ func (h *nodeUpgradeJobActionHandler) rollback(
 ) ActionResponse {
 	resp := new(nodeUpgradeJobActionResponse)
 	// Roll back to the previous version
-	cmdline := "keadm rollback edge >> /tmp/keadm.log 2>&1"
-	cmd := execs.NewCommand(cmdline)
-	h.logger.V(2).Info("run rollback cmd", "cmd", cmdline)
-	resp.err = cmd.Exec()
+	logFile, err := os.OpenFile("/tmp/keadm.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	if err != nil {
+		resp.err = fmt.Errorf("failed to open keadm log file: %w", err)
+		return resp
+	}
+	defer logFile.Close()
+
+	cmd := exec.Command("keadm", "rollback", "edge")
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+	h.logger.V(2).Info("run rollback cmd", "cmd", "keadm", "args", []string{"rollback", "edge"})
+	resp.err = cmd.Run()
 	return resp
 }
 
