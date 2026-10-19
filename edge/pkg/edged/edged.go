@@ -85,14 +85,15 @@ var DefaultRunLiteKubelet RunLiteKubelet = kubeletserver.Run
 
 // edged is the main edged implementation.
 type edged struct {
-	enable         bool
-	KubeletServer  *kubeletoptions.KubeletServer
-	KubeletDeps    *kubelet.Dependencies
-	FeatureGate    featuregate.FeatureGate
-	context        context.Context
-	nodeName       string
-	namespace      string
-	heldPodUpdates map[string][]kubelettypes.PodUpdate
+	enable                 bool
+	KubeletServer          *kubeletoptions.KubeletServer
+	KubeletDeps            *kubelet.Dependencies
+	FeatureGate            featuregate.FeatureGate
+	context                context.Context
+	nodeName               string
+	namespace              string
+	heldPodUpdates         map[string][]kubelettypes.PodUpdate
+	isInitialPodListSynced bool
 }
 
 var _ core.Module = (*edged)(nil)
@@ -322,14 +323,12 @@ func (e *edged) syncPod(podCfg *config.PodConfig) {
 					klog.Errorf("handle podList failed: %v", err)
 					continue
 				}
-				podCfg.SetInitPodReady(true)
 			} else if op == model.ResponseOperation && resID == "" && result.GetSource() == metamanager.CloudControllerModel {
 				err := e.handlePodListFromEdgeController(content, rawUpdateChan)
 				if err != nil {
 					klog.Errorf("handle podList failed: %v", err)
 					continue
 				}
-				podCfg.SetInitPodReady(true)
 			} else if op == model.UnholdUpgradeOperation {
 				key := fmt.Sprintf("%s/%s", ns, resID)
 				if updates, exists := e.heldPodUpdates[key]; exists {
@@ -528,7 +527,68 @@ func (e *edged) handlePodListFromMetaManager(content []byte, updatesChan chan<- 
 	updates := &kubelettypes.PodUpdate{Op: kubelettypes.SET, Pods: pods, Source: kubelettypes.ApiserverSource}
 	updatesChan <- *updates
 
+	// If it's the first time we received pods from MetaManager, we need to make sure
+	// that VolumeManager's DSWP has a chance to see these pods before Reconciler runs.
+	// This is to prevent Reconciler from seeing an empty DSW and unmounting existing volumes.
+	// We do this by ensuring SetInitPodReady is called only after pods are set.
+	// We check the kubelet readonly port to see if the pods are already synced to kubelet.
+	if !e.isInitialPodListSynced {
+		e.waitForPodsSynced(pods)
+		e.isInitialPodListSynced = true
+		e.KubeletDeps.PodConfig.SetInitPodReady(true)
+	}
+
 	return nil
+}
+
+func (e *edged) waitForPodsSynced(pods []*v1.Pod) {
+	if len(pods) == 0 {
+		return
+	}
+
+	// Poll Kubelet's read-only port to verify PodManager has been updated
+	// This is necessary because updatesChan is processed asynchronously by syncLoop
+	pollTimeout := 5 * time.Second
+	pollInterval := 100 * time.Millisecond
+	deadline := time.Now().Add(pollTimeout)
+
+	url := fmt.Sprintf("http://localhost:%d/pods", e.KubeletServer.ReadOnlyPort)
+
+	// Poll logic to ensure syncLoop has processed the updates
+	for time.Now().Before(deadline) {
+		resp, err := http.Get(url)
+		if err != nil {
+			klog.V(4).Infof("Failed to get pods from kubelet: %v. Retrying...", err)
+			time.Sleep(pollInterval)
+			continue
+		}
+
+		var podList v1.PodList
+		if err := json.NewDecoder(resp.Body).Decode(&podList); err != nil {
+			resp.Body.Close()
+			klog.Errorf("Failed to decode pods list: %v", err)
+			time.Sleep(pollInterval)
+			continue
+		}
+		resp.Body.Close()
+
+		// Check if all pods are synced
+		if len(podList.Items) == len(pods) {
+			synced := true
+			for i, p := range pods {
+				if podList.Items[i].UID != p.UID {
+					synced = false
+					break
+				}
+			}
+			if synced {
+				klog.V(2).Infof("Initial pods synced successfully to Kubelet PodManager.")
+				return
+			}
+		}
+
+		time.Sleep(pollInterval)
+	}
 }
 
 func (e *edged) handlePodListFromEdgeController(content []byte, updatesChan chan<- interface{}) (err error) {
@@ -545,6 +605,14 @@ func (e *edged) handlePodListFromEdgeController(content []byte, updatesChan chan
 	}
 	updates := &kubelettypes.PodUpdate{Op: kubelettypes.SET, Pods: pods, Source: kubelettypes.ApiserverSource}
 	updatesChan <- *updates
+
+	// If it's the first time we received pods from EdgeController, we need to make sure
+	// that VolumeManager's DSWP has a chance to see these pods before Reconciler runs.
+	if !e.isInitialPodListSynced {
+		e.waitForPodsSynced(pods)
+		e.isInitialPodListSynced = true
+		e.KubeletDeps.PodConfig.SetInitPodReady(true)
+	}
 
 	return nil
 }
