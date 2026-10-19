@@ -85,7 +85,11 @@ func queryToken(namespace string, name string, kubeConfigPath string) ([]byte, e
 	if err != nil {
 		return nil, err
 	}
-	return secret.Data[common.TokenDataName], nil
+	tokenData, ok := secret.Data[common.TokenDataName]
+	if !ok || len(tokenData) == 0 {
+		return nil, fmt.Errorf("secret %s/%s does not contain non-empty data for key %q", namespace, name, common.TokenDataName)
+	}
+	return tokenData, nil
 }
 
 // showToken prints the token
