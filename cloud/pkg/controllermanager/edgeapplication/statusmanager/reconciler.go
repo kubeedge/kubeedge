@@ -192,7 +192,7 @@ func (d deploymentAvailable) IsAvailable(ctx context.Context, client client.Clie
 		return false, err
 	}
 	if obj == nil {
-		return false, err
+		return false, nil
 	}
 
 	deploy := &appsv1.Deployment{}
@@ -200,7 +200,13 @@ func (d deploymentAvailable) IsAvailable(ctx context.Context, client client.Clie
 		return false, fmt.Errorf("failed to convert unstructured to deployment for %s/%s, %v", info.Namespace, info.Name, err)
 	}
 
-	return deploy.Status.ReadyReplicas == *deploy.Spec.Replicas, nil
+	// Kubernetes defaults Spec.Replicas to 1 when not explicitly set,
+	// so we must handle the nil case to avoid a nil pointer dereference.
+	var desiredReplicas int32 = 1
+	if deploy.Spec.Replicas != nil {
+		desiredReplicas = *deploy.Spec.Replicas
+	}
+	return deploy.Status.ReadyReplicas == desiredReplicas, nil
 }
 
 func getObjAccordingToResourceInfo(ctx context.Context, client client.Client, info utils.ResourceInfo) (*unstructured.Unstructured, error) {
