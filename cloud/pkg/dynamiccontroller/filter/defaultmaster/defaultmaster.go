@@ -40,25 +40,30 @@ func (f *FilterImpl) Name() string {
 	return filterName
 }
 
+func isDefaultMasterEndpointSlice(obj *unstructured.Unstructured) bool {
+	return obj.GetObjectKind().GroupVersionKind().Kind == resourceName &&
+		obj.GetName() == defaultEndpointSliceName &&
+		obj.GetNamespace() == defaultEndpointSliceNameSpace
+}
+
 func (f *FilterImpl) NeedFilter(content interface{}) bool {
 	if objList, ok := content.(*unstructured.UnstructuredList); ok {
-		if len(objList.Items) != 0 && objList.Items[0].GetObjectKind().GroupVersionKind().Kind == resourceName {
-			return true
+		for i := range objList.Items {
+			if isDefaultMasterEndpointSlice(&objList.Items[i]) {
+				return true
+			}
 		}
 		return false
 	}
 	if obj, ok := content.(*unstructured.Unstructured); ok {
-		if obj.GetObjectKind().GroupVersionKind().Kind == resourceName && obj.GetName() == defaultEndpointSliceName &&
-			obj.GetNamespace() == defaultEndpointSliceNameSpace {
-			return true
-		}
+		return isDefaultMasterEndpointSlice(obj)
 	}
 	return false
 }
 
 func (f *FilterImpl) FilterResource(_ string, obj runtime.Object) {
 	unstruct, ok := obj.(*unstructured.Unstructured)
-	if !ok {
+	if !ok || !isDefaultMasterEndpointSlice(unstruct) {
 		return
 	}
 	var eps discovery.EndpointSlice
