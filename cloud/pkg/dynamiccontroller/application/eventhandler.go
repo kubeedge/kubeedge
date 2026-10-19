@@ -144,6 +144,9 @@ func NewCommonResourceEventHandler(
 }
 
 func (c *CommonResourceEventHandler) objToEvent(t watch.EventType, obj interface{}) {
+	if tombstone, ok := obj.(cache.DeletedFinalStateUnknown); ok {
+		obj = tombstone.Obj
+	}
 	eventObj, ok := obj.(runtime.Object)
 	if !ok {
 		klog.Warningf("Unknown type: %T, ignore", obj)
