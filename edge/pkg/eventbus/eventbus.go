@@ -102,7 +102,7 @@ func (eb *eventbus) Start() {
 }
 
 func pubMQTT(topic string, payload []byte) {
-	token := mqttBus.MQTTHub.PubCli.Publish(topic, 1, false, payload)
+	token := mqttBus.MQTTHub.Publish(topic, 1, false, payload)
 	if token.WaitTimeout(util.TokenWaitTime) && token.Error() != nil {
 		klog.Errorf("Error in pubMQTT with topic: %s, %v", topic, token.Error())
 	} else {
@@ -201,7 +201,7 @@ func (eb *eventbus) subscribe(topic string) {
 
 	if eventconfig.Config.MqttMode >= v1alpha2.MqttModeBoth {
 		// subscribe topic to external mqtt broker.
-		token := mqttBus.MQTTHub.SubCli.Subscribe(topic, 1, mqttBus.OnSubMessageReceived)
+		token := mqttBus.MQTTHub.Subscribe(topic, 1, mqttBus.OnSubMessageReceived)
 		if rs, err := util.CheckClientToken(token); !rs {
 			klog.Errorf("Edge-hub-cli subscribe topic: %s, %v", topic, err)
 			return
@@ -220,7 +220,7 @@ func (eb *eventbus) unsubscribe(topic string) {
 	}
 
 	if eventconfig.Config.MqttMode >= v1alpha2.MqttModeBoth {
-		token := mqttBus.MQTTHub.SubCli.Unsubscribe(topic)
+		token := mqttBus.MQTTHub.Unsubscribe(topic)
 		if rs, err := util.CheckClientToken(token); !rs {
 			klog.Errorf("Edge-hub-cli unsubscribe topic: %s, %v", topic, err)
 			return
