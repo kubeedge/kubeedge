@@ -360,6 +360,13 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 
 	objectSyncName := synccontroller.BuildObjectSyncName(nodeID, resourceUID)
 	objectSync, err := md.objectSyncLister.ObjectSyncs(resourceNamespace).Get(objectSyncName)
+	if err == nil {
+		if err := md.repairObjectSyncMetadata(objectSync, msg); err != nil {
+			klog.ErrorS(err, "Failed to repair ObjectSync metadata",
+				"objectSyncName", objectSyncName,
+				"resourceNamespace", resourceNamespace)
+		}
+	}
 
 	switch {
 	case err == nil && objectSync.Status.ObjectResourceVersion != "":
@@ -414,6 +421,30 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 	}
 
 	return false
+}
+
+func (md *messageDispatcher) repairObjectSyncMetadata(objectSync *v1alpha1.ObjectSync, msg *beehivemodel.Message) error {
+	if objectSync.Spec.ObjectAPIVersion != "" && objectSync.Spec.ObjectKind != "" {
+		return nil
+	}
+	apiVersion := util.GetMessageAPIVersion(msg)
+	kind := util.GetMessageResourceType(msg)
+	if apiVersion == "" || kind == "" {
+		return fmt.Errorf("message content has incomplete GVK: apiVersion=%q, kind=%q", apiVersion, kind)
+	}
+
+	updated := objectSync.DeepCopy()
+	if updated.Spec.ObjectAPIVersion == "" {
+		updated.Spec.ObjectAPIVersion = apiVersion
+	}
+	if updated.Spec.ObjectKind == "" {
+		updated.Spec.ObjectKind = kind
+	}
+	if _, err := md.reliableClient.ReliablesyncsV1alpha1().ObjectSyncs(updated.Namespace).
+		Update(context.Background(), updated, metav1.UpdateOptions{}); err != nil {
+		return fmt.Errorf("update ObjectSync %s/%s: %w", updated.Namespace, updated.Name, err)
+	}
+	return nil
 }
 
 func isDeleteMessage(msg *beehivemodel.Message) bool {
