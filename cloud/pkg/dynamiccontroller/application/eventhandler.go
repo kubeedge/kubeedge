@@ -86,8 +86,15 @@ func (c *handlerCenter) AddListener(s *SelectorListener) error {
 
 func (c *handlerCenter) DeleteListener(s *SelectorListener) {
 	c.handlerLock.Lock()
-	c.handlers[s.gvr].DeleteListener(s)
+	handler, ok := c.handlers[s.gvr]
 	c.handlerLock.Unlock()
+
+	if !ok || handler == nil {
+		klog.Warningf("handler for GVR %v not found, ensuring listener %s is removed from manager", s.gvr, s.id)
+		c.listenerManager.DeleteListener(s)
+		return
+	}
+	handler.DeleteListener(s)
 }
 
 func (c *handlerCenter) GetListenersForNode(nodeName string) map[string]*SelectorListener {
