@@ -149,6 +149,16 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name:     "dealDeviceStateUpdateTest-InvalidContentType",
+			context:  dtContexts,
+			resource: "DeviceD",
+			msg:      &model.Message{Content: "not-bytes"},
+			setupMock: func(m *mocks.MockDeviceService) {
+				// No database call expected
+			},
+			wantErr: true,
+		},
+		{
 			name:     "dealDeviceStateUpdateTest-DeviceDoesNotExist",
 			context:  dtContexts,
 			resource: "DeviceB",
@@ -241,6 +251,13 @@ func TestDealUpdateDeviceAttr(t *testing.T) {
 			resource: "Device",
 			msg:      "",
 			wantErr:  errors.New("msg not Message type"),
+		},
+		{
+			name:     "DealUpdateDeviceAttrTest-Invalid Content Type",
+			context:  dtContexts,
+			resource: "DeviceA",
+			msg:      &model.Message{Content: "not-bytes"},
+			wantErr:  errors.New("invalid message content"),
 		},
 		{
 			name:     "DealUpdateDeviceAttrTest-Correct Message Type",
