@@ -12,6 +12,18 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 )
 
+// spyTarget is a test double for provider.Target that records whether
+// GoToTarget was invoked.  It never calls into any real infrastructure.
+type spyTarget struct {
+	called bool
+}
+
+func (s *spyTarget) Name() string { return "spy" }
+func (s *spyTarget) GoToTarget(_ map[string]interface{}, _ chan struct{}) (interface{}, error) {
+	s.called = true
+	return nil, fmt.Errorf("spy: GoToTarget should not have been called")
+}
+
 func TestPathJoin(t *testing.T) {
 	var s1, s2 string
 	s1 = fmt.Sprintf("%s/node/%s/%s/%s", "bus", "nodeName", "namespace", "subTopic")
@@ -190,6 +202,25 @@ func TestForward(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestForward_GetContentDataError is the regression test requested by PR #7054
+// review: when GetContentData() fails, Forward must return an error and must
+// never invoke target.GoToTarget().
+func TestForward_GetContentDataError(t *testing.T) {
+	eb := &EventBus{}
+	spy := &spyTarget{}
+
+	// GetContentData returns (data, nil) for string and []byte content;
+	// it calls json.Marshal for anything else.  A channel cannot be marshalled
+	// so it reliably triggers the error branch.
+	msg := model.NewMessage("")
+	msg.Content = make(chan struct{})
+
+	_, err := eb.Forward(spy, msg)
+
+	assert.Error(t, err, "Forward must return an error when GetContentData fails")
+	assert.False(t, spy.called, "GoToTarget must NOT be called when GetContentData fails")
 }
 
 func TestGoToTarget(t *testing.T) {
