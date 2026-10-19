@@ -24,8 +24,9 @@ var Versioner = storage.APIObjectVersioner{}
 
 type Client interface {
 	// This set of functions is for metamanager
-	// Inject the msg to the backend storage
-	Inject(msg model.Message)
+	// Inject the msg to the backend storage. It returns an error if the message
+	// fails to be saved to the local cache.
+	Inject(msg model.Message) error
 	InsertOrUpdateObj(ctx context.Context, obj runtime.Object) error
 	DeleteObj(ctx context.Context, obj runtime.Object) error
 	InsertOrUpdatePassThroughObj(ctx context.Context, obj []byte, key string) error
