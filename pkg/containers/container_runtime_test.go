@@ -52,13 +52,15 @@ func TestCopyResources(t *testing.T) {
 				// Use .Do to verify the command manually instead of MatchedBy
 				m.EXPECT().ExecSync(gomock.Any(), "cnt-123", gomock.Any(), gomock.Any()).
 					Do(func(ctx context.Context, containerID string, cmd []string, timeout time.Duration) {
-						expected := "cp /tmp/src /tmp/usr/local/bin/dest"
+						expected := "cp '/tmp/src' '/tmp/usr/local/bin/dest'"
 						if cmd[2] != expected {
 							t.Errorf("expected command %s, got %s", expected, cmd[2])
 						}
 					}).Return([]byte("stdout"), []byte(""), nil)
 
+				m.EXPECT().StopContainer(gomock.Any(), "cnt-123", int64(0)).Return(nil)
 				m.EXPECT().RemoveContainer(gomock.Any(), "cnt-123").Return(nil)
+				m.EXPECT().StopPodSandbox(gomock.Any(), "sb-123").Return(nil)
 				m.EXPECT().RemovePodSandbox(gomock.Any(), "sb-123").Return(nil)
 			},
 			wantErr: false,
@@ -80,7 +82,9 @@ func TestCopyResources(t *testing.T) {
 				m.EXPECT().CreateContainer(gomock.Any(), "sb-systemd", gomock.Any(), gomock.Any()).Return("cnt-systemd", nil)
 				m.EXPECT().StartContainer(gomock.Any(), "cnt-systemd").Return(nil)
 				m.EXPECT().ExecSync(gomock.Any(), "cnt-systemd", gomock.Any(), gomock.Any()).Return(nil, nil, nil)
+				m.EXPECT().StopContainer(gomock.Any(), "cnt-systemd", int64(0)).Return(nil)
 				m.EXPECT().RemoveContainer(gomock.Any(), "cnt-systemd").Return(nil)
+				m.EXPECT().StopPodSandbox(gomock.Any(), "sb-systemd").Return(nil)
 				m.EXPECT().RemovePodSandbox(gomock.Any(), "sb-systemd").Return(nil)
 			},
 			wantErr: false,
@@ -101,7 +105,9 @@ func TestCopyResources(t *testing.T) {
 				m.EXPECT().RunPodSandbox(gomock.Any(), gomock.Any(), gomock.Any()).Return("sb-fail", nil)
 				m.EXPECT().CreateContainer(gomock.Any(), "sb-fail", gomock.Any(), gomock.Any()).Return("cnt-fail", nil)
 				m.EXPECT().StartContainer(gomock.Any(), "cnt-fail").Return(fmt.Errorf("internal error"))
+				m.EXPECT().StopContainer(gomock.Any(), "cnt-fail", int64(0)).Return(nil)
 				m.EXPECT().RemoveContainer(gomock.Any(), "cnt-fail").Return(nil)
+				m.EXPECT().StopPodSandbox(gomock.Any(), "sb-fail").Return(nil)
 				m.EXPECT().RemovePodSandbox(gomock.Any(), "sb-fail").Return(nil)
 			},
 		},
@@ -138,7 +144,7 @@ func Test_copyResourcesCmd(t *testing.T) {
 			name:  "Single file command",
 			files: map[string]string{"/image/path": "/host/path"},
 			check: func(res string) bool {
-				return res == "cp /image/path /tmp/host/path"
+				return res == "cp '/image/path' '/tmp/host/path'"
 			},
 		},
 		{
@@ -149,8 +155,8 @@ func Test_copyResourcesCmd(t *testing.T) {
 			},
 			check: func(res string) bool {
 				// Map iteration is random, so check for both segments
-				return strings.Contains(res, "cp /src1 /tmp/dest1") &&
-					strings.Contains(res, "cp /src2 /tmp/dest2") &&
+				return strings.Contains(res, "cp '/src1' '/tmp/dest1'") &&
+					strings.Contains(res, "cp '/src2' '/tmp/dest2'") &&
 					strings.Contains(res, " && ")
 			},
 		},
