@@ -87,8 +87,10 @@ func requiresRefresh(tr *authenticationv1.TokenRequest) bool {
 	return false
 }
 
-// KeyFunc keys should be nonconfidential and safe to log
-func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
+// baseKey is the spec-derived key prefix that identifies the logical token
+// (independent of which generation). All generations of the same logical token
+// share this prefix. Used for prefix lookup in metaDB.
+func baseKey(name, namespace string, tr *authenticationv1.TokenRequest) string {
 	var exp int64
 	if tr.Spec.ExpirationSeconds != nil {
 		exp = *tr.Spec.ExpirationSeconds
@@ -102,34 +104,81 @@ func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
 	return fmt.Sprintf("%q/%q/%#v/%#v/%#v", name, namespace, tr.Spec.Audiences, exp, ref)
 }
 
+// KeyFunc returns the per-generation storage key for a TokenRequest. The key
+// is the base (spec-derived) key suffixed with the token's exp timestamp so
+// that successive refreshed tokens for the same logical token are stored as
+// separate rows. This is required to keep the previous (still un-expired)
+// token's row in metaDB during the propagation window between a refresh and
+// the moment the pod re-reads the new token from its projected volume; without
+// it, MetaServer (which authenticates by checking metaDB membership) rejects
+// requests bearing the previous token.
+//
+// Callers without a populated Status.ExpirationTimestamp (i.e., callers that
+// only have a TokenRequest spec, like an upstream kubelet refresh call) should
+// not use KeyFunc — they should use baseKey and a prefix query.
+//
+// Keys are nonconfidential and safe to log.
+func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
+	base := baseKey(name, namespace, tr)
+	if tr.Status.ExpirationTimestamp.IsZero() {
+		// Defensive: a write without exp is malformed. Return base so the
+		// behavior is at worst the pre-refactor behavior (one row per
+		// logical token, overwritten on refresh). The caller should ensure
+		// Status.ExpirationTimestamp is populated.
+		return base
+	}
+	return fmt.Sprintf("%s/%d", base, tr.Status.ExpirationTimestamp.UnixNano())
+}
+
 func getTokenLocally(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
-	resKey := KeyFunc(name, namespace, tr)
+	prefix := baseKey(name, namespace, tr)
 	ms := dbclient.NewMetaService()
-	metas, err := ms.QueryMeta("key", resKey)
+	metas, err := ms.QueryMetaByKeyPrefix(prefix)
 	if err != nil {
-		klog.Errorf("query meta %s failed: %v", resKey, err)
+		klog.Errorf("query meta by prefix %s failed: %v", prefix, err)
 		return nil, err
 	}
-	if len(*metas) != 1 {
-		klog.Errorf("query meta %s length error", resKey)
-		return nil, fmt.Errorf("query meta %s length error", resKey)
+	if metas == nil || len(*metas) == 0 {
+		return nil, fmt.Errorf("no cached token for %s", prefix)
 	}
-	var tokenRequest authenticationv1.TokenRequest
-	err = json.Unmarshal([]byte((*metas)[0]), &tokenRequest)
-	if err != nil {
-		klog.Errorf("unmarshal resource %s token request failed: %v", resKey, err)
-		return nil, err
-	}
-	if requiresRefresh(&tokenRequest) {
-		err := ms.DeleteMetaByKey(resKey)
-		if err != nil {
-			klog.Errorf("delete meta %s failed: %v", resKey, err)
-			return nil, err
+
+	// Pick the newest un-expired generation. Older generations may still be
+	// present (kept intentionally to bridge the refresh-propagation window;
+	// the GC sweep removes them after their exp passes), but the freshest
+	// one is what we want to return to the caller.
+	now := time.Now()
+	var newest *authenticationv1.TokenRequest
+	for _, v := range *metas {
+		var cur authenticationv1.TokenRequest
+		if err := json.Unmarshal([]byte(v), &cur); err != nil {
+			klog.Errorf("unmarshal cached token under prefix %s failed: %v", prefix, err)
+			continue
 		}
-		klog.Errorf("resource %s token expired", resKey)
-		return nil, fmt.Errorf("resource %s token expired", resKey)
+		if cur.Status.ExpirationTimestamp.IsZero() || !cur.Status.ExpirationTimestamp.Time.After(now) {
+			continue
+		}
+		if newest == nil || cur.Status.ExpirationTimestamp.Time.After(newest.Status.ExpirationTimestamp.Time) {
+			snapshot := cur
+			newest = &snapshot
+		}
 	}
-	return &tokenRequest, nil
+	if newest == nil {
+		return nil, fmt.Errorf("no un-expired cached token for %s", prefix)
+	}
+
+	if requiresRefresh(newest) {
+		// The freshest cached generation is past the 80%-of-TTL threshold;
+		// trigger a remote refresh. Do NOT delete any cached rows here:
+		// MetaServer authenticates pod requests by checking presence of the
+		// token in metaDB (see CheckTokenExist). The previous patch removed
+		// the eviction of this row; this patch additionally arranges for
+		// the refreshed token to be stored under a *new* per-generation key
+		// (see KeyFunc), so both rows coexist for a brief window. GC
+		// (RunExpiredTokenGC) removes rows whose exp has passed.
+		klog.V(4).Infof("resource %s token requires refresh", prefix)
+		return nil, fmt.Errorf("resource %s token requires refresh", prefix)
+	}
+	return newest, nil
 }
 
 func getTokenRemotely(resource string, tr *authenticationv1.TokenRequest, c *serviceAccountToken) (*authenticationv1.TokenRequest, error) {
@@ -250,4 +299,61 @@ func CheckTokenExist(token string) bool {
 		}
 	}
 	return false
+}
+
+// RunExpiredTokenGC periodically scans all service-account token rows in
+// metaDB and deletes any whose Status.ExpirationTimestamp has passed.
+//
+// Because refreshed tokens are stored under per-generation keys (see KeyFunc)
+// rather than overwriting the previous generation, expired generations
+// accumulate until removed here. With a 10-minute token TTL and an 80%
+// refresh threshold, steady-state row count per logical token is bounded
+// by ~2; the GC interval below is generous.
+//
+// Stops when stopCh is closed.
+func RunExpiredTokenGC(stopCh <-chan struct{}, interval time.Duration) {
+	if interval <= 0 {
+		interval = time.Minute
+	}
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-stopCh:
+			return
+		case <-ticker.C:
+			gcExpiredTokensOnce()
+		}
+	}
+}
+
+func gcExpiredTokensOnce() {
+	ms := dbclient.NewMetaService()
+	rows, err := ms.QueryAllMeta("type", model.ResourceTypeServiceAccountToken)
+	if err != nil {
+		klog.Errorf("GC: query SA tokens failed: %v", err)
+		return
+	}
+	if rows == nil {
+		return
+	}
+	now := time.Now()
+	for _, row := range *rows {
+		var tr authenticationv1.TokenRequest
+		if err := json.Unmarshal([]byte(row.Value), &tr); err != nil {
+			// Don't delete: an unparseable row is a separate bug; leave it
+			// for diagnosis rather than silently dropping it.
+			klog.Errorf("GC: unmarshal SA token row %s failed: %v", row.Key, err)
+			continue
+		}
+		if tr.Status.ExpirationTimestamp.IsZero() {
+			continue
+		}
+		if tr.Status.ExpirationTimestamp.Time.After(now) {
+			continue
+		}
+		if err := ms.DeleteMetaByKey(row.Key); err != nil {
+			klog.Errorf("GC: delete expired SA token row %s failed: %v", row.Key, err)
+		}
+	}
 }
