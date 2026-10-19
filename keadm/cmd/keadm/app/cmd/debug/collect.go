@@ -3,7 +3,10 @@ package debug
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -27,6 +30,13 @@ keadm debug collect --output-path .
 )
 
 var printDeatilFlag = false
+
+var runtimeGOOS = runtime.GOOS
+
+const (
+	collectDirPermission  = 0700
+	collectFilePermission = 0600
+)
 
 // NewCollect returns KubeEdge collect command.
 func NewCollect() *cobra.Command {
@@ -104,12 +114,22 @@ func ExecuteCollect(collectOptions *common.CollectOptions) error {
 	}
 	printDetail("collect edgecore data finish")
 
-	// TODO: collectRuntimeData with containerd
+	err = collectRuntimeData(fmt.Sprintf("%s/runtime", tmpName), edgeconfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint)
+	if err != nil {
+		fmt.Printf("collect runtime data failed: %v\n", err)
+		if writeErr := writeCollectionError(fmt.Sprintf("%s/runtime", tmpName), err); writeErr != nil {
+			fmt.Printf("failed to record runtime collection error: %v\n", writeErr)
+		}
+	}
+	printDetail("collect runtime data finish")
 
 	OutputPath := collectOptions.OutputPath
 	zipName := fmt.Sprintf("%s/edge_%s.tar.gz", OutputPath, timenow)
 	err = util.Compress(zipName, []string{tmpName})
 	if err != nil {
+		return err
+	}
+	if err = os.Chmod(zipName, collectFilePermission); err != nil {
 		return err
 	}
 	printDetail("Data compressed successfully")
@@ -150,13 +170,13 @@ func VerificationParameters(collectOptions *common.CollectOptions) error {
 func makeDirTmp() (string, string, error) {
 	timenow := time.Now().Format("2006_0102_150405")
 	tmpName := fmt.Sprintf("/tmp/edge_%s", timenow)
-	return tmpName, timenow, os.Mkdir(tmpName, os.ModePerm)
+	return tmpName, timenow, os.Mkdir(tmpName, collectDirPermission)
 }
 
 // collect system data
 func collectSystemData(tmpPath string) error {
 	printDetail(fmt.Sprintf("create tmp file: %s", tmpPath))
-	err := os.Mkdir(tmpPath, os.ModePerm)
+	err := os.Mkdir(tmpPath, collectDirPermission)
 	if err != nil {
 		return err
 	}
@@ -208,7 +228,7 @@ func collectSystemData(tmpPath string) error {
 // collect edgecore data
 func collectEdgecoreData(tmpPath string, config *v1alpha2.EdgeCoreConfig, ops *common.CollectOptions) error {
 	printDetail(fmt.Sprintf("create tmp file: %s", tmpPath))
-	err := os.Mkdir(tmpPath, os.ModePerm)
+	err := os.Mkdir(tmpPath, collectDirPermission)
 	if err != nil {
 		return err
 	}
@@ -267,10 +287,20 @@ func collectEdgecoreData(tmpPath string, config *v1alpha2.EdgeCoreConfig, ops *c
 	return ExecuteShell(common.CmdEdgecoreVersion, tmpPath)
 }
 
-// collect runtime/docker data
-func collectRuntimeData(tmpPath string) error {
+// collectRuntimeData collects diagnostics for the configured container runtime.
+func collectRuntimeData(tmpPath, endpoint string) error {
+	if runtimeGOOS == "windows" {
+		return fmt.Errorf("container runtime diagnostics are not supported on Windows")
+	}
+	if strings.Contains(strings.ToLower(endpoint), "containerd") {
+		return collectContainerdData(tmpPath, endpoint)
+	}
+	return collectDockerData(tmpPath)
+}
+
+func collectDockerData(tmpPath string) error {
 	printDetail(fmt.Sprintf("create tmp file: %s", tmpPath))
-	err := os.Mkdir(tmpPath, os.ModePerm)
+	err := os.Mkdir(tmpPath, collectDirPermission)
 	if err != nil {
 		return err
 	}
@@ -289,6 +319,31 @@ func collectRuntimeData(tmpPath string) error {
 	return nil
 }
 
+func collectContainerdData(tmpPath, endpoint string) error {
+	printDetail(fmt.Sprintf("create tmp file: %s", tmpPath))
+	if err := os.Mkdir(tmpPath, collectDirPermission); err != nil {
+		return err
+	}
+
+	commands := [][]string{
+		{"--runtime-endpoint", endpoint, "version"},
+		{"--runtime-endpoint", endpoint, "info"},
+		{"--runtime-endpoint", endpoint, "images"},
+		{"--runtime-endpoint", endpoint, "ps", "-a"},
+	}
+	outputNames := []string{"version", "info", "images", "containerInfo"}
+	for i, args := range commands {
+		if err := ExecuteCommand("crictl", args, filepath.Join(tmpPath, outputNames[i])); err != nil {
+			return err
+		}
+	}
+
+	if err := ExecuteCommand("journalctl", []string{"--no-pager", "--since", "24 hours ago", "-u", "containerd"}, filepath.Join(tmpPath, "log")); err != nil {
+		return err
+	}
+	return ExecuteCommand("systemctl", []string{"--no-pager", "--full", "status", "containerd"}, filepath.Join(tmpPath, "service"))
+}
+
 func CopyFile(pathSrc, tmpPath string) error {
 	cmd := execs.NewCommand(fmt.Sprintf(common.CmdCopyFile, pathSrc, tmpPath))
 	return cmd.Exec()
@@ -297,6 +352,27 @@ func CopyFile(pathSrc, tmpPath string) error {
 func ExecuteShell(cmdStr string, tmpPath string) error {
 	cmd := execs.NewCommand(fmt.Sprintf(cmdStr, tmpPath))
 	return cmd.Exec()
+}
+
+// ExecuteCommand writes command output to a file without invoking a shell.
+func ExecuteCommand(name string, args []string, outputPath string) error {
+	output, err := os.OpenFile(outputPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, collectFilePermission)
+	if err != nil {
+		return err
+	}
+	defer output.Close()
+
+	cmd := exec.Command(name, args...)
+	cmd.Stdout = output
+	cmd.Stderr = output
+	return cmd.Run()
+}
+
+func writeCollectionError(path string, collectionErr error) error {
+	if err := os.MkdirAll(path, collectDirPermission); err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(path, "error"), []byte(collectionErr.Error()+"\n"), collectFilePermission)
 }
 
 func printDetail(msg string) {
