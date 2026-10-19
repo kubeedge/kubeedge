@@ -76,6 +76,14 @@ func (ms *ContainerMetricsConnection) WriteToTunnel(m *stream.Message) error {
 }
 
 func (ms *ContainerMetricsConnection) SendConnection() (stream.EdgedConnection, error) {
+	if ms.session == nil {
+		return nil, fmt.Errorf("session is nil")
+	}
+	
+	if ms.r == nil || ms.r.Request == nil {
+		return nil, fmt.Errorf("invalid request")
+	}
+
 	connector := &stream.EdgedMetricsConnection{
 		MessID: ms.MessageID,
 		URL:    *ms.r.Request.URL,
@@ -83,14 +91,18 @@ func (ms *ContainerMetricsConnection) SendConnection() (stream.EdgedConnection, 
 	}
 	connector.URL.Scheme = httpScheme
 	connector.URL.Host = net.JoinHostPort(defaultServerHost, strconv.Itoa(constants.ServerPort))
+	
 	m, err := connector.CreateConnectMessage()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create connect message: %w", err)
 	}
+	
 	if err := ms.WriteToTunnel(m); err != nil {
-		klog.Errorf("%s write %s error %v", ms.String(), connector.String(), err)
-		return nil, err
+		klog.Errorf("%s write %s error: %v", ms.String(), connector.String(), err)
+		return nil, fmt.Errorf("failed to write to tunnel: %w", err)
 	}
+	
+	klog.V(4).Infof("%s successfully sent connection request", ms.String())
 	return connector, nil
 }
 
