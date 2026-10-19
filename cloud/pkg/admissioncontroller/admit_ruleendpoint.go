@@ -14,7 +14,7 @@ import (
 func admitRuleEndpoint(review admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 	reviewResponse := admissionv1.AdmissionResponse{}
 	switch review.Request.Operation {
-	case admissionv1.Create:
+	case admissionv1.Create, admissionv1.Update:
 		raw := review.Request.Object.Raw
 		ruleEndpoint := rulesv1.RuleEndpoint{}
 		deserializer := codecs.UniversalDeserializer()
