@@ -22,6 +22,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	coordinationv1 "k8s.io/api/coordination/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/beehive/pkg/common"
@@ -309,4 +312,33 @@ func TestSendImplementation(t *testing.T) {
 			t.Fatal("SendSync is hanging")
 		}
 	})
+}
+
+func TestClientsReturnMetaManagerErrorResponse(t *testing.T) {
+	const reported = "failed to process remote: not connected"
+	send := &mockSendInterface{
+		sendSyncFunc: func(message *model.Message) (*model.Message, error) {
+			return model.NewErrorMessage(message, reported), nil
+		},
+	}
+	nodes := newNodes(testNamespace, send)
+	leases := newLeases(testNamespace, send)
+	node := &corev1.Node{ObjectMeta: metav1.ObjectMeta{Name: "edge-node"}}
+	lease := &coordinationv1.Lease{ObjectMeta: metav1.ObjectMeta{Name: "edge-node"}}
+
+	tests := []struct {
+		name string
+		call func() error
+	}{
+		{"node create", func() error { _, err := nodes.Create(node); return err }},
+		{"node patch", func() error { _, err := nodes.Patch(node.Name, []byte("{}")); return err }},
+		{"lease create", func() error { _, err := leases.Create(lease); return err }},
+		{"lease update", func() error { _, err := leases.Update(lease); return err }},
+		{"lease get", func() error { _, err := leases.Get(lease.Name); return err }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.EqualError(t, tt.call(), reported)
+		})
+	}
 }
