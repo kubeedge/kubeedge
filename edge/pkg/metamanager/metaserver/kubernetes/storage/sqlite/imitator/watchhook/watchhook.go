@@ -19,6 +19,9 @@ type WatchHook struct {
 	id              string
 	Receiver
 	lock sync.Mutex
+	// stopped is set by Stop, so a Trigger that picked the hook before then sends nothing
+	// to the receiver, whose channel the watch closes after Stop.
+	stopped bool
 }
 
 func NewWatchHook(key string, rev uint64, receiver Receiver) (*WatchHook, error) {
@@ -39,6 +42,9 @@ func NewWatchHook(key string, rev uint64, receiver Receiver) (*WatchHook, error)
 func (h *WatchHook) Do(event watch.Event) error {
 	h.Lock()
 	defer h.UnLock()
+	if h.stopped {
+		return nil
+	}
 	return h.Receive(event)
 }
 
@@ -60,6 +66,7 @@ func (h *WatchHook) GetResourceVersion() uint64 {
 func (h *WatchHook) Stop() {
 	h.Lock()
 	defer h.UnLock()
+	h.stopped = true
 	if err := DeleteHook(h.id); err != nil {
 		klog.Error(err)
 	}
