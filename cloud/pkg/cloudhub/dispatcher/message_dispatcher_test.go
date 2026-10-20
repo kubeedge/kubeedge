@@ -22,6 +22,9 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
@@ -33,6 +36,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	tf "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/testing"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/session"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	mockcon "github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn/testing"
 )
 
@@ -160,6 +164,10 @@ func TestEnqueueAckMessage(t *testing.T) {
 	deleteMsg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "4"), "delete")
 	respMsg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "5"), "response")
 	invalidMsg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, ""), "update")
+	deleteWithoutRV := newPodDeleteWithoutRVMessage(tf.TestPodName, tf.TestPodUID)
+	terminatingPod := tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "3")
+	terminatingPod.DeletionTimestamp = &metav1.Time{}
+	terminatingMsg := tf.NewPodMessage(terminatingPod, "update")
 
 	tests := []tf.TestCase{
 		{
@@ -287,6 +295,58 @@ func TestEnqueueAckMessage(t *testing.T) {
 			},
 			ExpectedStoreMessage: normalMsg3,
 		},
+		{
+			Name: "delete without resourceVersion arrives and no message in store",
+			InitialObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod"),
+			},
+			ReactorErrors:        tf.NoErrors,
+			InitialMessages:      []*beehivemodel.Message{},
+			CurrentArriveMessage: deleteWithoutRV,
+			ExpectedObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod"),
+			},
+			ExpectedStoreMessage: deleteWithoutRV,
+		},
+		{
+			Name: "delete without resourceVersion arrives while a delete with resourceVersion waits in store",
+			InitialObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ReactorErrors:        tf.NoErrors,
+			InitialMessages:      []*beehivemodel.Message{deleteMsg},
+			CurrentArriveMessage: deleteWithoutRV,
+			ExpectedObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ExpectedStoreMessage: deleteMsg,
+		},
+		{
+			Name: "delete without resourceVersion arrives while an update with deletionTimestamp waits in store",
+			InitialObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ReactorErrors:        tf.NoErrors,
+			InitialMessages:      []*beehivemodel.Message{terminatingMsg},
+			CurrentArriveMessage: deleteWithoutRV,
+			ExpectedObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ExpectedStoreMessage: deleteWithoutRV,
+		},
+		{
+			Name: "delete with resourceVersion arrives while one without waits in store",
+			InitialObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ReactorErrors:        tf.NoErrors,
+			InitialMessages:      []*beehivemodel.Message{deleteWithoutRV},
+			CurrentArriveMessage: deleteMsg,
+			ExpectedObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ExpectedStoreMessage: deleteMsg,
+		},
 	}
 
 	executeTest := func(t *testing.T, test tf.TestCase) {
@@ -359,6 +419,21 @@ func TestEnqueueAckMessage(t *testing.T) {
 			executeTest(t, test)
 		})
 	}
+}
+
+// newPodDeleteWithoutRVMessage builds the DELETE synccontroller.gcOrphanedObjectSync sends:
+// GVK, name, namespace and UID only, and no resourceVersion.
+func newPodDeleteWithoutRVMessage(name, uid string) *beehivemodel.Message {
+	object := &unstructured.Unstructured{}
+	object.SetAPIVersion("v1")
+	object.SetKind("Pod")
+	object.SetNamespace(tf.TestNamespace)
+	object.SetName(name)
+	object.SetUID(types.UID(uid))
+	resource, _ := messagelayer.BuildResource(tf.TestNodeID, tf.TestNamespace, "pod", name)
+	return beehivemodel.NewMessage("").
+		BuildRouter("edgecontroller", "resource", resource, beehivemodel.DeleteOperation).
+		FillBody(object)
 }
 
 func TestGetAddNodeMessagePool(t *testing.T) {

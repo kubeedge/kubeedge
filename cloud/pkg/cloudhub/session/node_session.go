@@ -566,6 +566,12 @@ func (ns *NodeSession) deleteSuccessPoint(resourceNamespace, objectSyncName stri
 		}
 	}
 
+	// The store holds one message per object UID, so this also removes a message that
+	// replaced msg after it was sent, and the edge never gets that message. That is wanted
+	// for a Response, which would make metamanager store the deleted object again. A DELETE
+	// with resourceVersion that replaced one without is dropped too, which is safe: for a
+	// DELETE without resourceVersion the edge sends watches its stored object
+	// (imitator.deleteStored). TestNodeSessionAckDropsReplacingMessage covers both.
 	if err := ns.nodeMessagePool.AckMessageStore.Delete(msg); err != nil {
 		klog.Errorf("failed to delete message %v, err: %v", msg, err)
 	}
