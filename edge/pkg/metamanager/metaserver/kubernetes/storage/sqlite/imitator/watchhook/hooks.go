@@ -46,8 +46,15 @@ func Trigger(e watch.Event) {
 		return
 	}
 	gvr, ns, name := metaserver.ParseKey(key)
-	//TODO why not lock hooks ?
+	// Copy the hooks, because Do must not run under hooksLock: Stop takes the hook's
+	// lock and then hooksLock.
+	hooksLock.Lock()
+	snapshot := make([]*WatchHook, 0, len(hooks))
 	for _, hook := range hooks {
+		snapshot = append(snapshot, hook)
+	}
+	hooksLock.Unlock()
+	for _, hook := range snapshot {
 		compGVR, compNS, compName, compRev := true, true, true, true
 		if !hook.GetGVR().Empty() {
 			compGVR = hook.GetGVR() == gvr
