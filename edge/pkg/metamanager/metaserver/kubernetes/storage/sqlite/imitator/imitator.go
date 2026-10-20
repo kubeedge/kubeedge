@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
@@ -21,6 +22,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/imitator/watchhook"
+	patchutil "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/sqlite/util"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
 
@@ -42,20 +44,106 @@ func (s *imitator) Inject(msg model.Message) {
 	for _, e := range s.Event(&msg) {
 		// save to meta_v2
 		var err error
+		checkRV := true
 		switch e.Type {
 		case watch.Added, watch.Modified:
 			err = s.InsertOrUpdateObj(context.TODO(), e.Object)
 		case watch.Deleted:
-			err = s.DeleteObj(context.TODO(), e.Object)
+			var removed, kept bool
+			if e.Object, removed, kept, err = s.deleteStored(e.Object); kept {
+				continue
+			}
+			// The DELETED that removed a row goes to every watch, whatever resourceVersion it
+			// carries: a DELETE that waited in cloudhub behind an un-ACKed update, or the stored
+			// object swapped in for a DELETE without resourceVersion, is below a watch opened
+			// after the deletion in the cloud, and the row it removed was in that watch's list.
+			// Older watches see the RV go back, harmless while metaserver ignores the RV a client
+			// resumes from (watcher.go forces 0). Any other DELETED is filtered by
+			// resourceVersion, as before.
+			checkRV = !removed
 		}
 		if err != nil {
 			key := metaserver.KeyFunc(e.Object)
-			klog.Errorf("failed to serve event {type:%v,key:%v}", e.Type, key)
+			klog.Errorf("failed to serve event {type:%v,key:%v}: %v", e.Type, key, err)
 			continue
 		}
 		// TODO: move Trigger inside InsertOrUpdateObj and DeleteObj
-		watchhook.Trigger(e)
+		watchhook.Trigger(e, checkRV)
 	}
+}
+
+// deleteStored deletes obj's row, unless it holds another object (UID) under the same key, in
+// one step under s.lock. It reports whether it removed the row or kept another object's, and
+// returns the object a DELETED event carries: the stored one when obj has no resourceVersion
+// (the DELETE synccontroller.gcOrphanedObjectSync sends, with no labels or spec), else obj.
+//
+// A DELETE that names no UID deletes the row by key and goes out as before the UID check:
+// with its own body, filtered by resourceVersion. edgecontroller sends one for a pod name
+// whose pod is gone from the cloud or was recreated, and the row may hold the recreated pod,
+// so watches must not be told that the stored object was deleted.
+func (s *imitator) deleteStored(obj runtime.Object) (_ runtime.Object, removed, kept bool, err error) {
+	accessor, err := meta.Accessor(obj)
+	if err != nil {
+		return obj, false, false, err
+	}
+	key, err := metaserver.KeyFuncObj(obj)
+	if err != nil {
+		return obj, false, false, err
+	}
+	uid := string(accessor.GetUID())
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	if uid == "" {
+		return obj, false, false, s.deleteKey(key)
+	}
+	var stored runtime.Object
+	if accessor.GetResourceVersion() == "" {
+		stored = s.storedObj(key)
+	}
+	removed, kept, err = s.deleteKeyUID(key, uid)
+	if err != nil {
+		// The stored UID is unknown, so the DELETE goes out as it did before the UID check.
+		klog.Errorf("[imitator] delete %s error: %v", key, err)
+		return obj, false, false, nil
+	}
+	if !removed || stored == nil {
+		return obj, removed, kept, nil
+	}
+	return stored, true, false, nil
+}
+
+// storedObj returns the object under key as Get serves it, or nil if there is none or it
+// does not decode. The caller holds s.lock.
+func (s *imitator) storedObj(key string) runtime.Object {
+	rows, err := dbclient.NewMetaV2Service().RawMetaByGVRNN(metaserver.ParseKey(key))
+	if err != nil || len(*rows) != 1 {
+		return nil
+	}
+	obj := new(unstructured.Unstructured)
+	if err := patchutil.DecodeStored(s.codec, (*rows)[0].Value, obj); err != nil {
+		klog.Errorf("failed to decode stored obj %s: %v", key, err)
+		return nil
+	}
+	return obj
+}
+
+// deleteKeyUID deletes the row under key unless its object has a UID other than uid, and
+// reports whether it removed the row or kept another object's. It reads the UID from the row
+// itself: a pod's podpatch can name an older pod's UID. The caller holds s.lock.
+func (s *imitator) deleteKeyUID(key, uid string) (removed, kept bool, err error) {
+	metaV2 := dbclient.NewMetaV2Service()
+	n, err := metaV2.DeleteByKeyAndUID(key, uid)
+	if err != nil || n > 0 {
+		return n > 0, false, err
+	}
+	rows, err := metaV2.CountByKey(key)
+	if err != nil {
+		return false, false, err
+	}
+	if rows > 0 {
+		klog.V(2).Infof("[metaserver] skip delete of %s: the stored object is not uid %s", key, uid)
+	}
+	return false, rows > 0, nil
 }
 
 // TODO: filter out insert or update req that the obj's rev is smaller than the stored
@@ -119,11 +207,16 @@ func (s *imitator) Delete(_ context.Context, key string) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	err := dbclient.NewMetaV2Service().DeleteByKey(key)
+	err := s.deleteKey(key)
 	if err != nil {
 		klog.Errorf("[imitator] delete error: %v", err)
 	}
 	return err
+}
+
+// deleteKey deletes the row under key. The caller holds s.lock.
+func (s *imitator) deleteKey(key string) error {
+	return dbclient.NewMetaV2Service().DeleteByKey(key)
 }
 
 func (s *imitator) InsertOrUpdatePassThroughObj(_ context.Context, obj []byte, key string) error {
