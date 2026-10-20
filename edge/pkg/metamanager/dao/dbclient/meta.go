@@ -106,6 +106,20 @@ func (s *MetaService) QueryMeta(key string, condition string) (*[]string, error)
 	return &result, nil
 }
 
+// QueryMetaByKeyPrefix returns meta values whose Key starts with prefix.
+func (s *MetaService) QueryMetaByKeyPrefix(prefix string) (*[]string, error) {
+	var metas []models.Meta
+	err := s.db.Where("key LIKE ?", prefix+"%").Find(&metas).Error
+	if err != nil {
+		return nil, err
+	}
+	var result []string
+	for _, v := range metas {
+		result = append(result, v.Value)
+	}
+	return &result, nil
+}
+
 // QueryAllMeta returns all metas for given key and condition
 func (s *MetaService) QueryAllMeta(key string, condition string) (*[]models.Meta, error) {
 	var metas []models.Meta
