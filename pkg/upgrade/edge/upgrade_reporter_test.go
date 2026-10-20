@@ -18,6 +18,8 @@ package edge
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,10 +27,10 @@ import (
 
 func TestJSONFileReporter(t *testing.T) {
 	srcJSONFile := upgradeReportJSONFile
-	upgradeReportJSONFile = "test.json"
-	defer func() {
+	upgradeReportJSONFile = filepath.Join(t.TempDir(), "test.json")
+	t.Cleanup(func() {
 		upgradeReportJSONFile = srcJSONFile
-	}()
+	})
 
 	t.Run("report upgrade successful", func(t *testing.T) {
 		var err error
@@ -64,4 +66,98 @@ func TestJSONFileReporter(t *testing.T) {
 		assert.Equal(t, "v1.20.0", info.FromVersion)
 		assert.Equal(t, "v1.21.0", info.ToVersion)
 	})
+}
+
+// TestJSONReporterInfoExists covers the JSONReporterInfoExists() function
+func TestJSONReporterInfoExists(t *testing.T) {
+	srcJSONFile := upgradeReportJSONFile
+	upgradeReportJSONFile = filepath.Join(t.TempDir(), "test_exists.json")
+	t.Cleanup(func() {
+		upgradeReportJSONFile = srcJSONFile
+	})
+
+	// File does not exist yet
+	assert.False(t, JSONReporterInfoExists())
+
+	// Create the file
+	err := NewJSONFileReporter(EventTypeRollback, "v1.21.0", "v1.20.0").Report(nil)
+	assert.NoError(t, err)
+
+	// File now exists
+	assert.True(t, JSONReporterInfoExists())
+
+	// Cleanup
+	err = RemoveJSONReporterInfo()
+	assert.NoError(t, err)
+}
+
+// TestParseJSONReporterInfo_FileNotFound covers the os.ReadFile error branch
+func TestParseJSONReporterInfo_FileNotFound(t *testing.T) {
+	srcJSONFile := upgradeReportJSONFile
+	upgradeReportJSONFile = "/nonexistent/path/upgrade_report.json"
+	t.Cleanup(func() {
+		upgradeReportJSONFile = srcJSONFile
+	})
+
+	info, err := ParseJSONReporterInfo()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to read upgrade result from file")
+	assert.Empty(t, info.EventType)
+}
+
+// TestParseJSONReporterInfo_InvalidJSON covers the json.Unmarshal error branch
+func TestParseJSONReporterInfo_InvalidJSON(t *testing.T) {
+	srcJSONFile := upgradeReportJSONFile
+	upgradeReportJSONFile = filepath.Join(t.TempDir(), "test_invalid.json")
+	t.Cleanup(func() {
+		os.Remove(upgradeReportJSONFile)
+		upgradeReportJSONFile = srcJSONFile
+	})
+
+	// Write invalid JSON to the file
+	err := os.WriteFile(upgradeReportJSONFile, []byte("not valid json {{{"), os.ModePerm)
+	assert.NoError(t, err)
+
+	info, err := ParseJSONReporterInfo()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to unmarshal upgrade result")
+	assert.Empty(t, info.EventType)
+}
+
+// TestRemoveJSONReporterInfo_FileNotFound covers the os.Remove error branch
+func TestRemoveJSONReporterInfo_FileNotFound(t *testing.T) {
+	srcJSONFile := upgradeReportJSONFile
+	upgradeReportJSONFile = "nonexistent_file.json"
+	t.Cleanup(func() {
+		upgradeReportJSONFile = srcJSONFile
+	})
+
+	err := RemoveJSONReporterInfo()
+	assert.Error(t, err)
+}
+
+// TestReport_WriteFileError covers the os.WriteFile error branch in Report()
+func TestReport_WriteFileError(t *testing.T) {
+	srcJSONFile := upgradeReportJSONFile
+	// Use a path with a non-existent directory to force WriteFile to fail
+	upgradeReportJSONFile = "/nonexistent/directory/upgrade_report.json"
+	t.Cleanup(func() {
+		upgradeReportJSONFile = srcJSONFile
+	})
+
+	err := NewJSONFileReporter(EventTypeConfigUpdate, "v1.20.0", "v1.21.0").Report(nil)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to write upgrade result to file")
+}
+
+func TestReport_MarshalError(t *testing.T) {
+	origMarshal := jsonMarshal
+	jsonMarshal = func(v any) ([]byte, error) {
+		return nil, errors.New("forced marshal error")
+	}
+	t.Cleanup(func() { jsonMarshal = origMarshal })
+
+	err := NewJSONFileReporter(EventTypeUpgrade, "v1.20.0", "v1.21.0").Report(nil)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to marshal upgrade result")
 }

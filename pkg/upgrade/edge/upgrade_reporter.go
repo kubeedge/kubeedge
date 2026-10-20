@@ -40,6 +40,7 @@ const (
 )
 
 var upgradeReportJSONFile = filepath.Join(constants.KubeEdgePath, "upgrade_report.json")
+var jsonMarshal = json.Marshal
 
 // JSONReporterInfo defines the information to be reported.
 type JSONReporterInfo struct {
@@ -81,7 +82,7 @@ func (r JSONFileReporter) Report(inerr error) error {
 	if inerr != nil {
 		info.ErrorMessage = inerr.Error()
 	}
-	bff, err := json.Marshal(&info)
+	bff, err := jsonMarshal(&info)
 	if err != nil {
 		return fmt.Errorf("failed to marshal upgrade result, err: %v", err)
 	}
