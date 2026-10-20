@@ -38,8 +38,9 @@ func DeleteHook(id string) error {
 	return fmt.Errorf("unable to delete %q because it was not registered", id)
 }
 
-// Trigger trigger the corresponding hook to serve watch based on the event passed in
-func Trigger(e watch.Event) {
+// Trigger trigger the corresponding hook to serve watch based on the event passed in.
+// checkRV false delivers e also to watches opened after its resourceVersion.
+func Trigger(e watch.Event, checkRV bool) {
 	key, err := metaserver.KeyFuncObj(e.Object)
 	if err != nil {
 		klog.Errorf("failed to get key, %v", err)
@@ -65,7 +66,7 @@ func Trigger(e watch.Event) {
 		if hook.GetName() != "" {
 			compName = hook.GetName() == name
 		}
-		if hook.GetResourceVersion() != 0 {
+		if checkRV && hook.GetResourceVersion() != 0 {
 			accessor, err := meta.Accessor(e.Object)
 			if err != nil {
 				klog.Errorf("failed to get accessor, %v", err)
