@@ -34,7 +34,27 @@ import (
 	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/common"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage/restful"
 )
+
+func TestLogsPassesPreviousAndSinceTime(t *testing.T) {
+	var got common.LogsInfo
+	patch := gomonkey.ApplyMethod(reflect.TypeOf(&storage.REST{}), "Logs", func(_ *storage.REST, _ context.Context, info common.LogsInfo) (*types.LogsResponse, *http.Response) {
+		got = info
+		return &types.LogsResponse{}, &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewBufferString(""))}
+	})
+	defer patch.Reset()
+
+	handler := NewFactory().Logs(&request.RequestInfo{Name: "test-pod", Namespace: "default"})
+	req := httptest.NewRequest(http.MethodGet, "/logs?previous=true&sinceTime=2026-09-17T00:00:00Z", nil)
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	assert.Equal(t, "true", got.Previous)
+	assert.Equal(t, "2026-09-17T00:00:00Z", got.SinceTime)
+	path := restful.LogsRequest(got.Namespace, got.PodName, "app", got).Path
+	assert.Contains(t, path, "previous=true")
+	assert.Contains(t, path, "sinceTime=2026-09-17T00%3A00%3A00Z")
+}
 
 func TestLogs(t *testing.T) {
 	type testCase struct {

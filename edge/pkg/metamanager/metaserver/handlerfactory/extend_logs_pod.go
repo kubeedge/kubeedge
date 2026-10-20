@@ -40,7 +40,9 @@ func (f *Factory) Logs(request *request.RequestInfo) http.Handler {
 		insecureSkipTLSVerifyBackend := queryParams.Get("insecureSkipTLSVerifyBackend")
 		limitBytes := queryParams.Get("limitBytes")
 		pretty := queryParams.Get("pretty")
+		previous := queryParams.Get("previous")
 		sinceSeconds := queryParams.Get("sinceSeconds")
+		sinceTime := queryParams.Get("sinceTime")
 		timestamps := queryParams.Get("timestamps")
 
 		logsInfo := common.LogsInfo{
@@ -52,7 +54,9 @@ func (f *Factory) Logs(request *request.RequestInfo) http.Handler {
 			InsecureSkipTLSVerifyBackend: insecureSkipTLSVerifyBackend,
 			LimitBytes:                   limitBytes,
 			Pretty:                       pretty,
+			Previous:                     previous,
 			SinceSeconds:                 sinceSeconds,
+			SinceTime:                    sinceTime,
 			Timestamps:                   timestamps,
 		}
 
