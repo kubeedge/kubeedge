@@ -341,6 +341,91 @@ func TestRouteToCloud(t *testing.T) {
 	}
 }
 
+// TestRouteToCloudRequeuesMessageAfterTeardown tests that a message received after teardown is handed back instead of sent on the next connection
+func TestRouteToCloudRequeuesMessageAfterTeardown(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+	config.Config.MessageQPS = 3
+	config.Config.MessageBurst = 6
+	hub := newEdgeHub(true)
+	hub.chClient = mockAdapter
+	mockAdapter.EXPECT().Send(gomock.Any()).Times(0)
+
+	stop := make(chan struct{})
+	exited := make(chan struct{})
+	go func() {
+		hub.routeToCloud(stop)
+		close(exited)
+	}()
+	time.Sleep(200 * time.Millisecond)
+	close(stop)
+	beehiveContext.Send(modules.EdgeHubModuleName, *model.NewMessage("").BuildHeader("after_teardown", "", 1))
+
+	select {
+	case <-exited:
+	case <-time.After(2 * time.Second):
+		t.Fatal("routeToCloud kept running after its connection was torn down")
+	}
+
+	received := make(chan model.Message, 1)
+	go func() {
+		msg, _ := beehiveContext.Receive(modules.EdgeHubModuleName)
+		received <- msg
+	}()
+	select {
+	case msg := <-received:
+		require.Equal(t, "after_teardown", msg.GetID())
+	case <-time.After(2 * time.Second):
+		beehiveContext.Send(modules.EdgeHubModuleName, *model.NewMessage(""))
+		t.Fatal("the message received after teardown was lost")
+	}
+}
+
+// TestRouteToCloudSkipsWakeupMessage tests that the teardown wakeup is never sent to the cloud and unblocks Receive
+func TestRouteToCloudSkipsWakeupMessage(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+	config.Config.MessageQPS = 3
+	config.Config.MessageBurst = 6
+	hub := newEdgeHub(true)
+	hub.chClient = mockAdapter
+
+	sent := make(chan model.Message, 2)
+	mockAdapter.EXPECT().Send(gomock.Any()).DoAndReturn(func(msg model.Message) error {
+		sent <- msg
+		return nil
+	}).AnyTimes()
+
+	stop := make(chan struct{})
+	exited := make(chan struct{})
+	go func() {
+		hub.routeToCloud(stop)
+		close(exited)
+	}()
+
+	wakeup := message.BuildMsg(modules.HubGroup, "", modules.EdgeHubModuleName, "", message.OperationStop, nil)
+	beehiveContext.Send(modules.EdgeHubModuleName, *wakeup)
+	beehiveContext.Send(modules.EdgeHubModuleName, *model.NewMessage("").BuildHeader("live", "", 1))
+
+	select {
+	case msg := <-sent:
+		require.Equal(t, "live", msg.GetID(), "the wakeup message was sent to the cloud")
+	case <-time.After(2 * time.Second):
+		t.Fatal("the message after a wakeup message was never sent")
+	}
+
+	time.Sleep(200 * time.Millisecond)
+	close(stop)
+	wakeRouteToCloud()
+	select {
+	case <-exited:
+	case <-time.After(2 * time.Second):
+		t.Fatal("routeToCloud stayed blocked in Receive after teardown")
+	}
+}
+
 // TestKeepalive() tests whether ping message sent to the cloud at regular intervals happens properly
 func TestKeepalive(t *testing.T) {
 	CertFile := "/tmp/kubeedge/certs/edge.crt"
