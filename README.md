@@ -53,6 +53,8 @@ KubeEdge consists of cloud part and edge part.
 
 ## Kubernetes compatibility
 
+The current conformance CI uses Kubernetes 1.34 (`kindest/node:v1.34.0` with kind v0.30.0) to match the vendored test suite. Local conformance runs use the same default; older Kubernetes versions remain in the E2E compatibility matrix.
+
 |                        | Kubernetes 1.27 | Kubernetes 1.28 | Kubernetes 1.29 | Kubernetes 1.30 | Kubernetes 1.31 | Kubernetes 1.32 |
 |------------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
 | KubeEdge 1.19          | ✓               | ✓               | ✓               | -               | -               | -               |
