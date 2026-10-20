@@ -37,8 +37,14 @@ func (lc *LocationCache) PodConfigMapsAndSecrets(pod v1.Pod) (configMaps, secret
 			}
 		}
 	}
-	// used by envs
-	for _, s := range pod.Spec.Containers {
+	// used by envs, including init and ephemeral containers
+	containers := make([]v1.Container, 0, len(pod.Spec.Containers)+len(pod.Spec.InitContainers)+len(pod.Spec.EphemeralContainers))
+	containers = append(containers, pod.Spec.Containers...)
+	containers = append(containers, pod.Spec.InitContainers...)
+	for _, ec := range pod.Spec.EphemeralContainers {
+		containers = append(containers, v1.Container(ec.EphemeralContainerCommon))
+	}
+	for _, s := range containers {
 		for _, ef := range s.EnvFrom {
 			if ef.ConfigMapRef != nil {
 				configMaps = append(configMaps, ef.ConfigMapRef.Name)
