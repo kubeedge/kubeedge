@@ -8,6 +8,7 @@ import (
 
 	authenticationv1 "k8s.io/api/authentication/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -151,7 +152,7 @@ func (m *metaManager) handleMessage(message *model.Message) error {
 				return fmt.Errorf("failed to delete pod meta to DB: %s", err)
 			}
 		} else {
-			err := m.metaService.DeleteMetaByKey(resKey)
+			err := deleteMeta(resKey, message, m.metaService)
 			if err != nil {
 				klog.Errorf("delete meta failed, %s", msgDebugInfo(message))
 				return fmt.Errorf("delete meta failed, %s", err)
@@ -159,6 +160,20 @@ func (m *metaManager) handleMessage(message *model.Message) error {
 		}
 	}
 	return nil
+}
+
+// deleteMeta deletes the meta row of a non-pod resource. When the message names a UID, a row
+// holding another one stays, as in meta_v2.
+func deleteMeta(key string, message *model.Message, ms *dbclient.MetaService) error {
+	var obj metav1.PartialObjectMetadata
+	if content, err := message.GetContentData(); err == nil && json.Unmarshal(content, &obj) == nil && obj.UID != "" {
+		num, err := ms.DeleteMetaByKeyAndUID(key, string(obj.UID))
+		if err == nil && num == 0 {
+			klog.V(2).Infof("don't need to delete meta %s: no row with uid %s", key, obj.UID)
+		}
+		return err
+	}
+	return ms.DeleteMetaByKey(key)
 }
 
 func processDeletePodDB(message model.Message, ms *dbclient.MetaService) error {

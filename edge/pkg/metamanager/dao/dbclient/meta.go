@@ -70,6 +70,18 @@ func (s *MetaService) DeleteMetaByKeyAndPodUID(key, podUID string) (int64, error
 	return result.RowsAffected, nil
 }
 
+// DeleteMetaByKeyAndUID deletes the row under key unless its object has a UID other than
+// uid, so a DELETE for an old object keeps one recreated under the same name. It returns the
+// number of rows deleted.
+func (s *MetaService) DeleteMetaByKeyAndUID(key, uid string) (int64, error) {
+	result := s.db.Where("key = ? AND "+uidMatches, key, uid, uid).Delete(&models.Meta{})
+	if result.Error != nil {
+		klog.Errorf("delete meta by key %s and uid %s failed, err: %v", key, uid, result.Error)
+		return 0, result.Error
+	}
+	return result.RowsAffected, nil
+}
+
 // UpdateMeta updates a meta entry (all fields)
 func (s *MetaService) UpdateMeta(meta *models.Meta) error {
 	return s.db.Save(meta).Error
