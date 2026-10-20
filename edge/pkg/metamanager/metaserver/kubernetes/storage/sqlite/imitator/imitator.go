@@ -53,13 +53,18 @@ func (s *imitator) Inject(msg model.Message) {
 			if e.Object, removed, kept, err = s.deleteStored(e.Object); kept {
 				continue
 			}
-			// The DELETED that removed a row goes to every watch, whatever resourceVersion it
-			// carries: a DELETE that waited in cloudhub behind an un-ACKed update, or the stored
-			// object swapped in for a DELETE without resourceVersion, is below a watch opened
-			// after the deletion in the cloud, and the row it removed was in that watch's list.
-			// Older watches see the RV go back, harmless while metaserver ignores the RV a client
-			// resumes from (watcher.go forces 0). Any other DELETED is filtered by
-			// resourceVersion, as before.
+			// A DELETED that removed a row goes to every watch, whatever its resourceVersion:
+			// the row was in each watch's list, and the resourceVersion can be below a watch
+			// opened after the deletion in the cloud (a DELETE that waited in cloudhub behind an
+			// un-ACKed update, or the stored object swapped in for a DELETE without
+			// resourceVersion). Older watches see the RV go back, harmless while metaserver
+			// ignores the RV a client resumes from (watcher.go forces 0).
+			//
+			// Any other DELETED is filtered by resourceVersion, as before. One that found no row
+			// still reaches the watches opened before its resourceVersion, because a client may
+			// hold the object from a list the cloud served; a watcher without an informer then
+			// sees a second DELETED. One without resourceVersion reaches no watch (it parses to
+			// 0): there is no stored object to send, and its own body has no labels or spec.
 			checkRV = !removed
 		}
 		if err != nil {
@@ -76,6 +81,8 @@ func (s *imitator) Inject(msg model.Message) {
 // one step under s.lock. It reports whether it removed the row or kept another object's, and
 // returns the object a DELETED event carries: the stored one when obj has no resourceVersion
 // (the DELETE synccontroller.gcOrphanedObjectSync sends, with no labels or spec), else obj.
+// If the stored object does not decode, for example when its podpatch fails to merge, the row
+// is still removed and the DELETED carries obj, so the object does not stay in the clients.
 //
 // A DELETE that names no UID deletes the row by key and goes out as before the UID check:
 // with its own body, filtered by resourceVersion. edgecontroller sends one for a pod name
