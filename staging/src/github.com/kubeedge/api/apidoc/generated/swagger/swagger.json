@@ -347,6 +347,9 @@
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
           },
           {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
             "$ref": "#/parameters/labelSelector-5Zw57w4C"
           },
           {
@@ -523,6 +526,9 @@
           },
           {
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
           },
           {
             "$ref": "#/parameters/orphanDependents-uRB25kX5"
@@ -992,6 +998,9 @@
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
           },
           {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
             "$ref": "#/parameters/labelSelector-5Zw57w4C"
           },
           {
@@ -1165,6 +1174,9 @@
           },
           {
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
           },
           {
             "$ref": "#/parameters/orphanDependents-uRB25kX5"
@@ -2207,6 +2219,9 @@
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
           },
           {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
             "$ref": "#/parameters/labelSelector-5Zw57w4C"
           },
           {
@@ -2383,6 +2398,9 @@
           },
           {
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
           },
           {
             "$ref": "#/parameters/orphanDependents-uRB25kX5"
@@ -2852,6 +2870,9 @@
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
           },
           {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
             "$ref": "#/parameters/labelSelector-5Zw57w4C"
           },
           {
@@ -3028,6 +3049,9 @@
           },
           {
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
           },
           {
             "$ref": "#/parameters/orphanDependents-uRB25kX5"
@@ -4123,6 +4147,9 @@
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
           },
           {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
             "$ref": "#/parameters/labelSelector-5Zw57w4C"
           },
           {
@@ -4299,6 +4326,9 @@
           },
           {
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
           },
           {
             "$ref": "#/parameters/orphanDependents-uRB25kX5"
@@ -4768,6 +4798,9 @@
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
           },
           {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
             "$ref": "#/parameters/labelSelector-5Zw57w4C"
           },
           {
@@ -4944,6 +4977,9 @@
           },
           {
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
           },
           {
             "$ref": "#/parameters/orphanDependents-uRB25kX5"
@@ -5927,6 +5963,9 @@
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
           },
           {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
             "$ref": "#/parameters/labelSelector-5Zw57w4C"
           },
           {
@@ -6100,6 +6139,9 @@
           },
           {
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
           },
           {
             "$ref": "#/parameters/orphanDependents-uRB25kX5"
@@ -6563,6 +6605,9 @@
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
           },
           {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
             "$ref": "#/parameters/labelSelector-5Zw57w4C"
           },
           {
@@ -6736,6 +6781,9 @@
           },
           {
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
           },
           {
             "$ref": "#/parameters/orphanDependents-uRB25kX5"
@@ -7323,6 +7371,2412 @@
         }
       ]
     },
+    "/apis/operations.kubeedge.io/v1alpha2/": {
+      "get": {
+        "description": "get available resources",
+        "consumes": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "getOperationsKubeedgeIoV1alpha2APIResources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
+            }
+          }
+        }
+      }
+    },
+    "/apis/operations.kubeedge.io/v1alpha2/configupdatejobs": {
+      "get": {
+        "description": "list or watch objects of kind ConfigUpdateJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "listOperationsKubeedgeIoV1alpha2ConfigUpdateJob",
+        "parameters": [
+          {
+            "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+          },
+          {
+            "$ref": "#/parameters/continue-QfD61s0i"
+          },
+          {
+            "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+          },
+          {
+            "$ref": "#/parameters/labelSelector-5Zw57w4C"
+          },
+          {
+            "$ref": "#/parameters/limit-1NfNmdNH"
+          },
+          {
+            "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+          },
+          {
+            "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+          },
+          {
+            "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+          },
+          {
+            "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+          },
+          {
+            "$ref": "#/parameters/watch-XNNPZGbK"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJobList"
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ConfigUpdateJob"
+        }
+      },
+      "post": {
+        "description": "create a ConfigUpdateJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "createOperationsKubeedgeIoV1alpha2ConfigUpdateJob",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob"
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "post",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ConfigUpdateJob"
+        }
+      },
+      "delete": {
+        "description": "delete collection of ConfigUpdateJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "deleteOperationsKubeedgeIoV1alpha2CollectionConfigUpdateJob",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-2Y1dVQaQ"
+          },
+          {
+            "$ref": "#/parameters/continue-QfD61s0i"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+          },
+          {
+            "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
+            "$ref": "#/parameters/labelSelector-5Zw57w4C"
+          },
+          {
+            "$ref": "#/parameters/limit-1NfNmdNH"
+          },
+          {
+            "$ref": "#/parameters/orphanDependents-uRB25kX5"
+          },
+          {
+            "$ref": "#/parameters/propagationPolicy-6jk3prlO"
+          },
+          {
+            "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+          },
+          {
+            "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+          },
+          {
+            "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+          },
+          {
+            "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          }
+        },
+        "x-kubernetes-action": "deletecollection",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ConfigUpdateJob"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/pretty-tJGM1-ng"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha2/configupdatejobs/{name}": {
+      "get": {
+        "description": "read the specified ConfigUpdateJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "readOperationsKubeedgeIoV1alpha2ConfigUpdateJob",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ConfigUpdateJob"
+        }
+      },
+      "put": {
+        "description": "replace the specified ConfigUpdateJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "replaceOperationsKubeedgeIoV1alpha2ConfigUpdateJob",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ConfigUpdateJob"
+        }
+      },
+      "delete": {
+        "description": "delete a ConfigUpdateJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "deleteOperationsKubeedgeIoV1alpha2ConfigUpdateJob",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-2Y1dVQaQ"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
+            "$ref": "#/parameters/orphanDependents-uRB25kX5"
+          },
+          {
+            "$ref": "#/parameters/propagationPolicy-6jk3prlO"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          }
+        },
+        "x-kubernetes-action": "delete",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ConfigUpdateJob"
+        }
+      },
+      "patch": {
+        "description": "partially update the specified ConfigUpdateJob",
+        "consumes": [
+          "application/json-patch+json",
+          "application/merge-patch+json",
+          "application/strategic-merge-patch+json",
+          "application/apply-patch+yaml"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "patchOperationsKubeedgeIoV1alpha2ConfigUpdateJob",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-78PwaGsr"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-7c6nTn1T"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/force-tOGGb0Yi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ConfigUpdateJob"
+        }
+      },
+      "parameters": [
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the ConfigUpdateJob",
+          "name": "name",
+          "in": "path",
+          "required": true
+        },
+        {
+          "$ref": "#/parameters/pretty-tJGM1-ng"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha2/configupdatejobs/{name}/status": {
+      "get": {
+        "description": "read status of the specified ConfigUpdateJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "readOperationsKubeedgeIoV1alpha2ConfigUpdateJobStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ConfigUpdateJob"
+        }
+      },
+      "put": {
+        "description": "replace status of the specified ConfigUpdateJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "replaceOperationsKubeedgeIoV1alpha2ConfigUpdateJobStatus",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ConfigUpdateJob"
+        }
+      },
+      "patch": {
+        "description": "partially update status of the specified ConfigUpdateJob",
+        "consumes": [
+          "application/json-patch+json",
+          "application/merge-patch+json",
+          "application/strategic-merge-patch+json",
+          "application/apply-patch+yaml"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "patchOperationsKubeedgeIoV1alpha2ConfigUpdateJobStatus",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-78PwaGsr"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-7c6nTn1T"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/force-tOGGb0Yi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ConfigUpdateJob"
+        }
+      },
+      "parameters": [
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the ConfigUpdateJob",
+          "name": "name",
+          "in": "path",
+          "required": true
+        },
+        {
+          "$ref": "#/parameters/pretty-tJGM1-ng"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha2/imageprepulljobs": {
+      "get": {
+        "description": "list or watch objects of kind ImagePrePullJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "listOperationsKubeedgeIoV1alpha2ImagePrePullJob",
+        "parameters": [
+          {
+            "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+          },
+          {
+            "$ref": "#/parameters/continue-QfD61s0i"
+          },
+          {
+            "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+          },
+          {
+            "$ref": "#/parameters/labelSelector-5Zw57w4C"
+          },
+          {
+            "$ref": "#/parameters/limit-1NfNmdNH"
+          },
+          {
+            "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+          },
+          {
+            "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+          },
+          {
+            "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+          },
+          {
+            "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+          },
+          {
+            "$ref": "#/parameters/watch-XNNPZGbK"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJobList"
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ImagePrePullJob"
+        }
+      },
+      "post": {
+        "description": "create an ImagePrePullJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "createOperationsKubeedgeIoV1alpha2ImagePrePullJob",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob"
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "post",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ImagePrePullJob"
+        }
+      },
+      "delete": {
+        "description": "delete collection of ImagePrePullJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "deleteOperationsKubeedgeIoV1alpha2CollectionImagePrePullJob",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-2Y1dVQaQ"
+          },
+          {
+            "$ref": "#/parameters/continue-QfD61s0i"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+          },
+          {
+            "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
+            "$ref": "#/parameters/labelSelector-5Zw57w4C"
+          },
+          {
+            "$ref": "#/parameters/limit-1NfNmdNH"
+          },
+          {
+            "$ref": "#/parameters/orphanDependents-uRB25kX5"
+          },
+          {
+            "$ref": "#/parameters/propagationPolicy-6jk3prlO"
+          },
+          {
+            "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+          },
+          {
+            "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+          },
+          {
+            "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+          },
+          {
+            "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          }
+        },
+        "x-kubernetes-action": "deletecollection",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ImagePrePullJob"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/pretty-tJGM1-ng"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha2/imageprepulljobs/{name}": {
+      "get": {
+        "description": "read the specified ImagePrePullJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "readOperationsKubeedgeIoV1alpha2ImagePrePullJob",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ImagePrePullJob"
+        }
+      },
+      "put": {
+        "description": "replace the specified ImagePrePullJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "replaceOperationsKubeedgeIoV1alpha2ImagePrePullJob",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ImagePrePullJob"
+        }
+      },
+      "delete": {
+        "description": "delete an ImagePrePullJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "deleteOperationsKubeedgeIoV1alpha2ImagePrePullJob",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-2Y1dVQaQ"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
+            "$ref": "#/parameters/orphanDependents-uRB25kX5"
+          },
+          {
+            "$ref": "#/parameters/propagationPolicy-6jk3prlO"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          }
+        },
+        "x-kubernetes-action": "delete",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ImagePrePullJob"
+        }
+      },
+      "patch": {
+        "description": "partially update the specified ImagePrePullJob",
+        "consumes": [
+          "application/json-patch+json",
+          "application/merge-patch+json",
+          "application/strategic-merge-patch+json",
+          "application/apply-patch+yaml"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "patchOperationsKubeedgeIoV1alpha2ImagePrePullJob",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-78PwaGsr"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-7c6nTn1T"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/force-tOGGb0Yi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ImagePrePullJob"
+        }
+      },
+      "parameters": [
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the ImagePrePullJob",
+          "name": "name",
+          "in": "path",
+          "required": true
+        },
+        {
+          "$ref": "#/parameters/pretty-tJGM1-ng"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha2/imageprepulljobs/{name}/status": {
+      "get": {
+        "description": "read status of the specified ImagePrePullJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "readOperationsKubeedgeIoV1alpha2ImagePrePullJobStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ImagePrePullJob"
+        }
+      },
+      "put": {
+        "description": "replace status of the specified ImagePrePullJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "replaceOperationsKubeedgeIoV1alpha2ImagePrePullJobStatus",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ImagePrePullJob"
+        }
+      },
+      "patch": {
+        "description": "partially update status of the specified ImagePrePullJob",
+        "consumes": [
+          "application/json-patch+json",
+          "application/merge-patch+json",
+          "application/strategic-merge-patch+json",
+          "application/apply-patch+yaml"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "patchOperationsKubeedgeIoV1alpha2ImagePrePullJobStatus",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-78PwaGsr"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-7c6nTn1T"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/force-tOGGb0Yi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ImagePrePullJob"
+        }
+      },
+      "parameters": [
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the ImagePrePullJob",
+          "name": "name",
+          "in": "path",
+          "required": true
+        },
+        {
+          "$ref": "#/parameters/pretty-tJGM1-ng"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha2/nodeupgradejobs": {
+      "get": {
+        "description": "list or watch objects of kind NodeUpgradeJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "listOperationsKubeedgeIoV1alpha2NodeUpgradeJob",
+        "parameters": [
+          {
+            "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+          },
+          {
+            "$ref": "#/parameters/continue-QfD61s0i"
+          },
+          {
+            "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+          },
+          {
+            "$ref": "#/parameters/labelSelector-5Zw57w4C"
+          },
+          {
+            "$ref": "#/parameters/limit-1NfNmdNH"
+          },
+          {
+            "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+          },
+          {
+            "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+          },
+          {
+            "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+          },
+          {
+            "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+          },
+          {
+            "$ref": "#/parameters/watch-XNNPZGbK"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJobList"
+            }
+          }
+        },
+        "x-kubernetes-action": "list",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "NodeUpgradeJob"
+        }
+      },
+      "post": {
+        "description": "create a NodeUpgradeJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "createOperationsKubeedgeIoV1alpha2NodeUpgradeJob",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob"
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "post",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "NodeUpgradeJob"
+        }
+      },
+      "delete": {
+        "description": "delete collection of NodeUpgradeJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "deleteOperationsKubeedgeIoV1alpha2CollectionNodeUpgradeJob",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-2Y1dVQaQ"
+          },
+          {
+            "$ref": "#/parameters/continue-QfD61s0i"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+          },
+          {
+            "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
+            "$ref": "#/parameters/labelSelector-5Zw57w4C"
+          },
+          {
+            "$ref": "#/parameters/limit-1NfNmdNH"
+          },
+          {
+            "$ref": "#/parameters/orphanDependents-uRB25kX5"
+          },
+          {
+            "$ref": "#/parameters/propagationPolicy-6jk3prlO"
+          },
+          {
+            "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+          },
+          {
+            "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+          },
+          {
+            "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+          },
+          {
+            "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          }
+        },
+        "x-kubernetes-action": "deletecollection",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "NodeUpgradeJob"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/pretty-tJGM1-ng"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha2/nodeupgradejobs/{name}": {
+      "get": {
+        "description": "read the specified NodeUpgradeJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "readOperationsKubeedgeIoV1alpha2NodeUpgradeJob",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "NodeUpgradeJob"
+        }
+      },
+      "put": {
+        "description": "replace the specified NodeUpgradeJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "replaceOperationsKubeedgeIoV1alpha2NodeUpgradeJob",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "NodeUpgradeJob"
+        }
+      },
+      "delete": {
+        "description": "delete a NodeUpgradeJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "deleteOperationsKubeedgeIoV1alpha2NodeUpgradeJob",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-2Y1dVQaQ"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
+            "$ref": "#/parameters/orphanDependents-uRB25kX5"
+          },
+          {
+            "$ref": "#/parameters/propagationPolicy-6jk3prlO"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+            }
+          }
+        },
+        "x-kubernetes-action": "delete",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "NodeUpgradeJob"
+        }
+      },
+      "patch": {
+        "description": "partially update the specified NodeUpgradeJob",
+        "consumes": [
+          "application/json-patch+json",
+          "application/merge-patch+json",
+          "application/strategic-merge-patch+json",
+          "application/apply-patch+yaml"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "patchOperationsKubeedgeIoV1alpha2NodeUpgradeJob",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-78PwaGsr"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-7c6nTn1T"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/force-tOGGb0Yi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "NodeUpgradeJob"
+        }
+      },
+      "parameters": [
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the NodeUpgradeJob",
+          "name": "name",
+          "in": "path",
+          "required": true
+        },
+        {
+          "$ref": "#/parameters/pretty-tJGM1-ng"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha2/nodeupgradejobs/{name}/status": {
+      "get": {
+        "description": "read status of the specified NodeUpgradeJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "readOperationsKubeedgeIoV1alpha2NodeUpgradeJobStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "get",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "NodeUpgradeJob"
+        }
+      },
+      "put": {
+        "description": "replace status of the specified NodeUpgradeJob",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "replaceOperationsKubeedgeIoV1alpha2NodeUpgradeJobStatus",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob"
+            }
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-Qy4HdaTW"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "put",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "NodeUpgradeJob"
+        }
+      },
+      "patch": {
+        "description": "partially update status of the specified NodeUpgradeJob",
+        "consumes": [
+          "application/json-patch+json",
+          "application/merge-patch+json",
+          "application/strategic-merge-patch+json",
+          "application/apply-patch+yaml"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "patchOperationsKubeedgeIoV1alpha2NodeUpgradeJobStatus",
+        "parameters": [
+          {
+            "$ref": "#/parameters/body-78PwaGsr"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
+            "name": "dryRun",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/fieldManager-7c6nTn1T"
+          },
+          {
+            "uniqueItems": true,
+            "type": "string",
+            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
+            "name": "fieldValidation",
+            "in": "query"
+          },
+          {
+            "$ref": "#/parameters/force-tOGGb0Yi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob"
+            }
+          },
+          "201": {
+            "description": "Created",
+            "schema": {
+              "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob"
+            }
+          }
+        },
+        "x-kubernetes-action": "patch",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "NodeUpgradeJob"
+        }
+      },
+      "parameters": [
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the NodeUpgradeJob",
+          "name": "name",
+          "in": "path",
+          "required": true
+        },
+        {
+          "$ref": "#/parameters/pretty-tJGM1-ng"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha2/watch/configupdatejobs": {
+      "get": {
+        "description": "watch individual changes to a list of ConfigUpdateJob. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "watchOperationsKubeedgeIoV1alpha2ConfigUpdateJobList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ConfigUpdateJob"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-tJGM1-ng"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha2/watch/configupdatejobs/{name}": {
+      "get": {
+        "description": "watch changes to an object of kind ConfigUpdateJob. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "watchOperationsKubeedgeIoV1alpha2ConfigUpdateJob",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watch",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ConfigUpdateJob"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the ConfigUpdateJob",
+          "name": "name",
+          "in": "path",
+          "required": true
+        },
+        {
+          "$ref": "#/parameters/pretty-tJGM1-ng"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha2/watch/imageprepulljobs": {
+      "get": {
+        "description": "watch individual changes to a list of ImagePrePullJob. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "watchOperationsKubeedgeIoV1alpha2ImagePrePullJobList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ImagePrePullJob"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-tJGM1-ng"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha2/watch/imageprepulljobs/{name}": {
+      "get": {
+        "description": "watch changes to an object of kind ImagePrePullJob. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "watchOperationsKubeedgeIoV1alpha2ImagePrePullJob",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watch",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "ImagePrePullJob"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the ImagePrePullJob",
+          "name": "name",
+          "in": "path",
+          "required": true
+        },
+        {
+          "$ref": "#/parameters/pretty-tJGM1-ng"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha2/watch/nodeupgradejobs": {
+      "get": {
+        "description": "watch individual changes to a list of NodeUpgradeJob. deprecated: use the 'watch' parameter with a list operation instead.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "watchOperationsKubeedgeIoV1alpha2NodeUpgradeJobList",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watchlist",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "NodeUpgradeJob"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "$ref": "#/parameters/pretty-tJGM1-ng"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
+    "/apis/operations.kubeedge.io/v1alpha2/watch/nodeupgradejobs/{name}": {
+      "get": {
+        "description": "watch changes to an object of kind NodeUpgradeJob. deprecated: use the 'watch' parameter with a list operation instead, filtered to a single item with the 'fieldSelector' parameter.",
+        "consumes": [
+          "*/*"
+        ],
+        "produces": [
+          "application/json",
+          "application/yaml",
+          "application/vnd.kubernetes.protobuf",
+          "application/json;stream=watch",
+          "application/vnd.kubernetes.protobuf;stream=watch"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "operationsKubeedgeIo_v1alpha2"
+        ],
+        "operationId": "watchOperationsKubeedgeIoV1alpha2NodeUpgradeJob",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+            }
+          }
+        },
+        "x-kubernetes-action": "watch",
+        "x-kubernetes-group-version-kind": {
+          "group": "operations.kubeedge.io",
+          "version": "v1alpha2",
+          "kind": "NodeUpgradeJob"
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/parameters/allowWatchBookmarks-HC2hJt-J"
+        },
+        {
+          "$ref": "#/parameters/continue-QfD61s0i"
+        },
+        {
+          "$ref": "#/parameters/fieldSelector-xIcQKXFG"
+        },
+        {
+          "$ref": "#/parameters/labelSelector-5Zw57w4C"
+        },
+        {
+          "$ref": "#/parameters/limit-1NfNmdNH"
+        },
+        {
+          "uniqueItems": true,
+          "type": "string",
+          "description": "name of the NodeUpgradeJob",
+          "name": "name",
+          "in": "path",
+          "required": true
+        },
+        {
+          "$ref": "#/parameters/pretty-tJGM1-ng"
+        },
+        {
+          "$ref": "#/parameters/resourceVersion-5WAnf1kx"
+        },
+        {
+          "$ref": "#/parameters/resourceVersionMatch-t8XhRHeC"
+        },
+        {
+          "$ref": "#/parameters/sendInitialEvents-rLXlEK_k"
+        },
+        {
+          "$ref": "#/parameters/timeoutSeconds-yvYezaOC"
+        },
+        {
+          "$ref": "#/parameters/watch-XNNPZGbK"
+        }
+      ]
+    },
     "/apis/policy.kubeedge.io/": {
       "get": {
         "description": "get information of a group",
@@ -7559,6 +10013,9 @@
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
           },
           {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
             "$ref": "#/parameters/labelSelector-5Zw57w4C"
           },
           {
@@ -7735,6 +10192,9 @@
           },
           {
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
           },
           {
             "$ref": "#/parameters/orphanDependents-uRB25kX5"
@@ -8562,6 +11022,9 @@
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
           },
           {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
             "$ref": "#/parameters/labelSelector-5Zw57w4C"
           },
           {
@@ -8735,6 +11198,9 @@
           },
           {
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
           },
           {
             "$ref": "#/parameters/orphanDependents-uRB25kX5"
@@ -9198,6 +11664,9 @@
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
           },
           {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
             "$ref": "#/parameters/labelSelector-5Zw57w4C"
           },
           {
@@ -9374,6 +11843,9 @@
           },
           {
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
           },
           {
             "$ref": "#/parameters/orphanDependents-uRB25kX5"
@@ -10351,6 +12823,9 @@
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
           },
           {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
+          },
+          {
             "$ref": "#/parameters/labelSelector-5Zw57w4C"
           },
           {
@@ -10527,6 +13002,9 @@
           },
           {
             "$ref": "#/parameters/gracePeriodSeconds--K5HaBOS"
+          },
+          {
+            "$ref": "#/parameters/ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj"
           },
           {
             "$ref": "#/parameters/orphanDependents-uRB25kX5"
@@ -11117,6 +13595,32 @@
           "$ref": "#/parameters/watch-XNNPZGbK"
         }
       ]
+    },
+    "/version/": {
+      "get": {
+        "description": "get the code version",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "tags": [
+          "version"
+        ],
+        "operationId": "getCodeVersion",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/io.k8s.apimachinery.pkg.version.Info"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -11151,6 +13655,9 @@
     "com.github.kubeedge.api.apis.apps.v1alpha1.EdgeApplication": {
       "description": "EdgeApplication is the Schema for the edgeapplications API",
       "type": "object",
+      "required": [
+        "spec"
+      ],
       "properties": {
         "apiVersion": {
           "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -11346,6 +13853,9 @@
     "com.github.kubeedge.api.apis.apps.v1alpha1.NodeGroup": {
       "description": "NodeGroup is the Schema for the nodegroups API",
       "type": "object",
+      "required": [
+        "spec"
+      ],
       "properties": {
         "apiVersion": {
           "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -11432,6 +13942,10 @@
             "type": "string",
             "default": ""
           }
+        },
+        "topologyEnabled": {
+          "description": "topologyEnabled indicates whether the topology is enabled for this NodeGroup.",
+          "type": "boolean"
         }
       }
     },
@@ -11586,7 +14100,8 @@
       "description": "ResourcesOverrider represents the rules dedicated to handling resources overrides.",
       "type": "object",
       "required": [
-        "containerName"
+        "containerName",
+        "value"
       ],
       "properties": {
         "containerName": {
@@ -11620,6 +14135,22 @@
         }
       }
     },
+    "com.github.kubeedge.api.apis.apps.v1alpha1.TargetNodeLabel": {
+      "description": "TargetNodeLabels represents the target nodes with specified labels of workload to be deployed, including override rules to apply for the node.",
+      "type": "object",
+      "properties": {
+        "labelSelector": {
+          "description": "LabelSelector represents the label selectors used to match nodes for workload deployment. It defines the criteria for selecting the target nodes based on their labels.",
+          "default": {},
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector"
+        },
+        "overriders": {
+          "description": "Overriders represents the override rules that would apply to the workload for the nodes selected by the label selector.",
+          "default": {},
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.Overriders"
+        }
+      }
+    },
     "com.github.kubeedge.api.apis.apps.v1alpha1.WorkloadScope": {
       "description": "WorkloadScope represents which node groups the workload should be deployed in.",
       "type": "object",
@@ -11630,6 +14161,14 @@
           "items": {
             "default": {},
             "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.TargetNodeGroup"
+          }
+        },
+        "targetNodeLabels": {
+          "description": "TargetNodeLabels represents the target nodes with specified labels of workload to be deployed",
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.apps.v1alpha1.TargetNodeLabel"
           }
         }
       }
@@ -12419,9 +14958,34 @@
         }
       }
     },
+    "com.github.kubeedge.api.apis.devices.v1beta1.AnomalyDetectionConfig": {
+      "type": "object",
+      "required": [
+        "data"
+      ],
+      "properties": {
+        "data": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        }
+      }
+    },
     "com.github.kubeedge.api.apis.devices.v1beta1.CustomizedValue": {
       "description": "CustomizedValue contains a map type data",
-      "type": "object"
+      "type": "object",
+      "required": [
+        "data"
+      ],
+      "properties": {
+        "data": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        }
+      }
     },
     "com.github.kubeedge.api.apis.devices.v1beta1.DBMethodConfig": {
       "type": "object",
@@ -12502,7 +15066,7 @@
         },
         "status": {
           "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceStatus"
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceStatusOld"
         }
       },
       "x-kubernetes-group-version-kind": [
@@ -12547,6 +15111,28 @@
           "version": "v1beta1"
         }
       ]
+    },
+    "com.github.kubeedge.api.apis.devices.v1beta1.DeviceMethod": {
+      "description": "DeviceMethod describes the specifics all the methods of the device.",
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "Define the description of device method.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Required: The device method name to be accessed. It must be unique.",
+          "type": "string"
+        },
+        "propertyNames": {
+          "description": "PropertyNames are list of device properties that device methods can control. Required: A device method can control multiple device properties.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      }
     },
     "com.github.kubeedge.api.apis.devices.v1beta1.DeviceModel": {
       "description": "DeviceModel is the Schema for the device model API",
@@ -12627,6 +15213,10 @@
         "protocol": {
           "description": "Required: Protocol name used by the device.",
           "type": "string"
+        },
+        "protocolConfigData": {
+          "description": "Optional: Any config data.It can be overridden in the device instance.",
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.CustomizedValue"
         }
       }
     },
@@ -12676,6 +15266,14 @@
           "description": "Required: DeviceModelRef is reference to the device model used as a template to create the device instance.",
           "$ref": "#/definitions/io.k8s.api.core.v1.LocalObjectReference"
         },
+        "methods": {
+          "description": "List of methods of device. methods list item must be unique by method.Name.",
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DeviceMethod"
+          }
+        },
         "nodeName": {
           "description": "NodeName is a request to schedule this device onto a specific node. If it is non-empty, the scheduler simply schedules this device onto that node, assuming that it fits resource requirements.",
           "type": "string"
@@ -12692,28 +15290,25 @@
           "description": "Required: The protocol configuration used to connect to the device.",
           "default": {},
           "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.ProtocolConfig"
+        },
+        "stateReport": {
+          "description": "StateReport represents the configuration of state reporting for a device.",
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.StateReportConfig"
         }
       }
     },
-    "com.github.kubeedge.api.apis.devices.v1beta1.DeviceStatus": {
-      "description": "DeviceStatus reports the device state and the desired/reported values of twin attributes.",
+    "com.github.kubeedge.api.apis.devices.v1beta1.DeviceStatusOld": {
+      "description": "We schedule to extract the status field of Device CRD to a separate CRD DeviceStatus The DeviceStatusOld is kept temporarily to avoid breaking changes during the transition period. After the transition period, DeviceStatusOld and related code will be removed. DeviceStatusOld represents the status of a device instance.",
       "type": "object",
       "properties": {
-        "lastOnlineTime": {
-          "description": "Optional: The last time the device was online.",
-          "type": "string"
+        "reportCycle": {
+          "description": "Optional: Define how frequent mapper will report the device status.",
+          "type": "integer",
+          "format": "int64"
         },
-        "state": {
-          "description": "Optional: The state of the device.",
-          "type": "string"
-        },
-        "twins": {
-          "description": "A list of device twins containing desired/reported desired/reported values of twin properties. Optional: A passive device won't have twin properties and this list could be empty.",
-          "type": "array",
-          "items": {
-            "default": {},
-            "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.Twin"
-          }
+        "reportToCloud": {
+          "description": "Optional: whether be reported to the cloud",
+          "type": "boolean"
         }
       }
     },
@@ -12784,6 +15379,10 @@
         "unit": {
           "description": "The unit of the property",
           "type": "string"
+        },
+        "visitors": {
+          "description": "Note: It can be overridden in the device instance",
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.VisitorConfig"
         }
       }
     },
@@ -12820,6 +15419,10 @@
     "com.github.kubeedge.api.apis.devices.v1beta1.PushMethod": {
       "type": "object",
       "properties": {
+        "anomalyDetection": {
+          "description": "AnomalyDetection represents the method used to push data to anomaly detection service",
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.AnomalyDetectionConfig"
+        },
         "dbMethod": {
           "description": "DBMethod represents the method used to push data to database, please ensure that the mapper can access the destination address.",
           "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.DBMethodConfig"
@@ -12831,6 +15434,10 @@
         "mqtt": {
           "description": "MQTT Push method configuration for mqtt",
           "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.PushMethodMQTT"
+        },
+        "otel": {
+          "description": "OTEL Push Method configuration for otel",
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.PushMethodOTEL"
         }
       }
     },
@@ -12875,6 +15482,15 @@
         }
       }
     },
+    "com.github.kubeedge.api.apis.devices.v1beta1.PushMethodOTEL": {
+      "type": "object",
+      "properties": {
+        "endpointURL": {
+          "description": "the target endpoint URL the Exporter will connect to, like https://localhost:4318/v1/metrics",
+          "type": "string"
+        }
+      }
+    },
     "com.github.kubeedge.api.apis.devices.v1beta1.RedisClientConfig": {
       "type": "object",
       "properties": {
@@ -12899,6 +15515,21 @@
         }
       }
     },
+    "com.github.kubeedge.api.apis.devices.v1beta1.StateReportConfig": {
+      "description": "StateReportConfig represents the configuration of state reporting for a device.",
+      "type": "object",
+      "properties": {
+        "reportCycle": {
+          "description": "Optional: Define how frequent mapper will report the device state.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "reportToCloud": {
+          "description": "Optional: whether be reported to the cloud",
+          "type": "boolean"
+        }
+      }
+    },
     "com.github.kubeedge.api.apis.devices.v1beta1.TDEngineClientConfig": {
       "type": "object",
       "properties": {
@@ -12909,26 +15540,6 @@
         "dbName": {
           "description": "dbname of tdEngine database",
           "type": "string"
-        }
-      }
-    },
-    "com.github.kubeedge.api.apis.devices.v1beta1.Twin": {
-      "description": "Twin provides a logical representation of control properties (writable properties in the device model). The properties can have a Desired state and a Reported state. The cloud configures the `Desired`state of a device property and this configuration update is pushed to the edge node. The mapper sends a command to the device to change this property value as per the desired state . It receives the `Reported` state of the property once the previous operation is complete and sends the reported state to the cloud. Offline device interaction in the edge is possible via twin properties for control/command operations.",
-      "type": "object",
-      "properties": {
-        "observedDesired": {
-          "description": "The meaning of here is to indicate desired value of `deviceProperty.Desired` that the mapper has received in current cycle. Useful in cases that people want to check whether the mapper is working appropriately and its internal status is up-to-date. This value should be only updated by devicecontroller upstream.",
-          "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.TwinProperty"
-        },
-        "propertyName": {
-          "description": "Required: The property name for which the desired/reported values are specified. This property should be present in the device model.",
-          "type": "string"
-        },
-        "reported": {
-          "description": "Required: the reported property value.",
-          "default": {},
-          "$ref": "#/definitions/com.github.kubeedge.api.apis.devices.v1beta1.TwinProperty"
         }
       }
     },
@@ -12963,6 +15574,20 @@
         },
         "protocolName": {
           "description": "Required: name of customized protocol",
+          "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha1.ImageDigestGatter": {
+      "description": "ImageDigestGatter used to define a method for getting the image digest",
+      "type": "object",
+      "properties": {
+        "registryAPI": {
+          "description": "RegistryAPI define registry v2 interface access configuration",
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.RegistryAPI"
+        },
+        "value": {
+          "description": "Value used to directly set a value to check image",
           "type": "string"
         }
       }
@@ -13277,6 +15902,10 @@
           "description": "Image specifies a container image name, the image contains: keadm and edgecore. keadm is used as upgradetool, to install the new version of edgecore. The image name consists of registry hostname and repository name, if it includes the tag or digest, the tag or digest will be overwritten by Version field above. If the registry hostname is empty, docker.io will be used as default. The default image name is: kubeedge/installation-package.",
           "type": "string"
         },
+        "imageDigestGatter": {
+          "description": "ImageDigestGatter define registry v2 interface access configuration. As a transition, it is not required at first, and the image digest is checked when this field is set.",
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImageDigestGatter"
+        },
         "labelSelector": {
           "description": "LabelSelector is a filter to select member clusters by labels. It must match a node's labels for the NodeUpgradeJob to be operated on that node. Please note that sets of NodeNames and LabelSelector are ORed. Users must set one and can only set one.",
           "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector"
@@ -13288,6 +15917,10 @@
             "type": "string",
             "default": ""
           }
+        },
+        "requireConfirmation": {
+          "description": "RequireConfirmation specifies whether you need to confirm the upgrade. The default RequireConfirmation value is false.",
+          "type": "boolean"
         },
         "timeoutSeconds": {
           "description": "TimeoutSeconds limits the duration of the node upgrade job. Default to 300. If set to 0, we'll use the default value 300.",
@@ -13341,6 +15974,24 @@
         }
       }
     },
+    "com.github.kubeedge.api.apis.operations.v1alpha1.RegistryAPI": {
+      "description": "RegistryAPI used to define registry v2 interface access configuration",
+      "type": "object",
+      "required": [
+        "host",
+        "token"
+      ],
+      "properties": {
+        "host": {
+          "type": "string",
+          "default": ""
+        },
+        "token": {
+          "type": "string",
+          "default": ""
+        }
+      }
+    },
     "com.github.kubeedge.api.apis.operations.v1alpha1.TaskStatus": {
       "description": "TaskStatus stores the status of Upgrade for each edge node.",
       "type": "object",
@@ -13368,6 +16019,739 @@
         "time": {
           "description": "Time represents for the running time of the ImagePrePullJob.",
           "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob": {
+      "description": "ConfigUpdateJob is used to update edge configuration from cloud side.",
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "type": "string"
+        },
+        "metadata": {
+          "default": {},
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+        },
+        "spec": {
+          "description": "Specification of the desired behavior of ConfigUpdateJob.",
+          "default": {},
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJobSpec"
+        },
+        "status": {
+          "description": "Most recently observed status of the ConfigUpdateJob.",
+          "default": {},
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJobStatus"
+        }
+      },
+      "x-kubernetes-group-version-kind": [
+        {
+          "group": "operations.kubeedge.io",
+          "kind": "ConfigUpdateJob",
+          "version": "v1alpha2"
+        }
+      ]
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJobActionStatus": {
+      "description": "ConfigUpdateJobActionStatus defines the results of executing the action.",
+      "type": "object",
+      "properties": {
+        "action": {
+          "description": "Action represents for the action phase of the ConfigUpdateJob",
+          "type": "string"
+        },
+        "reason": {
+          "description": "Reason represents the reason for the failure of the action.",
+          "type": "string"
+        },
+        "status": {
+          "description": "State represents for the status of this image pull on the edge node.",
+          "type": "string"
+        },
+        "time": {
+          "description": "Time represents for the running time of the node task.",
+          "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJobList": {
+      "description": "ConfigUpdateJobList is a list of ConfigUpdateJob.",
+      "type": "object",
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+          "type": "string"
+        },
+        "items": {
+          "description": "List of ConfigUpdateJob.",
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJob"
+          }
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "type": "string"
+        },
+        "metadata": {
+          "description": "Standard list metadata.",
+          "default": {},
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+        }
+      },
+      "x-kubernetes-group-version-kind": [
+        {
+          "group": "operations.kubeedge.io",
+          "kind": "ConfigUpdateJobList",
+          "version": "v1alpha2"
+        }
+      ]
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJobNodeTaskStatus": {
+      "description": "ConfigUpdateJobNodeTaskStatus stores the status of config update for each edge node.",
+      "type": "object",
+      "properties": {
+        "actionFlow": {
+          "description": "ActionFlow represents for the results of executing the action flow.",
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJobActionStatus"
+          }
+        },
+        "nodeName": {
+          "description": "NodeName is the name of edge node.",
+          "type": "string"
+        },
+        "phase": {
+          "description": "Phase represents for the phase of the node task.",
+          "type": "string"
+        },
+        "reason": {
+          "description": "Reason represents the reason for the failure of the node task.",
+          "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJobSpec": {
+      "description": "ConfigUpdateJobSpec represents the specification of the desired behavior of ConfigUpdateJob.",
+      "type": "object",
+      "required": [
+        "updateFields"
+      ],
+      "properties": {
+        "concurrency": {
+          "description": "Concurrency specifies the maximum number of concurrent that edge nodes associated with each CloudCore instance can be updated at the same time. The default Concurrency value is 1.",
+          "type": "integer",
+          "format": "int32"
+        },
+        "failureTolerate": {
+          "description": "FailureTolerate specifies the task tolerance failure ratio. The default FailureTolerate value is 0.1.",
+          "type": "string"
+        },
+        "labelSelector": {
+          "description": "LabelSelector is a filter to select member clusters by labels. It must match a node's labels for the ConfigUpdateJob to be operated on that node. Please note that sets of NodeNames and LabelSelector are ORed. Users must set one and can only set one.",
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector"
+        },
+        "nodeNames": {
+          "description": "NodeNames is a request to select some specific nodes. If it is non-empty, the update job simply select these edge nodes to do config update operation. Please note that sets of NodeNames and LabelSelector are ORed. Users must set one and can only set one.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "default": ""
+          }
+        },
+        "timeoutSeconds": {
+          "description": "TimeoutSeconds limits the duration of the config update job. Default to 300. If set to 0, we'll use the default value 300.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "updateFields": {
+          "description": "UpdateFields specify certain fields in EdgeCore configuration to update",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      }
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJobStatus": {
+      "description": "ConfigUpdateJobStatus stores the status of ConfigUpdateJob. contains multiple edge nodes config update status.",
+      "type": "object",
+      "required": [
+        "phase"
+      ],
+      "properties": {
+        "nodeStatus": {
+          "description": "NodeStatus contains config update status for each edge node.",
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ConfigUpdateJobNodeTaskStatus"
+          }
+        },
+        "phase": {
+          "description": "Phase represents for the phase of the ConfigUpdateJob",
+          "type": "string",
+          "default": ""
+        },
+        "reason": {
+          "description": "Reason represents for the reason of the ConfigUpdateJob.",
+          "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.ImageDigestGetter": {
+      "description": "ImageDigestGetter used to define a method for getting the image digest.",
+      "type": "object",
+      "properties": {
+        "amd64": {
+          "description": "AMD64 indicates the image digest of the amd64 platform for verification. E.g., sha256:0738039541234567890123456789012345678901234567890123456789012345",
+          "type": "string"
+        },
+        "arm64": {
+          "description": "ARM64 indicates the image digest of the arm64 platform for verification. E.g., sha256:0738039541234567890123456789012345678901234567890123456789012345",
+          "type": "string"
+        },
+        "registryAPI": {
+          "description": "RegistryAPI define registry v2 interface access configuration. Used to automatically gets multiple platform image digests from a remote registry to set values into ARM64 and AMD64 fields.",
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.RegistryAPI"
+        }
+      }
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob": {
+      "description": "ImagePrePullJob is used to prepull images on edge node.",
+      "type": "object",
+      "required": [
+        "spec"
+      ],
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "type": "string"
+        },
+        "metadata": {
+          "default": {},
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+        },
+        "spec": {
+          "description": "Spec represents the specification of the desired behavior of ImagePrePullJob.",
+          "default": {},
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJobSpec"
+        },
+        "status": {
+          "description": "Status represents the status of ImagePrePullJob.",
+          "default": {},
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJobStatus"
+        }
+      },
+      "x-kubernetes-group-version-kind": [
+        {
+          "group": "operations.kubeedge.io",
+          "kind": "ImagePrePullJob",
+          "version": "v1alpha2"
+        }
+      ]
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJobActionStatus": {
+      "description": "ImagePrePullJobActionStatus defines the results of executing the action.",
+      "type": "object",
+      "properties": {
+        "action": {
+          "description": "Action represents for the action name",
+          "type": "string"
+        },
+        "reason": {
+          "description": "Reason represents the reason for the failure of the action.",
+          "type": "string"
+        },
+        "status": {
+          "description": "State represents for the status of this image pull on the edge node.",
+          "type": "string"
+        },
+        "time": {
+          "description": "Time represents for the running time of the node task.",
+          "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJobList": {
+      "description": "ImagePrePullJobList is a list of ImagePrePullJob.",
+      "type": "object",
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+          "type": "string"
+        },
+        "items": {
+          "description": "List of ImagePrePullJob.",
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJob"
+          }
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "type": "string"
+        },
+        "metadata": {
+          "description": "Standard list metadata.",
+          "default": {},
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+        }
+      },
+      "x-kubernetes-group-version-kind": [
+        {
+          "group": "operations.kubeedge.io",
+          "kind": "ImagePrePullJobList",
+          "version": "v1alpha2"
+        }
+      ]
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJobSpec": {
+      "description": "ImagePrePullSpec represents the specification of the desired behavior of ImagePrePullJob.",
+      "type": "object",
+      "properties": {
+        "imagePrePullTemplate": {
+          "description": "ImagePrepullTemplate represents original templates of imagePrePull",
+          "default": {},
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullTemplate"
+        }
+      }
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJobStatus": {
+      "description": "ImagePrePullJobStatus stores the status of ImagePrePullJob. contains images prepull status on multiple edge nodes.",
+      "type": "object",
+      "required": [
+        "phase"
+      ],
+      "properties": {
+        "action": {
+          "description": "Action represents for the action of the ImagePrePullJob. There are two possible action values: Success, Failure. Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23",
+          "type": "string"
+        },
+        "event": {
+          "description": "Event represents for the event of the ImagePrePullJob. There are four possible event values: Init, Check, Pull, TimeOut. Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23",
+          "type": "string"
+        },
+        "nodeStatus": {
+          "description": "NodeStatus contains image prepull status for each edge node.",
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullNodeTaskStatus"
+          }
+        },
+        "phase": {
+          "description": "Phase represents for the phase of the NodeUpgradeJob",
+          "type": "string",
+          "default": ""
+        },
+        "reason": {
+          "description": "Reason represents for the reason of the ImagePrePullJob.",
+          "type": "string"
+        },
+        "state": {
+          "description": "State represents for the state phase of the ImagePrePullJob. There are several possible state values: \"\", Upgrading, BackingUp, RollingBack and Checking. Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23",
+          "type": "string"
+        },
+        "status": {
+          "description": "Status contains image prepull status for each edge node. Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23",
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha1.ImagePrePullStatus"
+          }
+        },
+        "time": {
+          "description": "Time represents for the running time of the ImagePrePullJob. Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23",
+          "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullNodeTaskStatus": {
+      "description": "ImagePrePullNodeTaskStatus stores image prepull status for each edge node.",
+      "type": "object",
+      "properties": {
+        "actionFlow": {
+          "description": "ActionFlow represents for the results of executing the action flow.",
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullJobActionStatus"
+          }
+        },
+        "imageStatus": {
+          "description": "ImageStatus represents the prepull status for each image",
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImageStatus"
+          }
+        },
+        "nodeName": {
+          "description": "NodeName is the name of edge node.",
+          "type": "string"
+        },
+        "phase": {
+          "description": "Phase represents for the phase of the node task.",
+          "type": "string"
+        },
+        "reason": {
+          "description": "Reason represents the reason for the failure of the node task.",
+          "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.ImagePrePullTemplate": {
+      "description": "ImagePrePullTemplate represents original templates of imagePrePull",
+      "type": "object",
+      "properties": {
+        "checkItems": {
+          "description": "CheckItems specifies the items need to be checked before the task is executed. The default CheckItems value is disk.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "default": ""
+          }
+        },
+        "concurrency": {
+          "description": "Concurrency specifies the maximum number of concurrent that edge nodes associated with each CloudCore instance can pull images at the same time. The default Concurrency value is 1.",
+          "type": "integer",
+          "format": "int32"
+        },
+        "failureTolerate": {
+          "description": "FailureTolerate specifies the task tolerance failure ratio. The default FailureTolerate value is 0.1.",
+          "type": "string"
+        },
+        "imageSecrets": {
+          "description": "ImageSecret specifies the secret for image pull if private registry used. Use {namespace}/{secretName} in format.",
+          "type": "string"
+        },
+        "images": {
+          "description": "Images is the image list to be prepull",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "default": ""
+          }
+        },
+        "labelSelector": {
+          "description": "LabelSelector is a filter to select member clusters by labels. It must match a node's labels for the NodeUpgradeJob to be operated on that node. Please note that sets of NodeNames and LabelSelector are ORed. Users must set one and can only set one.",
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector"
+        },
+        "nodeNames": {
+          "description": "NodeNames is a request to select some specific nodes. If it is non-empty, the upgrade job simply select these edge nodes to do upgrade operation. Please note that sets of NodeNames and LabelSelector are ORed. Users must set one and can only set one.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "default": ""
+          }
+        },
+        "retryTimes": {
+          "description": "RetryTimes specifies the retry times if image pull failed on each edgenode. Default to 0",
+          "type": "integer",
+          "format": "int32"
+        },
+        "timeoutSeconds": {
+          "description": "TimeoutSeconds limits the duration of the node prepull job on each edgenode. Default to 300. If set to 0, we'll use the default value 300.",
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.ImageStatus": {
+      "description": "ImageStatus stores the prepull status for each image.",
+      "type": "object",
+      "properties": {
+        "image": {
+          "description": "Image is the name of the image",
+          "type": "string"
+        },
+        "reason": {
+          "description": "Reason represents the fail reason if image pull failed",
+          "type": "string"
+        },
+        "status": {
+          "description": "State represents for the status of this image pull on the edge node.",
+          "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob": {
+      "description": "NodeUpgradeJob is used to upgrade edge node from cloud side.",
+      "type": "object",
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+          "type": "string"
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "type": "string"
+        },
+        "metadata": {
+          "default": {},
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+        },
+        "spec": {
+          "description": "Specification of the desired behavior of NodeUpgradeJob.",
+          "default": {},
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJobSpec"
+        },
+        "status": {
+          "description": "Most recently observed status of the NodeUpgradeJob.",
+          "default": {},
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJobStatus"
+        }
+      },
+      "x-kubernetes-group-version-kind": [
+        {
+          "group": "operations.kubeedge.io",
+          "kind": "NodeUpgradeJob",
+          "version": "v1alpha2"
+        }
+      ]
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJobActionStatus": {
+      "description": "NodeUpgradeJobActionStatus defines the results of executing the action.",
+      "type": "object",
+      "properties": {
+        "action": {
+          "description": "Action represents for the action name",
+          "type": "string"
+        },
+        "reason": {
+          "description": "Reason represents the reason for the failure of the action.",
+          "type": "string"
+        },
+        "status": {
+          "description": "State represents for the status of this image pull on the edge node.",
+          "type": "string"
+        },
+        "time": {
+          "description": "Time represents for the running time of the node task.",
+          "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJobList": {
+      "description": "NodeUpgradeJobList is a list of NodeUpgradeJob.",
+      "type": "object",
+      "required": [
+        "items"
+      ],
+      "properties": {
+        "apiVersion": {
+          "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+          "type": "string"
+        },
+        "items": {
+          "description": "List of NodeUpgradeJobs.",
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJob"
+          }
+        },
+        "kind": {
+          "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "type": "string"
+        },
+        "metadata": {
+          "description": "Standard list metadata.",
+          "default": {},
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
+        }
+      },
+      "x-kubernetes-group-version-kind": [
+        {
+          "group": "operations.kubeedge.io",
+          "kind": "NodeUpgradeJobList",
+          "version": "v1alpha2"
+        }
+      ]
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJobNodeTaskStatus": {
+      "description": "NodeUpgradeJobNodeTaskStatus stores the status of Upgrade for each edge node.",
+      "type": "object",
+      "properties": {
+        "actionFlow": {
+          "description": "ActionFlow represents for the results of executing the action flow.",
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJobActionStatus"
+          }
+        },
+        "currentVersion": {
+          "description": "CurrentVersion represents for the current status of the EdgeCore.",
+          "type": "string"
+        },
+        "event": {
+          "description": "Event represents for the event of the ImagePrePullJob. There are three possible event values: Init, Check, Pull. Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23",
+          "type": "string"
+        },
+        "historicVersion": {
+          "description": "HistoricVersion represents for the historic status of the EdgeCore.",
+          "type": "string"
+        },
+        "nodeName": {
+          "description": "NodeName is the name of edge node.",
+          "type": "string"
+        },
+        "phase": {
+          "description": "Phase represents for the phase of the node task.",
+          "type": "string"
+        },
+        "reason": {
+          "description": "Reason represents the reason for the failure of the node task.",
+          "type": "string"
+        },
+        "state": {
+          "description": "State represents for the upgrade state phase of the edge node. There are several possible state values: \"\", Upgrading, BackingUp, RollingBack and Checking. Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23",
+          "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJobSpec": {
+      "description": "NodeUpgradeJobSpec is the specification of the desired behavior of the NodeUpgradeJob.",
+      "type": "object",
+      "properties": {
+        "checkItems": {
+          "description": "CheckItems specifies the items need to be checked before the task is executed. The default CheckItems value is nil.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "default": ""
+          }
+        },
+        "concurrency": {
+          "description": "Concurrency specifies the maximum number of concurrent that edge nodes associated with each CloudCore instance can be upgraded at the same time. The default Concurrency value is 1.",
+          "type": "integer",
+          "format": "int32"
+        },
+        "failureTolerate": {
+          "description": "FailureTolerate specifies the task tolerance failure ratio. The default FailureTolerate value is 0.1.",
+          "type": "string"
+        },
+        "image": {
+          "description": "Image specifies a container image name, the image contains: keadm and edgecore. keadm is used as upgradetool, to install the new version of edgecore. The image name consists of registry hostname and repository name, if it includes the tag or digest, the tag or digest will be overwritten by Version field above. If the registry hostname is empty, docker.io will be used as default. The default image name is: kubeedge/installation-package.",
+          "type": "string"
+        },
+        "imageDigestGatter": {
+          "description": "ImageDigestGetter define registry v2 interface access configuration. As a transition, it is not required at first, and the image digest is checked when this field is set.",
+          "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.ImageDigestGetter"
+        },
+        "labelSelector": {
+          "description": "LabelSelector is a filter to select member clusters by labels. It must match a node's labels for the NodeUpgradeJob to be operated on that node. Please note that sets of NodeNames and LabelSelector are ORed. Users must set one and can only set one.",
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector"
+        },
+        "nodeNames": {
+          "description": "NodeNames is a request to select some specific nodes. If it is non-empty, the upgrade job simply select these edge nodes to do upgrade operation. Please note that sets of NodeNames and LabelSelector are ORed. Users must set one and can only set one.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "default": ""
+          }
+        },
+        "requireConfirmation": {
+          "description": "RequireConfirmation specifies whether you need to confirm the upgrade. The default RequireConfirmation value is false.",
+          "type": "boolean"
+        },
+        "timeoutSeconds": {
+          "description": "TimeoutSeconds limits the duration of the node upgrade job. Default to 300. If set to 0, we'll use the default value 300.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJobStatus": {
+      "description": "NodeUpgradeJobStatus stores the status of NodeUpgradeJob. contains multiple edge nodes upgrade status.",
+      "type": "object",
+      "required": [
+        "phase"
+      ],
+      "properties": {
+        "action": {
+          "description": "Action represents for the action of the ImagePrePullJob. There are two possible action values: Success, Failure. Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23",
+          "type": "string"
+        },
+        "currentVersion": {
+          "description": "CurrentVersion represents for the current status of the EdgeCore. Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23",
+          "type": "string"
+        },
+        "event": {
+          "description": "Event represents for the event of the ImagePrePullJob. There are six possible event values: Init, Check, BackUp, Upgrade, TimeOut, Rollback. Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23",
+          "type": "string"
+        },
+        "historicVersion": {
+          "description": "HistoricVersion represents for the historic status of the EdgeCore. Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23",
+          "type": "string"
+        },
+        "nodeStatus": {
+          "description": "NodeStatus contains upgrade Status for each edge node.",
+          "type": "array",
+          "items": {
+            "default": {},
+            "$ref": "#/definitions/com.github.kubeedge.api.apis.operations.v1alpha2.NodeUpgradeJobNodeTaskStatus"
+          }
+        },
+        "phase": {
+          "description": "Phase represents for the phase of the NodeUpgradeJob",
+          "type": "string",
+          "default": ""
+        },
+        "reason": {
+          "description": "Reason represents for the reason of the NodeUpgradeJob.",
+          "type": "string"
+        },
+        "state": {
+          "description": "State represents for the state phase of the NodeUpgradeJob. There are several possible state values: \"\", Upgrading, BackingUp, RollingBack and Checking. Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23",
+          "type": "string"
+        },
+        "time": {
+          "description": "Time represents for the running time of the ImagePrePullJob. Deprecated: For compatibility with v1alpha1 version, It will be removed in v1.23",
+          "type": "string"
+        }
+      }
+    },
+    "com.github.kubeedge.api.apis.operations.v1alpha2.RegistryAPI": {
+      "description": "RegistryAPI used to define registry v2 interface access configuration.",
+      "type": "object",
+      "required": [
+        "host",
+        "token"
+      ],
+      "properties": {
+        "host": {
+          "type": "string",
+          "default": ""
+        },
+        "token": {
+          "type": "string",
+          "default": ""
         }
       }
     },
@@ -13457,6 +16841,9 @@
     "com.github.kubeedge.api.apis.policy.v1alpha1.ServiceAccountAccess": {
       "description": "ServiceAccountAccess is the Schema for the ServiceAccountAccess API",
       "type": "object",
+      "required": [
+        "spec"
+      ],
       "properties": {
         "apiVersion": {
           "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -13846,8 +17233,9 @@
           "default": ""
         },
         "name": {
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "string"
+          "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type": "string",
+          "default": ""
         },
         "optional": {
           "description": "Specify whether the ConfigMap or its key must be defined",
@@ -13905,8 +17293,9 @@
       "type": "object",
       "properties": {
         "name": {
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "string"
+          "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type": "string",
+          "default": ""
         }
       },
       "x-kubernetes-map-type": "atomic"
@@ -13924,7 +17313,8 @@
           "items": {
             "default": {},
             "$ref": "#/definitions/io.k8s.api.core.v1.NodeSelectorTerm"
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         }
       },
       "x-kubernetes-map-type": "atomic"
@@ -13961,7 +17351,8 @@
           "items": {
             "type": "string",
             "default": ""
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         }
       }
     },
@@ -13975,7 +17366,8 @@
           "items": {
             "default": {},
             "$ref": "#/definitions/io.k8s.api.core.v1.NodeSelectorRequirement"
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         },
         "matchFields": {
           "description": "A list of node selector requirements by node's fields.",
@@ -13983,7 +17375,8 @@
           "items": {
             "default": {},
             "$ref": "#/definitions/io.k8s.api.core.v1.NodeSelectorRequirement"
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         }
       },
       "x-kubernetes-map-type": "atomic"
@@ -14053,6 +17446,10 @@
           "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
           "type": "string",
           "default": ""
+        },
+        "request": {
+          "description": "Request is the name chosen for a request in the referenced claim. If empty, everything from the claim is made available, otherwise only the result of this request.",
+          "type": "string"
         }
       }
     },
@@ -14124,8 +17521,9 @@
           "default": ""
         },
         "name": {
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "string"
+          "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type": "string",
+          "default": ""
         },
         "optional": {
           "description": "Specify whether the Secret or its key must be defined",
@@ -14152,7 +17550,8 @@
           "items": {
             "default": {},
             "$ref": "#/definitions/io.k8s.api.core.v1.LocalObjectReference"
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         },
         "kind": {
           "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -14164,12 +17563,16 @@
           "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
         },
         "secrets": {
-          "description": "Secrets is a list of the secrets in the same namespace that pods running using this ServiceAccount are allowed to use. Pods are only limited to this list if this service account has a \"kubernetes.io/enforce-mountable-secrets\" annotation set to \"true\". This field should not be used to find auto-generated service account token secrets for use outside of pods. Instead, tokens can be requested directly using the TokenRequest API, or service account token secrets can be manually created. More info: https://kubernetes.io/docs/concepts/configuration/secret",
+          "description": "Secrets is a list of the secrets in the same namespace that pods running using this ServiceAccount are allowed to use. Pods are only limited to this list if this service account has a \"kubernetes.io/enforce-mountable-secrets\" annotation set to \"true\". The \"kubernetes.io/enforce-mountable-secrets\" annotation is deprecated since v1.32. Prefer separate namespaces to isolate access to mounted secrets. This field should not be used to find auto-generated service account token secrets for use outside of pods. Instead, tokens can be requested directly using the TokenRequest API, or service account token secrets can be manually created. More info: https://kubernetes.io/docs/concepts/configuration/secret",
           "type": "array",
           "items": {
             "default": {},
             "$ref": "#/definitions/io.k8s.api.core.v1.ObjectReference"
           },
+          "x-kubernetes-list-map-keys": [
+            "name"
+          ],
+          "x-kubernetes-list-type": "map",
           "x-kubernetes-patch-merge-key": "name",
           "x-kubernetes-patch-strategy": "merge"
         }
@@ -14213,7 +17616,8 @@
           "items": {
             "default": {},
             "$ref": "#/definitions/io.k8s.api.rbac.v1.Subject"
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         }
       },
       "x-kubernetes-group-version-kind": [
@@ -14237,7 +17641,8 @@
           "items": {
             "type": "string",
             "default": ""
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         },
         "nonResourceURLs": {
           "description": "NonResourceURLs is a set of partial urls that a user should have access to.  *s are allowed, but only as the full, final step in the path Since non-resource URLs are not namespaced, this field is only applicable for ClusterRoles referenced from a ClusterRoleBinding. Rules can either apply to API resources (such as \"pods\" or \"secrets\") or non-resource URL paths (such as \"/api\"),  but not both.",
@@ -14245,7 +17650,8 @@
           "items": {
             "type": "string",
             "default": ""
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         },
         "resourceNames": {
           "description": "ResourceNames is an optional white list of names that the rule applies to.  An empty set means that everything is allowed.",
@@ -14253,7 +17659,8 @@
           "items": {
             "type": "string",
             "default": ""
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         },
         "resources": {
           "description": "Resources is a list of resources this rule applies to. '*' represents all resources.",
@@ -14261,7 +17668,8 @@
           "items": {
             "type": "string",
             "default": ""
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         },
         "verbs": {
           "description": "Verbs is a list of Verbs that apply to ALL the ResourceKinds contained in this rule. '*' represents all verbs.",
@@ -14269,7 +17677,8 @@
           "items": {
             "type": "string",
             "default": ""
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         }
       }
     },
@@ -14304,7 +17713,8 @@
           "items": {
             "default": {},
             "$ref": "#/definitions/io.k8s.api.rbac.v1.Subject"
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         }
       },
       "x-kubernetes-group-version-kind": [
@@ -14372,7 +17782,7 @@
       "x-kubernetes-map-type": "atomic"
     },
     "io.k8s.apimachinery.pkg.api.resource.Quantity": {
-      "description": "Quantity is a fixed-point representation of a number. It provides convenient marshaling/unmarshaling in JSON and YAML, in addition to String() and AsInt64() accessors.\n\nThe serialization format is:\n\n``` \u003cquantity\u003e        ::= \u003csignedNumber\u003e\u003csuffix\u003e\n\n\t(Note that \u003csuffix\u003e may be empty, from the \"\" case in \u003cdecimalSI\u003e.)\n\n\u003cdigit\u003e           ::= 0 | 1 | ... | 9 \u003cdigits\u003e          ::= \u003cdigit\u003e | \u003cdigit\u003e\u003cdigits\u003e \u003cnumber\u003e          ::= \u003cdigits\u003e | \u003cdigits\u003e.\u003cdigits\u003e | \u003cdigits\u003e. | .\u003cdigits\u003e \u003csign\u003e            ::= \"+\" | \"-\" \u003csignedNumber\u003e    ::= \u003cnumber\u003e | \u003csign\u003e\u003cnumber\u003e \u003csuffix\u003e          ::= \u003cbinarySI\u003e | \u003cdecimalExponent\u003e | \u003cdecimalSI\u003e \u003cbinarySI\u003e        ::= Ki | Mi | Gi | Ti | Pi | Ei\n\n\t(International System of units; See: http://physics.nist.gov/cuu/Units/binary.html)\n\n\u003cdecimalSI\u003e       ::= m | \"\" | k | M | G | T | P | E\n\n\t(Note that 1024 = 1Ki but 1000 = 1k; I didn't choose the capitalization.)\n\n\u003cdecimalExponent\u003e ::= \"e\" \u003csignedNumber\u003e | \"E\" \u003csignedNumber\u003e ```\n\nNo matter which of the three exponent forms is used, no quantity may represent a number greater than 2^63-1 in magnitude, nor may it have more than 3 decimal places. Numbers larger or more precise will be capped or rounded up. (E.g.: 0.1m will rounded up to 1m.) This may be extended in the future if we require larger or smaller quantities.\n\nWhen a Quantity is parsed from a string, it will remember the type of suffix it had, and will use the same type again when it is serialized.\n\nBefore serializing, Quantity will be put in \"canonical form\". This means that Exponent/suffix will be adjusted up or down (with a corresponding increase or decrease in Mantissa) such that:\n\n- No precision is lost - No fractional digits will be emitted - The exponent (or suffix) is as large as possible.\n\nThe sign will be omitted unless the number is negative.\n\nExamples:\n\n- 1.5 will be serialized as \"1500m\" - 1.5Gi will be serialized as \"1536Mi\"\n\nNote that the quantity will NEVER be internally represented by a floating point number. That is the whole point of this exercise.\n\nNon-canonical values will still parse as long as they are well formed, but will be re-emitted in their canonical form. (So always use canonical form, or don't diff.)\n\nThis format is intended to make it difficult to use these numbers without writing some sort of special handling code in the hopes that that will cause implementers to also use a fixed point implementation.",
+      "description": "Quantity is a fixed-point representation of a number. It provides convenient marshaling/unmarshaling in JSON and YAML, in addition to String() and AsInt64() accessors.\n\nThe serialization format is:\n\n``` \u003cquantity\u003e        ::= \u003csignedNumber\u003e\u003csuffix\u003e\n\n\t(Note that \u003csuffix\u003e may be empty, from the \"\" case in \u003cdecimalSI\u003e.)\n\n\u003cdigit\u003e           ::= 0 | 1 | ... | 9 \u003cdigits\u003e          ::= \u003cdigit\u003e | \u003cdigit\u003e\u003cdigits\u003e \u003cnumber\u003e          ::= \u003cdigits\u003e | \u003cdigits\u003e.\u003cdigits\u003e | \u003cdigits\u003e. | .\u003cdigits\u003e \u003csign\u003e            ::= \"+\" | \"-\" \u003csignedNumber\u003e    ::= \u003cnumber\u003e | \u003csign\u003e\u003cnumber\u003e \u003csuffix\u003e          ::= \u003cbinarySI\u003e | \u003cdecimalExponent\u003e | \u003cdecimalSI\u003e \u003cbinarySI\u003e        ::= Ki | Mi | Gi | Ti | Pi | Ei\n\n\t(International System of units; See: http://physics.nist.gov/cuu/Units/binary.html)\n\n\u003cdecimalSI\u003e       ::= m | \"\" | k | M | G | T | P | E\n\n\t(Note that 1024 = 1Ki but 1000 = 1k; I didn't choose the capitalization.)\n\n\u003cdecimalExponent\u003e ::= \"e\" \u003csignedNumber\u003e | \"E\" \u003csignedNumber\u003e ```\n\nNo matter which of the three exponent forms is used, no quantity may represent a number greater than 2^63-1 in magnitude, nor may it have more than 3 decimal places. Numbers larger or more precise will be capped or rounded up. (E.g.: 0.1m will rounded up to 1m.) This may be extended in the future if we require larger or smaller quantities.\n\nWhen a Quantity is parsed from a string, it will remember the type of suffix it had, and will use the same type again when it is serialized.\n\nBefore serializing, Quantity will be put in \"canonical form\". This means that Exponent/suffix will be adjusted up or down (with a corresponding increase or decrease in Mantissa) such that:\n\n- No precision is lost - No fractional digits will be emitted - The exponent (or suffix) is as large as possible.\n\nThe sign will be omitted unless the number is negative.\n\nExamples:\n\n- 1.5 will be serialized as \"1500m\" - 1.5Gi will be serialized as \"1536Mi\"\n\nNote that the quantity will NEVER be internally represented by a floating point number. That is the whole point of this exercise.\n\nNon-canonical values will still parse as long as they are well formed, but will be re-emitted in their canonical form. (So always use canonical form, or don't diff.)\n\nThis format is intended to make it difficult to use these numbers without writing some sort of special handling code in the hopes that that will cause implementors to also use a fixed point implementation.",
       "type": "string"
     },
     "io.k8s.apimachinery.pkg.apis.meta.v1.APIGroup": {
@@ -14407,7 +17817,8 @@
           "items": {
             "default": {},
             "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ServerAddressByClientCIDR"
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         },
         "versions": {
           "description": "versions are the versions supported in this group.",
@@ -14415,7 +17826,8 @@
           "items": {
             "default": {},
             "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.GroupVersionForDiscovery"
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         }
       },
       "x-kubernetes-group-version-kind": [
@@ -14443,7 +17855,8 @@
           "items": {
             "default": {},
             "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.APIGroup"
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         },
         "kind": {
           "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -14475,7 +17888,8 @@
           "items": {
             "type": "string",
             "default": ""
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         },
         "group": {
           "description": "group is the preferred group of the resource.  Empty implies the group of the containing resource list. For subresources, this may have a different value, for example: Scale\".",
@@ -14502,7 +17916,8 @@
           "items": {
             "type": "string",
             "default": ""
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         },
         "singularName": {
           "description": "singularName is the singular name of the resource.  This allows clients to handle plural and singular opaquely. The singularName is more correct for reporting status on a single item and both singular and plural are allowed from the kubectl CLI interface.",
@@ -14554,7 +17969,8 @@
           "items": {
             "default": {},
             "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.APIResource"
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         }
       },
       "x-kubernetes-group-version-kind": [
@@ -14579,12 +17995,17 @@
           "items": {
             "type": "string",
             "default": ""
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         },
         "gracePeriodSeconds": {
           "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
           "type": "integer",
           "format": "int64"
+        },
+        "ignoreStoreReadErrorWithClusterBreakingPotential": {
+          "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
+          "type": "boolean"
         },
         "kind": {
           "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -14722,6 +18143,11 @@
         {
           "group": "coordination.k8s.io",
           "kind": "DeleteOptions",
+          "version": "v1alpha2"
+        },
+        {
+          "group": "coordination.k8s.io",
+          "kind": "DeleteOptions",
           "version": "v1beta1"
         },
         {
@@ -14820,6 +18246,11 @@
           "version": "v1alpha1"
         },
         {
+          "group": "operations.kubeedge.io",
+          "kind": "DeleteOptions",
+          "version": "v1alpha2"
+        },
+        {
           "group": "policy",
           "kind": "DeleteOptions",
           "version": "v1"
@@ -14857,7 +18288,12 @@
         {
           "group": "resource.k8s.io",
           "kind": "DeleteOptions",
-          "version": "v1alpha2"
+          "version": "v1alpha3"
+        },
+        {
+          "group": "resource.k8s.io",
+          "kind": "DeleteOptions",
+          "version": "v1beta1"
         },
         {
           "group": "rules.kubeedge.io",
@@ -14893,6 +18329,11 @@
           "group": "storage.k8s.io",
           "kind": "DeleteOptions",
           "version": "v1beta1"
+        },
+        {
+          "group": "storagemigration.k8s.io",
+          "kind": "DeleteOptions",
+          "version": "v1alpha1"
         }
       ]
     },
@@ -14930,7 +18371,8 @@
           "items": {
             "default": {},
             "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelectorRequirement"
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         },
         "matchLabels": {
           "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
@@ -14967,7 +18409,8 @@
           "items": {
             "type": "string",
             "default": ""
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         }
       }
     },
@@ -15060,6 +18503,7 @@
             "type": "string",
             "default": ""
           },
+          "x-kubernetes-list-type": "set",
           "x-kubernetes-patch-strategy": "merge"
         },
         "generateName": {
@@ -15085,7 +18529,8 @@
           "items": {
             "default": {},
             "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ManagedFieldsEntry"
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         },
         "name": {
           "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -15102,6 +18547,10 @@
             "default": {},
             "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.OwnerReference"
           },
+          "x-kubernetes-list-map-keys": [
+            "uid"
+          ],
+          "x-kubernetes-list-type": "map",
           "x-kubernetes-patch-merge-key": "uid",
           "x-kubernetes-patch-strategy": "merge"
         },
@@ -15213,7 +18662,8 @@
         },
         "details": {
           "description": "Extended data associated with the reason.  Each reason may define its own extended details. This field is optional and the data returned is not guaranteed to conform to any schema except that defined by the reason type.",
-          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails"
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails",
+          "x-kubernetes-list-type": "atomic"
         },
         "kind": {
           "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -15242,11 +18692,6 @@
           "group": "",
           "kind": "Status",
           "version": "v1"
-        },
-        {
-          "group": "resource.k8s.io",
-          "kind": "Status",
-          "version": "v1alpha2"
         }
       ]
     },
@@ -15278,7 +18723,8 @@
           "items": {
             "default": {},
             "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause"
-          }
+          },
+          "x-kubernetes-list-type": "atomic"
         },
         "group": {
           "description": "The group attribute of the resource associated with the status StatusReason.",
@@ -15444,6 +18890,11 @@
         {
           "group": "coordination.k8s.io",
           "kind": "WatchEvent",
+          "version": "v1alpha2"
+        },
+        {
+          "group": "coordination.k8s.io",
+          "kind": "WatchEvent",
           "version": "v1beta1"
         },
         {
@@ -15542,6 +18993,11 @@
           "version": "v1alpha1"
         },
         {
+          "group": "operations.kubeedge.io",
+          "kind": "WatchEvent",
+          "version": "v1alpha2"
+        },
+        {
           "group": "policy",
           "kind": "WatchEvent",
           "version": "v1"
@@ -15579,7 +19035,12 @@
         {
           "group": "resource.k8s.io",
           "kind": "WatchEvent",
-          "version": "v1alpha2"
+          "version": "v1alpha3"
+        },
+        {
+          "group": "resource.k8s.io",
+          "kind": "WatchEvent",
+          "version": "v1beta1"
         },
         {
           "group": "rules.kubeedge.io",
@@ -15615,12 +19076,70 @@
           "group": "storage.k8s.io",
           "kind": "WatchEvent",
           "version": "v1beta1"
+        },
+        {
+          "group": "storagemigration.k8s.io",
+          "kind": "WatchEvent",
+          "version": "v1alpha1"
         }
       ]
     },
     "io.k8s.apimachinery.pkg.runtime.RawExtension": {
       "description": "RawExtension is used to hold extensions in external versions.\n\nTo use this, make a field which has RawExtension as its type in your external, versioned struct, and Object in your internal struct. You also need to register your various plugin types.\n\n// Internal package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.Object `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// External package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.RawExtension `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// On the wire, the JSON will look something like this:\n\n\t{\n\t\t\"kind\":\"MyAPIObject\",\n\t\t\"apiVersion\":\"v1\",\n\t\t\"myPlugin\": {\n\t\t\t\"kind\":\"PluginA\",\n\t\t\t\"aOption\":\"foo\",\n\t\t},\n\t}\n\nSo what happens? Decode first uses json or yaml to unmarshal the serialized data into your external MyAPIObject. That causes the raw JSON to be stored, but not unpacked. The next step is to copy (using pkg/conversion) into the internal struct. The runtime package's DefaultScheme has conversion functions installed which will unpack the JSON stored in RawExtension, turning it into the correct object type, and storing it in the Object. (TODO: In the case where the object is of an unknown type, a runtime.Unknown object will be created and stored.)",
       "type": "object"
+    },
+    "io.k8s.apimachinery.pkg.version.Info": {
+      "description": "Info contains versioning information. how we'll want to distribute that information.",
+      "type": "object",
+      "required": [
+        "major",
+        "minor",
+        "gitVersion",
+        "gitCommit",
+        "gitTreeState",
+        "buildDate",
+        "goVersion",
+        "compiler",
+        "platform"
+      ],
+      "properties": {
+        "buildDate": {
+          "type": "string",
+          "default": ""
+        },
+        "compiler": {
+          "type": "string",
+          "default": ""
+        },
+        "gitCommit": {
+          "type": "string",
+          "default": ""
+        },
+        "gitTreeState": {
+          "type": "string",
+          "default": ""
+        },
+        "gitVersion": {
+          "type": "string",
+          "default": ""
+        },
+        "goVersion": {
+          "type": "string",
+          "default": ""
+        },
+        "major": {
+          "type": "string",
+          "default": ""
+        },
+        "minor": {
+          "type": "string",
+          "default": ""
+        },
+        "platform": {
+          "type": "string",
+          "default": ""
+        }
+      }
     }
   },
   "parameters": {
@@ -15686,6 +19205,13 @@
       "type": "integer",
       "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
       "name": "gracePeriodSeconds",
+      "in": "query"
+    },
+    "ignoreStoreReadErrorWithClusterBreakingPotential-QbNkfIqj": {
+      "uniqueItems": true,
+      "type": "boolean",
+      "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
+      "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
       "in": "query"
     },
     "labelSelector-5Zw57w4C": {
