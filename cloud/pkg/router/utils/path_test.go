@@ -61,6 +61,18 @@ func TestRuleContains(t *testing.T) {
 			rule2Path: "/b",
 			want:      false,
 		},
+		{
+			name:      "case3",
+			rulePath:  "/a/b",
+			rule2Path: "/a",
+			want:      false,
+		},
+		{
+			name:      "case4",
+			rulePath:  "/c/d",
+			rule2Path: "/c/d",
+			want:      true,
+		},
 	}
 
 	for _, c := range cases {
