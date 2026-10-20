@@ -273,7 +273,9 @@ func TestInjectDeleteOtherUIDConcurrent(t *testing.T) {
 		if len(storedPods(t, s)) != 1 {
 			t.Fatalf("round %d: the delete of uid-a removed the recreated pod", i)
 		}
-		_ = s.Delete(context.TODO(), "/core/v1/pods/default/web-0")
+		s.lock.Lock()
+		_ = s.deleteKey("/core/v1/pods/default/web-0")
+		s.lock.Unlock()
 	}
 }
 
