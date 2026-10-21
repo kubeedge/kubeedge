@@ -23,6 +23,7 @@ import (
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
 
+	apiconsts "github.com/kubeedge/api/apis/common/constants"
 	cfgv1alpha2 "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	edgecoreutil "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/edgecore"
@@ -203,6 +204,28 @@ func TestRunPostrunHook(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			executor.runPostRunHook(c.hook)
 			assert.Equal(t, c.wantScriptHasBeenRun, scriptHasBeenRun)
+		})
+	}
+}
+
+func TestApplyImageRepository(t *testing.T) {
+	tests := []struct {
+		name       string
+		repository string
+		current    string
+		want       string
+	}{
+		{"no repository keeps the default", "", apiconsts.DefaultPodSandboxImage, apiconsts.DefaultPodSandboxImage},
+		{"repository replaces the default pause image repository", "myprivaterepo.abc", apiconsts.DefaultPodSandboxImage, "myprivaterepo.abc/pause:3.6"},
+		{"repository with a path", "myprivaterepo.abc/mirror", apiconsts.DefaultPodSandboxImage, "myprivaterepo.abc/mirror/pause:3.6"},
+		{"explicit pause image is kept", "myprivaterepo.abc", "registry.k8s.io/pause:3.9", "registry.k8s.io/pause:3.9"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := cfgv1alpha2.NewDefaultEdgeCoreConfig()
+			cfg.Modules.Edged.PodSandboxImage = tt.current
+			applyImageRepository(cfg, tt.repository)
+			assert.Equal(t, tt.want, cfg.Modules.Edged.PodSandboxImage)
 		})
 	}
 }
