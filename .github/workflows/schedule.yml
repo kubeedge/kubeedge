@@ -103,10 +103,10 @@ jobs:
           - QUIC
         version:
           - v1.34.0
+          - v1.33.4
+          - v1.32.8
           - v1.31.6
           - v1.30.10
-          - v1.29.14
-          - v1.28.6
     timeout-minutes: 90
     name: E2e k8s compatibility test
     needs: image-prepare

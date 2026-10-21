@@ -56,15 +56,13 @@ KubeEdge 由云端和边缘端部分构成：
 
 ### Kubernetes 版本兼容
 
-当前 conformance CI 使用 Kubernetes 1.34（kind v0.30.0 和 `kindest/node:v1.34.0`），与 vendor 中的测试套件版本保持一致。本地 conformance 测试采用相同默认版本，E2E 兼容性测试矩阵仍保留较早的 Kubernetes 版本。
-
-|                        | Kubernetes 1.27 | Kubernetes 1.28 | Kubernetes 1.29 | Kubernetes 1.30 | Kubernetes 1.31 | Kubernetes 1.32 |
+|                        | Kubernetes 1.29 | Kubernetes 1.30 | Kubernetes 1.31 | Kubernetes 1.32 | Kubernetes 1.33 | Kubernetes 1.34 |
 |------------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.19          | ✓               | ✓               | ✓               | -               | -               | -               |
-| KubeEdge 1.20          | +               | ✓               | ✓               | ✓               | -               | -               |
-| KubeEdge 1.21          | +               | ✓               | ✓               | ✓               | -               | -               |
-| KubeEdge 1.22          | +               | +               | ✓               | ✓               | ✓               | -               |
-| KubeEdge 1.23          | +               | +               | +               | ✓               | ✓               | ✓               |
+| KubeEdge 1.19          | ✓               | -               | -               | -               | -               | -               |
+| KubeEdge 1.20          | ✓               | ✓               | -               | -               | -               | -               |
+| KubeEdge 1.21          | ✓               | ✓               | -               | -               | -               | -               |
+| KubeEdge 1.22          | ✓               | ✓               | ✓               | -               | -               | -               |
+| KubeEdge 1.23          | +               | ✓               | ✓               | ✓               | -               | -               |
 | KubeEdge HEAD (master) | +               | +               | +               | ✓               | ✓               | ✓               |
 
 说明：
