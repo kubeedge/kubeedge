@@ -20,7 +20,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	edgectrconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
-	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 func (sctl *SyncController) reconcileObjectSync(sync *v1alpha1.ObjectSync) {
@@ -30,8 +29,7 @@ func (sctl *SyncController) reconcileObjectSync(sync *v1alpha1.ObjectSync) {
 	if err != nil {
 		return
 	}
-	resource := util.UnsafeKindToResource(sync.Spec.ObjectKind)
-	gvr := gv.WithResource(resource)
+	gvr := sctl.resourceFor(gv.WithKind(sync.Spec.ObjectKind))
 	nodeName := getNodeName(sync.Name)
 	resourceType := strings.ToLower(sync.Spec.ObjectKind)
 
