@@ -208,6 +208,31 @@ func TestUnsafeResourceToKind(t *testing.T) {
 			args: args{r: "Other"},
 			want: "Other",
 		},
+		{
+			name: "TestUnsafeResourceToKind(): Case 8: registered multi-word kind",
+			args: args{r: "configmaps"},
+			want: "ConfigMap",
+		},
+		{
+			name: "TestUnsafeResourceToKind(): Case 9: registered multi-word kind ending with s",
+			args: args{r: "runtimeclasses"},
+			want: "RuntimeClass",
+		},
+		{
+			name: "TestUnsafeResourceToKind(): Case 10: registered multi-word kind ending with y",
+			args: args{r: "networkpolicies"},
+			want: "NetworkPolicy",
+		},
+		{
+			name: "TestUnsafeResourceToKind(): Case 11: registered acronym kind",
+			args: args{r: "csidrivers"},
+			want: "CSIDriver",
+		},
+		{
+			name: "TestUnsafeResourceToKind(): Case 12: unusual takes precedence over scheme",
+			args: args{r: "leases"},
+			want: "Leases",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
