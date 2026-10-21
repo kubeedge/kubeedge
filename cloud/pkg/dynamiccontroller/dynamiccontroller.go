@@ -73,7 +73,7 @@ func (dctl *DynamicController) RestartPolicy() *core.ModuleRestartPolicy {
 
 // Start controller
 func (dctl *DynamicController) Start() {
-	endpointresource.Register()
+	endpointresource.Register(config.Config.DynamicController.DefaultServiceTopology)
 	defaultmaster.Register()
 	dctl.dynamicSharedInformerFactory.Start(beehiveContext.Done())
 	for gvr, cacheSync := range dctl.dynamicSharedInformerFactory.WaitForCacheSync(beehiveContext.Done()) {

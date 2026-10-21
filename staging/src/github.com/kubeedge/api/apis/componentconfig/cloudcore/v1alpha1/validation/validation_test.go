@@ -352,6 +352,23 @@ func TestValidateModuleDynamicController(t *testing.T) {
 			},
 			expected: field.ErrorList{},
 		},
+		{
+			name: "case3 default service topology range-nodegroup",
+			input: v1alpha1.DynamicController{
+				Enable:                 true,
+				DefaultServiceTopology: "range-nodegroup",
+			},
+			expected: field.ErrorList{},
+		},
+		{
+			name: "case4 unknown default service topology",
+			input: v1alpha1.DynamicController{
+				Enable:                 true,
+				DefaultServiceTopology: "range-zone",
+			},
+			expected: field.ErrorList{field.NotSupported(field.NewPath("defaultServiceTopology"),
+				"range-zone", []string{"", "range-nodegroup"})},
+		},
 	}
 
 	for _, c := range cases {
