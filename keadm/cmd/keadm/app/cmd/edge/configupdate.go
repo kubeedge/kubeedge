@@ -93,7 +93,7 @@ func (executor *configUpdateExecutor) configUpdate(opts ConfigUpdateOptions) err
 	if err != nil {
 		return fmt.Errorf("failed to read configfile %s, err: %v", opts.Config, err)
 	}
-	mergedData, err := helm.MergeSetsToBytes(data, []string{opts.Sets})
+	mergedData, err := helm.MergeSetsToBytes(data, opts.Sets)
 	if err != nil {
 		return fmt.Errorf("failed to merge sets to edgecore's config with err:%v", err)
 	}

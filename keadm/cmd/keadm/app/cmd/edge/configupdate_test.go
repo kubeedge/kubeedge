@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/yaml"
 
@@ -30,23 +31,23 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
-func TestConfigUpdateHelmExpressions(t *testing.T) {
+func TestConfigUpdateSetFlags(t *testing.T) {
 	tests := []struct {
 		name    string
-		sets    string
+		sets    []string
 		update  func(*v1alpha2.EdgeCoreConfig)
 		wantErr string
 	}{
 		{
 			name: "scalar assignment",
-			sets: "modules.edgeHub.heartbeat=30",
+			sets: []string{"modules.edgeHub.heartbeat=30"},
 			update: func(cfg *v1alpha2.EdgeCoreConfig) {
 				cfg.Modules.EdgeHub.Heartbeat = 30
 			},
 		},
 		{
 			name: "comma-separated scalar assignments",
-			sets: "modules.edgeHub.heartbeat=30,modules.metaManager.remoteQueryTimeout=90",
+			sets: []string{"modules.edgeHub.heartbeat=30,modules.metaManager.remoteQueryTimeout=90"},
 			update: func(cfg *v1alpha2.EdgeCoreConfig) {
 				cfg.Modules.EdgeHub.Heartbeat = 30
 				cfg.Modules.MetaManager.RemoteQueryTimeout = 90
@@ -54,7 +55,7 @@ func TestConfigUpdateHelmExpressions(t *testing.T) {
 		},
 		{
 			name: "list followed by a scalar assignment",
-			sets: "modules.metaManager.metaServer.serviceAccountIssuers={issuer-one,issuer-two},modules.edgeHub.heartbeat=30",
+			sets: []string{"modules.metaManager.metaServer.serviceAccountIssuers={issuer-one,issuer-two},modules.edgeHub.heartbeat=30"},
 			update: func(cfg *v1alpha2.EdgeCoreConfig) {
 				cfg.Modules.MetaManager.MetaServer.ServiceAccountIssuers = []string{"issuer-one", "issuer-two"}
 				cfg.Modules.EdgeHub.Heartbeat = 30
@@ -62,7 +63,7 @@ func TestConfigUpdateHelmExpressions(t *testing.T) {
 		},
 		{
 			name: "escaped comma followed by a scalar assignment",
-			sets: `database.aliasName=edge\,cache,modules.edgeHub.heartbeat=30`,
+			sets: []string{`database.aliasName=edge\,cache,modules.edgeHub.heartbeat=30`},
 			update: func(cfg *v1alpha2.EdgeCoreConfig) {
 				cfg.DataBase.AliasName = "edge,cache"
 				cfg.Modules.EdgeHub.Heartbeat = 30
@@ -70,18 +71,115 @@ func TestConfigUpdateHelmExpressions(t *testing.T) {
 		},
 		{
 			name:    "unterminated list",
-			sets:    "modules.metaManager.metaServer.serviceAccountIssuers={issuer-one,issuer-two",
+			sets:    []string{"modules.metaManager.metaServer.serviceAccountIssuers={issuer-one,issuer-two"},
 			wantErr: "list must terminate",
 		},
 		{
 			name:    "unknown configuration field",
-			sets:    "modules.metaManager.unknownField=true",
+			sets:    []string{"modules.metaManager.unknownField=true"},
 			wantErr: "unknownField",
 		},
 		{
 			name:    "invalid field type",
-			sets:    "modules.edgeHub.heartbeat=not-a-number",
+			sets:    []string{"modules.edgeHub.heartbeat=not-a-number"},
 			wantErr: "cannot unmarshal",
+		},
+		{
+			name: "repeated flags preserve all fields",
+			sets: []string{
+				"modules.edgeHub.heartbeat=30",
+				"modules.metaManager.remoteQueryTimeout=90",
+				"database.aliasName=edge",
+			},
+			update: func(cfg *v1alpha2.EdgeCoreConfig) {
+				cfg.Modules.EdgeHub.Heartbeat = 30
+				cfg.Modules.MetaManager.RemoteQueryTimeout = 90
+				cfg.DataBase.AliasName = "edge"
+			},
+		},
+		{
+			name: "mixed repeated flags preserve last assignment precedence",
+			sets: []string{
+				"modules.edgeHub.heartbeat=30",
+				"modules.metaManager.remoteQueryTimeout=90,modules.edgeHub.heartbeat=45",
+				"modules.edgeHub.heartbeat=60",
+			},
+			update: func(cfg *v1alpha2.EdgeCoreConfig) {
+				cfg.Modules.EdgeHub.Heartbeat = 60
+				cfg.Modules.MetaManager.RemoteQueryTimeout = 90
+			},
+		},
+		{
+			name: "list in an earlier flag",
+			sets: []string{
+				"modules.metaManager.metaServer.serviceAccountIssuers={issuer-one,issuer-two}",
+				"modules.edgeHub.heartbeat=30",
+			},
+			update: func(cfg *v1alpha2.EdgeCoreConfig) {
+				cfg.Modules.MetaManager.MetaServer.ServiceAccountIssuers = []string{"issuer-one", "issuer-two"}
+				cfg.Modules.EdgeHub.Heartbeat = 30
+			},
+		},
+		{
+			name: "escaped comma in an earlier flag",
+			sets: []string{
+				`database.aliasName=edge\,cache`,
+				"modules.edgeHub.heartbeat=30",
+			},
+			update: func(cfg *v1alpha2.EdgeCoreConfig) {
+				cfg.DataBase.AliasName = "edge,cache"
+				cfg.Modules.EdgeHub.Heartbeat = 30
+			},
+		},
+		{
+			name: "unterminated list in an earlier flag",
+			sets: []string{
+				"modules.metaManager.metaServer.serviceAccountIssuers={issuer-one,issuer-two",
+				"modules.edgeHub.heartbeat=30",
+			},
+			wantErr: "list must terminate",
+		},
+		{
+			name: "unterminated list in a later flag",
+			sets: []string{
+				"modules.edgeHub.heartbeat=30",
+				"modules.metaManager.metaServer.serviceAccountIssuers={issuer-one,issuer-two",
+			},
+			wantErr: "list must terminate",
+		},
+		{
+			name: "unknown field in an earlier flag",
+			sets: []string{
+				"modules.metaManager.unknownField=true",
+				"modules.edgeHub.heartbeat=30",
+			},
+			wantErr: "unknownField",
+		},
+		{
+			name: "invalid type in an earlier flag",
+			sets: []string{
+				"modules.metaManager.remoteQueryTimeout=not-a-number",
+				"modules.edgeHub.heartbeat=30",
+			},
+			wantErr: "cannot unmarshal",
+		},
+		{
+			name: "invalid type in a later flag",
+			sets: []string{
+				"modules.edgeHub.heartbeat=30",
+				"modules.metaManager.remoteQueryTimeout=not-a-number",
+			},
+			wantErr: "cannot unmarshal",
+		},
+		{
+			name: "later assignment replaces an earlier invalid type",
+			sets: []string{
+				"modules.edgeHub.heartbeat=not-a-number",
+				"modules.edgeHub.heartbeat=30",
+			},
+			update: func(cfg *v1alpha2.EdgeCoreConfig) {
+				cfg.Modules.EdgeHub.Heartbeat = 30
+			},
 		},
 	}
 
@@ -105,11 +203,20 @@ func TestConfigUpdateHelmExpressions(t *testing.T) {
 			})
 			defer patches.Reset()
 
+			var opts ConfigUpdateOptions
+			cmd := &cobra.Command{}
+			AddConfigUpdateFlags(cmd, &opts)
+			args := []string{"--config", configFile}
+			for _, set := range tt.sets {
+				args = append(args, "--set", set)
+			}
+			require.NoError(t, cmd.ParseFlags(args))
+
 			executor := newConfigUpdateExecutor()
-			err = executor.configUpdate(ConfigUpdateOptions{
-				BaseOptions: BaseOptions{Config: configFile},
-				Sets:        tt.sets,
-			})
+			err = executor.configUpdate(opts)
+			info, statErr := os.Stat(configFile)
+			require.NoError(t, statErr)
+			require.Equal(t, os.FileMode(0600), info.Mode().Perm(), "preserve config permissions")
 			if tt.wantErr != "" {
 				require.ErrorContains(t, err, tt.wantErr)
 				unchanged, readErr := os.ReadFile(configFile)
