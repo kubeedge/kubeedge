@@ -18,7 +18,11 @@ package controllermanager
 
 import (
 	"context"
+	"fmt"
+	"net"
+	"os"
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -26,6 +30,7 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager"
@@ -37,22 +42,34 @@ var appsCRDDirectoryPath string
 var envtestBinDir string
 
 var (
-	cfg       *rest.Config
-	ctx       context.Context
-	cancel    context.CancelFunc
-	testEnv   *envtest.Environment
-	k8sClient client.Client
+	cfg             *rest.Config
+	ctx             context.Context
+	cancel          context.CancelFunc
+	testEnv         *envtest.Environment
+	k8sClient       client.Client
+	webhookPort     int
+	healthProbePort int
+	webhookCertDir  string
+	managerDone     chan error
 )
 
 var _ = BeforeSuite(func() {
 	ctx, cancel = context.WithCancel(context.TODO())
+
+	var err error
+	webhookPort, err = freeWebhookTestPort()
+	Expect(err).NotTo(HaveOccurred())
+	healthProbePort, err = freeWebhookTestPort()
+	Expect(err).NotTo(HaveOccurred())
+	webhookCertDir, err = os.MkdirTemp("", "kubeedge-webhook-test-")
+	Expect(err).NotTo(HaveOccurred())
+	Expect(writeWebhookTestTLSCert(webhookCertDir)).To(Succeed())
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths:     []string{appsCRDDirectoryPath},
 		BinaryAssetsDirectory: envtestBinDir,
 	}
-	var err error
 	cfg, err = testEnv.Start()
 	Expect(err).To(BeNil())
 	Expect(cfg).NotTo(BeNil())
@@ -64,18 +81,52 @@ var _ = BeforeSuite(func() {
 	Expect(err).To(BeNil())
 	Expect(k8sClient).NotTo(BeNil())
 
-	By("starting controller manager")
-	controllerManager, err := controllermanager.NewControllerManager(ctx, cfg, "")
+	By("starting controller manager with webhook server")
+	healthProbeAddress := fmt.Sprintf("127.0.0.1:%d", healthProbePort)
+	controllerManager, err := controllermanager.NewControllerManager(
+		ctx,
+		cfg,
+		healthProbeAddress,
+		webhookPort,
+		webhookCertDir,
+	)
 	Expect(err).To(BeNil())
+
+	controllerManager.GetWebhookServer().Register("/test-admission", &admission.Webhook{
+		Handler: admission.HandlerFunc(func(_ context.Context, _ admission.Request) admission.Response {
+			return admission.Allowed("test webhook")
+		}),
+	})
+
+	managerDone = make(chan error, 1)
 	go func() {
-		defer GinkgoRecover()
-		err = controllerManager.Start(ctx)
-		Expect(err).To(BeNil())
+		managerDone <- controllerManager.Start(ctx)
 	}()
 })
 
 var _ = AfterSuite(func() {
+	By("stopping controller manager")
 	cancel()
+
+	select {
+	case err := <-managerDone:
+		Expect(err).NotTo(HaveOccurred())
+	case <-time.After(15 * time.Second):
+		Fail("controller manager did not stop within 15 seconds")
+	}
+
+	By("verifying webhook port is released")
+	Eventually(func() bool {
+		listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", webhookPort))
+		if err != nil {
+			return false
+		}
+		_ = listener.Close()
+		return true
+	}, 5*time.Second, 100*time.Millisecond).Should(BeTrue())
+
+	Expect(os.RemoveAll(webhookCertDir)).To(Succeed())
+
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).To(BeNil())
