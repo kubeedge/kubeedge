@@ -63,8 +63,11 @@ func IsBelongToSameGroup(targetNodeName string, epNodeName string) bool {
 		return false
 	}
 
-	// Compare the labels
-	return targetAccessor.GetLabels()[nodegroup.LabelBelongingTo] == epNodeAccessor.GetLabels()[nodegroup.LabelBelongingTo]
+	// A node in no NodeGroup shares a group with no other node: "" must not
+	// match the "" of every ungrouped cloud node.
+	targetGroup := targetAccessor.GetLabels()[nodegroup.LabelBelongingTo]
+	epGroup := epNodeAccessor.GetLabels()[nodegroup.LabelBelongingTo]
+	return targetGroup != "" && targetGroup == epGroup
 }
 func GetDynamicResourceInformer(gvr schema.GroupVersionResource) informers.GenericInformer {
 	return commoninformers.GetInformersManager().GetDynamicInformerFactory().ForResource(gvr)
