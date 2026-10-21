@@ -102,6 +102,24 @@ func (s *MetaV2Service) DeleteByKey(key string) error {
 	return s.db.Where(models.KEY+" = ?", key).Delete(&models.MetaV2{}).Error
 }
 
+// uidMatches is a condition on the value column, with two parameters that are both the UID.
+// It holds when the stored object has that UID, has no UID, or is not JSON.
+const uidMatches = "coalesce(CASE WHEN json_valid(value) THEN json_extract(value, '$.metadata.uid') END, ?) = ?"
+
+// DeleteByKeyAndUID deletes the row under key unless its object has a UID other than uid,
+// and returns the number of rows deleted. The check and the delete are one statement.
+func (s *MetaV2Service) DeleteByKeyAndUID(key, uid string) (int64, error) {
+	result := s.db.Where(models.KEY+" = ? AND "+uidMatches, key, uid, uid).Delete(&models.MetaV2{})
+	return result.RowsAffected, result.Error
+}
+
+// CountByKey returns the number of rows under key.
+func (s *MetaV2Service) CountByKey(key string) (int64, error) {
+	var count int64
+	err := s.db.Model(&models.MetaV2{}).Where(models.KEY+" = ?", key).Count(&count).Error
+	return count, err
+}
+
 // upgrade_db
 func (s *MetaV2Service) SaveNodeUpgradeJobRequestToMetaV2(nodeUpgradeJobReq commontypes.NodeUpgradeJobRequest) error {
 	db := s.db

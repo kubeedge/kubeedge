@@ -27,7 +27,6 @@ type Client interface {
 	// Inject the msg to the backend storage
 	Inject(msg model.Message)
 	InsertOrUpdateObj(ctx context.Context, obj runtime.Object) error
-	DeleteObj(ctx context.Context, obj runtime.Object) error
 	InsertOrUpdatePassThroughObj(ctx context.Context, obj []byte, key string) error
 	GetPassThroughObj(ctx context.Context, key string) ([]byte, error)
 
