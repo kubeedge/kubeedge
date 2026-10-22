@@ -140,8 +140,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		dtcommon.CommModule,
 		context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, payload))
 	if err != nil {
-		// TODO: handle error
-		klog.Error(err)
+		klog.Errorf("Failed to send device state update to edge for device %s: %v", device.ID, err)
 	}
 
 	msgResource := "device/" + device.ID + dtcommon.DeviceETStateUpdateSuffix
@@ -150,8 +149,7 @@ func dealDeviceStateUpdate(context *dtcontext.DTContext, resource string, msg in
 		dtcommon.CommModule,
 		context.BuildModelMessage("resource", "", msgResource, model.UpdateOperation, string(payload)))
 	if err != nil {
-		// TODO: handle error
-		klog.Error(err)
+		klog.Errorf("Failed to send device state update to cloud for device %s: %v", deviceID, err)
 	}
 	return nil
 }
@@ -173,8 +171,7 @@ func dealDeviceAttrUpdate(context *dtcontext.DTContext, resource string, msg int
 	context.Lock(deviceID)
 	if _, err = UpdateDeviceAttr(context, deviceID, updatedDevice.Attributes,
 		dttype.BaseMessage{EventID: updatedDevice.EventID}, 0); err != nil {
-		// TODO: handle error
-		klog.Error(err)
+		klog.Errorf("Failed to update device attributes for device %s: %v", deviceID, err)
 	}
 	context.Unlock(deviceID)
 	return nil
@@ -210,8 +207,7 @@ func UpdateDeviceAttr(context *dtcontext.DTContext, deviceID string, attributes 
 
 		if err != nil {
 			if err := SyncDeviceFromSqlite(context, deviceID); err != nil {
-				// TODO: handle error
-				klog.Error(err)
+				klog.Errorf("Failed to sync device %s from sqlite: %v", deviceID, err)
 			}
 			klog.Errorf("Update device failed due to writing sql error: %v", err)
 		} else {
@@ -225,8 +221,7 @@ func UpdateDeviceAttr(context *dtcontext.DTContext, deviceID string, attributes 
 			err = context.Send(deviceID, dtcommon.SendToEdge, dtcommon.CommModule,
 				context.BuildModelMessage(modules.BusGroup, "", topic, messagepkg.OperationPublish, payload))
 			if err != nil {
-				// TODO: handle error
-				klog.Error(err)
+				klog.Errorf("Failed to send device attribute update to edge for device %s: %v", deviceID, err)
 			}
 		}
 	}
