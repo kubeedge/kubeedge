@@ -153,6 +153,15 @@ func (uc *UpstreamController) updateDeviceStatus() {
 				klog.Warning("Failed to assert to CacheDevice type")
 				continue
 			}
+			nodeID, err := messagelayer.GetNodeID(msg)
+			if err != nil {
+				klog.Warningf("Message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
+				continue
+			}
+			if cacheDevice.Spec.NodeName != nodeID {
+				klog.Warningf("Message: %s rejected, device %s is not bound to node %s", msg.GetID(), deviceID, nodeID)
+				continue
+			}
 
 			cachedDeviceStatus, err := uc.dc.getOrCreateDeviceStatusForDevice(cacheDevice)
 			if err != nil {
@@ -186,11 +195,6 @@ func (uc *UpstreamController) updateDeviceStatus() {
 
 			//send confirm message to edge twin
 			resMsg := model.NewMessage(msg.GetID())
-			nodeID, err := messagelayer.GetNodeID(msg)
-			if err != nil {
-				klog.Warningf("Message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
-				continue
-			}
 			resource, err := messagelayer.BuildResourceForDevice(nodeID, "twin", "")
 			if err != nil {
 				klog.Warningf("Message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
@@ -225,6 +229,15 @@ func (uc *UpstreamController) updateDeviceStatus() {
 			cacheDevice, ok := device.(*v1beta1.Device)
 			if !ok {
 				klog.Warning("Failed to assert to CacheDevice type")
+				continue
+			}
+			nodeID, err := messagelayer.GetNodeID(msg)
+			if err != nil {
+				klog.Warningf("Message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
+				continue
+			}
+			if cacheDevice.Spec.NodeName != nodeID {
+				klog.Warningf("Message: %s rejected, device %s is not bound to node %s", msg.GetID(), deviceID, nodeID)
 				continue
 			}
 
@@ -288,11 +301,6 @@ func (uc *UpstreamController) updateDeviceStatus() {
 			}
 			//send confirm message to edge twin
 			resMsg := model.NewMessage(msg.GetID())
-			nodeID, err := messagelayer.GetNodeID(msg)
-			if err != nil {
-				klog.Warningf("Message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
-				continue
-			}
 			resource, err := messagelayer.BuildResourceForDevice(nodeID, "twin", "")
 			if err != nil {
 				klog.Warningf("Message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
