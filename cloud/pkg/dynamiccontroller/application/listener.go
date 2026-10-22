@@ -54,6 +54,15 @@ func (l *SelectorListener) sendObj(event watch.Event, messageLayer messagelayer.
 	}
 	// filter message
 	filterEvent := *(event.DeepCopy())
+	// Objects from a typed informer carry no kind. objToEvent sets it on the
+	// cached object, but a list for a new listener can read an object that
+	// changed after that, before its event is handled. Without a kind the
+	// filters skip the object and the edge cannot decode it.
+	if filterEvent.Object.GetObjectKind().GroupVersionKind().Empty() {
+		if err := util.SetMetaType(filterEvent.Object); err != nil {
+			klog.Warningf("Failed to set metatype for %s: %v", accessor.GetName(), err)
+		}
+	}
 	content, err := convertToUnstructured(filterEvent.Object)
 	if err != nil {
 		klog.Errorf("convertToUnstructured error %v", err)
