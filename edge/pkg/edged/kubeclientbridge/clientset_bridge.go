@@ -32,9 +32,12 @@ import (
 	fakecorev1 "k8s.io/client-go/kubernetes/typed/core/v1/fake"
 	storagev1 "k8s.io/client-go/kubernetes/typed/storage/v1"
 	fakestoragev1 "k8s.io/client-go/kubernetes/typed/storage/v1/fake"
+	nodev1 "k8s.io/client-go/kubernetes/typed/node/v1"
+	fakenodev1 "k8s.io/client-go/kubernetes/typed/node/v1/fake"
 
 	kecoordinationv1 "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge/typed/coordination/v1"
 	kecorev1 "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge/typed/core/v1"
+	kenodev1 "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge/typed/node/v1"
 	kestoragev1 "github.com/kubeedge/kubeedge/edge/pkg/edged/kubeclientbridge/typed/storage/v1"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 )
@@ -62,4 +65,14 @@ func (c *Clientset) StorageV1() storagev1.StorageV1Interface {
 
 func (c *Clientset) CoordinationV1() coordinationv1.CoordinationV1Interface {
 	return &kecoordinationv1.CoordinationV1Bridge{FakeCoordinationV1: fakecoordinationv1.FakeCoordinationV1{Fake: &c.Fake}, MetaClient: c.MetaClient}
+}
+
+// NodeV1 retrieves the NodeV1Client
+func (c *Clientset) NodeV1() nodev1.NodeV1Interface {
+	return &kenodev1.NodeV1Bridge{
+		FakeNodeV1: fakenodev1.FakeNodeV1{Fake: &c.Fake},
+		MetaClient: c.MetaClient,
+		// Broadcaster is currently nil in the Clientset bridge since we don't route watches through here.
+		Broadcaster: nil,
+	}
 }

@@ -85,3 +85,11 @@ func (m *MockMetaService) InsertOrUpdate(meta *models.Meta) error {
 	}
 	return nil
 }
+
+// NewRuntimeClassesWithMetaService creates a new runtimeClasses instance with custom meta service (for testing).
+func NewRuntimeClassesWithMetaService(s SendInterface, metaService MetaServiceInterface) *runtimeClasses {
+	return &runtimeClasses{
+		send:        s,
+		metaService: metaService,
+	}
+}
