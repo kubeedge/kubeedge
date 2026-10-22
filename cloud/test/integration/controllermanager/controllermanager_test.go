@@ -833,6 +833,15 @@ var _ = Describe("Test EdgeApplication Controller", func() {
 			})
 		})
 
+		When("create edgeapplication that targets a nodegroup more than once", func() {
+			It("should be rejected", func() {
+				edgeapp.Spec.WorkloadScope.TargetNodeGroups = append(edgeapp.Spec.WorkloadScope.TargetNodeGroups,
+					appsv1alpha1.TargetNodeGroup{Name: nodegroup1.Name})
+				err := k8sClient.Create(ctx, edgeapp)
+				Expect(apierrors.IsInvalid(err)).Should(BeTrue(), "unexpected error: %v", err)
+			})
+		})
+
 		Context("Test Overrider", func() {
 			When("add overrider", func() {
 				BeforeEach(func() {
