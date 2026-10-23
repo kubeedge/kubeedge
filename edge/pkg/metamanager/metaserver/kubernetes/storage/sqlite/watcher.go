@@ -23,7 +23,6 @@ package sqlite
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 
@@ -239,7 +238,9 @@ func (wc *watchChan) startWatching(watchClosedCh chan struct{}) {
 	for wres := range wch {
 		wc.sendEvent(&wres)
 	}
-	wc.sendError(fmt.Errorf("stop to watch sqlite/meta_v2"))
+	// The source channel is closed either because ctx was cancelled or because
+	// the imitator failed to register the watch. Only signal a normal close:
+	// also sending an error here made run() pick one of the two at random.
 	close(watchClosedCh)
 }
 

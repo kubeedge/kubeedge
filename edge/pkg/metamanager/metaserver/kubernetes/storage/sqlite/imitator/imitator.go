@@ -24,6 +24,9 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
 )
 
+// newWatchHook is a variable so that tests can simulate registration failures.
+var newWatchHook = watchhook.NewWatchHook
+
 // imitator is a storage based on metav2 that imitate the behavior of etcd
 type imitator struct {
 	lock sync.RWMutex
@@ -204,10 +207,14 @@ func (s *imitator) SetRevision(version interface{}) {
 func (s *imitator) Watch(ctx context.Context, key string, rev uint64) <-chan watch.Event {
 	wch := make(chan watch.Event)
 	receiver := watchhook.NewChanReceiver(wch)
-	wh, err := watchhook.NewWatchHook(key, rev, receiver)
+	wh, err := newWatchHook(key, rev, receiver)
 	if err != nil {
 		klog.Errorf("add hook for %s failed, %v", key, err)
-		return nil
+		// Return a closed channel rather than nil: ranging over a nil channel
+		// blocks forever. The watch ends with a clean close and the error is
+		// only reported in the log above.
+		close(wch)
+		return wch
 	}
 
 	go func() {
