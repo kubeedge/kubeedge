@@ -157,6 +157,7 @@ func sendToKubeEdge(context, kubeEdgeEndpoint string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer r.Close()
 	// send
 	res, err := us.Send(r, context)
 	if err != nil {
