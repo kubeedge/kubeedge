@@ -23,6 +23,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"math/big"
+	"net"
 	"os"
 	"time"
 
@@ -45,6 +46,7 @@ func GenerateTestCertificate(path string, certFileName string, keyFileName strin
 			Organization: []string{"tester"},
 		},
 		DNSNames:    []string{"localhost"},
+		IPAddresses: []net.IP{net.ParseIP("127.0.0.1")},
 		NotBefore:   time.Now(),
 		NotAfter:    time.Now().AddDate(5, 5, 5),
 		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
