@@ -20,10 +20,10 @@ func (o *NodeSelectorOverrider) ApplyOverrides(rawObj *unstructured.Unstructured
 	switch rawObj.GetKind() {
 	case "Deployment":
 		if overriders.TargetNodeGroup != "" {
-			nodeGroupLabel := map[string]string{
-				nodegroup.LabelBelongingTo: overriders.TargetNodeGroup,
+			if deploymentObj.Spec.Template.Spec.NodeSelector == nil {
+				deploymentObj.Spec.Template.Spec.NodeSelector = make(map[string]string)
 			}
-			deploymentObj.Spec.Template.Spec.NodeSelector = nodeGroupLabel
+			deploymentObj.Spec.Template.Spec.NodeSelector[nodegroup.LabelBelongingTo] = overriders.TargetNodeGroup
 		}
 		if len(overriders.TargetNodeLabelSelector.MatchLabels) > 0 {
 			nodeAffinity := &corev1.NodeAffinity{
