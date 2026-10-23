@@ -262,7 +262,7 @@ require (
 	k8s.io/gengo/v2 v2.0.0-20250604051438-85fd79dbfd9f // indirect
 	k8s.io/kms v0.34.11 //indirect
 	k8s.io/kube-scheduler v0.34.11 // indirect
-	k8s.io/kubelet v0.34.11 // indirect
+	k8s.io/kubelet v0.34.11
 	k8s.io/pod-security-admission v0.34.11 // indirect
 	k8s.io/system-validators v1.10.2 // indirect
 	oras.land/oras-go v1.2.5 // indirect

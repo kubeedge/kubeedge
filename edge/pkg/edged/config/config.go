@@ -1,16 +1,22 @@
 package config
 
 import (
+	"fmt"
+	"maps"
 	"sync"
 	"unsafe"
 
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/conversion"
+	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/component-base/featuregate"
 	kubeletoptions "k8s.io/kubernetes/cmd/kubelet/app/options"
+	"k8s.io/kubernetes/pkg/features"
 	"k8s.io/kubernetes/pkg/kubelet"
 	kubeletconfig "k8s.io/kubernetes/pkg/kubelet/apis/config"
+	configv1beta1 "k8s.io/kubernetes/pkg/kubelet/apis/config/v1beta1"
+	"k8s.io/kubernetes/pkg/kubelet/eviction"
 
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 )
@@ -33,6 +39,12 @@ func InitConfigure(e *v1alpha2.Edged) {
 }
 
 func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.TailoredKubeletConfiguration, out *kubeletconfig.KubeletConfiguration, s conversion.Scope) error {
+	// Edgecore loads user overrides after creating defaults, so gated defaults
+	// must use the final feature gates rather than the initial default config.
+	localFeatureGate := utilfeature.DefaultMutableFeatureGate.DeepCopy()
+	if err := localFeatureGate.SetFromMap(in.FeatureGates); err != nil {
+		return fmt.Errorf("failed to set kubelet feature gates during conversion: %w", err)
+	}
 	out.StaticPodPath = in.StaticPodPath
 	out.PodLogsDir = in.PodLogsDir
 	out.SyncFrequency = in.SyncFrequency
@@ -110,12 +122,25 @@ func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.T
 		return err
 	}
 	out.MaxParallelImagePulls = (*int32)(unsafe.Pointer(in.MaxParallelImagePulls))
+	out.ImagePullCredentialsVerificationPolicy = string(in.ImagePullCredentialsVerificationPolicy)
+	if localFeatureGate.Enabled(features.KubeletEnsureSecretPulledImages) && out.ImagePullCredentialsVerificationPolicy == "" {
+		out.ImagePullCredentialsVerificationPolicy = string(kubeletconfig.NeverVerifyPreloadedImages)
+	}
+	out.PreloadedImagesVerificationAllowlist = in.PreloadedImagesVerificationAllowlist
 	out.EvictionHard = *(*map[string]string)(unsafe.Pointer(&in.EvictionHard))
 	out.EvictionSoft = *(*map[string]string)(unsafe.Pointer(&in.EvictionSoft))
 	out.EvictionSoftGracePeriod = *(*map[string]string)(unsafe.Pointer(&in.EvictionSoftGracePeriod))
 	out.EvictionPressureTransitionPeriod = in.EvictionPressureTransitionPeriod
 	out.EvictionMaxPodGracePeriod = in.EvictionMaxPodGracePeriod
 	out.EvictionMinimumReclaim = *(*map[string]string)(unsafe.Pointer(&in.EvictionMinimumReclaim))
+	if err := v1.Convert_Pointer_bool_To_bool(&in.MergeDefaultEvictionSettings, &out.MergeDefaultEvictionSettings, s); err != nil {
+		return err
+	}
+	// Edged bypasses kubelet's config file loader, which normally merges these defaults.
+	if out.MergeDefaultEvictionSettings {
+		out.EvictionHard = maps.Clone(eviction.DefaultEvictionHard)
+		maps.Copy(out.EvictionHard, in.EvictionHard)
+	}
 	out.PodsPerCore = in.PodsPerCore
 	if err := v1.Convert_Pointer_bool_To_bool(&in.EnableControllerAttachDetach, &out.EnableControllerAttachDetach, s); err != nil {
 		return err
@@ -166,6 +191,12 @@ func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.T
 	out.ShutdownGracePeriod = in.ShutdownGracePeriod
 	out.ShutdownGracePeriodCriticalPods = in.ShutdownGracePeriodCriticalPods
 	out.ShutdownGracePeriodByPodPriority = *(*[]kubeletconfig.ShutdownGracePeriodByPodPriority)(unsafe.Pointer(&in.ShutdownGracePeriodByPodPriority))
+	if err := configv1beta1.Convert_v1beta1_CrashLoopBackOffConfig_To_config_CrashLoopBackOffConfig(&in.CrashLoopBackOff, &out.CrashLoopBackOff, s); err != nil {
+		return err
+	}
+	if localFeatureGate.Enabled(features.KubeletCrashLoopBackOffMax) && out.CrashLoopBackOff.MaxContainerRestartPeriod == nil {
+		out.CrashLoopBackOff.MaxContainerRestartPeriod = &v1.Duration{Duration: configv1beta1.MaxContainerBackOff}
+	}
 	out.ReservedMemory = *(*[]kubeletconfig.MemoryReservation)(unsafe.Pointer(&in.ReservedMemory))
 	if err := v1.Convert_Pointer_bool_To_bool(&in.EnableProfilingHandler, &out.EnableProfilingHandler, s); err != nil {
 		return err
@@ -188,6 +219,13 @@ func ConvertEdgedKubeletConfigurationToConfigKubeletConfiguration(in *v1alpha2.T
 	out.ImageServiceEndpoint = in.ImageServiceEndpoint
 	if err := v1.Convert_Pointer_bool_To_bool(&in.FailCgroupV1, &out.FailCgroupV1, s); err != nil {
 		return err
+	}
+	out.UserNamespaces = nil
+	if in.UserNamespaces != nil {
+		out.UserNamespaces = &kubeletconfig.UserNamespaces{}
+		if err := configv1beta1.Convert_v1beta1_UserNamespaces_To_config_UserNamespaces(in.UserNamespaces, out.UserNamespaces, s); err != nil {
+			return err
+		}
 	}
 	return nil
 }
