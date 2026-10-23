@@ -67,6 +67,7 @@ import (
 
 // GetKubeletDeps returns a Dependencies suitable for lite kubelet being run.
 type GetKubeletDeps func(
+	ctx context.Context,
 	s *kubeletoptions.KubeletServer,
 	featureGate featuregate.FeatureGate) (*kubelet.Dependencies, error)
 
@@ -256,7 +257,8 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 	nodestatus.KubeletVersion = fmt.Sprintf("%s-kubeedge-%s", constants.CurrentSupportK8sVersion, version.Get())
 
 	// use kubeletServer to construct the default KubeletDeps
-	kubeletDeps, err := DefaultKubeletDeps(&kubeletServer, utilfeature.DefaultFeatureGate)
+	ctx := context.Background()
+	kubeletDeps, err := DefaultKubeletDeps(ctx, &kubeletServer, utilfeature.DefaultFeatureGate)
 	if err != nil {
 		klog.ErrorS(err, "Failed to construct kubelet dependencies")
 		return nil, fmt.Errorf("failed to construct kubelet dependencies")
@@ -268,7 +270,7 @@ func newEdged(enable bool, nodeName, namespace string) (*edged, error) {
 
 	ed = &edged{
 		enable:         true,
-		context:        context.Background(),
+		context:        ctx,
 		KubeletServer:  &kubeletServer,
 		KubeletDeps:    kubeletDeps,
 		FeatureGate:    utilfeature.DefaultFeatureGate,

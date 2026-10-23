@@ -75,17 +75,17 @@ jobs:
       matrix:
         cases:
           - protocol: WebSocket
-            version: v1.32.0
+            version: v1.34.0
           - protocol: WebSocket
-            version: v1.31.0
+            version: v1.33.4
           - protocol: WebSocket
-            version: v1.30.0
-          - protocol: QUIC
             version: v1.32.0
           - protocol: QUIC
-            version: v1.31.0
+            version: v1.34.0
           - protocol: QUIC
-            version: v1.30.0
+            version: v1.33.4
+          - protocol: QUIC
+            version: v1.32.0
     timeout-minutes: 30
     name: E2e test
     needs: image-prepare

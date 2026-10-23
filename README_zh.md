@@ -56,13 +56,13 @@ KubeEdge 由云端和边缘端部分构成：
 
 ### Kubernetes 版本兼容
 
-|                        | Kubernetes 1.27 | Kubernetes 1.28 | Kubernetes 1.29 | Kubernetes 1.30 | Kubernetes 1.31 | Kubernetes 1.32 |
+|                        | Kubernetes 1.29 | Kubernetes 1.30 | Kubernetes 1.31 | Kubernetes 1.32 | Kubernetes 1.33 | Kubernetes 1.34 |
 |------------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.19          | ✓               | ✓               | ✓               | -               | -               | -               |
-| KubeEdge 1.20          | +               | ✓               | ✓               | ✓               | -               | -               |
-| KubeEdge 1.21          | +               | ✓               | ✓               | ✓               | -               | -               |
-| KubeEdge 1.22          | +               | +               | ✓               | ✓               | ✓               | -               |
-| KubeEdge 1.23          | +               | +               | +               | ✓               | ✓               | ✓               |
+| KubeEdge 1.19          | ✓               | -               | -               | -               | -               | -               |
+| KubeEdge 1.20          | ✓               | ✓               | -               | -               | -               | -               |
+| KubeEdge 1.21          | ✓               | ✓               | -               | -               | -               | -               |
+| KubeEdge 1.22          | ✓               | ✓               | ✓               | -               | -               | -               |
+| KubeEdge 1.23          | +               | ✓               | ✓               | ✓               | -               | -               |
 | KubeEdge HEAD (master) | +               | +               | +               | ✓               | ✓               | ✓               |
 
 说明：

@@ -57,8 +57,10 @@ type server struct {
 	chandler   ClientHandler
 	clients    map[string]Client
 
-	// isStarted indicates whether the service has started successfully.
-	isStarted bool
+	// lastError records the last runtime error. A server is considered healthy till an actual error occurs.
+	lastError error
+
+	api.UnsafeRegistrationServer
 }
 
 // NewServer returns an initialized device plugin registration server.
@@ -91,7 +93,7 @@ func (s *server) Start() error {
 
 	if selinux.GetEnabled() {
 		if err := selinux.SetFileLabel(s.socketDir, config.KubeletPluginsDirSELinuxLabel); err != nil {
-			klog.InfoS("Unprivileged containerized plugins might not work. Could not set selinux context on socket dir", "path", s.socketDir, "err", err)
+			klog.ErrorS(err, "Unprivileged containerized plugins might not work. Could not set selinux context on socket dir", "path", s.socketDir)
 		}
 	}
 
@@ -117,7 +119,7 @@ func (s *server) Start() error {
 		defer s.wg.Done()
 		s.setHealthy()
 		if err = s.grpc.Serve(ln); err != nil {
-			s.setUnhealthy()
+			s.setUnhealthy(err)
 			klog.ErrorS(err, "Error while serving device plugin registration grpc server")
 		}
 	}()
@@ -128,7 +130,7 @@ func (s *server) Start() error {
 func (s *server) Stop() error {
 	s.visitClients(func(r string, c Client) {
 		if err := s.disconnectClient(r, c); err != nil {
-			klog.InfoS("Error disconnecting device plugin client", "resourceName", r, "err", err)
+			klog.ErrorS(err, "Failed to disconnect device plugin client", "resourceName", r)
 		}
 	})
 
@@ -145,6 +147,7 @@ func (s *server) Stop() error {
 	// During kubelet termination, we do not need the registration server,
 	// and we consider the kubelet to be healthy even when it is down.
 	s.setHealthy()
+	klog.V(2).InfoS("Stopping device plugin registration server")
 
 	return nil
 }
@@ -159,18 +162,18 @@ func (s *server) Register(ctx context.Context, r *api.RegisterRequest) (*api.Emp
 
 	if !s.isVersionCompatibleWithPlugin(r.Version) {
 		err := fmt.Errorf(errUnsupportedVersion, r.Version, api.SupportedVersions)
-		klog.InfoS("Bad registration request from device plugin with resource", "resourceName", r.ResourceName, "err", err)
+		klog.ErrorS(err, "Bad registration request from device plugin with resource", "resourceName", r.ResourceName)
 		return &api.Empty{}, err
 	}
 
 	if !v1helper.IsExtendedResourceName(core.ResourceName(r.ResourceName)) {
 		err := fmt.Errorf(errInvalidResourceName, r.ResourceName)
-		klog.InfoS("Bad registration request from device plugin", "err", err)
+		klog.ErrorS(err, "Bad registration request from device plugin")
 		return &api.Empty{}, err
 	}
 
 	if err := s.connectClient(r.ResourceName, filepath.Join(s.socketDir, r.Endpoint)); err != nil {
-		klog.InfoS("Error connecting to device plugin client", "err", err)
+		klog.ErrorS(err, "Error connecting to device plugin client")
 		return &api.Empty{}, err
 	}
 
@@ -207,18 +210,19 @@ func (s *server) Name() string {
 }
 
 func (s *server) Check(_ *http.Request) error {
-	if s.isStarted {
-		return nil
-	}
-	return fmt.Errorf("device plugin registration gRPC server failed and no device plugins can register")
+	return s.lastError
 }
 
 // setHealthy sets the health status of the gRPC server.
 func (s *server) setHealthy() {
-	s.isStarted = true
+	s.lastError = nil
 }
 
 // setUnhealthy sets the health status of the gRPC server to unhealthy.
-func (s *server) setUnhealthy() {
-	s.isStarted = false
+func (s *server) setUnhealthy(err error) {
+	if err == nil {
+		s.lastError = fmt.Errorf("device registration error: device plugin registration gRPC server failed and no device plugins can register")
+		return
+	}
+	s.lastError = fmt.Errorf("device registration error: device plugin registration gRPC server failed and no device plugins can register: %w", err)
 }

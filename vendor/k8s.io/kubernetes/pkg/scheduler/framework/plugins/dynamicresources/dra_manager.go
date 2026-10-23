@@ -18,17 +18,21 @@ package dynamicresources
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
-	resourceapi "k8s.io/api/resource/v1beta1"
+	resourceapi "k8s.io/api/resource/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/sets"
+	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/client-go/informers"
-	resourcelisters "k8s.io/client-go/listers/resource/v1beta1"
+	resourcelisters "k8s.io/client-go/listers/resource/v1"
+	resourceslicetracker "k8s.io/dynamic-resource-allocation/resourceslice/tracker"
 	"k8s.io/dynamic-resource-allocation/structured"
 	"k8s.io/klog/v2"
+	"k8s.io/kubernetes/pkg/features"
 	"k8s.io/kubernetes/pkg/scheduler/framework"
 	"k8s.io/kubernetes/pkg/scheduler/util/assumecache"
 )
@@ -44,8 +48,9 @@ type DefaultDRAManager struct {
 	deviceClassLister    *deviceClassLister
 }
 
-func NewDRAManager(ctx context.Context, claimsCache *assumecache.AssumeCache, informerFactory informers.SharedInformerFactory) *DefaultDRAManager {
+func NewDRAManager(ctx context.Context, claimsCache *assumecache.AssumeCache, resourceSliceTracker *resourceslicetracker.Tracker, informerFactory informers.SharedInformerFactory) *DefaultDRAManager {
 	logger := klog.FromContext(ctx)
+
 	manager := &DefaultDRAManager{
 		resourceClaimTracker: &claimTracker{
 			cache:               claimsCache,
@@ -53,8 +58,8 @@ func NewDRAManager(ctx context.Context, claimsCache *assumecache.AssumeCache, in
 			allocatedDevices:    newAllocatedDevices(logger),
 			logger:              logger,
 		},
-		resourceSliceLister: &resourceSliceLister{sliceLister: informerFactory.Resource().V1beta1().ResourceSlices().Lister()},
-		deviceClassLister:   &deviceClassLister{classLister: informerFactory.Resource().V1beta1().DeviceClasses().Lister()},
+		resourceSliceLister: &resourceSliceLister{tracker: resourceSliceTracker},
+		deviceClassLister:   &deviceClassLister{classLister: informerFactory.Resource().V1().DeviceClasses().Lister()},
 	}
 
 	// Reacting to events is more efficient than iterating over the list
@@ -79,11 +84,11 @@ func (s *DefaultDRAManager) DeviceClasses() framework.DeviceClassLister {
 var _ framework.ResourceSliceLister = &resourceSliceLister{}
 
 type resourceSliceLister struct {
-	sliceLister resourcelisters.ResourceSliceLister
+	tracker *resourceslicetracker.Tracker
 }
 
-func (l *resourceSliceLister) List() ([]*resourceapi.ResourceSlice, error) {
-	return l.sliceLister.List(labels.Everything())
+func (l *resourceSliceLister) ListWithDeviceTaintRules() ([]*resourceapi.ResourceSlice, error) {
+	return l.tracker.ListPatchedResourceSlices()
 }
 
 var _ framework.DeviceClassLister = &deviceClassLister{}
@@ -199,10 +204,29 @@ func (c *claimTracker) List() ([]*resourceapi.ResourceClaim, error) {
 	return result, nil
 }
 
+// errClaimTrackerConcurrentModification gets returned if ListAllAllocatedDevices
+// or GatherAllocatedState need to be retried.
+//
+// There is a rare race when a claim is initially in-flight:
+// - allocated is created from cache (claim not there)
+// - someone removes from the in-flight claims and adds to the cache
+// - we start checking in-flight claims (claim not there anymore)
+// => claim ignored
+//
+// A proper fix would be to rewrite the assume cache, allocatedDevices,
+// and the in-flight map so that they are under a single lock. But that's
+// a pretty big change and prevents reusing the assume cache. So instead
+// we check for changes in the set of allocated devices and keep trying
+// until we get an attempt with no concurrent changes.
+//
+// A claim being first in the cache, then only in-flight cannot happen,
+// so we don't need to re-check the in-flight claims.
+var errClaimTrackerConcurrentModification = errors.New("conflicting concurrent modification")
+
 func (c *claimTracker) ListAllAllocatedDevices() (sets.Set[structured.DeviceID], error) {
 	// Start with a fresh set that matches the current known state of the
 	// world according to the informers.
-	allocated := c.allocatedDevices.Get()
+	allocated, revision := c.allocatedDevices.Get()
 
 	// Whatever is in flight also has to be checked.
 	c.inFlightAllocations.Range(func(key, value any) bool {
@@ -210,11 +234,60 @@ func (c *claimTracker) ListAllAllocatedDevices() (sets.Set[structured.DeviceID],
 		foreachAllocatedDevice(claim, func(deviceID structured.DeviceID) {
 			c.logger.V(6).Info("Device is in flight for allocation", "device", deviceID, "claim", klog.KObj(claim))
 			allocated.Insert(deviceID)
-		})
+		}, false, func(structured.SharedDeviceID) {}, func(structured.DeviceConsumedCapacity) {})
 		return true
 	})
-	// There's no reason to return an error in this implementation, but the error might be helpful for other implementations.
-	return allocated, nil
+
+	if revision == c.allocatedDevices.Revision() {
+		// Our current result is valid, nothing changed in the meantime.
+		return allocated, nil
+	}
+
+	return nil, errClaimTrackerConcurrentModification
+}
+
+func (c *claimTracker) GatherAllocatedState() (*structured.AllocatedState, error) {
+	// Start with a fresh set that matches the current known state of the
+	// world according to the informers.
+	allocated, revision1 := c.allocatedDevices.Get()
+	allocatedSharedDeviceIDs := sets.New[structured.SharedDeviceID]()
+	aggregatedCapacity, revision2 := c.allocatedDevices.Capacities()
+
+	if revision1 != revision2 {
+		// Already not consistent. Try again.
+		return nil, errClaimTrackerConcurrentModification
+	}
+
+	enabledConsumableCapacity := utilfeature.DefaultFeatureGate.Enabled(features.DRAConsumableCapacity)
+
+	// Whatever is in flight also has to be checked.
+	c.inFlightAllocations.Range(func(key, value any) bool {
+		claim := value.(*resourceapi.ResourceClaim)
+		foreachAllocatedDevice(claim, func(deviceID structured.DeviceID) {
+			c.logger.V(6).Info("Device is in flight for allocation", "device", deviceID, "claim", klog.KObj(claim))
+			allocated.Insert(deviceID)
+		},
+			enabledConsumableCapacity,
+			func(sharedDeviceID structured.SharedDeviceID) {
+				c.logger.V(6).Info("Device is in flight for allocation", "shared device", sharedDeviceID, "claim", klog.KObj(claim))
+				allocatedSharedDeviceIDs.Insert(sharedDeviceID)
+			}, func(capacity structured.DeviceConsumedCapacity) {
+				c.logger.V(6).Info("Device is in flight for allocation", "consumed capacity", capacity, "claim", klog.KObj(claim))
+				aggregatedCapacity.Insert(capacity)
+			})
+		return true
+	})
+
+	if revision1 == c.allocatedDevices.Revision() {
+		// Our current result is valid, nothing changed in the meantime.
+		return &structured.AllocatedState{
+			AllocatedDevices:         allocated,
+			AllocatedSharedDeviceIDs: allocatedSharedDeviceIDs,
+			AggregatedCapacity:       aggregatedCapacity,
+		}, nil
+	}
+
+	return nil, errClaimTrackerConcurrentModification
 }
 
 func (c *claimTracker) AssumeClaimAfterAPICall(claim *resourceapi.ResourceClaim) error {
