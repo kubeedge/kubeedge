@@ -20,6 +20,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/emicklei/go-restful"
 	certutil "k8s.io/client-go/util/cert"
@@ -45,8 +46,9 @@ func StartHTTPServer() error {
 	}
 
 	server := &http.Server{
-		Addr:    addr,
-		Handler: serverContainer,
+		Addr:              addr,
+		Handler:           serverContainer,
+		ReadHeaderTimeout: 10 * time.Second,
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{cert},
 			ClientAuth:   tls.RequestClientCert,
