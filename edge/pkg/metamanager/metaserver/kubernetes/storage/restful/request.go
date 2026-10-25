@@ -43,9 +43,13 @@ func LogsRequest(namespace string, podName string, containerName string, logsInf
 	if err != nil {
 		return nil
 	}
+	path := CONTAINERLOGS + "/" + namespace + "/" + podName + "/" + containerName
+	if queryString != "" {
+		path += "?" + queryString
+	}
 	return &Request{
 		Method: http.MethodGet,
-		Path:   "/" + CONTAINERLOGS + "/" + namespace + "/" + podName + "/" + containerName + "?" + queryString,
+		Path:   path,
 	}
 }
 
@@ -79,6 +83,9 @@ func structToQueryString(s interface{}) (string, error) {
 }
 
 func (req *Request) RestfulRequest() (*http.Response, error) {
+	if req == nil {
+		return nil, fmt.Errorf("restful request cannot be nil")
+	}
 	var client http.Client
 	edgedAddress := config.Config.Edged.TailoredKubeletConfig.Address
 	edgedPort := config.Config.Edged.TailoredKubeletConfig.ReadOnlyPort
