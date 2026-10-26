@@ -23,6 +23,7 @@ import (
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	discovery "k8s.io/api/discovery/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -837,4 +838,26 @@ func TestMessageFilterKeepsDefaultMaster(t *testing.T) {
 			assert.Equal(t, []string{"127.0.0.1"}, got.Endpoints[0].Addresses)
 		}
 	}
+}
+
+// TestGetServiceNotInCacheYet: the Service and EndpointSlice watches are
+// independent, so a slice can be filtered before the cache has its Service.
+// getService must then ask the API server instead of failing.
+func TestGetServiceNotInCacheYet(t *testing.T) {
+	emptyCache := cache.NewGenericLister(cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{}), v1.Resource("services"))
+	svc := newService(nodegroup.ServiceTopologyRangeCluster, map[string]string{"app": "test"})
+	scheme := runtime.NewScheme()
+	require.NoError(t, v1.AddToScheme(scheme))
+
+	patches := gomonkey.ApplyFuncReturn(filter.GetSyncedResourceLister, emptyCache, nil)
+	defer patches.Reset()
+	patches.ApplyFuncReturn(client.GetDynamicClient, dynamicfake.NewSimpleDynamicClient(scheme, svc))
+
+	got, err := getService(svc.Namespace, svc.Name)
+	require.NoError(t, err)
+	assert.Equal(t, svc.Name, got.Name)
+	assert.Equal(t, nodegroup.ServiceTopologyRangeCluster, got.Annotations[nodegroup.ServiceTopologyAnnotation])
+
+	_, err = getService(svc.Namespace, "missing")
+	assert.True(t, apierrors.IsNotFound(err), "a Service missing from the API server too must stay an error: %v", err)
 }

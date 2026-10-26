@@ -7,6 +7,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	discovery "k8s.io/api/discovery/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -62,18 +63,29 @@ func (f *FilterImpl) NeedFilter(content interface{}) bool {
 }
 
 // getService resolves the Service owning an endpoint object, preferring the
-// shared informer cache and falling back to a live GET while it is unavailable.
+// shared informer cache and falling back to a live GET while it is unavailable
+// or does not have the Service yet.
 func getService(namespace, name string) (*v1.Service, error) {
 	servicesGVR := v1.SchemeGroupVersion.WithResource("services")
+	liveGet := func() (runtime.Object, error) {
+		return client.GetDynamicClient().Resource(servicesGVR).Namespace(namespace).
+			Get(context.TODO(), name, metav1.GetOptions{})
+	}
 
 	var svcRaw runtime.Object
 	lister, err := filter.GetSyncedResourceLister(servicesGVR)
 	if err != nil {
 		klog.Infof("services lister unavailable, falling back to live get: %v", err)
-		svcRaw, err = client.GetDynamicClient().Resource(servicesGVR).Namespace(namespace).
-			Get(context.TODO(), name, metav1.GetOptions{})
+		svcRaw, err = liveGet()
 	} else {
 		svcRaw, err = lister.ByNamespace(namespace).Get(name)
+		// The Service and EndpointSlice watches are independent, so a slice can
+		// arrive before the cache has its Service, for example when a Service is
+		// created over pods that already run. Ask the API server before giving up.
+		if apierrors.IsNotFound(err) {
+			klog.V(4).Infof("service %s/%s not in cache yet, falling back to live get", namespace, name)
+			svcRaw, err = liveGet()
+		}
 	}
 	if err != nil {
 		return nil, err
