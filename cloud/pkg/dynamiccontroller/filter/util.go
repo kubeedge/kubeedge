@@ -17,12 +17,13 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager/nodegroup"
 )
 
-func IsBelongToSameGroup(targetNodeName string, epNodeName string) bool {
-	// Return true if both node names are the same
-	if targetNodeName == epNodeName {
-		return true
-	}
-
+// SameGroupAs returns a function that reports whether an endpoint's node is in
+// the same NodeGroup as targetNodeName. The nodes lister and the target node are
+// looked up once here, so call SameGroupAs once per object, not per endpoint.
+//
+// The target node always matches itself. A node in no NodeGroup shares a group
+// with no other node: "" must not match the "" of every ungrouped cloud node.
+func SameGroupAs(targetNodeName string) func(epNodeName string) bool {
 	var getNode func(string) (interface{}, error)
 
 	// Define a function to get the node based on whether the informer is synced
@@ -38,36 +39,31 @@ func IsBelongToSameGroup(targetNodeName string, epNodeName string) bool {
 		}
 	}
 
-	// Get the target node
-	targetNode, err := getNode(targetNodeName)
-	if err != nil {
-		klog.Errorf("failed to get target node %s: %v", targetNodeName, err)
-		return false
+	getGroup := func(nodeName string) (string, bool) {
+		node, err := getNode(nodeName)
+		if err != nil {
+			klog.Errorf("failed to get node %s: %v", nodeName, err)
+			return "", false
+		}
+		accessor, err := meta.Accessor(node)
+		if err != nil {
+			klog.Error(err)
+			return "", false
+		}
+		return accessor.GetLabels()[nodegroup.LabelBelongingTo], true
 	}
 
-	// Get the endpoint node
-	epNode, err := getNode(epNodeName)
-	if err != nil {
-		klog.Errorf("failed to get endpoint node %s: %v", epNodeName, err)
-		return false
+	targetGroup, _ := getGroup(targetNodeName)
+	return func(epNodeName string) bool {
+		if epNodeName == targetNodeName {
+			return true
+		}
+		if targetGroup == "" {
+			return false
+		}
+		epGroup, ok := getGroup(epNodeName)
+		return ok && epGroup == targetGroup
 	}
-
-	targetAccessor, err := meta.Accessor(targetNode)
-	if err != nil {
-		klog.Error(err)
-		return false
-	}
-	epNodeAccessor, err := meta.Accessor(epNode)
-	if err != nil {
-		klog.Error(err)
-		return false
-	}
-
-	// A node in no NodeGroup shares a group with no other node: "" must not
-	// match the "" of every ungrouped cloud node.
-	targetGroup := targetAccessor.GetLabels()[nodegroup.LabelBelongingTo]
-	epGroup := epNodeAccessor.GetLabels()[nodegroup.LabelBelongingTo]
-	return targetGroup != "" && targetGroup == epGroup
 }
 func GetDynamicResourceInformer(gvr schema.GroupVersionResource) informers.GenericInformer {
 	return commoninformers.GetInformersManager().GetDynamicInformerFactory().ForResource(gvr)

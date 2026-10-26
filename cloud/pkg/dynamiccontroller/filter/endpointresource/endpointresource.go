@@ -153,6 +153,7 @@ func filterEndpointSlice(targetNode string, obj runtime.Object, defaultTopology 
 		klog.V(4).Infof("skip filter for endpointSlice %v", unstruct.GetName())
 		return
 	}
+	inGroup := filter.SameGroupAs(targetNode)
 	var epsTmp []discovery.Endpoint
 	for _, ep := range epSlice.Endpoints {
 		// nodeName is optional and is routinely absent while the backing pod is
@@ -163,7 +164,7 @@ func filterEndpointSlice(targetNode string, obj runtime.Object, defaultTopology 
 			klog.V(4).Infof("skip endpoint without nodeName in endpointSlice %v", unstruct.GetName())
 			continue
 		}
-		if filter.IsBelongToSameGroup(targetNode, *ep.NodeName) {
+		if inGroup(*ep.NodeName) {
 			epsTmp = append(epsTmp, ep)
 		}
 	}
@@ -176,13 +177,13 @@ func filterEndpointSlice(targetNode string, obj runtime.Object, defaultTopology 
 	unstruct.SetUnstructuredContent(unstrRaw)
 }
 
-func filterEndpointsAddress(targetNode string, address []v1.EndpointAddress) []v1.EndpointAddress {
+func filterEndpointsAddress(inGroup func(nodeName string) bool, address []v1.EndpointAddress) []v1.EndpointAddress {
 	var tmpAddress []v1.EndpointAddress
 	for _, addr := range address {
 		if addr.NodeName == nil {
 			continue
 		}
-		if filter.IsBelongToSameGroup(targetNode, *addr.NodeName) {
+		if inGroup(*addr.NodeName) {
 			tmpAddress = append(tmpAddress, addr)
 		}
 	}
@@ -211,9 +212,10 @@ func filterEndpoints(targetNode string, obj runtime.Object, defaultTopology stri
 		klog.V(4).Infof("skip filter for endpoint %v", unstruct.GetName())
 		return
 	}
+	inGroup := filter.SameGroupAs(targetNode)
 	for i := range ep.Subsets {
-		ep.Subsets[i].Addresses = filterEndpointsAddress(targetNode, ep.Subsets[i].Addresses)
-		ep.Subsets[i].NotReadyAddresses = filterEndpointsAddress(targetNode, ep.Subsets[i].NotReadyAddresses)
+		ep.Subsets[i].Addresses = filterEndpointsAddress(inGroup, ep.Subsets[i].Addresses)
+		ep.Subsets[i].NotReadyAddresses = filterEndpointsAddress(inGroup, ep.Subsets[i].NotReadyAddresses)
 	}
 	unstrRaw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&ep)
 	if err != nil {

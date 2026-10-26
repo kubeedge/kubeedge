@@ -145,8 +145,8 @@ func setupPatchesForService(svc *v1.Service) *gomonkey.Patches {
 	patches.ApplyFuncReturn(filter.GetDynamicResourceInformer, mockInformer)
 	patches.ApplyFuncReturn(filter.GetSyncedResourceLister, mockInformer.Lister(), nil)
 
-	patches.ApplyFunc(filter.IsBelongToSameGroup, func(node1, node2 string) bool {
-		return node2 == nodeName1
+	patches.ApplyFuncReturn(filter.SameGroupAs, func(nodeName string) bool {
+		return nodeName == nodeName1
 	})
 
 	return patches
@@ -329,7 +329,7 @@ func TestFilterEndpointsAddress(t *testing.T) {
 		},
 	}
 
-	result := filterEndpointsAddress("target-node", addresses)
+	result := filterEndpointsAddress(filter.SameGroupAs("target-node"), addresses)
 
 	assert.Len(t, result, 1, "Should only include addresses from node1")
 	assert.Equal(t, "192.168.1.1", result[0].IP)
@@ -506,7 +506,7 @@ func annotatedService() *v1.Service {
 }
 
 // twoNodeEpSlice is an EndpointSlice with one endpoint on node1 and one on
-// node2. With IsBelongToSameGroup stubbed to accept only node1, a filtered slice
+// node2. With SameGroupAs stubbed to accept only node1, a filtered slice
 // keeps one endpoint and an unfiltered one keeps both, so the endpoint count
 // alone says whether filtering ran.
 func twoNodeEpSlice(t *testing.T) *unstructured.Unstructured {
@@ -568,7 +568,7 @@ func TestFilterEndpointSliceIgnoresDynamicFactory(t *testing.T) {
 
 	patches.ApplyFuncReturn(filter.GetDynamicResourceInformer, &mockGenericInformer{lister: dynamicLister})
 	patches.ApplyFuncReturn(filter.GetSyncedResourceLister, cache.GenericLister(syncedLister), nil)
-	patches.ApplyFunc(filter.IsBelongToSameGroup, func(_, epNodeName string) bool {
+	patches.ApplyFuncReturn(filter.SameGroupAs, func(epNodeName string) bool {
 		return epNodeName == nodeName1
 	})
 
@@ -614,7 +614,7 @@ func TestFilterEndpointSliceFallsBackToLiveGet(t *testing.T) {
 	patches.ApplyFuncReturn(filter.GetSyncedResourceLister, nil,
 		fmt.Errorf("informer for /v1, Resource=services has not synced yet"))
 	patches.ApplyFuncReturn(client.GetDynamicClient, dynamic.Interface(fakeDynamic))
-	patches.ApplyFunc(filter.IsBelongToSameGroup, func(_, epNodeName string) bool {
+	patches.ApplyFuncReturn(filter.SameGroupAs, func(epNodeName string) bool {
 		return epNodeName == nodeName1
 	})
 
