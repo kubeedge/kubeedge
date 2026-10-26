@@ -129,6 +129,35 @@ func isScoped(svc *v1.Service, defaultTopology string) bool {
 	return defaultTopology == nodegroup.ServiceTopologyRangeNodegroup && len(svc.Spec.Selector) > 0
 }
 
+// keepEndpointsOn returns a function that reports whether targetNode keeps an
+// endpoint running on a given node, or nil when targetNode gets every endpoint
+// of Service namespace/svcName.
+//
+// When the Service cannot be looked up and defaultTopology is range-nodegroup,
+// targetNode keeps only its own endpoints: sending them all would show every
+// NodeGroup's endpoints to every edge node. default/kubernetes is the exception.
+// Its endpoints have no node, so this would empty them, and the defaultMaster
+// filter needs them. With the default unset, the Service was most likely not
+// scoped, so its endpoints are sent unfiltered.
+func keepEndpointsOn(targetNode, namespace, svcName, defaultTopology string) func(nodeName string) bool {
+	svc, err := getService(namespace, svcName)
+	if err != nil {
+		if defaultTopology != nodegroup.ServiceTopologyRangeNodegroup ||
+			(namespace == metav1.NamespaceDefault && svcName == "kubernetes") {
+			klog.Errorf("failed to get service %s/%s, sending its endpoints to node %s unfiltered: %v",
+				namespace, svcName, targetNode, err)
+			return nil
+		}
+		klog.Errorf("failed to get service %s/%s, sending node %s only its own endpoints: %v",
+			namespace, svcName, targetNode, err)
+		return func(nodeName string) bool { return nodeName == targetNode }
+	}
+	if !isScoped(svc, defaultTopology) {
+		return nil
+	}
+	return filter.SameGroupAs(targetNode)
+}
+
 func filterEndpointSlice(targetNode string, obj runtime.Object, defaultTopology string) {
 	unstruct, ok := obj.(*unstructured.Unstructured)
 	if !ok {
@@ -140,20 +169,14 @@ func filterEndpointSlice(targetNode string, obj runtime.Object, defaultTopology 
 		klog.Errorf("convert unstructure content %v err: %v", unstruct.GetName(), err)
 		return
 	}
-	scoped := false
+	var keep func(nodeName string) bool
 	if svcName, ok := epSlice.Labels[discovery.LabelServiceName]; ok {
-		svcObj, err := getService(epSlice.Namespace, svcName)
-		if err != nil {
-			klog.Errorf("filter endpoint slice for svc %s error: %v", svcName, err)
-			return
-		}
-		scoped = isScoped(svcObj, defaultTopology)
+		keep = keepEndpointsOn(targetNode, epSlice.Namespace, svcName, defaultTopology)
 	}
-	if !scoped {
+	if keep == nil {
 		klog.V(4).Infof("skip filter for endpointSlice %v", unstruct.GetName())
 		return
 	}
-	inGroup := filter.SameGroupAs(targetNode)
 	var epsTmp []discovery.Endpoint
 	for _, ep := range epSlice.Endpoints {
 		// nodeName is optional and is routinely absent while the backing pod is
@@ -164,7 +187,7 @@ func filterEndpointSlice(targetNode string, obj runtime.Object, defaultTopology 
 			klog.V(4).Infof("skip endpoint without nodeName in endpointSlice %v", unstruct.GetName())
 			continue
 		}
-		if inGroup(*ep.NodeName) {
+		if keep(*ep.NodeName) {
 			epsTmp = append(epsTmp, ep)
 		}
 	}
@@ -177,13 +200,13 @@ func filterEndpointSlice(targetNode string, obj runtime.Object, defaultTopology 
 	unstruct.SetUnstructuredContent(unstrRaw)
 }
 
-func filterEndpointsAddress(inGroup func(nodeName string) bool, address []v1.EndpointAddress) []v1.EndpointAddress {
+func filterEndpointsAddress(keep func(nodeName string) bool, address []v1.EndpointAddress) []v1.EndpointAddress {
 	var tmpAddress []v1.EndpointAddress
 	for _, addr := range address {
 		if addr.NodeName == nil {
 			continue
 		}
-		if inGroup(*addr.NodeName) {
+		if keep(*addr.NodeName) {
 			tmpAddress = append(tmpAddress, addr)
 		}
 	}
@@ -201,21 +224,14 @@ func filterEndpoints(targetNode string, obj runtime.Object, defaultTopology stri
 		klog.Errorf("convert unstructure content %v err: %v", unstruct.GetName(), err)
 		return
 	}
-	svcName := ep.GetName()
-	svcObj, err := getService(ep.Namespace, svcName)
-	if err != nil {
-		klog.Errorf("filter endpoint for svc %s error: %v", svcName, err)
-		return
-	}
-
-	if !isScoped(svcObj, defaultTopology) {
+	keep := keepEndpointsOn(targetNode, ep.Namespace, ep.GetName(), defaultTopology)
+	if keep == nil {
 		klog.V(4).Infof("skip filter for endpoint %v", unstruct.GetName())
 		return
 	}
-	inGroup := filter.SameGroupAs(targetNode)
 	for i := range ep.Subsets {
-		ep.Subsets[i].Addresses = filterEndpointsAddress(inGroup, ep.Subsets[i].Addresses)
-		ep.Subsets[i].NotReadyAddresses = filterEndpointsAddress(inGroup, ep.Subsets[i].NotReadyAddresses)
+		ep.Subsets[i].Addresses = filterEndpointsAddress(keep, ep.Subsets[i].Addresses)
+		ep.Subsets[i].NotReadyAddresses = filterEndpointsAddress(keep, ep.Subsets[i].NotReadyAddresses)
 	}
 	unstrRaw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&ep)
 	if err != nil {

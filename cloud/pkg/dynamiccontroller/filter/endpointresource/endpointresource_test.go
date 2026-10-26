@@ -17,6 +17,7 @@ limitations under the License.
 package endpointresource
 
 import (
+	"errors"
 	"fmt"
 	"maps"
 	"testing"
@@ -860,4 +861,76 @@ func TestGetServiceNotInCacheYet(t *testing.T) {
 
 	_, err = getService(svc.Namespace, "missing")
 	assert.True(t, apierrors.IsNotFound(err), "a Service missing from the API server too must stay an error: %v", err)
+}
+
+// TestFilterResourceServiceLookupFails: when the Service cannot be looked up
+// and scoping is on by default, the receiving node keeps only its own
+// endpoints rather than every NodeGroup's. With the default unset, or for
+// default/kubernetes, whose endpoints the defaultMaster filter needs, the
+// endpoints are sent unfiltered as before.
+func TestFilterResourceServiceLookupFails(t *testing.T) {
+	const target = "target-node"
+	cases := []struct {
+		name            string
+		namespace, svc  string
+		defaultTopology string
+		want            []string
+	}{
+		{"default on", "default", "test-service", nodegroup.ServiceTopologyRangeNodegroup, []string{target}},
+		{"default unset", "default", "test-service", "", []string{target, nodeName1, nodeName2}},
+		{"default on, default/kubernetes", "default", "kubernetes", nodegroup.ServiceTopologyRangeNodegroup, []string{target, nodeName1, nodeName2}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			// node1 is in the target's group, so keeping it would mean the
+			// slice was scoped to the NodeGroup instead of the node.
+			patches := setupPatches()
+			defer patches.Reset()
+			patches.ApplyFuncReturn(getService, nil, errors.New("services cache and API server unavailable"))
+			f := newEndpointsliceFilter(c.defaultTopology)
+
+			nodes := []string{target, nodeName1, nodeName2}
+			slice := &discovery.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      c.svc + "-abcde",
+					Namespace: c.namespace,
+					Labels:    map[string]string{discovery.LabelServiceName: c.svc},
+				},
+			}
+			ep := &v1.Endpoints{
+				ObjectMeta: metav1.ObjectMeta{Name: c.svc, Namespace: c.namespace},
+				Subsets:    []v1.EndpointSubset{{}},
+			}
+			for i := range nodes {
+				slice.Endpoints = append(slice.Endpoints, discovery.Endpoint{Addresses: []string{"10.0.0.1"}, NodeName: &nodes[i]})
+				ep.Subsets[0].Addresses = append(ep.Subsets[0].Addresses, v1.EndpointAddress{IP: "10.0.0.1", NodeName: &nodes[i]})
+			}
+
+			raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(slice)
+			require.NoError(t, err)
+			sliceObj := &unstructured.Unstructured{Object: raw}
+			sliceObj.SetGroupVersionKind(discovery.SchemeGroupVersion.WithKind(resourceEpSliceName))
+			f.FilterResource(target, sliceObj)
+			var gotSlice discovery.EndpointSlice
+			require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(sliceObj.Object, &gotSlice))
+			var sliceNodes []string
+			for _, e := range gotSlice.Endpoints {
+				sliceNodes = append(sliceNodes, *e.NodeName)
+			}
+			assert.Equal(t, c.want, sliceNodes, "EndpointSlice")
+
+			raw, err = runtime.DefaultUnstructuredConverter.ToUnstructured(ep)
+			require.NoError(t, err)
+			epObj := &unstructured.Unstructured{Object: raw}
+			epObj.SetGroupVersionKind(v1.SchemeGroupVersion.WithKind(resourceEpName))
+			f.FilterResource(target, epObj)
+			var gotEp v1.Endpoints
+			require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(epObj.Object, &gotEp))
+			var epNodes []string
+			for _, a := range gotEp.Subsets[0].Addresses {
+				epNodes = append(epNodes, *a.NodeName)
+			}
+			assert.Equal(t, c.want, epNodes, "Endpoints")
+		})
+	}
 }
