@@ -11,6 +11,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	kjson "k8s.io/apimachinery/pkg/util/json"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
@@ -228,15 +229,14 @@ func (s *imitator) Event(msg *model.Message) []watch.Event {
 		klog.V(4).Infof("skip status or node-lease messages")
 		return []watch.Event{}
 	}
-	var bytes []byte
+	var data []byte
 	var err error
-	var body = msg.GetContent()
 	// convert body to bytes
-	switch body := body.(type) {
+	switch body := msg.GetContent().(type) {
 	case []byte:
-		bytes = body
+		data = body
 	default:
-		bytes, err = json.Marshal(body)
+		data, err = json.Marshal(body)
 		if err != nil {
 			klog.Errorf("failed to marshal msg content, err: %+v", err)
 			return ret
@@ -251,9 +251,25 @@ func (s *imitator) Event(msg *model.Message) []watch.Event {
 	case model.DeleteOperation:
 		op = watch.Deleted
 	}
-	//TODO: support array List like []obj
+	if trimmed := bytes.TrimSpace(data); len(trimmed) > 0 && trimmed[0] == '[' {
+		var items []map[string]interface{}
+		if err := kjson.Unmarshal(trimmed, &items); err != nil {
+			klog.Errorf("failed to unmarshal message content to unstructured array: %+v", err)
+			return ret
+		}
+		for _, item := range items {
+			if item == nil {
+				klog.Error("failed to unmarshal message content to unstructured array: null item")
+				return ret
+			}
+		}
+		for i := range items {
+			ret = append(ret, watch.Event{Type: op, Object: &unstructured.Unstructured{Object: items[i]}})
+		}
+		return ret
+	}
 	obj := new(unstructured.Unstructured)
-	err = runtime.DecodeInto(s.codec, bytes, obj)
+	err = runtime.DecodeInto(s.codec, data, obj)
 	if err != nil {
 		klog.Errorf("failed to unmarshal message content to unstructured obj: %+v", err)
 		return ret
