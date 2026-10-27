@@ -18,11 +18,13 @@ package handlerfactory
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/kubeedge/api/apis/devices/v1beta1"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -31,7 +33,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
-func updateEdgeDevice() http.Handler {
+func updateEdgeDevice(reqInfo *request.RequestInfo) http.Handler {
 	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
@@ -41,6 +43,20 @@ func updateEdgeDevice() http.Handler {
 		var device *v1beta1.Device
 		if err := json.Unmarshal(body, &device); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		// The request was authorized against the namespace and name in the URL,
+		// so the device in the body must refer to the same object.
+		if device == nil {
+			http.Error(w, "device is required in request body", http.StatusBadRequest)
+			return
+		}
+		if device.Namespace == "" {
+			device.Namespace = reqInfo.Namespace
+		}
+		if device.Namespace != reqInfo.Namespace || device.Name != reqInfo.Name {
+			http.Error(w, fmt.Sprintf("device %s/%s does not match the request %s/%s",
+				device.Namespace, device.Name, reqInfo.Namespace, reqInfo.Name), http.StatusBadRequest)
 			return
 		}
 
