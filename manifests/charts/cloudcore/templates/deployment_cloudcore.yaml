@@ -45,6 +45,10 @@ spec:
       - name: cloudcore
         image: {{ .Values.cloudCore.image.repository }}:{{ .Values.cloudCore.image.tag }}
         imagePullPolicy: {{ .Values.cloudCore.image.pullPolicy }}
+        {{- if .Values.cloudCore.extraArgs }}
+        args:
+{{ toYaml .Values.cloudCore.extraArgs | indent 8 }}
+        {{- end }}
         ports:
         - containerPort: 10000
           name: cloudhub
