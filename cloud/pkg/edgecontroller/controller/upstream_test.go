@@ -43,10 +43,13 @@ import (
 
 	"github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
+	crdfake "github.com/kubeedge/api/client/clientset/versioned/fake"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	messagelayer "github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	edgectypes "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/types"
+	routermsg "github.com/kubeedge/kubeedge/cloud/pkg/router/messagelayer"
+	routerrule "github.com/kubeedge/kubeedge/cloud/pkg/router/rule"
 	edgeapi "github.com/kubeedge/kubeedge/common/types"
 )
 
@@ -1427,4 +1430,26 @@ func TestCreateNodeReservedLabelPatch(t *testing.T) {
 		require.Equal(t, "linux", node.Labels["kubernetes.io/os"])
 		require.Equal(t, "value", node.Labels["custom-label"])
 	})
+}
+
+func TestUpdateRuleStatus(t *testing.T) {
+	rule := &rulesv1.Rule{
+		ObjectMeta: metav1.ObjectMeta{Name: "rule-1", Namespace: defaultNamespace},
+		Spec:       rulesv1.RuleSpec{Source: "rest", Target: "eventbus"},
+	}
+	crdClient := crdfake.NewSimpleClientset(rule)
+	uc := &UpstreamController{crdClient: crdClient, ruleStatusChan: make(chan model.Message, 1)}
+	go uc.updateRuleStatus()
+
+	resource, err := routermsg.BuildResourceForRouter(defaultNamespace, model.ResourceTypeRuleStatus, "rule-1")
+	require.NoError(t, err)
+	msg := model.NewMessage("")
+	msg.BuildRouter("router", "user", resource, model.UpdateOperation)
+	msg.Content = routerrule.ExecResult{RuleID: "rule-1", ProjectID: defaultNamespace, Status: "SUCCESS"}
+	uc.ruleStatusChan <- *msg
+
+	require.Eventually(t, func() bool {
+		got, err := crdClient.RulesV1().Rules(defaultNamespace).Get(context.Background(), "rule-1", metav1.GetOptions{})
+		return err == nil && got.Status.SuccessMessages == 1
+	}, time.Second, 50*time.Millisecond)
 }
