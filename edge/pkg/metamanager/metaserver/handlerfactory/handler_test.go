@@ -31,6 +31,7 @@ import (
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -42,6 +43,7 @@ import (
 	"github.com/kubeedge/api/apis/devices/v1beta1"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/fakers"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/scope"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/kubernetes/storage"
@@ -525,54 +527,60 @@ func TestFactoryUpdateDevices(t *testing.T) {
 }
 
 func TestUpdateEdgeDeviceImplementation(t *testing.T) {
-	patches := gomonkey.NewPatches()
-	defer patches.Reset()
-
-	mockMessage := &model.Message{}
-	patches.ApplyFunc(model.NewMessage, func(_ string) *model.Message {
-		return mockMessage
-	})
-
-	patches.ApplyMethod((*model.Message)(nil), "BuildRouter", func(_ *model.Message, source, target, _, _ string) *model.Message {
-		return mockMessage
-	})
-	patches.ApplyMethod((*model.Message)(nil), "SetResourceVersion", func(_ *model.Message, _ string) *model.Message {
-		return mockMessage
-	})
-	patches.ApplyMethod((*model.Message)(nil), "FillBody", func(_ *model.Message, _ interface{}) *model.Message {
-		return mockMessage
-	})
-
-	responseBytes := []byte(`{"kind":"Device","metadata":{"name":"test-device"}}`)
-	mockResponse := model.Message{
-		Content: responseBytes,
+	tests := []struct {
+		namespace string
+		name      string
+		resource  string
+	}{
+		{namespace: "default", name: "d1", resource: "default/device/d1"},
+		{namespace: "default", name: "d2", resource: "default/device/d2"},
+		{namespace: "other", name: "d1", resource: "other/device/d1"},
+		{namespace: "default", name: "updated", resource: "default/device/updated"},
 	}
-	patches.ApplyFunc(beehiveContext.SendSync, func(_ string, _ model.Message, _ interface{}) (model.Message, error) {
-		return mockResponse, nil
-	})
+	for _, tt := range tests {
+		t.Run(tt.resource, func(t *testing.T) {
+			var sent model.Message
+			responseBytes := []byte(`{"result":"ok"}`)
+			// Keep message construction real so the persisted resource identity is checked.
+			patches := gomonkey.ApplyFunc(beehiveContext.SendSync, func(module string, msg model.Message, _ time.Duration) (model.Message, error) {
+				assert.Equal(t, modules.MetaManagerModuleName, module)
+				sent = msg
+				return model.Message{Content: responseBytes}, nil
+			})
+			defer patches.Reset()
 
-	patches.ApplyMethod((*model.Message)(nil), "GetContentData", func(_ *model.Message) ([]byte, error) {
-		return responseBytes, nil
-	})
+			device := &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            tt.name,
+					Namespace:       tt.namespace,
+					ResourceVersion: "7",
+					Labels:          map[string]string{"edited": "true"},
+				},
+			}
+			deviceBytes, err := json.Marshal(device)
+			require.NoError(t, err)
+			req := httptest.NewRequest(http.MethodPut, "/apis/devices.kubeedge.io/v1beta1/namespaces/"+tt.namespace+"/devices/"+tt.name, bytes.NewReader(deviceBytes))
+			w := httptest.NewRecorder()
+			updateEdgeDevice().ServeHTTP(w, req)
 
-	handler := updateEdgeDevice()
+			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+			assert.JSONEq(t, string(responseBytes), w.Body.String())
+			assert.Equal(t, tt.resource, sent.GetResource())
+			assert.Equal(t, modules.MetaManagerModuleName, sent.GetSource())
+			assert.Equal(t, modules.DeviceTwinModuleName, sent.GetGroup())
+			assert.Equal(t, model.UpdateOperation, sent.GetOperation())
+			assert.Equal(t, device.ResourceVersion, sent.GetResourceVersion())
 
-	device := &v1beta1.Device{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-device",
-			Namespace: "default",
-		},
+			content, err := sent.GetContentData()
+			require.NoError(t, err)
+			var actual v1beta1.Device
+			require.NoError(t, json.Unmarshal(content, &actual))
+			assert.Equal(t, device.ObjectMeta, actual.ObjectMeta)
+			assert.Equal(t, "Device", actual.Kind)
+			assert.Equal(t, v1beta1.GroupName+"/"+v1beta1.Version, actual.APIVersion)
+		})
 	}
-	deviceBytes, err := json.Marshal(device)
-	assert.NoError(t, err)
-
-	req := httptest.NewRequest("PUT", "/apis/devices/v1beta1/namespaces/default/devices/test-device", bytes.NewReader(deviceBytes))
-	w := httptest.NewRecorder()
-	handler.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
-	assert.Contains(t, w.Body.String(), "test-device")
 }
 
 func TestUpdateEdgeDeviceErrors(t *testing.T) {
