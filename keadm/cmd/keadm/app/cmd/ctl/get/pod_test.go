@@ -30,6 +30,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/kubectl/pkg/cmd/get"
 	api "k8s.io/kubernetes/pkg/apis/core"
 	k8s_v1_api "k8s.io/kubernetes/pkg/apis/core/v1"
@@ -189,18 +190,73 @@ func TestGetPodsJSON(t *testing.T) {
 							NodeName: testNodeName,
 						},
 					},
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "other-node-pod",
+							Namespace: defaultNamespace,
+						},
+						Spec: v1.PodSpec{
+							NodeName: "other-node",
+						},
+					},
 				},
 			}, nil
 		})
 
+	var passedObjects []runtime.Object
 	patches.ApplyMethod(reflect.TypeOf(&ctlcommon.ExtPrintFlags{}), "PrintToJSONYaml",
-		func(_ *ctlcommon.ExtPrintFlags, _ interface{}) error {
+		func(_ *ctlcommon.ExtPrintFlags, in interface{}) error {
+			if objs, ok := in.([]runtime.Object); ok {
+				passedObjects = objs
+			}
 			return nil
 		})
 
 	err := podGetOptions.getPods([]string{})
 
 	assert.NoError(t, err)
+	assert.Len(t, passedObjects, 1)
+	pod, ok := passedObjects[0].(*v1.Pod)
+	assert.True(t, ok)
+	assert.Equal(t, testPodName, pod.Name)
+}
+
+func TestGetPodsNoResourcesOnCurrentNode(t *testing.T) {
+	podGetOptions, patches := setupTestEnvironment()
+	defer patches.Reset()
+
+	patches.ApplyMethod(reflect.TypeOf(&client.PodRequest{}), "GetPods",
+		func(_ *client.PodRequest, _ context.Context) (*v1.PodList, error) {
+			return &v1.PodList{
+				Items: []v1.Pod{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "other-node-pod",
+							Namespace: defaultNamespace,
+						},
+						Spec: v1.PodSpec{
+							NodeName: "other-node",
+						},
+					},
+				},
+			}, nil
+		})
+
+	oldStdout := os.Stdout
+	r, w, pipeErr := os.Pipe()
+	assert.NoError(t, pipeErr, "Failed to create pipe")
+	os.Stdout = w
+
+	err := podGetOptions.getPods([]string{})
+
+	w.Close()
+	os.Stdout = oldStdout
+	var buf bytes.Buffer
+	_, copyErr := io.Copy(&buf, r)
+	assert.NoError(t, copyErr)
+
+	assert.NoError(t, err)
+	assert.Contains(t, buf.String(), "No resources found in default namespace")
 }
 
 func TestGetPodByName(t *testing.T) {
