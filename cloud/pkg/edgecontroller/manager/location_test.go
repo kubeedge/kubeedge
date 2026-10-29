@@ -70,6 +70,22 @@ func TestPodConfigMapsAndSecretsAllContainers(t *testing.T) {
 	if !reflect.DeepEqual(secrets, wantSecrets) {
 		t.Errorf("secrets = %v, want %v", secrets, wantSecrets)
 	}
+
+	// Check the node lookup used by downstream ConfigMap and Secret sync.
+	pod.Namespace = "workloads"
+	pod.Spec.NodeName = "edge-1"
+	lc.AddOrUpdatePod(pod)
+	wantNodes := []string{"edge-1"}
+	for _, name := range wantConfigMaps {
+		if got := lc.ConfigMapNodes(pod.Namespace, name); !reflect.DeepEqual(got, wantNodes) {
+			t.Errorf("ConfigMapNodes(%q, %q) = %v, want %v", pod.Namespace, name, got, wantNodes)
+		}
+	}
+	for _, name := range wantSecrets {
+		if got := lc.SecretNodes(pod.Namespace, name); !reflect.DeepEqual(got, wantNodes) {
+			t.Errorf("SecretNodes(%q, %q) = %v, want %v", pod.Namespace, name, got, wantNodes)
+		}
+	}
 }
 
 // TestAddOrUpdatePod is function to test AddOrUpdatePod
