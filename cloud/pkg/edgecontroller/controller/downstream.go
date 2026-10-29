@@ -79,6 +79,7 @@ func (dc *DownstreamController) syncPod() {
 				dc.lc.AddOrUpdatePod(*pod)
 			case watch.Deleted:
 				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.DeleteOperation)
+				dc.removePodFromLocalCache(*pod)
 			case watch.Modified:
 				msg.BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, model.UpdateOperation)
 				dc.lc.AddOrUpdatePod(*pod)
@@ -334,6 +335,49 @@ func (dc *DownstreamController) syncRuleEndpoint() {
 			} else {
 				klog.V(4).Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
 			}
+		}
+	}
+}
+
+// removePodFromLocalCache removes pod references from the LocationCache if no other pods require them.
+func (dc *DownstreamController) removePodFromLocalCache(pod v1.Pod) {
+	configMaps, secrets := dc.lc.PodConfigMapsAndSecrets(pod)
+
+	allPods, err := dc.podLister.Pods(pod.Namespace).List(labels.Everything())
+	if err != nil {
+		klog.Errorf("Failed to list pods in namespace %s: %v", pod.Namespace, err)
+		return
+	}
+
+	var otherPodsOnNode []*v1.Pod
+	for _, p := range allPods {
+		if p.Name != pod.Name && p.Spec.NodeName == pod.Spec.NodeName {
+			otherPodsOnNode = append(otherPodsOnNode, p)
+		}
+	}
+
+	activeConfigMaps := make(map[string]struct{})
+	activeSecrets := make(map[string]struct{})
+
+	for _, p := range otherPodsOnNode {
+		otherConfig, otherSecret := dc.lc.PodConfigMapsAndSecrets(*p)
+		for _, c := range otherConfig {
+			activeConfigMaps[c] = struct{}{}
+		}
+		for _, s := range otherSecret {
+			activeSecrets[s] = struct{}{}
+		}
+	}
+
+	for _, cm := range configMaps {
+		if _, needed := activeConfigMaps[cm]; !needed {
+			dc.lc.RemoveNodeFromConfigMap(pod.Namespace, cm, pod.Spec.NodeName)
+		}
+	}
+
+	for _, secret := range secrets {
+		if _, needed := activeSecrets[secret]; !needed {
+			dc.lc.RemoveNodeFromSecret(pod.Namespace, secret, pod.Spec.NodeName)
 		}
 	}
 }
