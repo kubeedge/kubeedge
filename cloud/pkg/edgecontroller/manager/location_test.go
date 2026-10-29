@@ -35,6 +35,59 @@ var (
 	secretVolume    = "VolumeSecret1"
 )
 
+// TestPodConfigMapsAndSecretsAllContainers verifies env refs of init and ephemeral containers are collected
+func TestPodConfigMapsAndSecretsAllContainers(t *testing.T) {
+	envRefs := func(cm, secret string) ([]v1.EnvFromSource, []v1.EnvVar) {
+		cmFrom := &v1.ConfigMapEnvSource{LocalObjectReference: v1.LocalObjectReference{Name: cm + "-from"}}
+		secretFrom := &v1.SecretEnvSource{LocalObjectReference: v1.LocalObjectReference{Name: secret + "-from"}}
+		cmSel := &v1.ConfigMapKeySelector{LocalObjectReference: v1.LocalObjectReference{Name: cm + "-key"}}
+		secretSel := &v1.SecretKeySelector{LocalObjectReference: v1.LocalObjectReference{Name: secret + "-key"}}
+		return []v1.EnvFromSource{{ConfigMapRef: cmFrom}, {SecretRef: secretFrom}},
+			[]v1.EnvVar{
+				{ValueFrom: &v1.EnvVarSource{ConfigMapKeyRef: cmSel}},
+				{ValueFrom: &v1.EnvVarSource{SecretKeyRef: secretSel}},
+			}
+	}
+	mainFrom, mainEnv := envRefs("main-cm", "main-secret")
+	initFrom, initEnv := envRefs("init-cm", "init-secret")
+	ephFrom, ephEnv := envRefs("eph-cm", "eph-secret")
+	pod := v1.Pod{Spec: v1.PodSpec{
+		Containers:     []v1.Container{{EnvFrom: mainFrom, Env: mainEnv}},
+		InitContainers: []v1.Container{{EnvFrom: initFrom, Env: initEnv}},
+		EphemeralContainers: []v1.EphemeralContainer{{
+			EphemeralContainerCommon: v1.EphemeralContainerCommon{EnvFrom: ephFrom, Env: ephEnv},
+		}},
+	}}
+
+	lc := &LocationCache{}
+	configMaps, secrets := lc.PodConfigMapsAndSecrets(pod)
+
+	wantConfigMaps := []string{"main-cm-from", "main-cm-key", "init-cm-from", "init-cm-key", "eph-cm-from", "eph-cm-key"}
+	wantSecrets := []string{"main-secret-from", "main-secret-key", "init-secret-from", "init-secret-key", "eph-secret-from", "eph-secret-key"}
+	if !reflect.DeepEqual(configMaps, wantConfigMaps) {
+		t.Errorf("configMaps = %v, want %v", configMaps, wantConfigMaps)
+	}
+	if !reflect.DeepEqual(secrets, wantSecrets) {
+		t.Errorf("secrets = %v, want %v", secrets, wantSecrets)
+	}
+
+	// Check the node lookup used by downstream ConfigMap and Secret sync.
+	pod.Namespace = "workloads"
+	pod.Spec.NodeName = "edge-1"
+	lc.AddOrUpdatePod(pod)
+	wantNodes := []string{"edge-1"}
+	for _, name := range wantConfigMaps {
+		if got := lc.ConfigMapNodes(pod.Namespace, name); !reflect.DeepEqual(got, wantNodes) {
+			t.Errorf("ConfigMapNodes(%q, %q) = %v, want %v", pod.Namespace, name, got, wantNodes)
+		}
+	}
+	for _, name := range wantSecrets {
+		if got := lc.SecretNodes(pod.Namespace, name); !reflect.DeepEqual(got, wantNodes) {
+			t.Errorf("SecretNodes(%q, %q) = %v, want %v", pod.Namespace, name, got, wantNodes)
+		}
+	}
+}
+
 // TestAddOrUpdatePod is function to test AddOrUpdatePod
 func TestAddOrUpdatePod(t *testing.T) {
 	pod := v1.Pod{
