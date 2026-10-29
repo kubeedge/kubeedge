@@ -23,6 +23,7 @@ import (
 
 	"k8s.io/klog/v2"
 
+	apiconsts "github.com/kubeedge/api/apis/common/constants"
 	cfgv1alpha2 "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	edgecoreutil "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/edgecore"
@@ -30,6 +31,17 @@ import (
 )
 
 const unknownEdgeCoreVersion = "unknown"
+
+// applyImageRepository points the pause image in the edgecore configuration at the image
+// repository given to `keadm join`. Only the default pause image is rewritten, so a pause image
+// that was configured explicitly is kept.
+func applyImageRepository(cfg *cfgv1alpha2.EdgeCoreConfig, imageRepository string) {
+	if imageRepository == "" || cfg.Modules.Edged.PodSandboxImage != apiconsts.DefaultPodSandboxImage {
+		return
+	}
+	pause := util.Set{"pause": apiconsts.DefaultPodSandboxImage}.Current(imageRepository, "")
+	cfg.Modules.Edged.PodSandboxImage = pause.Get("pause")
+}
 
 var OccupiedError = errors.New("the mutually exclusive command is being executed")
 
