@@ -464,6 +464,12 @@ func (r *REST) Logs(ctx context.Context, logsInfo common.LogsInfo) (*types.LogsR
 	}
 
 	req := restful.LogsRequest(nameSpace, podName, container, logsInfo)
+	if req == nil {
+		errMessage := fmt.Sprintf("failed to get logs for container %s for pod \"/%s/%s\": failed to create logs request", container, nameSpace, podName)
+		klog.Warningf("[metaserver/logs] %v", errMessage)
+		logsResponse.ErrMessages = append(logsResponse.ErrMessages, errMessage)
+		return logsResponse, nil
+	}
 	res, err := req.RestfulRequest()
 	if err != nil {
 		errMessage := fmt.Sprintf("failed to get logs for container %s for pod \"/%s/%s\" with err:%v", container, nameSpace, podName, err)
