@@ -18,6 +18,8 @@ package client
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"sync"
@@ -25,6 +27,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -35,6 +38,36 @@ import (
 
 type MockRESTMapper struct {
 	metav1.RESTMapper
+}
+
+func createTempKubeConfig(t *testing.T, server string) string {
+	t.Helper()
+
+	tempDir := t.TempDir()
+	kubeConfigPath := filepath.Join(tempDir, "kubeconfig")
+	kubeConfigContent := fmt.Sprintf(`apiVersion: v1
+kind: Config
+clusters:
+- cluster:
+    server: %s
+    insecure-skip-tls-verify: true
+  name: local
+contexts:
+- context:
+    cluster: local
+    user: test-user
+  name: test
+current-context: test
+users:
+- name: test-user
+  user:
+    token: test-token
+`, server)
+
+	err := os.WriteFile(kubeConfigPath, []byte(kubeConfigContent), 0644)
+	assert.NoError(t, err)
+
+	return kubeConfigPath
 }
 
 func TestSyncOncePattern(t *testing.T) {
@@ -103,6 +136,59 @@ func TestInitKubeEdgeClient(t *testing.T) {
 
 		InitKubeEdgeClient(testConfig, false)
 	}()
+}
+
+func TestInitKubeEdgeClientSuccessAndOnce(t *testing.T) {
+	origInitOnce := initOnce
+	origKubeClient := kubeClient
+	origCrdClient := crdClient
+	origDynamicClient := dynamicClient
+	origKubeConfig := KubeConfig
+	origCrdConfig := CrdConfig
+
+	defer func() {
+		initOnce = origInitOnce
+		kubeClient = origKubeClient
+		crdClient = origCrdClient
+		dynamicClient = origDynamicClient
+		KubeConfig = origKubeConfig
+		CrdConfig = origCrdConfig
+	}()
+
+	initOnce = sync.Once{}
+	kubeClient = nil
+	crdClient = nil
+	dynamicClient = nil
+	KubeConfig = nil
+	CrdConfig = nil
+
+	kubeConfigPath := createTempKubeConfig(t, "http://localhost:6443")
+	config := &cloudcoreConfig.KubeAPIConfig{
+		Master:     "",
+		KubeConfig: kubeConfigPath,
+		QPS:        123,
+		Burst:      456,
+	}
+
+	assert.NotPanics(t, func() {
+		InitKubeEdgeClient(config, false)
+	})
+
+	assert.NotNil(t, GetKubeClient())
+	assert.NotNil(t, GetCRDClient())
+	assert.NotNil(t, GetDynamicClient())
+	assert.NotNil(t, KubeConfig)
+	assert.NotNil(t, CrdConfig)
+	assert.Equal(t, float32(123), KubeConfig.QPS)
+	assert.Equal(t, 456, KubeConfig.Burst)
+	assert.Equal(t, runtime.ContentTypeProtobuf, KubeConfig.ContentType)
+	assert.Equal(t, runtime.ContentTypeJSON, CrdConfig.ContentType)
+
+	firstKubeConfig := KubeConfig
+	assert.NotPanics(t, func() {
+		InitKubeEdgeClient(&cloudcoreConfig.KubeAPIConfig{KubeConfig: "non-existent"}, false)
+	})
+	assert.Same(t, firstKubeConfig, KubeConfig)
 }
 
 func TestGetClientFunctions(t *testing.T) {
@@ -229,4 +315,36 @@ func TestGetRestMapper(t *testing.T) {
 	assert.Error(t, err, "GetRestMapper should return error with invalid config")
 
 	DefaultGetRestMapper = initialMapper
+}
+
+func TestGetRestMapperWithValidHTTPClient(t *testing.T) {
+	origKubeConfig := KubeConfig
+	defer func() {
+		KubeConfig = origKubeConfig
+	}()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"kind":"APIVersions","versions":["v1"],"serverAddressByClientCIDRs":[]}`))
+		case "/apis":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"kind":"APIGroupList","groups":[]}`))
+		case "/api/v1":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"kind":"APIResourceList","groupVersion":"v1","resources":[]}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	KubeConfig = &rest.Config{
+		Host: server.URL,
+	}
+
+	mapper, err := GetRestMapper()
+	assert.NoError(t, err)
+	assert.NotNil(t, mapper)
 }
