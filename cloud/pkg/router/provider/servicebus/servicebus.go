@@ -157,12 +157,25 @@ func (sb *ServiceBus) GoToTarget(data map[string]interface{}, stop chan struct{}
 	}
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	if stop != nil {
-		listener.MessageHandlerInstance.SetCallback(messageID, func(message *model.Message) {
-			response = message
-			stop <- struct{}{}
-		})
-		<-stop
-		listener.MessageHandlerInstance.DelCallback(messageID)
+		respCh, callback := newResponseCallback(messageID)
+		listener.MessageHandlerInstance.SetCallback(messageID, callback)
+		defer listener.MessageHandlerInstance.DelCallback(messageID)
+
+		select {
+		case response = <-respCh:
+		case <-stop:
+		}
 	}
 	return response, nil
+}
+
+func newResponseCallback(messageID string) (<-chan *model.Message, func(*model.Message)) {
+	respCh := make(chan *model.Message, 1)
+	return respCh, func(message *model.Message) {
+		select {
+		case respCh <- message:
+		default:
+			klog.Warningf("drop duplicated response for message %s", messageID)
+		}
+	}
 }
