@@ -41,7 +41,7 @@ require (
 	golang.org/x/time v0.7.0
 	google.golang.org/grpc v1.67.1
 	google.golang.org/protobuf v1.35.2
-	gopkg.in/square/go-jose.v2 v2.6.0
+	gopkg.in/go-jose/go-jose.v2 v2.6.3
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/sqlite v1.5.7
 	gorm.io/gorm v1.25.12
