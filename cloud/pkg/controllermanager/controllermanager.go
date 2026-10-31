@@ -14,6 +14,7 @@ import (
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	appsv1alpha1 "github.com/kubeedge/api/apis/apps/v1alpha1"
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
@@ -36,15 +37,41 @@ type Controller interface {
 	reconcile.Reconciler
 }
 
-func NewControllerManager(ctx context.Context, kubeCfg *rest.Config, healthProbe string,
+func NewControllerManager(
+	ctx context.Context,
+	kubeCfg *rest.Config,
+	healthProbe string,
+	webhookPort int,
+	webhookCertDir string,
 ) (manager.Manager, error) {
 	const nothingCheckName = "nothing"
-	mgr, err := controllerruntime.NewManager(kubeCfg, controllerruntime.Options{
+
+	mgrOptions := controllerruntime.Options{
 		Scheme:                 kubeedgeScheme,
 		HealthProbeBindAddress: healthProbe,
-	})
+	}
+
+	var webhookServer webhook.Server
+	if webhookPort > 0 {
+		webhookServer = webhook.NewServer(webhook.Options{
+			Port:     webhookPort,
+			CertDir:  webhookCertDir,
+			CertName: "tls.crt",
+			KeyName:  "tls.key",
+		})
+		mgrOptions.WebhookServer = webhookServer
+	}
+
+	mgr, err := controllerruntime.NewManager(kubeCfg, mgrOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create controller manager, err: %v", err)
+	}
+
+	if webhookServer != nil {
+		webhookServer = mgr.GetWebhookServer()
+		if err := mgr.AddReadyzCheck("webhook", webhookServer.StartedChecker()); err != nil {
+			return nil, fmt.Errorf("failed to add webhook readyz check, err: %v", err)
+		}
 	}
 
 	if err := mgr.AddHealthzCheck(nothingCheckName, func(_ *http.Request) error {
@@ -61,6 +88,7 @@ func NewControllerManager(ctx context.Context, kubeCfg *rest.Config, healthProbe
 	if err := setupControllers(ctx, mgr); err != nil {
 		return nil, err
 	}
+
 	return mgr, nil
 }
 

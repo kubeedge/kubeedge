@@ -32,7 +32,13 @@ func NewControllerManagerCommand(ctx context.Context) *cobra.Command {
 				}
 			}
 			kubeconfig := controllerruntime.GetConfigOrDie()
-			mgr, err := controllermanager.NewControllerManager(ctx, kubeconfig, opts.HealthProbeBindAddress)
+			mgr, err := controllermanager.NewControllerManager(
+				ctx,
+				kubeconfig,
+				opts.HealthProbeBindAddress,
+				opts.WebhookPort,
+				opts.WebhookCertDir,
+			)
 			if err != nil {
 				klog.Fatalf("failed to get controller manager, %v", err)
 			}
