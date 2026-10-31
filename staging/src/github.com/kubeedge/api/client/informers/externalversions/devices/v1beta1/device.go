@@ -62,13 +62,25 @@ func NewFilteredDeviceInformer(client versioned.Interface, namespace string, res
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.DevicesV1beta1().Devices(namespace).List(context.TODO(), options)
+				return client.DevicesV1beta1().Devices(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.DevicesV1beta1().Devices(namespace).Watch(context.TODO(), options)
+				return client.DevicesV1beta1().Devices(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.DevicesV1beta1().Devices(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.DevicesV1beta1().Devices(namespace).Watch(ctx, options)
 			},
 		},
 		&apisdevicesv1beta1.Device{},

@@ -18,13 +18,16 @@ package kubeconfig
 
 import (
 	"fmt"
+	"net"
 	"os"
-
-	"github.com/pkg/errors"
+	"strconv"
 
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	kubeadmapi "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm"
+	"k8s.io/kubernetes/cmd/kubeadm/app/util/errors"
 )
 
 // CreateBasic creates a basic, general KubeConfig object that then can be extended
@@ -119,6 +122,18 @@ func GetClusterFromKubeConfig(config *clientcmdapi.Config) (string, *clientcmdap
 	}
 
 	return "", nil, errors.Errorf("the current context is invalid: %s", config.CurrentContext)
+}
+
+// PointKubeConfigToLocalAPIEndpoint modifies the provided kubeconfig to point to the given APIEndpoint.
+func PointKubeConfigToLocalAPIEndpoint(config *clientcmdapi.Config, lae *kubeadmapi.APIEndpoint) {
+	for _, v := range config.Clusters {
+		v.Server = fmt.Sprintf("https://%s",
+			net.JoinHostPort(
+				lae.AdvertiseAddress,
+				strconv.Itoa(int(lae.BindPort)),
+			),
+		)
+	}
 }
 
 // HasAuthenticationCredentials returns true if the current user has valid authentication credentials for
