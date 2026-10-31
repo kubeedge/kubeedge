@@ -38,7 +38,7 @@ import (
 type HandlerCenter interface {
 	AddListener(s *SelectorListener) error
 	DeleteListener(s *SelectorListener)
-	ForResource(gvr schema.GroupVersionResource) *CommonResourceEventHandler
+	ForResource(gvr schema.GroupVersionResource) (*CommonResourceEventHandler, error)
 	GetListenersForNode(nodeName string) map[string]*SelectorListener
 }
 
@@ -63,25 +63,45 @@ func NewHandlerCenter(informerFactory dynamicinformer.DynamicSharedInformerFacto
 	return &c
 }
 
-func (c *handlerCenter) ForResource(gvr schema.GroupVersionResource) *CommonResourceEventHandler {
+func (c *handlerCenter) ForResource(gvr schema.GroupVersionResource) (*CommonResourceEventHandler, error) {
 	c.handlerLock.Lock()
-	defer c.handlerLock.Unlock()
-
-	if handler, ok := c.handlers[gvr]; ok {
-		return handler
+	handler, ok := c.handlers[gvr]
+	c.handlerLock.Unlock()
+	if ok {
+		return handler, nil
 	}
 
 	klog.Infof("[metaserver/HandlerCenter] prepare a new resourceEventHandler(%v)", gvr)
 
-	handler := NewCommonResourceEventHandler(gvr, c.listenerManager, c.messageLayer)
+	// Getting the informer may wait for its cache to sync, so do not hold handlerLock meanwhile.
+	informerPair, err := genericinformers.GetInformersManager().GetInformerPair(gvr)
+	if err != nil {
+		return nil, fmt.Errorf("get informer for %s err: %v", gvr.String(), err)
+	}
+
+	c.handlerLock.Lock()
+	defer c.handlerLock.Unlock()
+
+	if handler, ok := c.handlers[gvr]; ok {
+		return handler, nil
+	}
+
+	handler, err = NewCommonResourceEventHandler(gvr, informerPair, c.listenerManager, c.messageLayer)
+	if err != nil {
+		return nil, err
+	}
 	c.handlers[gvr] = handler
 
-	return handler
+	return handler, nil
 }
 
 // AddListener dispatch listeners to corresponding CommonResourceEventHandler according it's gvr
 func (c *handlerCenter) AddListener(s *SelectorListener) error {
-	return c.ForResource(s.gvr).AddListener(s)
+	handler, err := c.ForResource(s.gvr)
+	if err != nil {
+		return err
+	}
+	return handler.AddListener(s)
 }
 
 func (c *handlerCenter) DeleteListener(s *SelectorListener) {
@@ -107,8 +127,9 @@ type CommonResourceEventHandler struct {
 
 func NewCommonResourceEventHandler(
 	gvr schema.GroupVersionResource,
+	informerPair *genericinformers.InformerPair,
 	listenerManager *listenerManager,
-	layer messagelayer.MessageLayer) *CommonResourceEventHandler {
+	layer messagelayer.MessageLayer) (*CommonResourceEventHandler, error) {
 	handler := &CommonResourceEventHandler{
 		listenerManager: listenerManager,
 		events:          make(chan watch.Event, 100),
@@ -116,13 +137,8 @@ func NewCommonResourceEventHandler(
 		gvr:             gvr,
 	}
 
-	klog.Infof("[metaserver/resourceEventHandler] handler(%v) init, prepare informer...", gvr)
-	informerPair, err := genericinformers.GetInformersManager().GetInformerPair(gvr)
-	if err != nil {
-		klog.Exitf("get informer for %s err: %v", gvr.String(), err)
-	}
-
-	_, err = informerPair.Informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	klog.Infof("[metaserver/resourceEventHandler] handler(%v) init", gvr)
+	_, err := informerPair.Informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			handler.objToEvent(watch.Added, obj)
 		},
@@ -134,13 +150,13 @@ func NewCommonResourceEventHandler(
 		},
 	})
 	if err != nil {
-		klog.Exitf("add evenet handler err: %v", err)
+		return nil, fmt.Errorf("add event handler for %s err: %v", gvr.String(), err)
 	}
 
 	handler.informer = informerPair
 	klog.Infof("[metaserver/resourceEventHandler] handler(%v) init successfully, start to dispatch events to it's listeners", gvr)
 	go handler.dispatchEvents()
-	return handler
+	return handler, nil
 }
 
 func (c *CommonResourceEventHandler) objToEvent(t watch.EventType, obj interface{}) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	authorizationv1 "k8s.io/api/authorization/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -275,15 +276,31 @@ func (c *Center) ProcessWatchSync(msg model.Message) error {
 		c.HandlerCenter.DeleteListener(listener)
 	}
 
-	failedWatchApp := make(map[string]metaserver.Application)
-
-	// add listener for new added watch app
-	for _, watchApp := range addedWatchApp {
-		if config.Config.EnableAuthorization && nodeID != watchApp.Nodename {
-			return fmt.Errorf("node name %q is not allowed", watchApp.Nodename)
+	if config.Config.EnableAuthorization {
+		for _, watchApp := range addedWatchApp {
+			if nodeID != watchApp.Nodename {
+				return fmt.Errorf("node name %q is not allowed", watchApp.Nodename)
+			}
 		}
-		err := c.processWatchApp(&watchApp)
-		if err != nil {
+	}
+
+	var (
+		failedWatchApp = make(map[string]metaserver.Application)
+		failedLock     sync.Mutex
+		wg             sync.WaitGroup
+	)
+
+	// Add listeners for the new added watch apps concurrently. Adding a listener can wait
+	// for the informer of its resource to sync, and the edge waits for the response of the
+	// whole watch sync for a limited time, so the waits must overlap instead of adding up.
+	for _, watchApp := range addedWatchApp {
+		wg.Add(1)
+		go func(watchApp metaserver.Application) {
+			defer wg.Done()
+			err := c.processWatchApp(&watchApp)
+			if err == nil {
+				return
+			}
 			watchApp.Status = metaserver.Rejected
 			apiErr, ok := err.(apierrors.APIStatus)
 			if ok {
@@ -291,10 +308,14 @@ func (c *Center) ProcessWatchSync(msg model.Message) error {
 			} else {
 				watchApp.Reason = err.Error()
 			}
-			failedWatchApp[watchApp.ID] = watchApp
 			klog.Errorf("processWatchApp %s err: %v", watchApp.String(), err)
-		}
+
+			failedLock.Lock()
+			failedWatchApp[watchApp.ID] = watchApp
+			failedLock.Unlock()
+		}(watchApp)
 	}
+	wg.Wait()
 
 	respMsg := model.NewMessage(msg.GetID()).
 		BuildRouter(modules.DynamicControllerModuleName, message.ResourceGroupName, msg.GetResource(), metaserver.ApplicationResp).
