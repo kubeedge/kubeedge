@@ -131,7 +131,7 @@ func logsPod(ctx context.Context, clientSet kubernetes.Interface, pod string, o 
 
 	if o.Follow {
 		// Stream logs
-		logStream, err := req.Stream(context.TODO())
+		logStream, err := req.Stream(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -140,6 +140,7 @@ func logsPod(ctx context.Context, clientSet kubernetes.Interface, pod string, o 
 		if _, err := io.Copy(os.Stdout, logStream); err != nil {
 			return nil, err
 		}
+		return &types.LogsResponse{}, nil
 	}
 	result := req.Do(ctx)
 
