@@ -23,6 +23,7 @@ import (
 	"net"
 	goruntime "runtime"
 	"strings"
+	"sync"
 	"time"
 
 	cadvisorapiv1 "github.com/google/cadvisor/info/v1"
@@ -40,6 +41,7 @@ import (
 	kubecontainer "k8s.io/kubernetes/pkg/kubelet/container"
 	"k8s.io/kubernetes/pkg/kubelet/events"
 	netutils "k8s.io/utils/net"
+	"k8s.io/utils/ptr"
 
 	"k8s.io/klog/v2"
 )
@@ -56,12 +58,13 @@ var KubeletVersion string
 // Setters may partially mutate the node before returning an error.
 type Setter func(ctx context.Context, node *v1.Node) error
 
+// Only emit one reboot event
+var rebootEvent sync.Once
+
 // NodeAddress returns a Setter that updates address-related information on the node.
 func NodeAddress(nodeIPs []net.IP, // typically Kubelet.nodeIPs
 	validateNodeIPFunc func(net.IP) error, // typically Kubelet.nodeIPValidator
 	hostname string, // typically Kubelet.hostname
-	hostnameOverridden bool, // was the hostname force set?
-	nodeAddressesFunc func() ([]v1.NodeAddress, error), // typically Kubelet.cloudResourceSyncManager.NodeAddresses
 	resolveAddressFunc func(net.IP) (net.IP, error), // typically k8s.io/apimachinery/pkg/util/net.ResolveBindAddress
 ) Setter {
 	var nodeIP, secondaryNodeIP net.IP
@@ -84,6 +87,7 @@ func NodeAddress(nodeIPs []net.IP, // typically Kubelet.nodeIPs
 		if secondaryNodeIPSpecified {
 			klog.V(4).InfoS("Using secondary node IP", "IP", secondaryNodeIP.String())
 		}
+
 		if nodeIPSpecified && secondaryNodeIPSpecified {
 			node.Status.Addresses = []v1.NodeAddress{
 				{Type: v1.NodeInternalIP, Address: nodeIP.String()},
@@ -135,23 +139,6 @@ func NodeAddress(nodeIPs []net.IP, // typically Kubelet.nodeIPs
 		}
 		return nil
 	}
-}
-
-func hasAddressType(addresses []v1.NodeAddress, addressType v1.NodeAddressType) bool {
-	for _, address := range addresses {
-		if address.Type == addressType {
-			return true
-		}
-	}
-	return false
-}
-func hasAddressValue(addresses []v1.NodeAddress, addressValue string) bool {
-	for _, address := range addresses {
-		if address.Address == addressValue {
-			return true
-		}
-	}
-	return false
 }
 
 // MachineInfo returns a Setter that updates machine-related information on the node.
@@ -206,8 +193,12 @@ func MachineInfo(nodeName string,
 				node.Status.NodeInfo.BootID != info.BootID {
 				// TODO: This requires a transaction, either both node status is updated
 				// and event is recorded or neither should happen, see issue #6055.
-				recordEventFunc(v1.EventTypeWarning, events.NodeRebooted,
-					fmt.Sprintf("Node %s has been rebooted, boot id: %s", nodeName, info.BootID))
+				//
+				// Only emit one reboot event. recordEventFunc queues events and can emit many superfluous reboot events
+				rebootEvent.Do(func() {
+					recordEventFunc(v1.EventTypeWarning, events.NodeRebooted,
+						fmt.Sprintf("Node %s has been rebooted, boot id: %s", nodeName, info.BootID))
+				})
 			}
 			node.Status.NodeInfo.BootID = info.BootID
 
@@ -239,6 +230,12 @@ func MachineInfo(nodeName string,
 				// resources and the cluster-level resources, which are absent in
 				// node status.
 				node.Status.Capacity[v1.ResourceName(removedResource)] = *resource.NewQuantity(int64(0), resource.DecimalSI)
+			}
+
+			if utilfeature.DefaultFeatureGate.Enabled(features.NodeSwap) && info.SwapCapacity != 0 {
+				node.Status.NodeInfo.Swap = &v1.NodeSwapStatus{
+					Capacity: ptr.To(int64(info.SwapCapacity)),
+				}
 			}
 		}
 
