@@ -130,26 +130,23 @@ func (c *ContainerExecConnection) Serve() error {
 			return fmt.Errorf("%s find edge peer done, so stop this connection", c.String())
 		default:
 		}
-		func() {
-			n, err := c.Conn.Read(data[:])
-			if err != nil {
-				if !errors.Is(err, io.EOF) {
-					klog.Errorf("%s failed to read from client: %v", c.String(), err)
-					return
-				}
+		n, err := c.Conn.Read(data[:])
+		if err != nil {
+			if !errors.Is(err, io.EOF) {
+				klog.Errorf("%s failed to read from client: %v", c.String(), err)
+			} else {
 				klog.V(6).Infof("%s read EOF from client", c.String())
-				sendCloseMessage()
-				return
 			}
-			if n <= 0 {
-				return
-			}
-			msg := stream.NewMessage(connector.GetMessageID(), stream.MessageTypeData, data[:n])
-			if err := c.WriteToTunnel(msg); err != nil {
-				klog.Errorf("%s failed to write to tunnel server, err: %v", c.String(), err)
-				return
-			}
-		}()
+			sendCloseMessage()
+			return nil
+		}
+		if n <= 0 {
+			continue
+		}
+		msg := stream.NewMessage(connector.GetMessageID(), stream.MessageTypeData, data[:n])
+		if err := c.WriteToTunnel(msg); err != nil {
+			klog.Errorf("%s failed to write to tunnel server, err: %v", c.String(), err)
+		}
 	}
 }
 

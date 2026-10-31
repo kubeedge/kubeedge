@@ -19,6 +19,7 @@ package cloudstream
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"net/url"
 	"testing"
@@ -244,14 +245,11 @@ func TestServe_Exec(t *testing.T) {
 					r:            r,
 					Conn:         conn,
 					session:      session,
-					edgePeerStop: make(chan struct{}),
+					edgePeerStop: make(chan struct{}, 1),
 					closeChan:    make(chan bool),
 				}
 
-				go func() {
-					time.Sleep(50 * time.Millisecond)
-					execConn.EdgePeerDone() <- struct{}{}
-				}()
+				execConn.EdgePeerDone() <- struct{}{}
 
 				return execConn, cancel
 			},
@@ -293,6 +291,89 @@ func TestServe_Exec(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+type readErrConn struct {
+	MockConn
+	err   error
+	reads int
+}
+
+func (m *readErrConn) Read(b []byte) (int, error) {
+	m.reads++
+	if m.reads == 1 {
+		return 0, nil
+	}
+	if m.readBuffer.Len() > 0 {
+		return m.readBuffer.Read(b)
+	}
+	return 0, m.err
+}
+
+type countingTunneler struct {
+	MockTunneler
+	sent map[stream.MessageType]int
+}
+
+func (m *countingTunneler) WriteMessage(message *stream.Message) error {
+	m.sent[message.MessageType]++
+	if message.MessageType == stream.MessageTypeData {
+		return assert.AnError
+	}
+	return nil
+}
+
+func TestServe_ClientClosed(t *testing.T) {
+	r := &restful.Request{Request: &http.Request{URL: &url.URL{}}}
+	testCases := []struct {
+		name    string
+		newConn func(*readErrConn, *Session) APIServerConnection
+	}{
+		{
+			name: "exec",
+			newConn: func(conn *readErrConn, session *Session) APIServerConnection {
+				return &ContainerExecConnection{
+					ctx:          context.Background(),
+					r:            r,
+					Conn:         conn,
+					session:      session,
+					edgePeerStop: make(chan struct{}),
+					closeChan:    make(chan bool),
+				}
+			},
+		},
+		{
+			name: "attach",
+			newConn: func(conn *readErrConn, session *Session) APIServerConnection {
+				return &ContainerAttachConnection{
+					ctx:          context.Background(),
+					r:            r,
+					Conn:         conn,
+					session:      session,
+					edgePeerStop: make(chan struct{}),
+					closeChan:    make(chan bool),
+				}
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		for _, readErr := range []error{io.EOF, errors.New("connection reset by peer")} {
+			t.Run(tc.name+" "+readErr.Error(), func(t *testing.T) {
+				assert := assert.New(t)
+				conn := &readErrConn{err: readErr}
+				conn.readBuffer.WriteString("ls\n")
+				tun := &countingTunneler{sent: map[stream.MessageType]int{}}
+				apiConn := tc.newConn(conn, &Session{tunnel: tun})
+				time.AfterFunc(time.Second, apiConn.SetEdgePeerDone)
+
+				assert.NoError(apiConn.Serve())
+				assert.Equal(3, conn.reads)
+				assert.Equal(1, tun.sent[stream.MessageTypeData])
+				assert.Equal(1, tun.sent[stream.MessageTypeRemoveConnect])
+			})
+		}
 	}
 }
 
