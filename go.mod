@@ -65,7 +65,7 @@ require (
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738
 	sigs.k8s.io/apiserver-network-proxy v0.0.37
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.31.0
-	sigs.k8s.io/controller-runtime v0.19.7
+	sigs.k8s.io/controller-runtime v0.22.5
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.2
 	sigs.k8s.io/yaml v1.4.0
 )
@@ -270,8 +270,8 @@ replace (
 	github.com/Sirupsen/logrus v1.0.5 => github.com/sirupsen/logrus v1.0.5
 	github.com/Sirupsen/logrus v1.3.0 => github.com/Sirupsen/logrus v1.0.6
 	github.com/Sirupsen/logrus v1.4.0 => github.com/sirupsen/logrus v1.0.6
-	github.com/containerd/containerd => github.com/containerd/containerd v1.7.19
-	github.com/containerd/errdefs => github.com/containerd/errdefs v0.1.0
+	github.com/containerd/containerd => github.com/containerd/containerd v1.7.24
+	github.com/containerd/errdefs => github.com/containerd/errdefs v0.3.0
 	github.com/emicklei/go-restful/v3 => github.com/emicklei/go-restful/v3 v3.7.5-0.20220308211933-7c971ca4d0fd
 	github.com/gopherjs/gopherjs v0.0.0 => github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/kubeedge/api => ./staging/src/github.com/kubeedge/api
