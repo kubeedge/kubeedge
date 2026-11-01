@@ -18,10 +18,10 @@ package slices
 
 import "reflect"
 
-// RemoveDuplicateElement deduplicate
-func RemoveDuplicateElement[T any](slice []T) []T {
+// RemoveDuplicateElement deduplicates elements in a slice of comparable items.
+func RemoveDuplicateElement[T comparable](slice []T) []T {
 	result := make([]T, 0, len(slice))
-	temp := make(map[any]struct{}, len(slice))
+	temp := make(map[T]struct{}, len(slice))
 
 	for _, item := range slice {
 		if _, ok := temp[item]; !ok {
