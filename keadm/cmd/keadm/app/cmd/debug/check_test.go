@@ -361,3 +361,11 @@ func TestCheckRuntimeEndpoint(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckDisk(t *testing.T) {
+	err := CheckDisk()
+	if err != nil {
+		assert.Contains(t, []string{"disk check failed", "no disk partitions found"}, err.Error())
+	}
+}
+
