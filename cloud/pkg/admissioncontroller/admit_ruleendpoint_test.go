@@ -163,17 +163,40 @@ func Test_admitRuleEndpoint(t *testing.T) {
 		}
 	})
 
-	t.Run("update ruleEndpoint failed", func(t *testing.T) {
+	t.Run("update valid ruleEndpoint successful", func(t *testing.T) {
+		ruleEndpoint := rulesv1.RuleEndpoint{
+			TypeMeta: v1.TypeMeta{
+				Kind:       "RuleEndpoint",
+				APIVersion: "rules.kubeedge.io/v1",
+			},
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "servicebus-test",
+				Namespace: "test",
+			},
+			Spec: rulesv1.RuleEndpointSpec{
+				RuleEndpointType: rulesv1.RuleEndpointTypeServiceBus,
+				Properties: map[string]string{
+					"service_port": "9001",
+				},
+			},
+		}
+		jsonData, err := json.Marshal(ruleEndpoint)
+		if err != nil {
+			t.Fatal(err)
+		}
 		admissionReview := admissionv1.AdmissionReview{
 			Request: &admissionv1.AdmissionRequest{
 				Operation: admissionv1.Update,
 				Name:      "servicebus-test",
+				Object: runtime.RawExtension{
+					Raw: jsonData,
+				},
 			},
 			Response: nil,
 		}
 		admissionResp := admitRuleEndpoint(admissionReview)
-		if admissionResp.Allowed == true {
-			t.Fatalf("update ruleEndpoint should not success")
+		if admissionResp.Allowed != true {
+			t.Fatalf("update ruleEndpoint error: %v", admissionResp.Result.Message)
 		}
 	})
 

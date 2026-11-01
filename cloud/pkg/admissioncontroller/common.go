@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"mime"
 	"net/http"
 
 	admissionv1 "k8s.io/api/admission/v1"
@@ -70,18 +71,31 @@ var errNilAdmissionRequest = errors.New("the request field of the AdmissionRevie
 type hookFunc func(admissionv1.AdmissionReview) *admissionv1.AdmissionResponse
 
 func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
-	var body []byte
-	if r.Body != nil {
-		r.Body = http.MaxBytesReader(w, r.Body, constants.MaxRespBodyLength)
-		if data, err := io.ReadAll(r.Body); err == nil {
-			body = data
-		}
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", http.MethodPost)
+		http.Error(w, "method must be POST", http.StatusMethodNotAllowed)
+		return
 	}
 
-	// verify the content type is accurate
-	contentType := r.Header.Get("Content-Type")
-	if contentType != "application/json" {
-		klog.Errorf("contentType=%s, expect application/json", contentType)
+	// AdmissionReview requests are JSON. Parse the media type instead of doing
+	// an exact comparison so valid values such as
+	// "application/json; charset=utf-8" are accepted.
+	contentType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if err != nil || contentType != "application/json" {
+		klog.Errorf("contentType=%s, expect application/json", r.Header.Get("Content-Type"))
+		http.Error(w, "content type must be application/json", http.StatusUnsupportedMediaType)
+		return
+	}
+
+	if r.Body == nil {
+		http.Error(w, "request body is required", http.StatusBadRequest)
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, constants.MaxRespBodyLength)
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		klog.Errorf("read request body failed: %v", err)
+		http.Error(w, "read request body failed", http.StatusBadRequest)
 		return
 	}
 
@@ -114,6 +128,8 @@ func serve(w http.ResponseWriter, r *http.Request, hook hookFunc) {
 		klog.Errorf("cannot marshal to a valid response %v", err)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write(respBytes); err != nil {
 		klog.Errorf("cannot write response %v", err)
 		return
