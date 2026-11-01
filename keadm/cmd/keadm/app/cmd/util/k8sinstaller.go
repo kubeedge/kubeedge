@@ -33,6 +33,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/kubeedge/kubeedge/common/constants"
+	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
@@ -58,6 +59,26 @@ func (ks *K8SInstTool) InstallTools() error {
 
 	err = ks.IsK8SComponentInstalled(ks.KubeConfig, ks.Master)
 	if err != nil {
+		return err
+	}
+
+	// Legacy path preflight RBAC permissions check
+	config, err := BuildConfig(ks.KubeConfig, ks.Master)
+	if err != nil {
+		return fmt.Errorf("failed to build config, err: %v", err)
+	}
+	client, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return fmt.Errorf("failed to create client, err: %v", err)
+	}
+
+	opts := &types.InitOptions{
+		SkipCRDs: false, // Legacy path always installs CRDs
+	}
+	opts.Force = true // Legacy path wait behavior is disabled (pods list/watch not needed)
+
+	rbacChecks := RequiredPermissions(opts)
+	if err := CheckKubernetesPermissions(client, rbacChecks); err != nil {
 		return err
 	}
 
