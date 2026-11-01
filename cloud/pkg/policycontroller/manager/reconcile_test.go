@@ -1603,7 +1603,7 @@ func TestSyncRules(t *testing.T) {
 				},
 				Status: policyv1alpha1.AccessStatus{NodeList: []string{"my-node", "my-node-2"}},
 			},
-			msgOpr: []string{model.DeleteOperation, model.UpdateOperation},
+			msgOpr: []string{model.DeleteOperation, model.UpdateOperation, model.UpdateOperation},
 		},
 		{
 			name:            "rolebinding updated and inserted new node with none old node",
@@ -1693,7 +1693,7 @@ func TestSyncRules(t *testing.T) {
 				},
 				Status: policyv1alpha1.AccessStatus{NodeList: []string{"my-node", "my-node-2"}},
 			},
-			msgOpr: []string{model.InsertOperation},
+			msgOpr: []string{model.UpdateOperation, model.UpdateOperation}, // both nodes, not just the added one
 		},
 		{
 			name:  "delete only updates status",
@@ -1709,7 +1709,23 @@ func TestSyncRules(t *testing.T) {
 				},
 				Status: policyv1alpha1.AccessStatus{NodeList: []string{"my-node"}},
 			},
-			msgOpr: []string{model.DeleteOperation},
+			msgOpr: []string{model.UpdateOperation, model.DeleteOperation}, // the remaining node is refreshed too
+		},
+		{
+			name:  "insert/delete only",
+			input: saa3.DeepCopy(),
+			obj: []client.Object{saa3.DeepCopy(), pod1.DeepCopy(), sa1.DeepCopy(), rb1.DeepCopy(),
+				crb1.DeepCopy(), cr1.DeepCopy(), role1.DeepCopy()},
+			reconcileResult: controllerruntime.Result{},
+			output: &policyv1alpha1.ServiceAccountAccess{ObjectMeta: metav1.ObjectMeta{Name: "sa1", Namespace: "my-namespace"},
+				Spec: policyv1alpha1.AccessSpec{
+					ServiceAccount:           *sa1.DeepCopy(),
+					AccessRoleBinding:        []policyv1alpha1.AccessRoleBinding{{RoleBinding: *rb1.DeepCopy(), Rules: role1.Rules}},
+					AccessClusterRoleBinding: []policyv1alpha1.AccessClusterRoleBinding{{ClusterRoleBinding: *crb1.DeepCopy(), Rules: cr1.Rules}},
+				},
+				Status: policyv1alpha1.AccessStatus{NodeList: []string{"my-node"}},
+			},
+			msgOpr: []string{model.UpdateOperation, model.DeleteOperation}, // the added node gets an update, not an insert
 		},
 		{
 			name:  "reconcile failed cause serviceaccountaccess not found",
