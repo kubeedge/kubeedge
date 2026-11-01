@@ -21,6 +21,7 @@ import (
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 
 	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/common"
@@ -1011,6 +1012,99 @@ func TestFilterResource(t *testing.T) {
 				t.Errorf("case %q want=%v, got=%v", tc.name, tc.objResult, got1)
 			}
 		}
+	}
+}
+
+func TestPodUpdateFilter(t *testing.T) {
+	var pod1 v1.Pod
+	if err := json.Unmarshal([]byte(podStr1), &pod1); err != nil {
+		t.Fatalf("unmarshal pod1: %v", err)
+	}
+	var podDel v1.Pod
+	if err := json.Unmarshal([]byte(podDelStr1), &podDel); err != nil {
+		t.Fatalf("unmarshal podDel: %v", err)
+	}
+	var podNoNodeName v1.Pod
+	if err := json.Unmarshal([]byte(podStrWithoutNodeName), &podNoNodeName); err != nil {
+		t.Fatalf("unmarshal podNoNodeName: %v", err)
+	}
+
+	edgeNode := v1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "my-node",
+			Labels: map[string]string{"node-role.kubernetes.io/edge": ""},
+		},
+	}
+	cloudNode := v1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   "cloud-node",
+			Labels: map[string]string{},
+		},
+	}
+	podOnCloudNode := pod1.DeepCopy()
+	podOnCloudNode.Spec.NodeName = cloudNode.Name
+
+	tests := []struct {
+		name string
+		old  client.Object
+		new  client.Object
+		want bool
+	}{
+		{
+			name: "status-only update: NodeName unchanged, no DeletionTimestamp",
+			old:  pod1.DeepCopy(),
+			new:  pod1.DeepCopy(),
+			want: false,
+		},
+		{
+			name: "NodeName first assigned to edge node (DaemonSet scheduling)",
+			old:  podNoNodeName.DeepCopy(),
+			new:  pod1.DeepCopy(),
+			want: true,
+		},
+		{
+			name: "NodeName first assigned but not an edge node",
+			old:  podNoNodeName.DeepCopy(),
+			new:  podOnCloudNode,
+			want: false,
+		},
+		{
+			name: "deletion begins (DeletionTimestamp appears)",
+			old:  pod1.DeepCopy(),
+			new:  podDel.DeepCopy(),
+			want: true,
+		},
+		{
+			name: "ObjectOld is not a Pod",
+			old:  &v1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: "sa1", Namespace: "my-namespace"}},
+			new:  pod1.DeepCopy(),
+			want: false,
+		},
+	}
+
+	var accessScheme = runtime.NewScheme()
+	if err := policyv1alpha1.AddToScheme(accessScheme); err != nil {
+		t.Fatalf("add policyv1alpha1 scheme: %v", err)
+	}
+	if err := v1.AddToScheme(accessScheme); err != nil {
+		t.Fatalf("add v1 scheme: %v", err)
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			fakeClient := fake.NewClientBuilder().
+				WithScheme(accessScheme).
+				WithObjects(&edgeNode, &cloudNode).
+				Build()
+			ctr := &Controller{Client: fakeClient, Reader: fakeClient}
+			got := ctr.podUpdateFilter(context.Background(), event.UpdateEvent{
+				ObjectOld: tc.old,
+				ObjectNew: tc.new,
+			})
+			if got != tc.want {
+				t.Errorf("podUpdateFilter() = %v, want %v", got, tc.want)
+			}
+		})
 	}
 }
 
