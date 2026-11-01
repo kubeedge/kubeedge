@@ -266,10 +266,17 @@ func (md *messageDispatcher) enqueueAckMessage(nodeID string, msg *beehivemodel.
 	item, exist, _ := nodeStore.GetByKey(messageKey)
 	if exist {
 		msgInStore := item.(*beehivemodel.Message)
-		if isDeleteMessage(msgInStore) ||
-			synccontroller.CompareResourceVersion(msg.GetResourceVersion(), msgInStore.GetResourceVersion()) <= 0 {
-			// If the message resource version is older than the message in store or the operation
-			// for the message in store is delete, The message will be discarded directly.
+		if isDeleteMessage(msgInStore) {
+			// If the operation for the message in store is delete, The message will be discarded directly.
+			return
+		}
+		cmp, err := synccontroller.CompareResourceVersion(msg.GetResourceVersion(), msgInStore.GetResourceVersion())
+		if err != nil {
+			klog.Errorf("Failed to compare resource version for message %s: %v", msg.Header.ID, err)
+			return
+		}
+		if cmp <= 0 {
+			// If the message resource version is older than the message in store, The message will be discarded directly.
 			return
 		}
 		shouldEnqueue = true
@@ -299,7 +306,12 @@ func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *be
 
 	switch {
 	case err == nil && clusterObjectSync.Status.ObjectResourceVersion != "":
-		if synccontroller.CompareResourceVersion(msg.GetResourceVersion(), clusterObjectSync.Status.ObjectResourceVersion) > 0 {
+		cmp, parseErr := synccontroller.CompareResourceVersion(msg.GetResourceVersion(), clusterObjectSync.Status.ObjectResourceVersion)
+		if parseErr != nil {
+			klog.Errorf("Failed to compare resource version for message %s: %v", msg.Header.ID, parseErr)
+			return false
+		}
+		if cmp > 0 {
 			return true
 		}
 
@@ -363,7 +375,12 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 
 	switch {
 	case err == nil && objectSync.Status.ObjectResourceVersion != "":
-		if synccontroller.CompareResourceVersion(msg.GetResourceVersion(), objectSync.Status.ObjectResourceVersion) > 0 {
+		cmp, parseErr := synccontroller.CompareResourceVersion(msg.GetResourceVersion(), objectSync.Status.ObjectResourceVersion)
+		if parseErr != nil {
+			klog.Errorf("Failed to compare resource version for message %s: %v", msg.Header.ID, parseErr)
+			return false
+		}
+		if cmp > 0 {
 			return true
 		}
 
