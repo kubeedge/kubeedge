@@ -35,6 +35,7 @@ func TestNewCloudInit(t *testing.T) {
 	assert.Equal(cmd.Long, cloudInitLongDescription)
 	assert.Equal(cmd.Example, fmt.Sprintf(cloudInitExample, types.DefaultKubeEdgeVersion))
 
+	assert.NotNil(cmd.PreRunE)
 	assert.NotNil(cmd.RunE)
 
 	expectedFlags := []struct {
@@ -91,6 +92,16 @@ func TestNewCloudInit(t *testing.T) {
 		assert.Equal(flag.defaultValue, cmd.Flag(flag.name).DefValue)
 		assert.Equal(flag.name, cmd.Flag(flag.name).Name)
 	}
+}
+
+func TestNewCloudInitPreRunEDryRun(t *testing.T) {
+	assert := assert.New(t)
+	cmd := NewCloudInit()
+
+	err := cmd.Flags().Set(types.FlagNameDryRun, "true")
+	assert.Nil(err)
+
+	assert.Nil(cmd.PreRunE(cmd, []string{}))
 }
 
 func TestNewInitOptions(t *testing.T) {

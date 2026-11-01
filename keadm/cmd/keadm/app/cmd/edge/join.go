@@ -64,6 +64,10 @@ func NewEdgeJoin() *cobra.Command {
 		Example:      edgeJoinExample,
 		SilenceUsage: true,
 		PreRunE: func(_ *cobra.Command, _ []string) error {
+			if err := util.CheckRootPrivileges(); err != nil {
+				return err
+			}
+
 			if joinOptions.PreRun != "" {
 				step.Printf("Executing pre-run script: %s\n", joinOptions.PreRun)
 				if err := util.RunScript(joinOptions.PreRun); err != nil {
