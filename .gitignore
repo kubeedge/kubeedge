@@ -21,3 +21,11 @@ build/edge/tmp
 
 coverage.out
 go.work.sum
+
+# local certs / test artifacts
+*.crt
+*.key
+*.csr
+*.srl
+
+edge/test/integration/config.json
