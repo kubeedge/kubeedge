@@ -19,6 +19,7 @@ limitations under the License.
 package util
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -26,6 +27,7 @@ import (
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/blang/semver"
+	"github.com/coreos/go-systemd/v22/dbus"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/klog/v2"
 
@@ -329,6 +331,8 @@ func TestKillKubeEdgeBinaryOthers(t *testing.T) {
 		hasSystemd     bool
 		edgeRunning    bool
 		edgeRunningErr error
+		dbusConnErr    error
+		disableStopErr error
 		cmdExecErr     error
 		expected       bool
 	}{
@@ -339,11 +343,13 @@ func TestKillKubeEdgeBinaryOthers(t *testing.T) {
 			expected:   true,
 		},
 		{
-			name:        "Kill edgecore with systemd and service running",
-			proc:        "edgecore",
-			hasSystemd:  true,
-			edgeRunning: true,
-			expected:    true,
+			name:           "Kill edgecore with systemd and service running",
+			proc:           "edgecore",
+			hasSystemd:     true,
+			edgeRunning:    true,
+			dbusConnErr:    nil,
+			disableStopErr: nil,
+			expected:       true,
 		},
 		{
 			name:        "Kill edgecore with systemd but service not running",
@@ -365,6 +371,23 @@ func TestKillKubeEdgeBinaryOthers(t *testing.T) {
 			cmdExecErr: fmt.Errorf("command failed"),
 			expected:   false,
 		},
+		{
+			name:        "DBus connection fails",
+			proc:        "edgecore",
+			hasSystemd:  true,
+			edgeRunning: true,
+			dbusConnErr: fmt.Errorf("dbus connection failed"),
+			expected:    false,
+		},
+		{
+			name:           "DisableAndStop fails",
+			proc:           "edgecore",
+			hasSystemd:     true,
+			edgeRunning:    true,
+			dbusConnErr:    nil,
+			disableStopErr: fmt.Errorf("failed to stop service"),
+			expected:       true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -383,14 +406,23 @@ func TestKillKubeEdgeBinaryOthers(t *testing.T) {
 				return false, nil
 			})
 
-			patches.ApplyFunc(os.Stat, func(name string) (os.FileInfo, error) {
-				if name == fmt.Sprintf("/etc/systemd/system/%s.service", "edge") ||
-					name == fmt.Sprintf("/etc/systemd/system/%s.service", constants.KubeEdgeBinaryName) {
-					if tt.edgeRunning {
-						return &MockFileInfo{}, nil
-					}
+			// NEW: Mock dbus.NewSystemConnectionContext
+			mockConn := &dbus.Conn{}
+			patches.ApplyFunc(dbus.NewSystemConnectionContext, func(ctx context.Context) (*dbus.Conn, error) {
+				if tt.dbusConnErr != nil {
+					return nil, tt.dbusConnErr
 				}
-				return nil, os.ErrNotExist
+				return mockConn, nil
+			})
+
+			// NEW: Mock Close - NO error return!
+			patches.ApplyMethod(mockConn, "Close", func(*dbus.Conn) {
+				// no-op
+			})
+
+			// NEW: Mock DisableAndStopSystemdUnit
+			patches.ApplyFunc(DisableAndStopSystemdUnit, func(ctx context.Context, conn *dbus.Conn, unit string, reload bool) error {
+				return tt.disableStopErr
 			})
 
 			mockCmd := &execs.Command{}
@@ -595,18 +627,56 @@ func TestIsEdgeCoreServiceRunningOthers(t *testing.T) {
 	tests := []struct {
 		name           string
 		serviceName    string
-		exitCode       int
-		execErr        error
+		listUnitsResp  []dbus.UnitStatus
+		listUnitsErr   error
 		expectedResult bool
 		expectedErr    bool
 	}{
 		{
-			name:           "Service is running",
-			serviceName:    "edgecore",
-			exitCode:       0,
-			execErr:        nil,
+			name:        "Service is running",
+			serviceName: "edgecore.service",
+			listUnitsResp: []dbus.UnitStatus{
+				{
+					Name:        "edgecore.service",
+					SubState:    "running",
+					ActiveState: "active",
+					LoadState:   "loaded",
+				},
+			},
+			listUnitsErr:   nil,
 			expectedResult: true,
 			expectedErr:    false,
+		},
+		{
+			name:        "Service is not running",
+			serviceName: "edgecore.service",
+			listUnitsResp: []dbus.UnitStatus{
+				{
+					Name:        "edgecore.service",
+					SubState:    "dead",
+					ActiveState: "inactive",
+					LoadState:   "loaded",
+				},
+			},
+			listUnitsErr:   nil,
+			expectedResult: false,
+			expectedErr:    true,
+		},
+		{
+			name:           "DBus connection error",
+			serviceName:    "edgecore.service",
+			listUnitsResp:  nil,
+			listUnitsErr:   fmt.Errorf("dbus connection failed"),
+			expectedResult: false,
+			expectedErr:    true,
+		},
+		{
+			name:           "No matching service found",
+			serviceName:    "edgecore.service",
+			listUnitsResp:  []dbus.UnitStatus{},
+			listUnitsErr:   nil,
+			expectedResult: false,
+			expectedErr:    true,
 		},
 	}
 
@@ -615,16 +685,23 @@ func TestIsEdgeCoreServiceRunningOthers(t *testing.T) {
 			patches := gomonkey.NewPatches()
 			defer patches.Reset()
 
-			mockCmd := &execs.Command{
-				ExitCode: tt.exitCode,
-			}
-
-			patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
-				return mockCmd
+			// Mock dbus connection
+			mockConn := &dbus.Conn{}
+			patches.ApplyFunc(dbus.NewSystemConnectionContext, func(ctx context.Context) (*dbus.Conn, error) {
+				if tt.listUnitsErr != nil {
+					return nil, tt.listUnitsErr
+				}
+				return mockConn, nil
 			})
 
-			patches.ApplyMethod(mockCmd, "Exec", func(*execs.Command) error {
-				return tt.execErr
+			// Mock ListUnitsByPatternsContext
+			patches.ApplyMethod(mockConn, "ListUnitsByPatternsContext",
+				func(*dbus.Conn, context.Context, []string, []string) ([]dbus.UnitStatus, error) {
+					return tt.listUnitsResp, tt.listUnitsErr
+				})
+
+			// Mock Close
+			patches.ApplyMethod(mockConn, "Close", func(*dbus.Conn) {
 			})
 
 			result, err := isEdgeCoreServiceRunning(tt.serviceName)
@@ -644,36 +721,82 @@ func TestRunEdgeCoreOthers(t *testing.T) {
 		name        string
 		mkdirErr    error
 		hasSystemd  bool
-		cmdExecErr  error
+		reloadErr   error
+		enableErr   error
+		startErr    error
+		startResult string
+		statErr     error
+		linkErr     error
 		expectedErr bool
 	}{
 		{
 			name:        "Run with systemd successfully",
 			mkdirErr:    nil,
 			hasSystemd:  true,
-			cmdExecErr:  nil,
+			reloadErr:   nil,
+			enableErr:   nil,
+			startErr:    nil,
+			startResult: "done",
+			statErr:     nil,
+			linkErr:     nil,
 			expectedErr: false,
 		},
 		{
 			name:        "Run without systemd successfully",
 			mkdirErr:    nil,
 			hasSystemd:  false,
-			cmdExecErr:  nil,
 			expectedErr: false,
 		},
 		{
 			name:        "MkdirAll fails",
 			mkdirErr:    fmt.Errorf("mkdir failed"),
 			hasSystemd:  true,
-			cmdExecErr:  nil,
 			expectedErr: true,
 		},
 		{
-			name:        "Command execution fails",
+			name:        "DBus reload fails",
 			mkdirErr:    nil,
 			hasSystemd:  true,
-			cmdExecErr:  fmt.Errorf("command failed"),
+			reloadErr:   fmt.Errorf("reload failed"),
 			expectedErr: true,
+		},
+		{
+			name:        "Enable unit fails",
+			mkdirErr:    nil,
+			hasSystemd:  true,
+			reloadErr:   nil,
+			enableErr:   fmt.Errorf("enable failed"),
+			expectedErr: true,
+		},
+		{
+			name:        "Start unit fails",
+			mkdirErr:    nil,
+			hasSystemd:  true,
+			reloadErr:   nil,
+			enableErr:   nil,
+			startErr:    fmt.Errorf("start failed"),
+			expectedErr: true,
+		},
+		{
+			name:        "Start unit returns failed status",
+			mkdirErr:    nil,
+			hasSystemd:  true,
+			reloadErr:   nil,
+			enableErr:   nil,
+			startErr:    nil,
+			startResult: "failed",
+			expectedErr: true,
+		},
+		{
+			name:        "Service file doesn't exist",
+			mkdirErr:    nil,
+			hasSystemd:  true,
+			reloadErr:   nil,
+			enableErr:   nil,
+			startErr:    nil,
+			startResult: "done",
+			statErr:     os.ErrNotExist,
+			expectedErr: false,
 		},
 	}
 
@@ -690,22 +813,52 @@ func TestRunEdgeCoreOthers(t *testing.T) {
 				return tt.hasSystemd
 			})
 
-			mockCmd := &execs.Command{}
-			patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
-				return mockCmd
+			patches.ApplyFunc(os.Stat, func(name string) (os.FileInfo, error) {
+				if tt.statErr != nil {
+					return nil, tt.statErr
+				}
+				return &MockFileInfo{}, nil
 			})
 
-			patches.ApplyMethod(mockCmd, "Exec", func(*execs.Command) error {
-				return tt.cmdExecErr
+			patches.ApplyFunc(os.Link, func(oldname, newname string) error {
+				return tt.linkErr
 			})
 
-			patches.ApplyMethod(mockCmd, "GetStdOut", func(*execs.Command) string {
-				return "mock stdout"
-			})
+			if tt.hasSystemd {
+				// Mock EnableAndRunSystemdUnit
+				patches.ApplyFunc(EnableAndRunSystemdUnit, func(ctx context.Context, unit string, reload bool) error {
+					if tt.reloadErr != nil {
+						return tt.reloadErr
+					}
+					if tt.enableErr != nil {
+						return tt.enableErr
+					}
+					if tt.startErr != nil {
+						return tt.startErr
+					}
+					if tt.startResult != "done" {
+						return fmt.Errorf("failed to start %s: %s", unit, tt.startResult)
+					}
+					return nil
+				})
+			} else {
+				// Mock command execution for non-systemd case
+				mockCmd := &execs.Command{}
+				patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
+					return mockCmd
+				})
+				patches.ApplyMethod(mockCmd, "Exec", func(*execs.Command) error {
+					return nil
+				})
+				patches.ApplyMethod(mockCmd, "GetStdOut", func(*execs.Command) string {
+					return "mock stdout"
+				})
+			}
 
 			patches.ApplyFunc(fmt.Printf, func(format string, a ...interface{}) (n int, err error) {
 				return 0, nil
 			})
+
 			patches.ApplyFunc(fmt.Println, func(a ...interface{}) (n int, err error) {
 				return 0, nil
 			})
