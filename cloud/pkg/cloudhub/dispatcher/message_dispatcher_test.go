@@ -160,6 +160,12 @@ func TestEnqueueAckMessage(t *testing.T) {
 	deleteMsg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "4"), "delete")
 	respMsg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "5"), "response")
 	invalidMsg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, ""), "update")
+	legacyObjectSync := tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod")
+	legacyObjectSync.Spec.ObjectAPIVersion = ""
+	legacyObjectSync.Spec.ObjectKind = ""
+	repairedObjectSync := legacyObjectSync.DeepCopy()
+	repairedObjectSync.Spec.ObjectAPIVersion = "v1"
+	repairedObjectSync.Spec.ObjectKind = "Pod"
 
 	tests := []tf.TestCase{
 		{
@@ -219,6 +225,15 @@ func TestEnqueueAckMessage(t *testing.T) {
 			ExpectedObjectSyncs: []*v1alpha1.ObjectSync{
 				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod"),
 			},
+			ExpectedStoreMessage: normalMsg2,
+		},
+		{
+			Name:                 "message repairs incomplete objectSync metadata",
+			InitialObjectSyncs:   []*v1alpha1.ObjectSync{legacyObjectSync},
+			ReactorErrors:        tf.NoErrors,
+			InitialMessages:      []*beehivemodel.Message{},
+			CurrentArriveMessage: normalMsg2,
+			ExpectedObjectSyncs:  []*v1alpha1.ObjectSync{repairedObjectSync},
 			ExpectedStoreMessage: normalMsg2,
 		},
 		{
