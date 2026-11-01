@@ -22,6 +22,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/common"
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
 	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
@@ -60,3 +61,14 @@ func TestNameAndGroup(t *testing.T) {
 		}
 	})
 }
+
+func TestProcessVolume(t *testing.T) {
+	m := &metaManager{enable: true}
+	msg := model.NewMessage("test-volume-msg-id").
+		BuildRouter(commodule.MetaManagerModuleName, commodule.MetaGroup, "volume", "createVolume")
+
+	t.Run("processVolume SendSync error handling", func(t *testing.T) {
+		m.processVolume(*msg)
+	})
+}
+
