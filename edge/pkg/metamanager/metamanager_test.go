@@ -22,6 +22,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/common"
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
 	commodule "github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 )
 
@@ -59,4 +60,15 @@ func TestNameAndGroup(t *testing.T) {
 			t.Errorf("Group of module is not correct wanted: %v and got: %v", commodule.MetaGroup, metaModule.Group())
 		}
 	})
+}
+
+func TestProcessVolume_Error(t *testing.T) {
+	m := &metaManager{}
+	msg := model.NewMessage("")
+	msg.BuildHeader("msg-id", "", 0)
+	msg.BuildRouter("cloud", "group", "resource", "operation")
+
+	// Call processVolume; edged module is not running, so SendSync returns an error.
+	// We verify that processVolume handles the error cleanly without panic.
+	m.processVolume(*msg)
 }
