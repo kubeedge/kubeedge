@@ -163,17 +163,74 @@ func Test_admitRuleEndpoint(t *testing.T) {
 		}
 	})
 
-	t.Run("update ruleEndpoint failed", func(t *testing.T) {
+	t.Run("update servicebus ruleEndpoint successful", func(t *testing.T) {
+		ruleEndpoint := rulesv1.RuleEndpoint{
+			TypeMeta: v1.TypeMeta{
+				Kind:       "RuleEndpoint",
+				APIVersion: "rules.kubeedge.io/v1",
+			},
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "servicebus-test",
+				Namespace: "test",
+				Labels:    map[string]string{"updated": "true"},
+			},
+			Spec: rulesv1.RuleEndpointSpec{
+				RuleEndpointType: rulesv1.RuleEndpointTypeServiceBus,
+				Properties: map[string]string{
+					"service_port": "9001",
+				},
+			},
+		}
+		jsonData, _ := json.Marshal(ruleEndpoint)
 		admissionReview := admissionv1.AdmissionReview{
 			Request: &admissionv1.AdmissionRequest{
 				Operation: admissionv1.Update,
 				Name:      "servicebus-test",
+				Object: runtime.RawExtension{
+					Raw:    jsonData,
+					Object: nil,
+				},
+			},
+			Response: nil,
+		}
+		admissionResp := admitRuleEndpoint(admissionReview)
+		if admissionResp.Allowed != true {
+			t.Fatalf("update servicebus ruleEndpoint error:%v", admissionResp.Result.Message)
+		}
+	})
+
+	t.Run("service_port not in range 1-65535,update servicebus ruleEndpoint failed", func(t *testing.T) {
+		ruleEndpoint := rulesv1.RuleEndpoint{
+			TypeMeta: v1.TypeMeta{
+				Kind:       "RuleEndpoint",
+				APIVersion: "rules.kubeedge.io/v1",
+			},
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "servicebus-test",
+				Namespace: "test",
+			},
+			Spec: rulesv1.RuleEndpointSpec{
+				RuleEndpointType: rulesv1.RuleEndpointTypeServiceBus,
+				Properties: map[string]string{
+					"service_port": "69999",
+				},
+			},
+		}
+		jsonData, _ := json.Marshal(ruleEndpoint)
+		admissionReview := admissionv1.AdmissionReview{
+			Request: &admissionv1.AdmissionRequest{
+				Operation: admissionv1.Update,
+				Name:      "servicebus-test",
+				Object: runtime.RawExtension{
+					Raw:    jsonData,
+					Object: nil,
+				},
 			},
 			Response: nil,
 		}
 		admissionResp := admitRuleEndpoint(admissionReview)
 		if admissionResp.Allowed == true {
-			t.Fatalf("update ruleEndpoint should not success")
+			t.Fatalf("update servicebus ruleEndpoint should not success")
 		}
 	})
 
