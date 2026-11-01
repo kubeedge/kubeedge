@@ -437,6 +437,109 @@ func TestValidateModuleCloudStream(t *testing.T) {
 	}
 }
 
+func TestValidateModuleRouter(t *testing.T) {
+	dir := t.TempDir()
+
+	ef, err := os.CreateTemp(dir, "existFile")
+	if err != nil {
+		t.Errorf("create temp file failed: %v", err)
+		return
+	}
+
+	ef.Close()
+
+	nonexistentDir := filepath.Join(dir, "not_exist_dir")
+	notExistFile := filepath.Join(nonexistentDir, "not_exist_file")
+	tlsPath := field.NewPath("router", "tls")
+
+	halfTLS := &v1alpha1.RouterTLS{Enable: true, CertFile: ef.Name()}
+
+	cases := []struct {
+		name     string
+		input    v1alpha1.Router
+		expected field.ErrorList
+	}{
+		{
+			name: "case1 not enable",
+			input: v1alpha1.Router{
+				Enable: false,
+				TLS:    &v1alpha1.RouterTLS{Enable: true, CertFile: notExistFile},
+			},
+			expected: field.ErrorList{},
+		},
+		{
+			name:     "case2 tls and restTargetTLS not set",
+			input:    v1alpha1.Router{Enable: true},
+			expected: field.ErrorList{},
+		},
+		{
+			name: "case3 tls disabled",
+			input: v1alpha1.Router{
+				Enable: true,
+				TLS:    &v1alpha1.RouterTLS{Enable: false, CertFile: notExistFile},
+			},
+			expected: field.ErrorList{},
+		},
+		{
+			name: "case4 tls enabled with the CloudCore certificate",
+			input: v1alpha1.Router{
+				Enable: true,
+				TLS:    &v1alpha1.RouterTLS{Enable: true},
+			},
+			expected: field.ErrorList{},
+		},
+		{
+			name: "case5 only certFile set",
+			input: v1alpha1.Router{
+				Enable: true,
+				TLS:    halfTLS,
+			},
+			expected: field.ErrorList{field.Invalid(tlsPath, halfTLS,
+				"certFile and privateKeyFile must be set together")},
+		},
+		{
+			name: "case6 certFile not exist",
+			input: v1alpha1.Router{
+				Enable: true,
+				TLS:    &v1alpha1.RouterTLS{Enable: true, CertFile: notExistFile, PrivateKeyFile: ef.Name()},
+			},
+			expected: field.ErrorList{field.Invalid(tlsPath.Child("certFile"), notExistFile, "certFile not exist")},
+		},
+		{
+			name: "case7 privateKeyFile not exist",
+			input: v1alpha1.Router{
+				Enable: true,
+				TLS:    &v1alpha1.RouterTLS{Enable: true, CertFile: ef.Name(), PrivateKeyFile: notExistFile},
+			},
+			expected: field.ErrorList{field.Invalid(tlsPath.Child("privateKeyFile"), notExistFile, "privateKeyFile not exist")},
+		},
+		{
+			name: "case8 restTargetTLS caFile not exist",
+			input: v1alpha1.Router{
+				Enable:        true,
+				RestTargetTLS: &v1alpha1.RouterRestTargetTLS{CAFile: notExistFile},
+			},
+			expected: field.ErrorList{field.Invalid(field.NewPath("router", "restTargetTLS", "caFile"),
+				notExistFile, "caFile not exist")},
+		},
+		{
+			name: "case9 all ok",
+			input: v1alpha1.Router{
+				Enable:        true,
+				TLS:           &v1alpha1.RouterTLS{Enable: true, CertFile: ef.Name(), PrivateKeyFile: ef.Name()},
+				RestTargetTLS: &v1alpha1.RouterRestTargetTLS{CAFile: ef.Name()},
+			},
+			expected: field.ErrorList{},
+		},
+	}
+
+	for _, c := range cases {
+		if result := ValidateModuleRouter(c.input); !reflect.DeepEqual(result, c.expected) {
+			t.Errorf("%v: expected %v, but got %v", c.name, c.expected, result)
+		}
+	}
+}
+
 func TestValidateKubeAPIConfig(t *testing.T) {
 	dir := t.TempDir()
 
