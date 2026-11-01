@@ -61,3 +61,35 @@ func TestGetMetricsDeletesConnectionOnRequestCancel(t *testing.T) {
 	assert.Equal(t, stream.MessageTypeRemoveConnect, mockTunneler.lastMessage.MessageType)
 	assert.Empty(t, session.apiServerConn)
 }
+
+func TestGetMetricsDeletesConnectionOnRequestCancelWithIPv6Host(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	req := httptest.NewRequest(http.MethodGet, "/metrics", nil).WithContext(ctx)
+	req.Host = "[2001:db8::1]:10003"
+	resp := httptest.NewRecorder()
+
+	tunnel := &TunnelServer{
+		sessions: make(map[string]*Session),
+	}
+	mockTunneler := &MockTunneler{}
+	session := &Session{
+		sessionID:     "2001:db8::1",
+		tunnel:        mockTunneler,
+		apiServerConn: make(map[uint64]APIServerConnection),
+		apiConnlock:   &sync.RWMutex{},
+	}
+	tunnel.addSession("2001:db8::1", session)
+
+	streamServer := &StreamServer{
+		tunnel: tunnel,
+	}
+
+	streamServer.getMetrics(restful.NewRequest(req), restful.NewResponse(resp))
+
+	assert.Equal(t, http.StatusOK, resp.Code)
+	require.NotNil(t, mockTunneler.lastMessage)
+	assert.Equal(t, stream.MessageTypeRemoveConnect, mockTunneler.lastMessage.MessageType)
+	assert.Empty(t, session.apiServerConn)
+}
