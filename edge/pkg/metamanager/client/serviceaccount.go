@@ -10,11 +10,13 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
 
+	"github.com/kubeedge/api/apis/common/constants"
 	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
+	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 )
 
 // ServiceAccountTokenGetter is interface to get client service account token
@@ -87,6 +89,21 @@ func requiresRefresh(tr *authenticationv1.TokenRequest) bool {
 	return false
 }
 
+// normalizeAudiences normalizes the audiences slice.
+// According to Kubernetes API specification, when TokenRequest.Spec.Audiences is nil or empty,
+// the API server defaults to the Kubernetes apiserver audience.
+// This ensures that local cache lookups use the same audience key as stored tokens.
+func normalizeAudiences(audiences []string) []string {
+	if len(audiences) == 0 {
+		issuers := metaserverconfig.Config.ServiceAccountIssuers
+		if len(issuers) > 0 {
+			return issuers
+		}
+		return []string{constants.DefaultServiceAccountIssuer}
+	}
+	return audiences
+}
+
 // KeyFunc keys should be nonconfidential and safe to log
 func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
 	var exp int64
@@ -99,7 +116,9 @@ func KeyFunc(name, namespace string, tr *authenticationv1.TokenRequest) string {
 		ref = *tr.Spec.BoundObjectRef
 	}
 
-	return fmt.Sprintf("%q/%q/%#v/%#v/%#v", name, namespace, tr.Spec.Audiences, exp, ref)
+	audiences := normalizeAudiences(tr.Spec.Audiences)
+
+	return fmt.Sprintf("%q/%q/%#v/%#v/%#v", name, namespace, audiences, exp, ref)
 }
 
 func getTokenLocally(name, namespace string, tr *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
