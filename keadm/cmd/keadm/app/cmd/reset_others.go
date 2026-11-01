@@ -41,8 +41,6 @@ var (
 'keadm reset' command can be executed in both cloud and edge node.
 In cloud node it shuts down the cloud processes of KubeEdge.
 In edge node it shuts down the edge processes of KubeEdge.
-'keadm reset' is no longer supported after version v1.22. 
-You must use the third-level command 'keadm reset cloud' or 'keadm reset edge'.
 `
 	resetExample = `
 For cloud node:
@@ -63,10 +61,6 @@ func NewKubeEdgeReset() *cobra.Command {
 		Long:    resetLongDescription,
 		Example: resetExample,
 		PreRunE: func(_ *cobra.Command, _ []string) error {
-			// TODO: remove this hint after version v1.22
-			fmt.Println("WARNING: 'keadm reset' is no longer supported after version v1.22.")
-			fmt.Println("You must use the third-level command 'keadm reset cloud' or 'keadm reset edge'.")
-
 			whoRunning := util.RunningModuleV2(reset)
 			if whoRunning == common.NoneRunning {
 				fmt.Println("None of KubeEdge components are running in this host, exit")
