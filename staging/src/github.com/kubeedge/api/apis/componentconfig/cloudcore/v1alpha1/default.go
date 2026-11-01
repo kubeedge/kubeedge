@@ -79,6 +79,10 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 					Enable:  true,
 					Port:    10002,
 					Address: "0.0.0.0",
+					RateLimit: &HTTPSRateLimit{
+						QPS:   100,
+						Burst: 200,
+					},
 				},
 				Authorization: &CloudHubAuthorization{
 					Enable: false,
@@ -288,6 +292,10 @@ func NewMinCloudCoreConfig() *CloudCoreConfig {
 					Enable:  true,
 					Port:    10002,
 					Address: "0.0.0.0",
+					RateLimit: &HTTPSRateLimit{
+						QPS:   100,
+						Burst: 200,
+					},
 				},
 			},
 			Router: &Router{
