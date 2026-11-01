@@ -265,7 +265,15 @@ func (dc *DownstreamController) deviceUpdated(device *v1beta1.Device) {
 	value, ok := dc.deviceManager.Device.Load(deviceID)
 	dc.deviceManager.Device.Store(deviceID, device)
 	if ok {
-		cachedDevice := value.(*v1beta1.Device)
+		cachedDevice, ok := value.(*v1beta1.Device)
+		if !ok {
+			// The cached value is corrupted, so there is no valid previous state
+			// to diff against. Treat it as a new device addition to keep the edge
+			// node in sync, mirroring the not-cached branch below.
+			klog.Warningf("Invalid cached device object for device %s/%s", device.Namespace, device.Name)
+			dc.deviceAdded(device)
+			return
+		}
 		if isDeviceUpdated(cachedDevice, device) {
 			// if NodeName changed, delete from old node and create in new node
 			if cachedDevice.Spec.NodeName != device.Spec.NodeName {
