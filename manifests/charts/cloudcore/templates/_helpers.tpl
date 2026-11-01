@@ -34,3 +34,26 @@ streamCA.crt: {{ $ca.Cert | b64enc }}
 stream.crt: {{ $cert.Cert | b64enc }}
 stream.key: {{ $cert.Key | b64enc }}
 {{- end -}}
+
+{{/*
+Return admission cert secret name
+*/}}
+{{- define "kubeedge.admission.certsSecretName" -}}
+{{- if .Values.admission.certsSecretName -}}
+{{ .Values.admission.certsSecretName }}
+{{- else -}}
+{{ printf "%s-admission-certs" .Release.Name }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Generate certificates for kubeedge admission
+*/}}
+{{- define "admission.gen-certs" -}}
+{{- $altNames := list "kubeedge-admission-service" (printf "%s.%s" "kubeedge-admission-service" .Release.Namespace) (printf "%s.%s.svc" "kubeedge-admission-service" .Release.Namespace) -}}
+{{- $ca := genCA (printf "%s.%s.svc" "kubeedge-admission-service" .Release.Namespace) 365 -}}
+{{- $cert := genSignedCert (printf "%s.%s.svc" "kubeedge-admission-service" .Release.Namespace) nil $altNames 365 $ca -}}
+ca.crt: {{ $ca.Cert | b64enc }}
+tls.crt: {{ $cert.Cert | b64enc }}
+tls.key: {{ $cert.Key | b64enc }}
+{{- end -}}
