@@ -140,7 +140,7 @@ func logGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, h
 // buildResource return a string as "beehive/pkg/core/model".Message.Router.Resource
 func buildResource(nodeID, namespace, resourceType, resourceID string) (string, error) {
 	if nodeID == "" || namespace == "" || resourceType == "" {
-		return "", fmt.Errorf("required parameter are not set (node id, namespace or resource type)")
+		return "", fmt.Errorf("required parameters are not set (node id, namespace or resource type)")
 	}
 	resource := fmt.Sprintf("%s%s%s%s%s%s%s", "node", constants.ResourceSep, nodeID, constants.ResourceSep, namespace, constants.ResourceSep, resourceType)
 	if resourceID != "" {
