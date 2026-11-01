@@ -21,6 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	admissionv1 "k8s.io/api/admission/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	devicesv1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
@@ -41,6 +42,7 @@ func TestAdmitDevice(t *testing.T) {
 			operation: admissionv1.Create,
 			device: &devicesv1beta1.Device{
 				Spec: devicesv1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{Name: "test-model"},
 					Properties: []devicesv1beta1.DeviceProperty{
 						{Name: "prop1"},
 						{Name: "prop2"},
@@ -55,6 +57,7 @@ func TestAdmitDevice(t *testing.T) {
 			operation: admissionv1.Create,
 			device: &devicesv1beta1.Device{
 				Spec: devicesv1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{Name: "test-model"},
 					Properties: []devicesv1beta1.DeviceProperty{
 						{Name: "prop1"},
 						{Name: "prop1"},
@@ -69,6 +72,7 @@ func TestAdmitDevice(t *testing.T) {
 			operation: admissionv1.Delete,
 			device: &devicesv1beta1.Device{
 				Spec: devicesv1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{Name: "test-model"},
 					Properties: []devicesv1beta1.DeviceProperty{
 						{Name: "prop1"},
 						{Name: "prop2"},
@@ -77,6 +81,19 @@ func TestAdmitDevice(t *testing.T) {
 			},
 			expectedAllowed: true,
 			expectedMessage: "",
+		},
+		{
+			name:      "Create invalid device missing deviceModelRef",
+			operation: admissionv1.Create,
+			device: &devicesv1beta1.Device{
+				Spec: devicesv1beta1.DeviceSpec{
+					Properties: []devicesv1beta1.DeviceProperty{
+						{Name: "prop1"},
+					},
+				},
+			},
+			expectedAllowed: false,
+			expectedMessage: "deviceModelRef is required",
 		},
 		{
 			name:            "Unsupported operation",
@@ -130,6 +147,7 @@ func TestValidateDevice(t *testing.T) {
 			name: "Device with unique properties",
 			device: &devicesv1beta1.Device{
 				Spec: devicesv1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{Name: "test-model"},
 					Properties: []devicesv1beta1.DeviceProperty{
 						{Name: "prop1"},
 						{Name: "prop2"},
@@ -144,6 +162,7 @@ func TestValidateDevice(t *testing.T) {
 			name: "Device with duplicate properties",
 			device: &devicesv1beta1.Device{
 				Spec: devicesv1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{Name: "test-model"},
 					Properties: []devicesv1beta1.DeviceProperty{
 						{Name: "prop1"},
 						{Name: "prop2"},
@@ -158,7 +177,8 @@ func TestValidateDevice(t *testing.T) {
 			name: "Device with no properties",
 			device: &devicesv1beta1.Device{
 				Spec: devicesv1beta1.DeviceSpec{
-					Properties: []devicesv1beta1.DeviceProperty{},
+					DeviceModelRef: &v1.LocalObjectReference{Name: "test-model"},
+					Properties:     []devicesv1beta1.DeviceProperty{},
 				},
 			},
 			expectedAllowed: true,
@@ -168,6 +188,7 @@ func TestValidateDevice(t *testing.T) {
 			name: "Device with one property",
 			device: &devicesv1beta1.Device{
 				Spec: devicesv1beta1.DeviceSpec{
+					DeviceModelRef: &v1.LocalObjectReference{Name: "test-model"},
 					Properties: []devicesv1beta1.DeviceProperty{
 						{Name: "prop1"},
 					},
@@ -175,6 +196,18 @@ func TestValidateDevice(t *testing.T) {
 			},
 			expectedAllowed: true,
 			expectedMessage: "",
+		},
+		{
+			name: "Device missing deviceModelRef",
+			device: &devicesv1beta1.Device{
+				Spec: devicesv1beta1.DeviceSpec{
+					Properties: []devicesv1beta1.DeviceProperty{
+						{Name: "prop1"},
+					},
+				},
+			},
+			expectedAllowed: false,
+			expectedMessage: "deviceModelRef is required",
 		},
 	}
 
