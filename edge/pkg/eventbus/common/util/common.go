@@ -43,7 +43,7 @@ func CheckClientToken(token MQTT.Token) (bool, error) {
 // PathExist check file exists or not
 func PathExist(path string) bool {
 	_, err := os.Stat(path)
-	return err == nil || os.IsExist(err)
+	return !os.IsNotExist(err)
 }
 
 // HubClientInit create mqtt client config
