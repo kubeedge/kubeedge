@@ -1,0 +1,175 @@
+apiVersion: edgecore.config.kubeedge.io/v1alpha2
+database:
+  aliasName: default
+  dataSource: /var/lib/kubeedge/edgecore.db
+  driverName: sqlite3
+kind: EdgeCore
+featureGates:
+  requireAuthorization: true
+modules:
+  dbTest:
+    enable: false
+  deviceTwin:
+    dmiSockPath: /etc/kubeedge/dmi.sock
+    enable: true
+  edgeHub:
+    enable: true
+    heartbeat: 15
+    httpServer: https://IP:30002
+    messageBurst: 60
+    messageQPS: 30
+    projectID: e632aba927ea4ac2b575ec1603d56f10
+    quic:
+      enable: false
+      handshakeTimeout: 30
+      readDeadline: 15
+      server: IP:30001
+      writeDeadline: 15
+    rotateCertificates: true
+    tlsCaFile: /etc/kubeedge/ca/rootCA.crt
+    tlsCertFile: /etc/kubeedge/certs/server.crt
+    tlsPrivateKeyFile: /etc/kubeedge/certs/server.key
+    token: ""
+    websocket:
+      enable: true
+      handshakeTimeout: 30
+      readDeadline: 15
+      server: IP:30000
+      writeDeadline: 15
+  edgeStream:
+    enable: true 
+    handshakeTimeout: 30
+    readDeadline: 15
+    server: IP:30004
+    tlsTunnelCAFile: /etc/kubeedge/ca/rootCA.crt
+    tlsTunnelCertFile: /etc/kubeedge/certs/server.crt
+    tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/server.key
+    writeDeadline: 15
+  edged:
+    containerRuntime: remote
+    enable: true
+    hostnameOverride: kube-edge1
+    masterServiceNamespace: default
+    maxContainerCount: -1
+    maxPerPodContainerCount: 1
+    minimumGCAge: 0s
+    podSandboxImage: kubeedge/pause:3.6
+    registerNode: true
+    registerNodeNamespace: default
+    registerSchedulable: true
+    remoteImageEndpoint: unix:///run/containerd/containerd.sock
+    remoteRuntimeEndpoint: unix:///run/containerd/containerd.sock
+    rootDirectory: /var/lib/edged
+    tailoredKubeletConfig:
+      address: 127.0.0.1
+      cgroupDriver: systemd
+      cgroupsPerQOS: true
+      clusterDomain: cluster.local
+      configMapAndSecretChangeDetectionStrategy: Get
+      containerLogMaxFiles: 5
+      containerLogMaxSize: 10Mi
+      containerRuntimeEndpoint: unix:///run/containerd/containerd.sock
+      contentType: application/json
+      cpuCFSQuota: true
+      cpuCFSQuotaPeriod: 100ms
+      cpuManagerPolicy: none
+      cpuManagerReconcilePeriod: 10s
+      enableControllerAttachDetach: true
+      enableDebugFlagsHandler: true
+      enableDebuggingHandlers: true
+      enableProfilingHandler: true
+      enableSystemLogHandler: true
+      enforceNodeAllocatable:
+      - pods
+      eventBurst: 100
+      eventRecordQPS: 50
+      evictionHard:
+        imagefs.available: 15%
+        memory.available: 100Mi
+        nodefs.available: 10%
+        nodefs.inodesFree: 5%
+      evictionPressureTransitionPeriod: 5m0s
+      failSwapOn: false
+      fileCheckFrequency: 20s
+      hairpinMode: promiscuous-bridge
+      imageGCHighThresholdPercent: 85
+      imageGCLowThresholdPercent: 80
+      imageMinimumGCAge: 2m0s
+      imageServiceEndpoint: unix:///run/containerd/containerd.sock
+      iptablesDropBit: 15
+      iptablesMasqueradeBit: 14
+      localStorageCapacityIsolation: true
+      logging:
+        flushFrequency: 5s
+        format: text
+        options:
+          json:
+            infoBufferSize: "0"
+        verbosity: 0
+      makeIPTablesUtilChains: true
+      maxOpenFiles: 1000000
+      maxPods: 110
+      memoryManagerPolicy: None
+      memorySwap: {}
+      memoryThrottlingFactor: 0.9
+      nodeLeaseDurationSeconds: 40
+      nodeStatusMaxImages: 0
+      nodeStatusReportFrequency: 5m0s
+      nodeStatusUpdateFrequency: 10s
+      oomScoreAdj: -999
+      podPidsLimit: -1
+      readOnlyPort: 10350
+      registerNode: true
+      registryBurst: 10
+      registryPullQPS: 5
+      resolvConf: /etc/resolv.conf
+      runtimeRequestTimeout: 2m0s
+      seccompDefault: false
+      serializeImagePulls: true
+      shutdownGracePeriod: 0s
+      shutdownGracePeriodCriticalPods: 0s
+      staticPodPath: /etc/kubeedge/manifests
+      streamingConnectionIdleTimeout: 4h0m0s
+      syncFrequency: 1m0s
+      topologyManagerPolicy: none
+      topologyManagerScope: container
+      volumePluginDir: /usr/libexec/kubernetes/kubelet-plugins/volume/exec/
+      volumeStatsAggPeriod: 1m0s
+  eventBus:
+    enable: true
+    eventBusTLS:
+      enable: false
+      tlsMqttCAFile: /etc/kubeedge/ca/rootCA.crt
+      tlsMqttCertFile: /etc/kubeedge/certs/server.crt
+      tlsMqttPrivateKeyFile: /etc/kubeedge/certs/server.key
+    mqttMode: 2
+    mqttPassword: ""
+    mqttPubClientID: ""
+    mqttQOS: 0
+    mqttRetain: false
+    mqttServerExternal: tcp://127.0.0.1:1883
+    mqttServerInternal: tcp://127.0.0.1:1884
+    mqttSessionQueueSize: 100
+    mqttSubClientID: ""
+    mqttUsername: ""
+  metaManager:
+    contextSendGroup: hub
+    contextSendModule: websocket
+    enable: true
+    metaServer:
+      apiAudiences: null
+      dummyServer: 169.254.30.10:10550
+      enable: true 
+      server: 127.0.0.1:10550
+      serviceAccountIssuers:
+      - https://kubernetes.default.svc.cluster.local
+      serviceAccountKeyFiles: null
+      tlsCaFile: /etc/kubeedge/ca/rootCA.crt
+      tlsCertFile: /etc/kubeedge/certs/server.crt
+      tlsPrivateKeyFile: /etc/kubeedge/certs/server.key
+    remoteQueryTimeout: 60
+  serviceBus:
+    enable: false
+    port: 9060
+    server: 127.0.0.1
+    timeout: 60

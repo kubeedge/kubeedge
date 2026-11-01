@@ -1,0 +1,39 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    entryPoints:
+      tcp0:
+        address: ":30000/tcp"
+      tcp1:
+        address: ":30001/tcp"
+      tcp2:
+        address: ":30002/tcp"
+      tcp3:
+        address: ":30003/tcp"
+      tcp4:
+        address: ":30004/tcp"
+    ports:
+      tcp0:
+        port: 30000
+        expose: true
+        exposedPort: 30000
+      tcp1:
+        port: 30001
+        expose: true
+        exposedPort: 30001
+      tcp2:
+        port: 30002
+        expose: true
+        exposedPort: 30002
+      tcp3:
+        port: 30003
+        expose: true
+        exposedPort: 30003
+      tcp4:
+        port: 30004
+        expose: true
+        exposedPort: 30004
