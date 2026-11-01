@@ -2,6 +2,7 @@ package util
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"golang.org/x/text/cases"
@@ -11,10 +12,12 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/storage"
-	"k8s.io/client-go/kubernetes/scheme"
+	kubescheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2"
 
+	kubeedgescheme "github.com/kubeedge/api/client/clientset/versioned/scheme"
 	beehiveModel "github.com/kubeedge/beehive/pkg/core/model"
 )
 
@@ -23,18 +26,15 @@ import (
 // apiVersion: apps/v1
 // kind: Deployments
 // }
-// TODO: support crd
 func SetMetaType(obj runtime.Object) error {
 	accessor, err := meta.Accessor(obj)
 	if err != nil {
 		return err
 	}
-	//gvr,_,_ := apiserverlite.ParseKey(accessor.GetSelfLink())
-	kinds, _, err := scheme.Scheme.ObjectKinds(obj)
+	gvk, err := getObjectKind(obj)
 	if err != nil {
 		return err
 	}
-	gvk := kinds[0]
 	obj.GetObjectKind().SetGroupVersionKind(gvk)
 	klog.V(6).Infof("[metaserver]successfully set MetaType for obj %v, %+v", obj.GetObjectKind(), accessor.GetName())
 	return nil
@@ -128,22 +128,50 @@ func UnstructuredAttr(obj runtime.Object) (labels.Set, fields.Set, error) {
 	}
 }
 
-// GetMessageUID returns the UID of the object in message
+// GetMessageAPIVersion returns the API version of the object in message.
 func GetMessageAPIVersion(msg *beehiveModel.Message) string {
 	obj, ok := msg.Content.(runtime.Object)
 	if ok {
-		return obj.GetObjectKind().GroupVersionKind().GroupVersion().String()
+		gvk, err := getObjectKind(obj)
+		if err != nil {
+			return ""
+		}
+		return gvk.GroupVersion().String()
 	}
 	return ""
 }
 
-// GetMessageUID returns the UID of the object in message
+// GetMessageResourceType returns the kind of the object in message.
 func GetMessageResourceType(msg *beehiveModel.Message) string {
 	obj, ok := msg.Content.(runtime.Object)
 	if ok {
-		return obj.GetObjectKind().GroupVersionKind().Kind
+		gvk, err := getObjectKind(obj)
+		if err != nil {
+			return ""
+		}
+		return gvk.Kind
 	}
 	return ""
+}
+
+func getObjectKind(obj runtime.Object) (schema.GroupVersionKind, error) {
+	if obj == nil {
+		return schema.GroupVersionKind{}, fmt.Errorf("object is nil")
+	}
+
+	gvk := obj.GetObjectKind().GroupVersionKind()
+	if !gvk.Empty() {
+		return gvk, nil
+	}
+
+	for _, scheme := range []*runtime.Scheme{kubescheme.Scheme, kubeedgescheme.Scheme} {
+		kinds, _, err := scheme.ObjectKinds(obj)
+		if err == nil && len(kinds) > 0 {
+			return kinds[0], nil
+		}
+	}
+
+	return schema.GroupVersionKind{}, fmt.Errorf("no kind is registered for object %T", obj)
 }
 
 type key int
