@@ -31,7 +31,7 @@ type DeviceTwinUpdate struct {
 // DeviceStateUpdate the structure of device state update.
 type DeviceStateUpdate struct {
 	types.BaseMessage
-	State string
+	State string `json:"state"`
 }
 
 // getTimestamp get current timestamp.
