@@ -1,6 +1,8 @@
 package application
 
 import (
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,14 +16,20 @@ type LabelFieldSelector struct {
 	Field fields.Selector
 }
 
-func NewSelector(ls string, fs string) LabelFieldSelector {
-	label, _ := labels.Parse(ls)
-	field := fields.ParseSelectorOrDie(fs)
+func NewSelector(ls string, fs string) (LabelFieldSelector, error) {
+	label, err := labels.Parse(ls)
+	if err != nil {
+		return LabelFieldSelector{}, fmt.Errorf("invalid label selector %q: %w", ls, err)
+	}
+	field, err := fields.ParseSelector(fs)
+	if err != nil {
+		return LabelFieldSelector{}, fmt.Errorf("invalid field selector %q: %w", fs, err)
+	}
 	lf := LabelFieldSelector{
 		Label: label,
 		Field: field,
 	}
-	return lf
+	return lf, nil
 }
 
 func (lf *LabelFieldSelector) Labels() labels.Selector {

@@ -26,6 +26,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+func mustNewSelector(ls, fs string) LabelFieldSelector {
+	selector, err := NewSelector(ls, fs)
+	if err != nil {
+		panic(err)
+	}
+	return selector
+}
+
 func TestNewSelector(t *testing.T) {
 	assert := assert.New(t)
 
@@ -68,10 +76,42 @@ func TestNewSelector(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			selector := NewSelector(tc.labelSelector, tc.fieldSelector)
+			selector, err := NewSelector(tc.labelSelector, tc.fieldSelector)
+			if !assert.NoError(err) {
+				return
+			}
 
 			assert.Equal(tc.expectedLabel, selector.Label.String())
 			assert.Equal(tc.expectedField, selector.Field.String())
+		})
+	}
+}
+
+func TestNewSelectorRejectsInvalidSelectors(t *testing.T) {
+	testCases := []struct {
+		name          string
+		labelSelector string
+		fieldSelector string
+		wantError     string
+	}{
+		{
+			name:          "invalid label selector",
+			labelSelector: "app in (",
+			wantError:     "invalid label selector",
+		},
+		{
+			name:          "invalid field selector",
+			fieldSelector: "metadata.name in (",
+			wantError:     "invalid field selector",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := NewSelector(tc.labelSelector, tc.fieldSelector)
+			if assert.Error(t, err) {
+				assert.Contains(t, err.Error(), tc.wantError)
+			}
 		})
 	}
 }
@@ -98,7 +138,10 @@ func TestLabelFieldSelector_Labels(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			selector := NewSelector(tc.labelSelector, "")
+			selector, err := NewSelector(tc.labelSelector, "")
+			if !assert.NoError(err) {
+				return
+			}
 			result := selector.Labels()
 
 			assert.Equal(tc.expected, result.String())
@@ -128,7 +171,10 @@ func TestLabelFieldSelector_Fields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			selector := NewSelector("", tc.fieldSelector)
+			selector, err := NewSelector("", tc.fieldSelector)
+			if !assert.NoError(err) {
+				return
+			}
 			result := selector.Fields()
 
 			assert.Equal(tc.expected, result.String())
@@ -173,7 +219,10 @@ func TestLabelFieldSelector_String(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			selector := NewSelector(tc.labelSelector, tc.fieldSelector)
+			selector, err := NewSelector(tc.labelSelector, tc.fieldSelector)
+			if !assert.NoError(err) {
+				return
+			}
 			result := selector.String()
 
 			assert.Equal(tc.expectedString, result)
@@ -228,7 +277,10 @@ func TestLabelFieldSelector_Match(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			selector := NewSelector(tc.labelSelector, tc.fieldSelector)
+			selector, err := NewSelector(tc.labelSelector, tc.fieldSelector)
+			if !assert.NoError(err) {
+				return
+			}
 			result := selector.Match(tc.labelSet, tc.fieldSet)
 
 			assert.Equal(tc.expected, result)
@@ -332,7 +384,10 @@ func TestLabelFieldSelector_MatchObj(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.obj.SetGroupVersionKind(schema.GroupVersionKind{Kind: "Pod"})
 
-			selector := NewSelector(tc.labelSelector, tc.fieldSelector)
+			selector, err := NewSelector(tc.labelSelector, tc.fieldSelector)
+			if !assert.NoError(err) {
+				return
+			}
 			result := selector.MatchObj(tc.obj)
 
 			assert.Equal(tc.expected, result)

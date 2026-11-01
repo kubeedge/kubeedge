@@ -107,7 +107,7 @@ func createTestSelector(shouldMatch bool) LabelFieldSelector {
 		fieldStr = "metadata.name=non-existent-name"
 	}
 
-	return NewSelector(labelStr, fieldStr)
+	return mustNewSelector(labelStr, fieldStr)
 }
 
 func init() {
@@ -118,7 +118,7 @@ func init() {
 
 func TestNewSelectorListener(t *testing.T) {
 	gvr := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
-	selector := NewSelector("", "")
+	selector := mustNewSelector("", "")
 
 	listener := NewSelectorListener("test-id", "test-node", gvr, selector)
 
@@ -170,7 +170,7 @@ func TestSendObjWithNonMatchingSelector(t *testing.T) {
 
 func TestSendObjWithMetaAccessorError(t *testing.T) {
 	gvr := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
-	selector := NewSelector("", "")
+	selector := mustNewSelector("", "")
 
 	listener := &SelectorListener{
 		id:       "test-id",
@@ -196,7 +196,7 @@ func TestSendObjWithMetaAccessorError(t *testing.T) {
 
 func TestSendAllObjects(t *testing.T) {
 	gvr := schema.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
-	selector := NewSelector("", "")
+	selector := mustNewSelector("", "")
 
 	listener := &SelectorListener{
 		id:       "test-id",
