@@ -1,3 +1,4 @@
+## workspace
 # cel.dev/expr v0.18.0
 ## explicit; go 1.21.1
 cel.dev/expr
@@ -221,7 +222,7 @@ github.com/euank/go-kmsg-parser/kmsgparser
 # github.com/evanphx/json-patch v5.9.0+incompatible
 ## explicit
 github.com/evanphx/json-patch
-# github.com/evanphx/json-patch/v5 v5.9.0
+# github.com/evanphx/json-patch/v5 v5.9.11
 ## explicit; go 1.18
 github.com/evanphx/json-patch/v5
 github.com/evanphx/json-patch/v5/internal/json
@@ -312,7 +313,9 @@ github.com/golang/protobuf/ptypes/wrappers
 # github.com/gomodule/redigo v2.0.0+incompatible
 ## explicit
 # github.com/google/btree v1.0.1
-## explicit; go 1.12
+## explicit; go 1.18
+# github.com/google/btree v1.1.3
+## explicit; go 1.18
 github.com/google/btree
 # github.com/google/cadvisor v0.51.0
 ## explicit; go 1.21
@@ -476,80 +479,12 @@ github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/kr/fs v0.1.0
 ## explicit
 github.com/kr/fs
+# github.com/kr/pretty v0.3.1
+## explicit; go 1.12
 # github.com/kubeedge/api v0.0.0 => ./staging/src/github.com/kubeedge/api
 ## explicit; go 1.25.14
-github.com/kubeedge/api/apis/apps/v1alpha1
-github.com/kubeedge/api/apis/common/constants
-github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1
-github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1/validation
-github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2
-github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2/validation
-github.com/kubeedge/api/apis/componentconfig/meta/v1alpha1
-github.com/kubeedge/api/apis/devices/v1beta1
-github.com/kubeedge/api/apis/dmi/v1beta1
-github.com/kubeedge/api/apis/fsm/v1alpha1
-github.com/kubeedge/api/apis/operations/v1alpha1
-github.com/kubeedge/api/apis/operations/v1alpha2
-github.com/kubeedge/api/apis/policy/v1alpha1
-github.com/kubeedge/api/apis/reliablesyncs/v1alpha1
-github.com/kubeedge/api/apis/rules/v1
-github.com/kubeedge/api/apis/util
-github.com/kubeedge/api/apis/util/validation
-github.com/kubeedge/api/client/clientset/versioned
-github.com/kubeedge/api/client/clientset/versioned/fake
-github.com/kubeedge/api/client/clientset/versioned/scheme
-github.com/kubeedge/api/client/clientset/versioned/typed/apps/v1alpha1
-github.com/kubeedge/api/client/clientset/versioned/typed/apps/v1alpha1/fake
-github.com/kubeedge/api/client/clientset/versioned/typed/devices/v1beta1
-github.com/kubeedge/api/client/clientset/versioned/typed/devices/v1beta1/fake
-github.com/kubeedge/api/client/clientset/versioned/typed/operations/v1alpha1
-github.com/kubeedge/api/client/clientset/versioned/typed/operations/v1alpha1/fake
-github.com/kubeedge/api/client/clientset/versioned/typed/operations/v1alpha2
-github.com/kubeedge/api/client/clientset/versioned/typed/operations/v1alpha2/fake
-github.com/kubeedge/api/client/clientset/versioned/typed/policy/v1alpha1
-github.com/kubeedge/api/client/clientset/versioned/typed/policy/v1alpha1/fake
-github.com/kubeedge/api/client/clientset/versioned/typed/reliablesyncs/v1alpha1
-github.com/kubeedge/api/client/clientset/versioned/typed/reliablesyncs/v1alpha1/fake
-github.com/kubeedge/api/client/clientset/versioned/typed/rules/v1
-github.com/kubeedge/api/client/clientset/versioned/typed/rules/v1/fake
-github.com/kubeedge/api/client/informers/externalversions
-github.com/kubeedge/api/client/informers/externalversions/apps
-github.com/kubeedge/api/client/informers/externalversions/apps/v1alpha1
-github.com/kubeedge/api/client/informers/externalversions/devices
-github.com/kubeedge/api/client/informers/externalversions/devices/v1beta1
-github.com/kubeedge/api/client/informers/externalversions/internalinterfaces
-github.com/kubeedge/api/client/informers/externalversions/operations
-github.com/kubeedge/api/client/informers/externalversions/operations/v1alpha1
-github.com/kubeedge/api/client/informers/externalversions/operations/v1alpha2
-github.com/kubeedge/api/client/informers/externalversions/policy
-github.com/kubeedge/api/client/informers/externalversions/policy/v1alpha1
-github.com/kubeedge/api/client/informers/externalversions/reliablesyncs
-github.com/kubeedge/api/client/informers/externalversions/reliablesyncs/v1alpha1
-github.com/kubeedge/api/client/informers/externalversions/rules
-github.com/kubeedge/api/client/informers/externalversions/rules/v1
-github.com/kubeedge/api/client/listers/apps/v1alpha1
-github.com/kubeedge/api/client/listers/devices/v1beta1
-github.com/kubeedge/api/client/listers/operations/v1alpha1
-github.com/kubeedge/api/client/listers/operations/v1alpha2
-github.com/kubeedge/api/client/listers/policy/v1alpha1
-github.com/kubeedge/api/client/listers/reliablesyncs/v1alpha1
-github.com/kubeedge/api/client/listers/rules/v1
 # github.com/kubeedge/beehive v0.0.0 => ./staging/src/github.com/kubeedge/beehive
 ## explicit; go 1.25.14
-github.com/kubeedge/beehive/pkg/common
-github.com/kubeedge/beehive/pkg/core
-github.com/kubeedge/beehive/pkg/core/channel
-github.com/kubeedge/beehive/pkg/core/context
-github.com/kubeedge/beehive/pkg/core/model
-github.com/kubeedge/beehive/pkg/core/socket
-github.com/kubeedge/beehive/pkg/core/socket/broker
-github.com/kubeedge/beehive/pkg/core/socket/config
-github.com/kubeedge/beehive/pkg/core/socket/store
-github.com/kubeedge/beehive/pkg/core/socket/synckeeper
-github.com/kubeedge/beehive/pkg/core/socket/wrapper
-github.com/kubeedge/beehive/pkg/core/socket/wrapper/packer
-github.com/kubeedge/beehive/pkg/core/socket/wrapper/reader
-github.com/kubeedge/beehive/pkg/core/socket/wrapper/writer
 # github.com/kubernetes-csi/csi-lib-utils v0.6.1
 ## explicit
 github.com/kubernetes-csi/csi-lib-utils/protosanitizer
@@ -654,7 +589,7 @@ github.com/munnerz/goautoneg
 github.com/mxk/go-flowrate/flowrate
 # github.com/onsi/ginkgo v1.16.5
 ## explicit; go 1.16
-# github.com/onsi/ginkgo/v2 v2.21.0
+# github.com/onsi/ginkgo/v2 v2.22.0
 ## explicit; go 1.22.0
 github.com/onsi/ginkgo/v2
 github.com/onsi/ginkgo/v2/config
@@ -676,7 +611,7 @@ github.com/onsi/ginkgo/v2/internal/parallel_support
 github.com/onsi/ginkgo/v2/internal/testingtproxy
 github.com/onsi/ginkgo/v2/reporters
 github.com/onsi/ginkgo/v2/types
-# github.com/onsi/gomega v1.35.1
+# github.com/onsi/gomega v1.36.1
 ## explicit; go 1.22
 github.com/onsi/gomega
 github.com/onsi/gomega/format
@@ -686,6 +621,7 @@ github.com/onsi/gomega/gstruct/errors
 github.com/onsi/gomega/internal
 github.com/onsi/gomega/internal/gutil
 github.com/onsi/gomega/matchers
+github.com/onsi/gomega/matchers/internal/miter
 github.com/onsi/gomega/matchers/support/goraph/bipartitegraph
 github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
@@ -755,6 +691,8 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
+# github.com/rogpeppe/go-internal v1.12.0
+## explicit; go 1.20
 # github.com/rubenv/sql-migrate v1.7.1
 ## explicit; go 1.21
 github.com/rubenv/sql-migrate
@@ -966,7 +904,6 @@ golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 # golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 ## explicit; go 1.20
 golang.org/x/exp/constraints
-golang.org/x/exp/maps
 golang.org/x/exp/slices
 # golang.org/x/mod v0.21.0
 ## explicit; go 1.22.0
@@ -1074,6 +1011,8 @@ golang.org/x/tools/internal/versions
 # gomodules.xyz/jsonpatch/v2 v2.4.0
 ## explicit; go 1.20
 gomodules.xyz/jsonpatch/v2
+# google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de
+## explicit; go 1.19
 # google.golang.org/genproto/googleapis/api v0.0.0-20241007155032-5fefd90f89a9
 ## explicit; go 1.21
 google.golang.org/genproto/googleapis/api
@@ -1192,6 +1131,8 @@ google.golang.org/protobuf/types/known/fieldmaskpb
 google.golang.org/protobuf/types/known/structpb
 google.golang.org/protobuf/types/known/timestamppb
 google.golang.org/protobuf/types/known/wrapperspb
+# gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
+## explicit; go 1.11
 # gopkg.in/evanphx/json-patch.v4 v4.12.0
 ## explicit
 gopkg.in/evanphx/json-patch.v4
@@ -2658,8 +2599,8 @@ sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/client
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/client/metrics
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/pkg/common/metrics
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client/proto/client
-# sigs.k8s.io/controller-runtime v0.19.7
-## explicit; go 1.22.0
+# sigs.k8s.io/controller-runtime v0.20.4
+## explicit; go 1.23.0
 sigs.k8s.io/controller-runtime
 sigs.k8s.io/controller-runtime/pkg/builder
 sigs.k8s.io/controller-runtime/pkg/cache
@@ -2677,6 +2618,7 @@ sigs.k8s.io/controller-runtime/pkg/config
 sigs.k8s.io/controller-runtime/pkg/controller
 sigs.k8s.io/controller-runtime/pkg/controller/controllertest
 sigs.k8s.io/controller-runtime/pkg/controller/controllerutil
+sigs.k8s.io/controller-runtime/pkg/controller/priorityqueue
 sigs.k8s.io/controller-runtime/pkg/conversion
 sigs.k8s.io/controller-runtime/pkg/envtest
 sigs.k8s.io/controller-runtime/pkg/event
@@ -2688,6 +2630,7 @@ sigs.k8s.io/controller-runtime/pkg/internal/field/selector
 sigs.k8s.io/controller-runtime/pkg/internal/flock
 sigs.k8s.io/controller-runtime/pkg/internal/httpserver
 sigs.k8s.io/controller-runtime/pkg/internal/log
+sigs.k8s.io/controller-runtime/pkg/internal/metrics
 sigs.k8s.io/controller-runtime/pkg/internal/objectutil
 sigs.k8s.io/controller-runtime/pkg/internal/recorder
 sigs.k8s.io/controller-runtime/pkg/internal/source
@@ -2813,8 +2756,6 @@ sigs.k8s.io/yaml/goyaml.v3
 # github.com/containerd/errdefs => github.com/containerd/errdefs v0.1.0
 # github.com/emicklei/go-restful/v3 => github.com/emicklei/go-restful/v3 v3.7.5-0.20220308211933-7c971ca4d0fd
 # github.com/gopherjs/gopherjs v0.0.0 => github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e
-# github.com/kubeedge/api => ./staging/src/github.com/kubeedge/api
-# github.com/kubeedge/beehive => ./staging/src/github.com/kubeedge/beehive
 # github.com/spf13/viper => github.com/spf13/viper v1.8.1
 # go.etcd.io/bbolt => go.etcd.io/bbolt v1.3.6
 # go.etcd.io/etcd/client/v2 => go.etcd.io/etcd/client/v2 v2.305.0
