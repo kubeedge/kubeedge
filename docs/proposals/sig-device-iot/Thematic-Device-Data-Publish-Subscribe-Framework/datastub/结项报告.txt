@@ -1,0 +1,103 @@
+结项报告
+
+项目信息
+项目名称：基于KubeEdge 的主题化设备数据发布/订阅框架
+方案描述：
+在工业物联网场景中，设备数据的实时发布与灵活订阅是支撑AI分析（如预测性维护、工艺优化）和精细化运维（如故障告警响应、能效监控）的关键基础。通过主题化数据分发和动态路由策略，可精准区分高优先级事件（如设备异常）与低优先级属性数据（如能耗统计），避免混合传输导致的解析负担和响应延迟。统一的发布/订阅机制能简化多协议设备接入、提升边缘-云协同效率，为智能化应用提供低时延、高可靠的数据供给，同时满足动态扩容场景下的灵活扩展需求。为此，本项目旨在设计并实现一套基于 KubeEdge 的统一主题化设备数据发布/订阅系统，通过定义层级化主题模型（如 sensor/temperature, camera/objectDetected等）），实现动态订阅机制与边缘-云协同路由策略，支持应用按主题灵活订阅数据、事件数据（高优先级实时推送）与属性数据（低优先级批量传输）的分类处理，最终与 KubeEdge 的 DeviceTwin等原生组件集成，提升工业物联网场景中数据分发的实时性、灵活性与可扩展性。
+
+时间规划：
+前期准备（第 1–2 周）：调研 KubeEdge 架构，明确 DataStub 功能定位；
+中期开发（第 3–6 周）：实现 gRPC 接口、ZeroMQ 发布机制、QoS 策略与调度器；
+后期测试（第 7–8 周）：功能测试、性能验证、与 Mapper/DeviceTwin 对接；
+收尾总结（第 9 周）：整理测试报告与结项文档。
+
+项目总结
+已完成工作：
+实现 gRPC 服务端接口 PushDeviceData，支持接收设备或 Mapper 上报数据；
+实现 QoS 策略：区分实时（RT）与批量（BT）消息，保证消息传输的优先级；
+开发调度器：使用 channel 和定时器机制，RT 消息即时发布，BT 消息定时批量发布；
+集成 ZeroMQ：为不同设备/Topic 动态分配端口并创建独立发布通道；
+云端注册功能：通过 HTTP 向 Registry 服务注册生产者信息；
+配置化与并发控制：支持 JSON 配置文件加载，使用 Mutex 避免并发冲突。
+
+遇到的问题及解决方案
+数据来源不清晰：初期只考虑 DeviceTwin 推送，后来发现 Mapper 也需要直接上报。
+解决：保持 gRPC 接口通用，Mapper 也可调用并设置 QoS。
+优先级与批量冲突：最初无法区分实时与批量消息。
+解决：引入 rtChan、btChan 两个通道和缓冲区机制。
+端口冲突：多设备/Topic 并发时可能重复占用端口。
+解决：设计 publisherMap 与端口分配函数 getNewPort()，保证唯一性。
+注册表同步问题：并发更新时出现重复注册。
+解决：增加 registryMutex 确保操作原子性。
+
+测试用例
+功能测试
+设备模拟调用 PushDeviceData，数据成功转发到 ZeroMQ；
+Mapper 调用时可通过 Qos 字段区分消息优先级；
+多设备多 Topic 并发注册与消息分发均正常。
+QoS 策略验证
+RT 消息立即发布，无延迟；
+BT 消息积累后每 5 秒批量发送，日志输出与预期一致。
+健壮性测试
+错误输入处理正确，无 panic；
+并发高压场景下端口与注册表维护稳定。
+
+后续工作安排
+与 Mapper 深度对接，提供 SDK 示例指导其正确调用接口；
+将 QoS 策略参数（如批量周期）配置化，提升灵活性；
+考虑扩展 ZeroMQ 之外的消息通道，如 Kafka/MQTT；
+进一步解耦 DataStub 与 DeviceTwin，使其可独立作为数据接入层使用。
+
+Final Report
+Project Information
+Project Name: A Topic-based Device Data Publish/Subscribe Framework on KubeEdge
+Scheme Description:
+In industrial IoT scenarios, real-time publishing and flexible subscription of device data are fundamental to supporting AI-driven analytics (e.g., predictive maintenance, process optimization) and fine-grained operations (e.g., fault alert response, energy efficiency monitoring). By adopting a topic-based data distribution and dynamic routing strategy, the system can accurately differentiate high-priority events (e.g., device anomalies) from low-priority property data (e.g., energy consumption statistics), avoiding the overhead and latency caused by mixed transmission.
+A unified publish/subscribe mechanism simplifies multi-protocol device integration, enhances edge–cloud collaboration efficiency, and provides low-latency, highly reliable data for intelligent applications while ensuring flexible scalability in dynamic expansion scenarios.
+
+To this end, this project aims to design and implement a unified topic-based device data publish/subscribe system on KubeEdge. It defines a hierarchical topic model (e.g., sensor/temperature, camera/objectDetected), implements dynamic subscription and edge–cloud collaborative routing strategies, and supports applications in flexibly subscribing to data by topic. It also enables differentiated handling of event data (high-priority real-time push) versus property data (low-priority batch transmission), and finally integrates with KubeEdge’s native components such as DeviceTwin to improve the timeliness, flexibility, and scalability of data distribution in industrial IoT scenarios.
+
+Time Planning:
+Preparation (Weeks 1–2): Research KubeEdge architecture, clarify DataStub’s role;
+Development (Weeks 3–6): Implement gRPC interface, ZeroMQ publishing mechanism, QoS policy, and scheduler;
+Testing (Weeks 7–8): Conduct functional and performance validation, integrate with Mapper/DeviceTwin;
+Wrap-up (Week 9): Compile test reports and final documentation.
+
+Project Summary
+Completed Work
+Implemented the gRPC server interface PushDeviceData, supporting data reporting from devices or Mappers;
+Implemented QoS policies: distinguished between real-time (RT) and batch (BT) messages to guarantee transmission priority;
+Developed a scheduler: leveraged channels and timer mechanisms to immediately publish RT messages while batching BT messages for periodic dispatch;
+Integrated ZeroMQ: dynamically allocated ports for different devices/topics and created independent publishing channels;
+Implemented cloud registry functionality: registered producer information to the Registry service via HTTP;
+Configuration and concurrency control: supported JSON-based configuration loading and used Mutex locks to ensure thread safety.
+
+Problems and Solutions
+Unclear data source: Initially only considered DeviceTwin as the data source, but later discovered that Mapper also needed to report data directly.
+Solution: Kept the gRPC interface generic so Mapper can also invoke it and set QoS.
+Conflict between priority and batching: Initially no distinction was made between real-time and batch messages.
+Solution: Introduced rtChan and btChan channels and a buffer mechanism.
+Port conflicts: Concurrent operations across multiple devices/topics sometimes reused ports.
+Solution: Designed publisherMap and the getNewPort() function to ensure uniqueness.
+Registry synchronization issues: Concurrent updates caused duplicate registrations.
+Solution: Added registryMutex to ensure atomic updates.
+
+Test Cases
+Functional Testing
+Simulated devices calling PushDeviceData, data successfully forwarded to ZeroMQ;
+Mapper calls verified QoS differentiation through the Qos field;
+Multi-device, multi-topic concurrent registration and message publishing worked as expected.
+
+QoS Policy Validation
+RT messages were published immediately with no delay;
+BT messages were accumulated and published in batches every 5 seconds, with logs matching expectations.
+
+Robustness Testing
+Handled invalid input gracefully without panic;
+Maintained port allocation and registry consistency under concurrent stress testing.
+
+Subsequent Work Arrangement
+Deep integration with Mapper: provide an SDK example to guide proper interface invocation;
+Parameterize QoS policies (e.g., batch interval) to improve flexibility;
+Consider extending beyond ZeroMQ to other messaging channels such as Kafka/MQTT;
+Further decouple DataStub from DeviceTwin, making it an independent data ingestion layer.
