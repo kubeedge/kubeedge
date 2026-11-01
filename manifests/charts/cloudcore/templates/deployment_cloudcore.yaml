@@ -46,13 +46,13 @@ spec:
         image: {{ .Values.cloudCore.image.repository }}:{{ .Values.cloudCore.image.tag }}
         imagePullPolicy: {{ .Values.cloudCore.image.pullPolicy }}
         ports:
-        - containerPort: 10000
+        - containerPort: {{ .Values.cloudCore.modules.cloudHub.websocket.port }}
           name: cloudhub
           protocol: TCP
-        - containerPort: 10001
+        - containerPort: {{ .Values.cloudCore.modules.cloudHub.quic.port }}
           name: cloudhub-quic
-          protocol: TCP
-        - containerPort: 10002
+          protocol: UDP
+        - containerPort: {{ .Values.cloudCore.modules.cloudHub.https.port }}
           name: cloudhub-https
           protocol: TCP
         - containerPort: 10003
