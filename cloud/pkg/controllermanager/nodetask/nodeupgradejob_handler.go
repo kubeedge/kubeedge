@@ -22,6 +22,7 @@ import (
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
 	controllerruntime "sigs.k8s.io/controller-runtime"
@@ -88,9 +89,19 @@ func (h *NodeUpgradeJobReconcileHandler) InitNodesStatus(ctx context.Context, jo
 	if err != nil {
 		job.Status.Phase = operationsv1alpha2.JobPhaseFailure
 		job.Status.Reason = err.Error()
+		setNodeUpgradeJobCondition(job,
+			operationsv1alpha2.NodeUpgradeJobConditionFailed,
+			metav1.ConditionTrue,
+			nodeUpgradeJobReasonNodeVerifyFailed,
+			err.Error())
 		return
 	}
 	job.Status.Phase = operationsv1alpha2.JobPhaseInit
+	setNodeUpgradeJobCondition(job,
+		operationsv1alpha2.NodeUpgradeJobConditionInitialized,
+		metav1.ConditionTrue,
+		nodeUpgradeJobReasonInitialized,
+		"Node upgrade job selected target nodes and initialized node task status.")
 	nodeStatus := make([]operationsv1alpha2.NodeUpgradeJobNodeTaskStatus, 0, len(verifyResult))
 	for _, it := range verifyResult {
 		var phase operationsv1alpha2.NodeTaskPhase
@@ -145,6 +156,9 @@ func (NodeUpgradeJobReconcileHandler) CalculateStatus(ctx context.Context, job *
 	}
 	if job.Status.Reason != reason {
 		job.Status.Reason = reason
+		changed = true
+	}
+	if setNodeUpgradeJobLifecycleConditions(job, phase, failedCount) {
 		changed = true
 	}
 	return changed
@@ -214,6 +228,11 @@ func (h *NodeUpgradeJobReconcileHandler) CheckTimeout(ctx context.Context, jobNa
 	}
 
 	if changed {
+		setNodeUpgradeJobCondition(job,
+			operationsv1alpha2.NodeUpgradeJobConditionTimedOut,
+			metav1.ConditionTrue,
+			nodeUpgradeJobReasonTimedOut,
+			NodeTaskReasonTimeout)
 		if err := h.UpdateJobStatus(ctx, job); err != nil {
 			return err
 		}
