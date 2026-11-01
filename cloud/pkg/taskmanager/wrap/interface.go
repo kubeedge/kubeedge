@@ -18,6 +18,7 @@ package wrap
 
 import (
 	"fmt"
+	"time"
 
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/nodetask/actionflow"
@@ -30,6 +31,9 @@ type NodeJob interface {
 	ResourceType() string
 	// Concurrency returns the concurrency in the node job spec.
 	Concurrency() int
+	// Timeout returns the maximum duration to wait for a node to report a task
+	// action before the task is marked as a timeout failure.
+	Timeout() time.Duration
 	// Spec returns the spec of the node job.
 	Spec() any
 	// Tasks returns the node tasks of the node job.
@@ -52,6 +56,20 @@ type NodeJobTask interface {
 	Action() (*actionflow.Action, error)
 	// GetObject returns the node task object.
 	GetObject() any
+}
+
+// DefaultJobTimeout is the timeout used for a node task when the job spec does
+// not set TimeoutSeconds (or sets it to 0). It matches the default documented
+// on the operations v1alpha2 job specs.
+const DefaultJobTimeout = 300 * time.Second
+
+// jobTimeout converts a spec TimeoutSeconds value to a duration, falling back to
+// DefaultJobTimeout when it is unset or zero.
+func jobTimeout(seconds *uint32) time.Duration {
+	if seconds == nil || *seconds == 0 {
+		return DefaultJobTimeout
+	}
+	return time.Duration(*seconds) * time.Second
 }
 
 // WithEventObj returns the node job wrap based on the event object.
