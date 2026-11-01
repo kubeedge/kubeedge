@@ -597,7 +597,7 @@ func TestListenerManager(t *testing.T) {
 
 		byGVR := lm.GetListenersForGVR(gvr1)
 		assert.NotNil(t, byGVR)
-		assert.Contains(t, byGVR, "listener1")
+		assert.Contains(t, byGVR, listener1)
 
 		listener2 := &SelectorListener{gvr: gvr2, nodeName: "node1", id: "listener2", selector: selector}
 		lm.AddListener(listener2)
@@ -609,11 +609,11 @@ func TestListenerManager(t *testing.T) {
 
 		byGVR = lm.GetListenersForGVR(gvr1)
 		assert.Len(t, byGVR, 1)
-		assert.Contains(t, byGVR, "listener1")
+		assert.Contains(t, byGVR, listener1)
 
 		byGVR = lm.GetListenersForGVR(gvr2)
 		assert.Len(t, byGVR, 1)
-		assert.Contains(t, byGVR, "listener2")
+		assert.Contains(t, byGVR, listener2)
 
 		lm.DeleteListener(listener1)
 
