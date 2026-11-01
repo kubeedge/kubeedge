@@ -25,6 +25,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/emicklei/go-restful"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -392,8 +393,9 @@ func (s *StreamServer) Start() {
 	pool.AppendCertsFromPEM(data)
 
 	streamServer := &http.Server{
-		Addr:    fmt.Sprintf(":%d", config.Config.StreamPort),
-		Handler: s.container,
+		Addr:              fmt.Sprintf(":%d", config.Config.StreamPort),
+		Handler:           s.container,
+		ReadHeaderTimeout: 10 * time.Second,
 		TLSConfig: &tls.Config{
 			ClientCAs: pool,
 			// Populate PeerCertificates in requests, but don't reject connections without verified certificates

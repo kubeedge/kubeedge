@@ -56,8 +56,9 @@ func (rh *RestHandler) Serve() {
 	mux.HandleFunc("/", rh.httpHandler)
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", rh.bindAddress, rh.port),
-		Handler: mux,
+		Addr:              fmt.Sprintf("%s:%d", rh.bindAddress, rh.port),
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
 		// TODO: add tls for router
 	}
 	klog.Infof("router server listening in %d...", rh.port)

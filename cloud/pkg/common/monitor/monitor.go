@@ -79,8 +79,9 @@ func ServeMonitor(config config.MonitorServer) {
 	}
 
 	s := http.Server{
-		Addr:    config.BindAddress,
-		Handler: mux,
+		Addr:              config.BindAddress,
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	go func() {

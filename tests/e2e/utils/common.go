@@ -620,7 +620,11 @@ func StartEchoServer() (string, error) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/echo", echo)
 	mux.HandleFunc("/url", url)
-	server := &http.Server{Addr: "127.0.0.1:9000", Handler: mux}
+	server := &http.Server{
+		Addr:              "127.0.0.1:9000",
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+	}
 	go func() {
 		err := server.ListenAndServe()
 		Errorf("Echo server stop. reason: %s", err.Error())
