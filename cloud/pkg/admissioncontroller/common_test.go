@@ -147,13 +147,14 @@ func TestRegisterMutatingWebhook(t *testing.T) {
 }
 
 func TestServe(t *testing.T) {
-	w := httpfake.NewResponseWriter()
 	hookfn := func(admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 		return &admissionv1.AdmissionResponse{Allowed: true}
 	}
 
 	t.Run("not json content-type", func(_ *testing.T) {
+		w := httpfake.NewResponseWriter()
 		serve(w, &http.Request{
+			Method: http.MethodPost,
 			Header: map[string][]string{
 				"Content-Type": {"application/xml"},
 			},
@@ -161,8 +162,10 @@ func TestServe(t *testing.T) {
 	})
 
 	t.Run("decode body failed", func(_ *testing.T) {
+		w := httpfake.NewResponseWriter()
 		raw := "{"
 		serve(w, &http.Request{
+			Method: http.MethodPost,
 			Header: map[string][]string{
 				"Content-Type": {"application/json"},
 			},
@@ -176,6 +179,7 @@ func TestServe(t *testing.T) {
 		w := httpfake.NewResponseWriter()
 		raw := "{\"apiVersion\": \"admission.k8s.io/v1\", \"kind\": \"AdmissionReview\"}"
 		serve(w, &http.Request{
+			Method: http.MethodPost,
 			Header: map[string][]string{
 				"Content-Type": {"application/json"},
 			},
@@ -190,13 +194,33 @@ func TestServe(t *testing.T) {
 	})
 
 	t.Run("handle hook func", func(_ *testing.T) {
+		w := httpfake.NewResponseWriter()
 		raw := "{\"request\": {\"uid\": \"1\"}}"
 		serve(w, &http.Request{
+			Method: http.MethodPost,
 			Header: map[string][]string{
 				"Content-Type": {"application/json"},
 			},
 			Body: io.NopCloser(bytes.NewReader([]byte(raw))),
 		}, hookfn)
+	})
+
+	t.Run("accepts json content-type with charset", func(t *testing.T) {
+		w := httpfake.NewResponseWriter()
+		serve(w, &http.Request{
+			Method: http.MethodPost,
+			Header: map[string][]string{"Content-Type": {"application/json; charset=utf-8"}},
+			Body:   io.NopCloser(bytes.NewReader([]byte("{\"request\": {\"uid\": \"2\"}}"))),
+		}, hookfn)
+		assert.Equal(t, http.StatusOK, w.Status)
+		assert.Equal(t, "application/json", w.HTTPHeader.Get("Content-Type"))
+	})
+
+	t.Run("rejects non-post method", func(t *testing.T) {
+		w := httpfake.NewResponseWriter()
+		serve(w, &http.Request{Method: http.MethodGet}, hookfn)
+		assert.Equal(t, http.StatusMethodNotAllowed, w.Status)
+		assert.Equal(t, http.MethodPost, w.HTTPHeader.Get("Allow"))
 	})
 }
 
