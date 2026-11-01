@@ -453,8 +453,7 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 			sResp.Code = http.StatusBadRequest
 			sResp.Msg = "can't read data from body of the http's request"
 			if _, err := w.Write(marshalResult(sResp)); err != nil {
-				// TODO: handle err
-				klog.Error(err)
+				klog.Errorf("failed to write http response: %v", err)
 			}
 			return
 		}
@@ -462,8 +461,7 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 			sResp.Code = http.StatusBadRequest
 			sResp.Msg = "invalid params"
 			if _, err := w.Write(marshalResult(sResp)); err != nil {
-				// TODO: handle err
-				klog.Error(err)
+				klog.Errorf("failed to write http response: %v", err)
 			}
 			return
 		}
@@ -471,8 +469,7 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 			sResp.Code = http.StatusBadRequest
 			sResp.Msg = fmt.Sprintf("url %s is not allowed and please make a rule for this url in the cloud", sReq.TargetURL)
 			if _, err := w.Write(marshalResult(sResp)); err != nil {
-				// TODO: handle err
-				klog.Error(err)
+				klog.Errorf("failed to write http response: %v", err)
 			}
 			return
 		}
@@ -483,8 +480,7 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 			sResp.Code = http.StatusBadRequest
 			sResp.Msg = err.Error()
 			if _, err := w.Write(marshalResult(sResp)); err != nil {
-				// TODO: handle err
-				klog.Error(err)
+				klog.Errorf("failed to write http response: %v", err)
 			}
 			return
 		}
@@ -493,8 +489,7 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 			sResp.Code = http.StatusInternalServerError
 			sResp.Msg = err.Error()
 			if _, err := w.Write(marshalResult(sResp)); err != nil {
-				// TODO: handle err
-				klog.Error(err)
+				klog.Errorf("failed to write http response: %v", err)
 			}
 			return
 		}
@@ -503,8 +498,7 @@ func buildBasicHandler(timeout time.Duration) http.Handler {
 		sResp.Msg = "receive response from cloud successfully"
 		sResp.Body = string(resp)
 		if _, err := w.Write(marshalResult(sResp)); err != nil {
-			// TODO: handle err
-			klog.Error(err)
+			klog.Errorf("failed to write http response: %v", err)
 		}
 	})
 }
