@@ -85,6 +85,13 @@ func NewEditDeviceOpts() *DeviceEditOptions {
 }
 
 func (o *DeviceEditOptions) editDevice(args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("device name is required")
+	}
+	if len(args) > 1 {
+		return fmt.Errorf("too many args, edit one device at once")
+	}
+
 	config, err := util.ParseEdgecoreConfig(constants.EdgecoreConfigPath)
 	if err != nil {
 		return fmt.Errorf("get edge config failed with err:%v", err)
@@ -93,27 +100,23 @@ func (o *DeviceEditOptions) editDevice(args []string) error {
 
 	ctx := context.Background()
 
-	if len(args) == 1 {
-		deviceRequest := &client.DeviceRequest{
-			Namespace:  o.Namespace,
-			DeviceName: args[0],
-		}
+	deviceRequest := &client.DeviceRequest{
+		Namespace:  o.Namespace,
+		DeviceName: args[0],
+	}
 
-		device, err := deviceRequest.GetDevice(ctx)
-		if err != nil {
+	device, err := deviceRequest.GetDevice(ctx)
+	if err != nil {
+		return err
+	}
+
+	if device.Spec.NodeName == nodeName {
+		if err = o.edit(device); err != nil {
 			return err
 		}
-
-		if device.Spec.NodeName == nodeName {
-			if err = o.edit(device); err != nil {
-				return err
-			}
-			klog.Infof("Send update message to DeviceTwin")
-		} else {
-			klog.Errorf("Can't query device: \"%s\" for node: \"%s\"", device.Name, device.Spec.NodeName)
-		}
+		klog.Infof("Send update message to DeviceTwin")
 	} else {
-		return fmt.Errorf("too many args, edit one device at once")
+		klog.Errorf("Can't query device: \"%s\" for node: \"%s\"", device.Name, device.Spec.NodeName)
 	}
 
 	return nil
@@ -160,7 +163,7 @@ func (o *DeviceEditOptions) edit(dl *v1beta1.Device) error {
 	jsonEdited := cmdutil.StripComments(edited)
 
 	var editedDevice v1beta1.Device
-	err = json.Unmarshal(jsonEdited, &editedDevice)
+	err = yaml.Unmarshal(jsonEdited, &editedDevice)
 	if err != nil {
 		return preservedFile(err, file)
 	}
