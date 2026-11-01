@@ -293,3 +293,12 @@ func TestParseKey(t *testing.T) {
 		})
 	}
 }
+
+func TestKeyRootFuncNopanic(t *testing.T) {
+	assert := assert.New(t)
+	// nil context should not panic
+	assert.Empty(KeyRootFunc(nil))
+
+	// empty context has no request info, must return "" not panic
+	assert.Empty(KeyRootFunc(context.TODO()))
+}
