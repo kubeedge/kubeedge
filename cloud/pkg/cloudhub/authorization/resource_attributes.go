@@ -23,6 +23,7 @@ import (
 	certificatesv1 "k8s.io/api/certificates/v1"
 	coordinationv1 "k8s.io/api/coordination/v1"
 	v1 "k8s.io/api/core/v1"
+	nodev1 "k8s.io/api/node/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -199,4 +200,5 @@ var resourceTypeToKubeResources = map[string]kubeResource{
 	beehivemodel.ResourceTypePodPatch:                 {resource: "pods", subresource: "status", groupVersion: v1.SchemeGroupVersion, namespaced: true},
 	beehivemodel.ResourceTypeLease:                    {resource: "leases", groupVersion: coordinationv1.SchemeGroupVersion, namespaced: true},
 	beehivemodel.ResourceTypeCSR:                      {resource: "certificatesigningrequests", groupVersion: certificatesv1.SchemeGroupVersion, namespaced: false},
+	beehivemodel.ResourceTypeRuntimeClass:             {resource: "runtimeclasses", groupVersion: nodev1.SchemeGroupVersion, namespaced: false},
 }
