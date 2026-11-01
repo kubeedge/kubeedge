@@ -27,6 +27,7 @@ import (
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/blang/semver"
 	"github.com/stretchr/testify/assert"
+	"helm.sh/helm/v3/pkg/strvals"
 
 	"github.com/kubeedge/kubeedge/common/constants"
 	types "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -382,13 +383,14 @@ func TestRebuildFlagVals(t *testing.T) {
 			},
 		},
 		{
-			name: "With duplicate keys",
+			name: "Duplicate keys preserved for Helm",
 			initialSets: []string{
 				"key1=value1",
 				"key1=value2",
 				"key2=value3",
 			},
 			expectedSets: []string{
+				"key1=value1",
 				"key1=value2",
 				"key2=value3",
 			},
@@ -417,25 +419,98 @@ func TestRebuildFlagVals(t *testing.T) {
 
 			assert.NoError(t, err)
 
-			assert.Equal(t, len(tt.expectedSets), len(cu.Sets))
-
-			expectedMap := make(map[string]bool)
-			for _, set := range tt.expectedSets {
-				expectedMap[set] = true
-			}
-
-			actualMap := make(map[string]bool)
-			for _, set := range cu.Sets {
-				actualMap[set] = true
-			}
-
-			assert.Equal(t, len(expectedMap), len(actualMap))
-
-			for key := range expectedMap {
-				assert.True(t, actualMap[key], "Expected set not found: %s", key)
-			}
+			assert.Equal(t, tt.expectedSets, cu.Sets)
 		})
 	}
+}
+
+func TestRebuildFlagValsPreservesHelmExpressions(t *testing.T) {
+	tests := []struct {
+		name         string
+		initialSets  []string
+		expectedSets []string
+	}{
+		{
+			name: "Comma-separated Helm expression preserved",
+			initialSets: []string{
+				"key1=value1,key2=value2",
+			},
+			expectedSets: []string{
+				"key1=value1,key2=value2",
+			},
+		},
+		{
+			name: "Value containing extra equals sign preserved",
+			initialSets: []string{
+				"token=abc=def",
+			},
+			expectedSets: []string{
+				"token=abc=def",
+			},
+		},
+		{
+			name: "Repeated keys preserve raw sequence for Helm",
+			initialSets: []string{
+				"alpha=1",
+				"beta=2",
+				"alpha=3",
+			},
+			expectedSets: []string{
+				"alpha=1",
+				"beta=2",
+				"alpha=3",
+			},
+		},
+		{
+			name: "Mixed comma and repeated key sequence preserved",
+			initialSets: []string{
+				"a=1",
+				"b=1,a=2",
+				"a=3",
+			},
+			expectedSets: []string{
+				"a=1",
+				"b=1,a=2",
+				"a=3",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cu := &KubeCloudHelmInstTool{
+				Sets: tt.initialSets,
+			}
+
+			err := cu.rebuildFlagVals()
+
+			assert.NoError(t, err)
+
+			assert.Equal(t, tt.expectedSets, cu.Sets)
+		})
+	}
+}
+
+func TestRebuildFlagValsHelmSemantics(t *testing.T) {
+	cu := &KubeCloudHelmInstTool{
+		Sets: []string{
+			"a=1",
+			"b=1,a=2",
+			"a=3",
+		},
+	}
+
+	err := cu.rebuildFlagVals()
+	assert.NoError(t, err)
+
+	vals := map[string]interface{}{}
+	for _, value := range cu.Sets {
+		err := strvals.ParseInto(value, vals)
+		assert.NoError(t, err)
+	}
+
+	assert.Equal(t, int64(3), vals["a"])
+	assert.Equal(t, int64(1), vals["b"])
 }
 
 func TestHandleProfile(t *testing.T) {
