@@ -79,6 +79,27 @@ func TestAddFilterFunc_AppendsMultipleFilters(t *testing.T) {
 	assert.Equal(t, []int{1, 2, 3}, order, "filters must be invoked in registration order")
 }
 
+// TestAddFilterFunc_PreservesExistingFilters verifies that AddFilterFunc
+// appends new filters without replacing previously registered filters.
+func TestAddFilterFunc_PreservesExistingFilters(t *testing.T) {
+	var order []int
+	mf := &MessageFilter{}
+
+	mf.AddFilterFunc(func(msg *model.Message) error {
+		order = append(order, 1)
+		return nil
+	})
+	mf.AddFilterFunc(func(msg *model.Message) error {
+		order = append(order, 2)
+		return nil
+	})
+
+	assert.Len(t, mf.Filters, 2)
+	assert.NoError(t, mf.Filters[0](newMsg("m3")))
+	assert.NoError(t, mf.Filters[1](newMsg("m4")))
+	assert.Equal(t, []int{1, 2}, order, "registered filters should remain addressable in append order")
+}
+
 // ---------------------------------------------------------------------------
 // ProcessFilter
 // ---------------------------------------------------------------------------
