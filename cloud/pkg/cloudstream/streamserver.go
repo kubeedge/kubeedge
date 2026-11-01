@@ -156,10 +156,7 @@ func (s *StreamServer) getContainerLogs(r *restful.Request, w *restful.Response)
 	}
 
 	defer func() {
-		if err != nil {
-			session.DeleteAPIServerConnection(logConnection)
-			klog.Infof("Delete %s from %s", logConnection.String(), session.String())
-		}
+		session.DeleteAPIServerConnection(logConnection)
 	}()
 
 	if err = logConnection.Serve(); err != nil {
