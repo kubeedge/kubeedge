@@ -74,7 +74,14 @@ func (sctl *SyncController) gcOrphanedObjectSync(sync *v1alpha1.ObjectSync) {
 	nodeName := getNodeName(sync.Name)
 	klog.V(4).Infof("%s: %s has been deleted in K8s, send the delete event to edge in sync loop", resourceType, sync.Spec.ObjectName)
 
+	// The GVK has to be stamped explicitly. The object is gone from K8s, so the
+	// body is fabricated here rather than taken from an informer event, and the
+	// edge cannot rebuild the GVK from the message on its own: without it the
+	// delete is rejected by the edge's meta_v2 writer and the object is stranded
+	// there forever.
 	object := &unstructured.Unstructured{}
+	object.SetAPIVersion(sync.Spec.ObjectAPIVersion)
+	object.SetKind(sync.Spec.ObjectKind)
 	object.SetNamespace(sync.Namespace)
 	object.SetName(sync.Spec.ObjectName)
 	object.SetUID(types.UID(getObjectUID(sync.Name)))
