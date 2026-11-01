@@ -28,11 +28,39 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/metaclient"
 )
 
+var (
+	edgeConfirmLongDescription = `
+Send a confirmation signal to the MetaService API to acknowledge
+that the current edge node upgrade has been verified and can proceed.
+
+This command is used as part of the KubeEdge upgrade workflow.
+When an edge node upgrade is held (paused at a checkpoint), the
+user must manually inspect the node and run 'keadm ctl confirm'
+to signal that the upgrade can continue.
+
+Typical workflow:
+  1. Cloud side triggers a node upgrade task.
+  2. EdgeCore pauses at the upgrade checkpoint (hold state).
+  3. User verifies node state, application health, and readiness.
+  4. User runs 'keadm ctl confirm' to release the hold.
+  5. EdgeCore continues and completes the upgrade.
+
+Note: This command must be run directly on the edge node where
+EdgeCore is running. It communicates with the local MetaService
+API (not the cloud).`
+
+	edgeConfirmExample = `
+  # Confirm the pending upgrade on this edge node
+  keadm ctl confirm`
+)
+
 // NewEdgeConfirm returns KubeEdge confirm command.
 func NewEdgeConfirm() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "confirm",
-		Short: "Send a confirmation signal to the MetaService API.",
+		Use:     "confirm",
+		Short:   "Confirm a held upgrade on this edge node.",
+		Long:    edgeConfirmLongDescription,
+		Example: edgeConfirmExample,
 		RunE: func(_cmd *cobra.Command, _args []string) error {
 			ctx := context.Background()
 			clientset, err := metaclient.KubeClient()
