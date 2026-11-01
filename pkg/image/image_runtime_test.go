@@ -27,7 +27,7 @@ import (
 )
 
 func TestGetImageDigest(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
 	image := "docker.io/kubeedge/installation-package:v1.20.0"
 
 	t.Run("failed to get image status", func(t *testing.T) {
