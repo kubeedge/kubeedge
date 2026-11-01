@@ -59,8 +59,11 @@ type TimeoutJob[T NodeJobType] struct {
 	ticker *time.Ticker
 	// handler an ReconcileHandler interface with a CheckTimeout function to check timeout.
 	handler ReconcileHandler[T]
-	// stopped indicates whether the timeout job is stopped.
-	stopped bool
+	// stopCh is closed when the timeout job is stopped. Stopping the ticker does not
+	// close its channel, so Run waits on stopCh to return.
+	stopCh chan struct{}
+	// stopOnce ensures that stopCh is closed only once.
+	stopOnce sync.Once
 }
 
 // NewTimeoutJob creates a new timeout job.
@@ -69,34 +72,32 @@ func NewTimeoutJob[T NodeJobType](jobName string, handler ReconcileHandler[T]) *
 		nodeJobName: jobName,
 		handler:     handler,
 		ticker:      time.NewTicker(10 * time.Second),
+		stopCh:      make(chan struct{}),
 	}
 }
 
 // Run runs the timeout job. It checks the timeout of the node job every 10 seconds(More appropriate frequency).
 func (job *TimeoutJob[T]) Run(ctx context.Context) {
 	logger := klog.FromContext(ctx)
-	if job.stopped {
+	if job.IsStopped() {
 		logger.V(2).Info("timeout job is already stopped")
 		return
 	}
 
 	for {
 		select {
-		case _, ok := <-job.ticker.C:
-			if !ok { // channel closed
-				logger.V(1).Info("ticker is closed")
-				job.stopped = true
-				return
-			}
+		case <-job.ticker.C:
 			if err := job.handler.CheckTimeout(ctx, job.nodeJobName); err != nil {
 				logger.Error(err, "check timeout for job failed")
 				job.ticker.Stop()
 				return
 			}
+		case <-job.stopCh:
+			logger.V(2).Info("timeout job is stopped")
+			return
 		case <-ctx.Done():
 			logger.V(2).Info("timeout job is stopped by context")
-			job.ticker.Stop()
-			job.stopped = true
+			job.Stop(ctx)
 			return
 		}
 	}
@@ -106,11 +107,18 @@ func (job *TimeoutJob[T]) Run(ctx context.Context) {
 func (job *TimeoutJob[T]) Stop(ctx context.Context) {
 	logger := klog.FromContext(ctx)
 	logger.V(1).Info("stop the timeout job")
-	job.ticker.Stop()
-	job.stopped = true
+	job.stopOnce.Do(func() {
+		job.ticker.Stop()
+		close(job.stopCh)
+	})
 }
 
 // IsStopped returns whether the timeout job is stopped.
-func (job TimeoutJob[T]) IsStopped() bool {
-	return job.stopped
+func (job *TimeoutJob[T]) IsStopped() bool {
+	select {
+	case <-job.stopCh:
+		return true
+	default:
+		return false
+	}
 }
