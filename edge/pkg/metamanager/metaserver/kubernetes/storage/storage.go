@@ -459,6 +459,12 @@ func (r *REST) Logs(ctx context.Context, logsInfo common.LogsInfo) (*types.LogsR
 				break
 			}
 		}
+		if container == "" {
+			errMessage := fmt.Sprintf("not found container %s in pod:\"/%s/%s\"", logsInfo.ContainerName, nameSpace, podName)
+			klog.Warningf("[metaserver/logs] %v", errMessage)
+			logsResponse.ErrMessages = append(logsResponse.ErrMessages, errMessage)
+			return logsResponse, nil
+		}
 	} else {
 		container = containers[0].Metadata.Name
 	}
