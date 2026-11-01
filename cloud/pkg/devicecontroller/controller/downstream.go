@@ -210,7 +210,11 @@ func (dc *DownstreamController) getOrCreateDeviceStatusForDevice(device *v1beta1
 		return nil, err
 	}
 
-	return dc.crdClient.DevicesV1beta1().DeviceStatuses(device.Namespace).Create(context.Background(), deviceStatus, metav1.CreateOptions{})
+	deviceStatus, err = dc.crdClient.DevicesV1beta1().DeviceStatuses(device.Namespace).Create(context.Background(), deviceStatus, metav1.CreateOptions{})
+	if apierrors.IsAlreadyExists(err) {
+		return dc.crdClient.DevicesV1beta1().DeviceStatuses(device.Namespace).Get(context.Background(), device.Name, metav1.GetOptions{})
+	}
+	return deviceStatus, err
 }
 
 // createDevice creates a device from CRD

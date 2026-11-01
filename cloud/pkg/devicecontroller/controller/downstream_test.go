@@ -17,11 +17,20 @@ limitations under the License.
 package controller
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kubeedge/api/apis/devices/v1beta1"
+	crdfake "github.com/kubeedge/api/client/clientset/versioned/fake"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/manager"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
+	ktesting "k8s.io/client-go/testing"
 )
 
 func TestRemoveTwinWithNameChanged(t *testing.T) {
@@ -124,4 +133,55 @@ func TestRemoveTwinWithNameChanged(t *testing.T) {
 			assert.Equal(t, tt.expected, tt.deviceStatus.Status.Twins)
 		})
 	}
+}
+
+func TestGetOrCreateDeviceStatusForDeviceHandlesAlreadyExistsRace(t *testing.T) {
+	device := &v1beta1.Device{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: v1beta1.SchemeGroupVersion.String(),
+			Kind:       "Device",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "lite-node",
+			Namespace: "led",
+			UID:       types.UID("device-uid"),
+		},
+	}
+	existingStatus := &v1beta1.DeviceStatus{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: v1beta1.SchemeGroupVersion.String(),
+			Kind:       "DeviceStatus",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      device.Name,
+			Namespace: device.Namespace,
+		},
+	}
+
+	deviceStatuses := schema.GroupResource{Group: v1beta1.GroupName, Resource: "devicestatuses"}
+	getCalls := 0
+	crdClient := crdfake.NewSimpleClientset()
+	crdClient.Fake.PrependReactor("get", "devicestatuses", func(action ktesting.Action) (bool, runtime.Object, error) {
+		getCalls++
+		if getCalls == 1 {
+			return true, nil, apierrors.NewNotFound(deviceStatuses, action.(ktesting.GetAction).GetName())
+		}
+		return true, existingStatus.DeepCopy(), nil
+	})
+	crdClient.Fake.PrependReactor("create", "devicestatuses", func(action ktesting.Action) (bool, runtime.Object, error) {
+		deviceStatus := action.(ktesting.CreateAction).GetObject().(*v1beta1.DeviceStatus)
+		return true, nil, apierrors.NewAlreadyExists(deviceStatuses, deviceStatus.Name)
+	})
+
+	dc := &DownstreamController{
+		crdClient: crdClient,
+		deviceStatusManager: &manager.DeviceStatusManager{
+			DeviceStatus: sync.Map{},
+		},
+	}
+
+	status, err := dc.getOrCreateDeviceStatusForDevice(device)
+	assert.NoError(t, err)
+	assert.Equal(t, existingStatus.Name, status.Name)
+	assert.Equal(t, 2, getCalls)
 }
