@@ -89,7 +89,7 @@ func (sb *ServiceBus) Forward(target provider.Target, data interface{}) (respons
 	}
 	res := make(map[string]interface{})
 	content, err := message.GetContentData()
-	if !ok {
+	if err != nil {
 		klog.Errorf("get message %s content err: %v", message.GetID(), err)
 		return nil, fmt.Errorf("get message %s content err: %v", message.GetID(), err)
 	}
