@@ -17,6 +17,7 @@ limitations under the License.
 package dbclient
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -62,7 +63,29 @@ func (s *MetaService) DeleteMetaByKey(key string) error {
 
 // DeleteMetaByKeyAndPodUID deletes meta by key and podUID from value field
 func (s *MetaService) DeleteMetaByKeyAndPodUID(key, podUID string) (int64, error) {
-	result := s.db.Where("key = ? AND value LIKE ?", key, "%"+podUID+"%").Delete(&models.Meta{})
+	var metas []models.Meta
+	if err := s.db.Where("key = ?", key).Find(&metas).Error; err != nil {
+		klog.Errorf("delete pod by key %s and podUID %s failed, err: %v", key, podUID, err)
+		return 0, err
+	}
+	if len(metas) == 0 {
+		return 0, nil
+	}
+
+	var pod struct {
+		Metadata struct {
+			UID string `json:"uid"`
+		} `json:"metadata"`
+	}
+	if err := json.Unmarshal([]byte(metas[0].Value), &pod); err != nil {
+		klog.Errorf("delete pod by key %s and podUID %s failed, err: %v", key, podUID, err)
+		return 0, err
+	}
+	if pod.Metadata.UID != podUID {
+		return 0, nil
+	}
+
+	result := s.db.Where("key = ?", key).Delete(&models.Meta{})
 	if result.Error != nil {
 		klog.Errorf("delete pod by key %s and podUID %s failed, err: %v", key, podUID, result.Error)
 		return 0, result.Error
