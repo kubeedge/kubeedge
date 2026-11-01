@@ -57,9 +57,9 @@ func (mux *MessageMux) Entry(pattern *MessagePattern, handle func(*MessageContai
 func (mux *MessageMux) extractParameters(expression *MessageExpression, resource string) map[string]string {
 	parameters := make(map[string]string)
 	matches := expression.Matcher.FindStringSubmatch(resource)
-	for index := 1; index < len(matches); index++ {
-		if len(expression.VarNames) >= index {
-			parameters[expression.VarNames[index-1]] = matches[index]
+	for index, varName := range expression.VarNames {
+		if index < len(expression.VarIndexes) && expression.VarIndexes[index] < len(matches) {
+			parameters[varName] = matches[expression.VarIndexes[index]]
 		}
 	}
 	return parameters
