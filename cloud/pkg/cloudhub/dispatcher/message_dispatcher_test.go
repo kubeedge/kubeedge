@@ -19,9 +19,12 @@ package dispatcher
 import (
 	"fmt"
 	"reflect"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
@@ -203,9 +206,7 @@ func TestEnqueueAckMessage(t *testing.T) {
 			ReactorErrors:        tf.NoErrors,
 			InitialMessages:      []*beehivemodel.Message{},
 			CurrentArriveMessage: normalMsg1,
-			ExpectedObjectSyncs: []*v1alpha1.ObjectSync{
-				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "0"), "Pod"),
-			},
+			ExpectedObjectSyncs:  tf.NoObjectSyncs,
 			ExpectedStoreMessage: normalMsg1,
 		},
 		{
@@ -283,7 +284,6 @@ func TestEnqueueAckMessage(t *testing.T) {
 			CurrentArriveMessage: normalMsg3,
 			ExpectedObjectSyncs: []*v1alpha1.ObjectSync{
 				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
-				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestDiffPodUID, "0"), "Pod"),
 			},
 			ExpectedStoreMessage: normalMsg3,
 		},
@@ -404,4 +404,204 @@ func TestDeleteNodeMessagePool(t *testing.T) {
 	if exist {
 		t.Errorf("expected pool not exist but got it")
 	}
+}
+
+func TestEnqueueAckMessage_LazyObjectSyncCreation(t *testing.T) {
+	client := &fake.Clientset{}
+	nmp := common.InitNodeMessagePool(tf.TestNodeID)
+
+	objectSyncIndexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
+	objectSyncLister := synclisters.NewObjectSyncLister(objectSyncIndexer)
+
+	clusterObjectSyncIndexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
+	clusterObjectSyncLister := synclisters.NewClusterObjectSyncLister(clusterObjectSyncIndexer)
+
+	dispatcher := &messageDispatcher{
+		reliableClient:          client,
+		objectSyncLister:        objectSyncLister,
+		clusterObjectSyncLister: clusterObjectSyncLister,
+	}
+	dispatcher.AddNodeMessagePool(tf.TestNodeID, nmp)
+
+	podMsg := tf.NewPodMessage(tf.NewTestPodResource("test-pod", "uid-123", "1"), "update")
+
+	// Call enqueueAckMessage for resource not present in lister cache
+	dispatcher.enqueueAckMessage(tf.TestNodeID, podMsg)
+
+	// Verify message was enqueued into NodeMessagePool
+	item, exist, err := nmp.AckMessageStore.Get(podMsg)
+	if err != nil || !exist || item == nil {
+		t.Fatalf("expected podMsg to be enqueued in AckMessageStore, got exist=%v, err=%v", exist, err)
+	}
+
+	// Verify ZERO K8s API calls were performed against reliableClient (no synchronous Create/Update calls)
+	actions := client.Actions()
+	if len(actions) != 0 {
+		t.Errorf("expected 0 K8s API actions on enqueue, got %d actions: %+v", len(actions), actions)
+	}
+}
+
+// TestSaveSuccessPoint_CreatesObjectSyncOnACK verifies the full lazy creation
+// flow for namespaced resources: enqueue produces zero API calls, and the
+// ObjectSync CR is created with the correct spec and resourceVersion only when
+// the edge node sends an ACK (triggering saveSuccessPoint in NodeSession).
+func TestSaveSuccessPoint_CreatesObjectSyncOnACK(t *testing.T) {
+	client := &fake.Clientset{}
+	nmp := common.InitNodeMessagePool(tf.TestNodeID)
+
+	// Empty lister caches → first-time resource, no ObjectSync in cache
+	objectSyncIndexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
+	objectSyncLister := synclisters.NewObjectSyncLister(objectSyncIndexer)
+	clusterObjectSyncIndexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
+	clusterObjectSyncLister := synclisters.NewClusterObjectSyncLister(clusterObjectSyncIndexer)
+
+	// Wire up a reactor to capture ObjectSync create/update/get actions
+	reactor := tf.NewObjectSyncReactor(client, tf.NoErrors)
+
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	mockConn := mockcon.NewMockConnection(mockController)
+	mockConn.EXPECT().Close().Return(nil).AnyTimes()
+
+	// Set up NodeSession (ACK side)
+	nodeSession := session.NewNodeSession(tf.TestNodeID, tf.TestProjectID, mockConn, tf.KeepaliveInterval, nmp, client)
+	manager := session.NewSessionManager(10)
+	manager.AddSession(nodeSession)
+
+	// Set up dispatcher (enqueue side)
+	dispatcher := &messageDispatcher{
+		reliableClient:          client,
+		SessionManager:          manager,
+		objectSyncLister:        objectSyncLister,
+		clusterObjectSyncLister: clusterObjectSyncLister,
+	}
+	dispatcher.AddNodeMessagePool(tf.TestNodeID, nmp)
+
+	// Simulate edge ACK: WriteMessageAsync succeeds → ReceiveMessageAck closes ackChan → saveSuccessPoint fires
+	mockConn.EXPECT().WriteMessageAsync(gomock.Any()).DoAndReturn(func(msg *beehivemodel.Message) error {
+		nodeSession.ReceiveMessageAck(msg.GetID())
+		return nil
+	}).AnyTimes()
+
+	// Start the session in background (starts SendAckMessage loop)
+	wg := sync.WaitGroup{}
+	stopCh := make(chan struct{})
+	defer func() {
+		close(stopCh)
+		nodeSession.Terminating()
+		wg.Wait()
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		nodeSession.Start()
+	}()
+	// Send keepalives to keep session alive
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		ticker := time.NewTicker(tf.NormalSendKeepaliveInterval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				nodeSession.KeepAliveMessage()
+			case <-stopCh:
+				return
+			}
+		}
+	}()
+
+	// --- Step 1: Enqueue the message ---
+	podResource := tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "5")
+	podMsg := tf.NewPodMessage(podResource, "update")
+	dispatcher.enqueueAckMessage(tf.TestNodeID, podMsg)
+
+	// --- Step 2 & 3: Wait for ACK + saveSuccessPoint and verify ObjectSync creation ---
+	expectedObjectSync := tf.NewObjectSync(podResource, "Pod")
+	assert.Eventually(t, func() bool {
+		return reactor.CheckObjectSyncs([]*v1alpha1.ObjectSync{expectedObjectSync}) == nil
+	}, 2*time.Second, 10*time.Millisecond, "ObjectSync should be created in reactor after ACK")
+}
+
+// TestSaveSuccessPoint_CreatesClusterObjectSyncOnACK verifies the full lazy
+// creation flow for cluster-scoped (non-namespaced) resources: enqueue produces
+// zero API calls, and the ClusterObjectSync CR is created with the correct spec
+// and resourceVersion only when the edge node sends an ACK.
+func TestSaveSuccessPoint_CreatesClusterObjectSyncOnACK(t *testing.T) {
+	client := &fake.Clientset{}
+	nmp := common.InitNodeMessagePool(tf.TestNodeID)
+
+	// Empty lister caches → first-time resource
+	objectSyncIndexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
+	objectSyncLister := synclisters.NewObjectSyncLister(objectSyncIndexer)
+	clusterObjectSyncIndexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
+	clusterObjectSyncLister := synclisters.NewClusterObjectSyncLister(clusterObjectSyncIndexer)
+
+	// Wire up reactors for both ObjectSync and ClusterObjectSync
+	tf.NewObjectSyncReactor(client, tf.NoErrors)
+	clusterReactor := tf.NewClusterObjectSyncReactor(client, tf.NoErrors)
+
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	mockConn := mockcon.NewMockConnection(mockController)
+	mockConn.EXPECT().Close().Return(nil).AnyTimes()
+
+	nodeSession := session.NewNodeSession(tf.TestNodeID, tf.TestProjectID, mockConn, tf.KeepaliveInterval, nmp, client)
+	manager := session.NewSessionManager(10)
+	manager.AddSession(nodeSession)
+
+	dispatcher := &messageDispatcher{
+		reliableClient:          client,
+		SessionManager:          manager,
+		objectSyncLister:        objectSyncLister,
+		clusterObjectSyncLister: clusterObjectSyncLister,
+	}
+	dispatcher.AddNodeMessagePool(tf.TestNodeID, nmp)
+
+	// Simulate edge ACK
+	mockConn.EXPECT().WriteMessageAsync(gomock.Any()).DoAndReturn(func(msg *beehivemodel.Message) error {
+		nodeSession.ReceiveMessageAck(msg.GetID())
+		return nil
+	}).AnyTimes()
+
+	wg := sync.WaitGroup{}
+	stopCh := make(chan struct{})
+	defer func() {
+		close(stopCh)
+		nodeSession.Terminating()
+		wg.Wait()
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		nodeSession.Start()
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		ticker := time.NewTicker(tf.NormalSendKeepaliveInterval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				nodeSession.KeepAliveMessage()
+			case <-stopCh:
+				return
+			}
+		}
+	}()
+
+	// --- Step 1: Enqueue a non-namespaced (cluster-scoped) resource ---
+	nodeResource := tf.NewTestNodeResource(tf.TestClusterNodeName, tf.TestClusterNodeUID, "3")
+	nodeMsg := tf.NewNodeMessage(nodeResource, "update")
+	dispatcher.enqueueAckMessage(tf.TestNodeID, nodeMsg)
+
+	// --- Step 2 & 3: Wait for ACK + saveSuccessPoint and verify ClusterObjectSync creation ---
+	expectedClusterObjectSync := tf.NewClusterObjectSync(nodeResource, "Node")
+	assert.Eventually(t, func() bool {
+		return clusterReactor.CheckClusterObjectSyncs([]*v1alpha1.ClusterObjectSync{expectedClusterObjectSync}) == nil
+	}, 2*time.Second, 10*time.Millisecond, "ClusterObjectSync should be created in reactor after ACK")
 }
