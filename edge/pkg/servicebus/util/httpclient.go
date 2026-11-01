@@ -86,12 +86,11 @@ func GetURLClient(option *URLClientOption) (client *URLClient, err error) {
 	if option == nil {
 		option = DefaultURLClientOption
 	} else {
-		switch {
-		case option.HandshakeTimeout == 0:
+		if option.HandshakeTimeout == 0 {
 			option.HandshakeTimeout = DefaultURLClientOption.HandshakeTimeout
-			fallthrough
-		case option.ResponseHeaderTimeout == 0:
-			option.ResponseHeaderTimeout = DefaultURLClientOption.HandshakeTimeout
+		}
+		if option.ResponseHeaderTimeout == 0 {
+			option.ResponseHeaderTimeout = DefaultURLClientOption.ResponseHeaderTimeout
 		}
 	}
 

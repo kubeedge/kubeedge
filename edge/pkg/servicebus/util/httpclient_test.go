@@ -74,6 +74,51 @@ func TestURLClient_SSL(t *testing.T) {
 	}
 }
 
+func TestGetURLClientPreservesTimeoutOptions(t *testing.T) {
+	tests := []struct {
+		name                  string
+		option                *URLClientOption
+		handshakeTimeout      time.Duration
+		responseHeaderTimeout time.Duration
+	}{
+		{
+			name: "preserves configured response timeout",
+			option: &URLClientOption{
+				ResponseHeaderTimeout: 5 * time.Second,
+			},
+			handshakeTimeout:      DefaultURLClientOption.HandshakeTimeout,
+			responseHeaderTimeout: 5 * time.Second,
+		},
+		{
+			name: "uses response timeout default independently",
+			option: &URLClientOption{
+				HandshakeTimeout: 5 * time.Second,
+			},
+			handshakeTimeout:      5 * time.Second,
+			responseHeaderTimeout: DefaultURLClientOption.ResponseHeaderTimeout,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			client, err := GetURLClient(test.option)
+			if err != nil {
+				t.Fatalf("GetURLClient error: %v", err)
+			}
+			transport, ok := client.Transport.(*http.Transport)
+			if !ok {
+				t.Fatalf("expected *http.Transport, got %T", client.Transport)
+			}
+			if transport.TLSHandshakeTimeout != test.handshakeTimeout {
+				t.Errorf("expected handshake timeout %s, got %s", test.handshakeTimeout, transport.TLSHandshakeTimeout)
+			}
+			if transport.ResponseHeaderTimeout != test.responseHeaderTimeout {
+				t.Errorf("expected response header timeout %s, got %s", test.responseHeaderTimeout, transport.ResponseHeaderTimeout)
+			}
+		})
+	}
+}
+
 func TestSignRequest(t *testing.T) {
 	mockSignRequest := func(req *http.Request) error {
 		req.Header.Set("Authorization", "Bearer token")
