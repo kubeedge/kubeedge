@@ -26,6 +26,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/common"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcommon"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dtcontext"
 	"github.com/kubeedge/kubeedge/edge/pkg/devicetwin/dttype"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/mocks"
@@ -118,6 +119,8 @@ func TestDealDeviceStateUpdate(t *testing.T) {
 	dtContexts.DeviceList.Store("DeviceC", "DeviceC")
 	deviceD := &dttype.Device{ID: "DeviceD"}
 	dtContexts.DeviceList.Store("DeviceD", deviceD)
+	// Register CommModule channel so context.Send succeeds in tests
+	dtContexts.CommChan[dtcommon.CommModule] = make(chan interface{}, 128)
 	bytesEmptyDevUpdate, err := json.Marshal(emptyDevUpdate)
 	if err != nil {
 		t.Errorf("marshal error %v", err)
@@ -508,3 +511,207 @@ func generateTestMessageAttributes() map[string]*dttype.MsgAttr {
 		},
 	}
 }
+
+// TestUpdateDeviceAttrTransFailure tests that DeviceAttrTrans failure is returned
+// by UpdateDeviceAttr (Issue #6904, reviewer issue 3).
+func TestUpdateDeviceAttrTransFailure(t *testing.T) {
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+	defer func() {
+		DeviceServiceFactory = originalDeviceServiceFactory
+		MembershipServiceFactory = MembershipServiceFactory
+	}()
+
+	dtContexts, _ := dtcontext.InitDTContext()
+	// Register CommModule channel
+	dtContexts.CommChan[dtcommon.CommModule] = make(chan interface{}, 128)
+
+	devA := &dttype.Device{ID: "DeviceA", Attributes: make(map[string]*dttype.MsgAttr)}
+	dtContexts.DeviceList.Store("DeviceA", devA)
+
+	errDBAttr := errors.New("attr DB write failure")
+	messageAttributes := generateTestMessageAttributes()
+	baseMessage := dttype.BuildBaseMessage()
+
+	// Setup mock for device service with DeviceAttrTrans failure
+	mockService := mocks.NewMockDeviceService()
+	mockService.DeviceAttrTransFunc = func(adds []models.DeviceAttr, deletes []models.DeviceDelete, updates []models.DeviceAttrUpdate) error {
+		return errDBAttr
+	}
+
+	DeviceServiceFactory = func() interface {
+		UpdateDeviceFields(deviceID string, cols map[string]interface{}) error
+		DeviceAttrTrans(adds []models.DeviceAttr, deletes []models.DeviceDelete, updates []models.DeviceAttrUpdate) error
+	} {
+		return mockService
+	}
+
+	// Setup mock for membership service (used by SyncDeviceFromSqlite)
+	mockMembershipService := mocks.NewMockDeviceService()
+	mockMembershipService.QueryDeviceFunc = func(key, condition string) ([]models.Device, error) {
+		return []models.Device{{ID: "DeviceA", Name: "DeviceA"}}, nil
+	}
+	mockMembershipService.QueryDeviceAttrFunc = func(key, condition string) (*[]models.DeviceAttr, error) {
+		return &[]models.DeviceAttr{}, nil
+	}
+	mockMembershipService.QueryDeviceTwinFunc = func(key, condition string) (*[]models.DeviceTwin, error) {
+		return &[]models.DeviceTwin{}, nil
+	}
+
+	origMembershipFactory := MembershipServiceFactory
+	MembershipServiceFactory = func() interface {
+		AddDeviceTrans(adds []models.Device, addAttrs []models.DeviceAttr, addTwins []models.DeviceTwin) error
+		DeleteDeviceTrans(deletes []string) error
+		QueryDevice(key string, condition string) ([]models.Device, error)
+		QueryDeviceAttr(key, condition string) (*[]models.DeviceAttr, error)
+		QueryDeviceTwin(key, condition string) (*[]models.DeviceTwin, error)
+	} {
+		return mockMembershipService
+	}
+	defer func() {
+		MembershipServiceFactory = origMembershipFactory
+	}()
+
+	// Test UpdateDeviceAttr directly
+	_, err := UpdateDeviceAttr(dtContexts, "DeviceA", messageAttributes, baseMessage, 0)
+	if err == nil {
+		t.Fatal("UpdateDeviceAttr() returned nil, want error")
+	}
+	if !errors.Is(err, errDBAttr) {
+		t.Errorf("UpdateDeviceAttr() error = %v, want error wrapping %v", err, errDBAttr)
+	}
+
+	// Test dealDeviceAttrUpdate propagates the same error
+	devA2 := &dttype.Device{ID: "DeviceA2", Attributes: make(map[string]*dttype.MsgAttr)}
+	dtContexts.DeviceList.Store("DeviceA2", devA2)
+
+	devUpdate := &dttype.DeviceUpdate{
+		Attributes: messageAttributes,
+	}
+	bytesDevUpdate, _ := json.Marshal(devUpdate)
+	err = dealDeviceAttrUpdate(dtContexts, "DeviceA2", &model.Message{Content: bytesDevUpdate})
+	if err == nil {
+		t.Fatal("dealDeviceAttrUpdate() returned nil, want error")
+	}
+	if !errors.Is(err, errDBAttr) {
+		t.Errorf("dealDeviceAttrUpdate() error = %v, want error wrapping %v", err, errDBAttr)
+	}
+}
+
+// TestDealDeviceStateUpdateDBFailure tests that a database failure in
+// dealDeviceStateUpdate is returned (Issue #6904, reviewer issue 3).
+func TestDealDeviceStateUpdateDBFailure(t *testing.T) {
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+	defer func() {
+		DeviceServiceFactory = originalDeviceServiceFactory
+	}()
+
+	dtContexts, _ := dtcontext.InitDTContext()
+	dtContexts.CommChan[dtcommon.CommModule] = make(chan interface{}, 128)
+
+	deviceD := &dttype.Device{ID: "DeviceD"}
+	dtContexts.DeviceList.Store("DeviceD", deviceD)
+
+	errDBUpdate := errors.New("DB update failure")
+	mockService := mocks.NewMockDeviceService()
+	mockService.UpdateDeviceFieldsFunc = func(deviceID string, cols map[string]interface{}) error {
+		return errDBUpdate
+	}
+
+	DeviceServiceFactory = func() interface {
+		UpdateDeviceFields(deviceID string, cols map[string]interface{}) error
+		DeviceAttrTrans(adds []models.DeviceAttr, deletes []models.DeviceDelete, updates []models.DeviceAttrUpdate) error
+	} {
+		return mockService
+	}
+
+	devUpdate := &dttype.DeviceUpdate{State: "online"}
+	bytesDevUpdate, _ := json.Marshal(devUpdate)
+
+	err := dealDeviceStateUpdate(dtContexts, "DeviceD", &model.Message{Content: bytesDevUpdate})
+	if err == nil {
+		t.Fatal("dealDeviceStateUpdate() returned nil, want error")
+	}
+	if !errors.Is(err, errDBUpdate) {
+		t.Errorf("dealDeviceStateUpdate() error = %v, want error wrapping %v", err, errDBUpdate)
+	}
+}
+
+// TestDealDeviceStateUpdateSuccess tests that a successful update emits
+// both edge result and cloud update messages (Issue #6904, reviewer issue 3).
+func TestDealDeviceStateUpdateSuccess(t *testing.T) {
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+	defer func() {
+		DeviceServiceFactory = originalDeviceServiceFactory
+	}()
+
+	dtContexts, _ := dtcontext.InitDTContext()
+	commChan := make(chan interface{}, 128)
+	dtContexts.CommChan[dtcommon.CommModule] = commChan
+
+	deviceE := &dttype.Device{ID: "DeviceE", Name: "TestDevice"}
+	dtContexts.DeviceList.Store("DeviceE", deviceE)
+
+	mockService := mocks.NewMockDeviceService()
+	mockService.UpdateDeviceFieldsFunc = func(deviceID string, cols map[string]interface{}) error {
+		return nil
+	}
+
+	DeviceServiceFactory = func() interface {
+		UpdateDeviceFields(deviceID string, cols map[string]interface{}) error
+		DeviceAttrTrans(adds []models.DeviceAttr, deletes []models.DeviceDelete, updates []models.DeviceAttrUpdate) error
+	} {
+		return mockService
+	}
+
+	devUpdate := &dttype.DeviceUpdate{State: "online"}
+	bytesDevUpdate, _ := json.Marshal(devUpdate)
+
+	err := dealDeviceStateUpdate(dtContexts, "DeviceE", &model.Message{Content: bytesDevUpdate})
+	if err != nil {
+		t.Fatalf("dealDeviceStateUpdate() returned error: %v", err)
+	}
+
+	// Should have received 2 messages on the comm channel: edge result + cloud update
+	msgCount := len(commChan)
+	if msgCount < 2 {
+		t.Errorf("Expected at least 2 messages on comm channel, got %d", msgCount)
+	}
+}
+
+// TestDealDeviceStateUpdateMissingChannel tests that dealDeviceStateUpdate
+// returns an error when the CommModule channel is not registered, i.e.
+// context.Send fails after a successful DB update (Issue #6904, reviewer issue 3).
+func TestDealDeviceStateUpdateMissingChannel(t *testing.T) {
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+	defer func() {
+		DeviceServiceFactory = originalDeviceServiceFactory
+	}()
+
+	dtContexts, _ := dtcontext.InitDTContext()
+	// Deliberately do NOT register CommModule channel so context.Send will fail
+	delete(dtContexts.CommChan, dtcommon.CommModule)
+
+	deviceF := &dttype.Device{ID: "DeviceF"}
+	dtContexts.DeviceList.Store("DeviceF", deviceF)
+
+	mockService := mocks.NewMockDeviceService()
+	mockService.UpdateDeviceFieldsFunc = func(deviceID string, cols map[string]interface{}) error {
+		return nil
+	}
+
+	DeviceServiceFactory = func() interface {
+		UpdateDeviceFields(deviceID string, cols map[string]interface{}) error
+		DeviceAttrTrans(adds []models.DeviceAttr, deletes []models.DeviceDelete, updates []models.DeviceAttrUpdate) error
+	} {
+		return mockService
+	}
+
+	devUpdate := &dttype.DeviceUpdate{State: "online"}
+	bytesDevUpdate, _ := json.Marshal(devUpdate)
+
+	err := dealDeviceStateUpdate(dtContexts, "DeviceF", &model.Message{Content: bytesDevUpdate})
+	if err == nil {
+		t.Fatal("dealDeviceStateUpdate() returned nil, want error for missing channel")
+	}
+}
+
