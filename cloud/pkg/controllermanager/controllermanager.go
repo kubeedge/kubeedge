@@ -20,7 +20,6 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager/edgeapplication"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager/nodegroup"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager/nodetask"
-	"github.com/kubeedge/kubeedge/pkg/features"
 )
 
 var kubeedgeScheme = runtime.NewScheme()
@@ -74,13 +73,9 @@ func setupControllers(ctx context.Context, mgr manager.Manager) error {
 		nodegroup.NewController(cli),
 		edgeapplication.NewController(ctx, cli, serializer, mgr),
 	}
-	if !features.DefaultFeatureGate.Enabled(features.DisableNodeTaskV1alpha2) {
-		ctls = append(ctls, nodetask.NewImagePrePullJobController(cli, che))
-		ctls = append(ctls, nodetask.NewConfigUpdateJobController(cli, che))
-		ctls = append(ctls, nodetask.NewNodeUpgradeJobController(cli, che))
-	} else {
-		klog.V(1).Info("disabled the node task v1alpha2")
-	}
+	ctls = append(ctls, nodetask.NewImagePrePullJobController(cli, che))
+	ctls = append(ctls, nodetask.NewConfigUpdateJobController(cli, che))
+	ctls = append(ctls, nodetask.NewNodeUpgradeJobController(cli, che))
 
 	klog.V(1).Info("start setup controllers")
 	for i := range ctls {
