@@ -39,9 +39,12 @@ KubeEdge consists of cloud part and edge part.
 
 ### In the Cloud
 - [CloudHub](https://kubeedge.io/en/docs/architecture/cloud/cloudhub): a web socket server responsible for watching changes at the cloud side, caching and sending messages to EdgeHub.
-- [EdgeController](https://kubeedge.io/en/docs/architecture/cloud/edge_controller): an extended kubernetes controller which manages edge nodes and pods metadata so that the data can be targeted to a specific edge node.
-- [DeviceController](https://kubeedge.io/en/docs/architecture/cloud/device_controller): an extended kubernetes controller which manages devices so that the device metadata/status data can be synced between edge and cloud.
-
+- [EdgeController](https://kubeedge.io/en/docs/architecture/cloud/edge_controller): an extended Kubernetes controller which manages edge nodes and pods metadata so that the data can be targeted to a specific edge node.
+- [DeviceController](https://kubeedge.io/en/docs/architecture/cloud/device_controller): an extended Kubernetes controller which manages devices so that the device metadata/status data can be synced between edge and cloud.
+- [SyncController](https://kubeedge.io/en/docs/architecture/cloud/synccontroller): an extended Kubernetes controller which is responsible for reliable data transmission between cloud and edge. It periodically checks meta data that persist on edge and cloud, trigger reconcile if necessary.
+- [DynamicController](https://kubeedge.io/en/docs/architecture/cloud/dynamiccontroller): an extended Kubernetes controller which is based on Kubernetes dynamic client, allows client on the edge node list/watch common Kubernetes resource and custom resources.
+- [ControllerManager](https://kubeedge.io/en/docs/architecture/cloud/controller_manager): Manage two extended Kubernetes controllers, called NodeGroupController and EdgeApplicationController, which takes over the lifetime management of NodeGroup and EdgeApplication respectively.  
+- [NodeUpgradeJobController](https://kubeedge.io/en/docs/architecture/cloud/nodeupgradejob_controller): an extended Kubernetes controller which manages node upgrade jobs and synchronize the edge node upgrade status between cloud and edge so that users can upgrade edge nodes from the cloud.
 
 ### On the Edge
 - [EdgeHub](https://kubeedge.io/en/docs/architecture/edge/edgehub): a web socket client responsible for interacting with Cloud Service for the edge computing (like Edge Controller as in the KubeEdge Architecture). This includes syncing cloud-side resource updates to the edge, and reporting edge-side host and device status changes to the cloud.
@@ -50,6 +53,7 @@ KubeEdge consists of cloud part and edge part.
 - [ServiceBus](https://kubeedge.io/en/docs/architecture/edge/servicebus): an HTTP client to interact with HTTP servers (REST), offering HTTP client capabilities to components of cloud to reach HTTP servers running at edge.
 - [DeviceTwin](https://kubeedge.io/en/docs/architecture/edge/devicetwin): responsible for storing device status and syncing device status to the cloud. It also provides query interfaces for applications.
 - [MetaManager](https://kubeedge.io/en/docs/architecture/edge/metamanager): the message processor between edged and edgehub. It is also responsible for storing/retrieving metadata to/from a lightweight database (SQLite).
+- [MetaServer](https://kubeedge.io/en/docs/architecture/edge/metaserver): starts an HTTP server and acts as an edge api-server for Kubernetes operators. It proxies the Kubernetes resource request to the dynamic controller in the cloud, and if node is offline, the MetaServer will request the edge local storage for a workaround.
 
 ## Kubernetes compatibility
 
