@@ -41,7 +41,7 @@ import (
 )
 
 var (
-	edgePodGetShortDescription = `Get pods in edge node`
+	edgePodGetShortDescription = `Get pods on an edge node`
 )
 
 type PodGetOptions struct {

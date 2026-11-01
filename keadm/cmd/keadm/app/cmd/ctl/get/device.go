@@ -35,7 +35,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
-var edgeDeviceGetShortDescription = `Get devices in edge node`
+var edgeDeviceGetShortDescription = `Get devices on an edge node`
 
 type DeviceGetOptions struct {
 	Namespace     string
