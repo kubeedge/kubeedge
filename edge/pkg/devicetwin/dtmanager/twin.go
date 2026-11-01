@@ -838,7 +838,7 @@ func dealTwinAdd(returnResult *dttype.DealTwinResult, deviceID string, key strin
 		}
 	}
 
-	if msgTwin.Expected != nil {
+	if msgTwin.Expected != nil && msgTwin.Expected.Value != nil {
 		version := &dttype.TwinVersion{}
 		var msgTwinExpectedVersion *dttype.TwinVersion
 		if dealType != RestDealType {
@@ -881,7 +881,7 @@ func dealTwinAdd(returnResult *dttype.DealTwinResult, deviceID string, key strin
 		}
 	}
 
-	if msgTwin.Actual != nil {
+	if msgTwin.Actual != nil && msgTwin.Actual.Value != nil {
 		version := &dttype.TwinVersion{}
 		var msgTwinActualVersion *dttype.TwinVersion
 		if dealType != RestDealType {
