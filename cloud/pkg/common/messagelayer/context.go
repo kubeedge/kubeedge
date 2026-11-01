@@ -71,6 +71,10 @@ func isRouterMsg(message model.Message) bool {
 	return len(resourceArray) == 2 && (resourceArray[0] == model.ResourceTypeRule || resourceArray[0] == model.ResourceTypeRuleEndpoint)
 }
 
+// EdgeControllerMessageLayer returns a MessageLayer configured for the
+// EdgeController module. Messages are sent via CloudHub and optionally
+// routed to the Router module when the message resource matches a rule
+// or ruleEndpoint type.
 func EdgeControllerMessageLayer() MessageLayer {
 	return &ContextMessageLayer{
 		SendModuleName:       modules.CloudHubModuleName,
@@ -80,6 +84,8 @@ func EdgeControllerMessageLayer() MessageLayer {
 	}
 }
 
+// DeviceControllerMessageLayer returns a MessageLayer configured for the
+// DeviceController module. Messages are sent and responded to via CloudHub.
 func DeviceControllerMessageLayer() MessageLayer {
 	return &ContextMessageLayer{
 		SendModuleName:     modules.CloudHubModuleName,
@@ -88,6 +94,8 @@ func DeviceControllerMessageLayer() MessageLayer {
 	}
 }
 
+// DynamicControllerMessageLayer returns a MessageLayer configured for the
+// DynamicController module. Messages are sent and responded to via CloudHub.
 func DynamicControllerMessageLayer() MessageLayer {
 	return &ContextMessageLayer{
 		SendModuleName:     modules.CloudHubModuleName,
@@ -96,6 +104,8 @@ func DynamicControllerMessageLayer() MessageLayer {
 	}
 }
 
+// TaskManagerMessageLayer returns a MessageLayer configured for the
+// TaskManager module. Messages are sent and responded to via CloudHub.
 func TaskManagerMessageLayer() MessageLayer {
 	return &ContextMessageLayer{
 		SendModuleName:     modules.CloudHubModuleName,
@@ -104,6 +114,8 @@ func TaskManagerMessageLayer() MessageLayer {
 	}
 }
 
+// PolicyControllerMessageLayer returns a MessageLayer configured for the
+// PolicyController module. Messages are sent and responded to via CloudHub.
 func PolicyControllerMessageLayer() MessageLayer {
 	return &ContextMessageLayer{
 		SendModuleName:     modules.CloudHubModuleName,
