@@ -29,7 +29,7 @@ import (
 func Create(ca, caKey []byte, intervalTime time.Duration) (string, error) {
 	// set double intervalTime as expirationTime, which can guarantee that the validity period
 	// of the token obtained at anytime is greater than or equal to intervalTime.
-	expiresAt := time.Now().Add(time.Hour * intervalTime * 2)
+	expiresAt := time.Now().Add(intervalTime * 2)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(expiresAt),
