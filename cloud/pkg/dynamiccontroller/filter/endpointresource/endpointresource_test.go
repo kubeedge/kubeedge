@@ -191,6 +191,9 @@ func TestFilterEndpointSlice(t *testing.T) {
 		},
 		Endpoints: []discovery.Endpoint{
 			{
+				Addresses: []string{"192.168.1.0"},
+			},
+			{
 				Addresses: []string{"192.168.1.1"},
 				NodeName:  &n1,
 			},
@@ -213,6 +216,7 @@ func TestFilterEndpointSlice(t *testing.T) {
 
 	assert.Len(t, result.Endpoints, 1, "Should only include endpoints from node1")
 	assert.Equal(t, nodeName1, *result.Endpoints[0].NodeName)
+	assert.Equal(t, []string{"192.168.1.1"}, result.Endpoints[0].Addresses)
 }
 
 // func TestFilterEndpoints(t *testing.T) {
