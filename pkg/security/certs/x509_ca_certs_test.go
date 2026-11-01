@@ -31,6 +31,9 @@ func TestSignX509Certs(t *testing.T) {
 		Province:     []string{"Zhejiang"},
 		CommonName:   "test-node",
 	}, certpkw, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	opts := SignCertsOptionsWithCSR(csrblock.Bytes, cablock.Bytes, capkw.DER(),
 		[]x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}, 24*time.Hour)
