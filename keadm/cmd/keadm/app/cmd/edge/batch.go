@@ -235,8 +235,15 @@ func batchProcessNodes(cfg *common.Config, logWriter *bufio.Writer) error {
 	if cfg.MaxRunNum == 0 {
 		cfg.MaxRunNum = defaultMaxRunNum
 	}
+	type batchNodeResult struct {
+		nodeName string
+		message  string
+		err      error
+	}
+
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, cfg.MaxRunNum)
+	results := make(chan batchNodeResult, len(cfg.Nodes))
 	for _, node := range cfg.Nodes {
 		wg.Add(1)
 		go func(node common.Node) {
@@ -244,23 +251,37 @@ func batchProcessNodes(cfg *common.Config, logWriter *bufio.Writer) error {
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
-			var result string
+			result := batchNodeResult{nodeName: node.NodeName}
 			if err := processNode(&node, cfg); err != nil {
-				result = fmt.Sprintf("Failed to process node %s: %v", node.NodeName, err)
-				klog.Error(result)
+				result.err = err
+				result.message = fmt.Sprintf("Failed to process node %s: %v", node.NodeName, err)
+				klog.Error(result.message)
 			} else {
-				result = fmt.Sprintf("Successfully processed node %s", node.NodeName)
-				klog.Info(result)
+				result.message = fmt.Sprintf("Successfully processed node %s", node.NodeName)
+				klog.Info(result.message)
 			}
-
-			// Log result to file
-			_, err := logWriter.WriteString(result + "\n")
-			if err != nil {
-				klog.Errorf("Failed to write log entry for node %s: %v", node.NodeName, err)
-			}
+			results <- result
 		}(node)
 	}
+
 	wg.Wait()
+	close(results)
+
+	failedNodes := 0
+	for result := range results {
+		if result.err != nil {
+			failedNodes++
+		}
+
+		// Log result to file from a single goroutine.
+		if _, err := logWriter.WriteString(result.message + "\n"); err != nil {
+			klog.Errorf("Failed to write log entry for node %s: %v", result.nodeName, err)
+		}
+	}
+
+	if failedNodes > 0 {
+		return errors.Errorf("%d node(s) failed", failedNodes)
+	}
 	return nil
 }
 
