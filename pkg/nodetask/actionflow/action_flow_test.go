@@ -49,3 +49,51 @@ func TestFound(t *testing.T) {
 	require.NotNil(t, FlowNodeUpgradeJob.Find(string(v1alpha2.NodeUpgradeJobActionRollBack)))
 	require.Nil(t, FlowNodeUpgradeJob.Find("unknown"))
 }
+
+func TestImagePrePullActionFlow(t *testing.T) {
+	check := FlowImagePrePullJob.First
+	require.Equal(t, string(v1alpha2.ImagePrePullJobActionCheck), check.Name)
+	require.Nil(t, check.Next(false))
+	pulls := check.Next(true)
+	require.Equal(t, string(v1alpha2.ImagePrePullJobActionPull), pulls.Name)
+	require.Nil(t, pulls.Next(true))
+	require.Nil(t, pulls.Next(false))
+}
+
+func TestConfigUpdateActionFlow(t *testing.T) {
+	check := FlowConfigUpdateJob.First
+	require.Equal(t, string(v1alpha2.ConfigUpdateJobActionCheck), check.Name)
+	require.Nil(t, check.Next(false))
+	backUp := check.Next(true)
+	require.Equal(t, string(v1alpha2.ConfigUpdateJobActionBackUp), backUp.Name)
+	require.Nil(t, backUp.Next(false))
+	update := backUp.Next(true)
+	require.Equal(t, string(v1alpha2.ConfigUpdateJobActionUpdate), update.Name)
+	require.Nil(t, update.Next(true))
+	rollback := update.Next(false)
+	require.Equal(t, string(v1alpha2.ConfigUpdateJobActionRollBack), rollback.Name)
+}
+
+func TestFoundAllFlows(t *testing.T) {
+	// ImagePrePullJob
+	require.NotNil(t, FlowImagePrePullJob.Find(string(v1alpha2.ImagePrePullJobActionCheck)))
+	require.NotNil(t, FlowImagePrePullJob.Find(string(v1alpha2.ImagePrePullJobActionPull)))
+	require.Nil(t, FlowImagePrePullJob.Find("unknown"))
+
+	// ConfigUpdateJob -- RollBack hangs off NextFailure; this was the broken case
+	require.NotNil(t, FlowConfigUpdateJob.Find(string(v1alpha2.ConfigUpdateJobActionCheck)))
+	require.NotNil(t, FlowConfigUpdateJob.Find(string(v1alpha2.ConfigUpdateJobActionBackUp)))
+	require.NotNil(t, FlowConfigUpdateJob.Find(string(v1alpha2.ConfigUpdateJobActionUpdate)))
+	require.NotNil(t, FlowConfigUpdateJob.Find(string(v1alpha2.ConfigUpdateJobActionRollBack)))
+	require.Nil(t, FlowConfigUpdateJob.Find("unknown"))
+}
+
+func TestFindWithNilFlow(t *testing.T) {
+	var f *Flow
+	require.Nil(t, f.Find("anything"))
+}
+
+func TestFindWithEmptyFlow(t *testing.T) {
+	f := &Flow{}
+	require.Nil(t, f.Find("anything"))
+}
