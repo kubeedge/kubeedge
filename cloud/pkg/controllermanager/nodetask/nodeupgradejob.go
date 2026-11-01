@@ -20,6 +20,7 @@ import (
 	"context"
 	"runtime/debug"
 
+	"k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -33,10 +34,10 @@ type NodeUpgradeJobController struct {
 	handler ReconcileHandler[operationsv1alpha2.NodeUpgradeJob]
 }
 
-func NewNodeUpgradeJobController(cli client.Client, che cache.Cache,
+func NewNodeUpgradeJobController(cli client.Client, che cache.Cache, recorder record.EventRecorder,
 ) *NodeUpgradeJobController {
 	return &NodeUpgradeJobController{
-		handler: NewNodeUpgradeJobReconcileHandler(cli, che),
+		handler: NewNodeUpgradeJobReconcileHandler(cli, che, recorder),
 	}
 }
 
