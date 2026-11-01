@@ -1,0 +1,20 @@
+{
+  "tasks": [
+    {
+      "id": "my_example_task_for_golang",
+      "inputFilePath": "./cloud/pkg/admissioncontroller/mutate_offlinemigration.go",
+      "inputFileProcessMethod": "by_function",
+      "prompt": "Please help me create unit test file for this function, here is the function:",
+      "outputProcessMethod": "regex_match",
+      "outputFilePath": "./cloud/pkg/admissioncontroller/mutate_offlinemigration{{index}}_test.go"
+    },
+    {
+      "id": "my_example_task_for_golang",
+      "inputFilePath": "./cloud/pkg/admissioncontroller/admit_rule.go",
+      "inputFileProcessMethod": "by_function",
+      "prompt": "Please help me create unit test file for this function, here is the function:",
+      "outputProcessMethod": "regex_match",
+      "outputFilePath": "./cloud/pkg/admissioncontroller/admit_rule{{index}}_test.go"
+    }
+  ]
+}
