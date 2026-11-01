@@ -17,11 +17,17 @@ limitations under the License.
 package dispatcher
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	coretesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
@@ -33,6 +39,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	tf "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/testing"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/session"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	mockcon "github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn/testing"
 )
 
@@ -209,6 +216,28 @@ func TestEnqueueAckMessage(t *testing.T) {
 			ExpectedStoreMessage: normalMsg1,
 		},
 		{
+			Name:                 "new message is queued when objectSync create fails",
+			InitialObjectSyncs:   tf.NoObjectSyncs,
+			ReactorErrors:        []tf.ReactorError{{Verb: "create", Resource: "objectsyncs", Error: errors.New("create err")}},
+			InitialMessages:      []*beehivemodel.Message{},
+			CurrentArriveMessage: normalMsg1,
+			ExpectedObjectSyncs:  tf.NoObjectSyncs,
+			ExpectedStoreMessage: normalMsg1,
+		},
+		{
+			Name: "message with empty objectSync status is queued",
+			InitialObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, ""), "Pod"),
+			},
+			ReactorErrors:        tf.NoErrors,
+			InitialMessages:      []*beehivemodel.Message{},
+			CurrentArriveMessage: normalMsg1,
+			ExpectedObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "0"), "Pod"),
+			},
+			ExpectedStoreMessage: normalMsg1,
+		},
+		{
 			Name: "message with large resource version than already exist objectSync arrives, no message in store",
 			InitialObjectSyncs: []*v1alpha1.ObjectSync{
 				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod"),
@@ -358,6 +387,48 @@ func TestEnqueueAckMessage(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			executeTest(t, test)
 		})
+	}
+}
+
+func TestEnqueueAckMessageClusterObjectSync(t *testing.T) {
+	client := fake.NewSimpleClientset()
+	client.Fake.PrependReactor("create", "clusterobjectsyncs", func(coretesting.Action) (bool, runtime.Object, error) {
+		return true, nil, errors.New("create err")
+	})
+
+	nmp := common.InitNodeMessagePool(tf.TestNodeID)
+	objectSyncIndexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
+	clusterObjectSyncIndexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{})
+
+	dispatcher := &messageDispatcher{
+		reliableClient:          client,
+		SessionManager:          session.NewSessionManager(10),
+		objectSyncLister:        synclisters.NewObjectSyncLister(objectSyncIndexer),
+		clusterObjectSyncLister: synclisters.NewClusterObjectSyncLister(clusterObjectSyncIndexer),
+	}
+	dispatcher.AddNodeMessagePool(tf.TestNodeID, nmp)
+
+	node := &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            tf.TestNodeID,
+			ResourceVersion: "1",
+			UID:             types.UID(tf.TestPodUID),
+		},
+	}
+	resource := fmt.Sprintf("node/%s/%s/node/%s", tf.TestNodeID, models.NullNamespace, node.Name)
+	msg := beehivemodel.NewMessage("").
+		SetResourceVersion(node.ResourceVersion).
+		FillBody(node).
+		BuildRouter("edgecontroller", "resource", resource, "update")
+
+	dispatcher.enqueueAckMessage(tf.TestNodeID, msg)
+
+	item, _, _ := nmp.AckMessageStore.Get(msg)
+	if item == nil {
+		t.Fatal("expected message to be queued")
+	}
+	if !reflect.DeepEqual(item.(*beehivemodel.Message), msg) {
+		t.Errorf("expected: %+v, got %+v", msg, item)
 	}
 }
 
