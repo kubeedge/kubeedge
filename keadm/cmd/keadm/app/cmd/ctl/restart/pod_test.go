@@ -59,3 +59,12 @@ func TestAddRestartPodFlags(t *testing.T) {
 	assert.Equal("default", namespaceFlag.DefValue)
 	assert.Equal("namespace", namespaceFlag.Name)
 }
+
+func TestPodRestartRequiresPodName(t *testing.T) {
+	assert := assert.New(t)
+	cmd := NewEdgePodRestart()
+
+	err := cmd.RunE(cmd, []string{})
+	assert.Error(err)
+	assert.Equal("no pod specified for restart", err.Error())
+}
