@@ -1,4 +1,4 @@
-﻿package tdengine
+package tdengine
 
 import (
 	"database/sql"
@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -18,6 +19,24 @@ import (
 var (
 	DB *sql.DB
 )
+
+// identifierRegexp defines allowed characters in SQL identifiers to prevent
+// SQL injection when table names are derived from user-controlled data such
+// as device names, namespaces, and property names.
+var identifierRegexp = regexp.MustCompile(`^[a-zA-Z0-9_\-/.]+$`)
+
+// sanitizeIdentifier validates that a SQL identifier (table name, column name)
+// contains only safe characters. This prevents SQL injection when identifiers
+// are constructed from user-controlled input.
+func sanitizeIdentifier(name string) error {
+	if name == "" {
+		return fmt.Errorf("identifier must not be empty")
+	}
+	if !identifierRegexp.MatchString(name) {
+		return fmt.Errorf("identifier %q contains invalid characters, only alphanumeric characters, underscores, hyphens, dots, and slashes are allowed", name)
+	}
+	return nil
+}
 
 type DataBaseConfig struct {
 	TDEngineClientConfig *TDEngineClientConfig `json:"config,omitempty"`
@@ -63,6 +82,13 @@ func (d *DataBaseConfig) AddData(data *common.DataModel) error {
 	legalTable := strings.Replace(tableName, "-", "_", -1)
 	legalTag := strings.Replace(data.PropertyName, "-", "_", -1)
 
+	if err := sanitizeIdentifier(legalTable); err != nil {
+		return fmt.Errorf("invalid table name: %v", err)
+	}
+	if err := sanitizeIdentifier(legalTag); err != nil {
+		return fmt.Errorf("invalid tag name: %v", err)
+	}
+
 	stableName := fmt.Sprintf("SHOW STABLES LIKE '%s'", legalTable)
 	stable := fmt.Sprintf("CREATE STABLE %s (ts timestamp, deviceid binary(64), propertyname binary(64), data binary(64),type binary(64)) TAGS (location binary(64));", legalTable)
 
@@ -99,6 +125,9 @@ func (d *DataBaseConfig) AddData(data *common.DataModel) error {
 	return nil
 }
 func (d *DataBaseConfig) GetDataByDeviceID(deviceID string) ([]*common.DataModel, error) {
+	if err := sanitizeIdentifier(deviceID); err != nil {
+		return nil, fmt.Errorf("invalid device ID for table name: %v", err)
+	}
 	querySql := fmt.Sprintf("SELECT ts, deviceid, propertyname, data, type FROM %s", deviceID)
 	rows, err := DB.Query(querySql)
 	if err != nil {
@@ -127,11 +156,14 @@ func (d *DataBaseConfig) GetPropertyDataByDeviceID(deviceID string, propertyData
 func (d *DataBaseConfig) GetDataByTimeRange(deviceID string, start int64, end int64) ([]*common.DataModel, error) {
 
 	legalTable := strings.Replace(deviceID, "-", "_", -1)
+	if err := sanitizeIdentifier(legalTable); err != nil {
+		return nil, fmt.Errorf("invalid device ID for table name: %v", err)
+	}
 	startTime := time.Unix(start, 0).UTC().Format("2006-01-02 15:04:05")
 	endTime := time.Unix(end, 0).UTC().Format("2006-01-02 15:04:05")
 	//Query data within a specified time range
 	querySQL := fmt.Sprintf("SELECT ts, deviceid, propertyname, data, type FROM %s WHERE ts >= '%s' AND ts <= '%s'", legalTable, startTime, endTime)
-	fmt.Println(querySQL)
+	klog.V(4).Infof("query SQL: %s", querySQL)
 	rows, err := DB.Query(querySQL)
 	if err != nil {
 		return nil, err
