@@ -59,6 +59,77 @@ type TwinWorker struct {
 	Group string
 }
 
+type twinDBBatch struct {
+	adds     []models.DeviceTwin
+	deletes  []models.DeviceDelete
+	updates  []models.DeviceTwinUpdate
+	deviceID string
+	context  *dtcontext.DTContext
+}
+
+var (
+	twinDBBatchChan = make(chan twinDBBatch, 1000)
+)
+
+func init() {
+	go startTwinDBBatcher()
+}
+
+func startTwinDBBatcher() {
+	var adds []models.DeviceTwin
+	var deletes []models.DeviceDelete
+	var updates []models.DeviceTwinUpdate
+
+	// Map to keep track of deviceIDs that need syncing on failure
+	deviceContexts := make(map[string]*dtcontext.DTContext)
+
+	ticker := time.NewTicker(50 * time.Millisecond)
+	for {
+		select {
+		case batch := <-twinDBBatchChan:
+			adds = append(adds, batch.adds...)
+			deletes = append(deletes, batch.deletes...)
+			updates = append(updates, batch.updates...)
+			if batch.context != nil {
+				deviceContexts[batch.deviceID] = batch.context
+			}
+			if len(adds)+len(deletes)+len(updates) >= 100 {
+				executeTwinDBBatch(&adds, &deletes, &updates, deviceContexts)
+			}
+		case <-ticker.C:
+			if len(adds)+len(deletes)+len(updates) > 0 {
+				executeTwinDBBatch(&adds, &deletes, &updates, deviceContexts)
+			}
+		}
+	}
+}
+
+func executeTwinDBBatch(adds *[]models.DeviceTwin, deletes *[]models.DeviceDelete, updates *[]models.DeviceTwinUpdate, deviceContexts map[string]*dtcontext.DTContext) {
+	var err error
+	for i := 1; i <= dtcommon.RetryTimes; i++ {
+		err = TwinServiceFactory().DeviceTwinTrans(*adds, *deletes, *updates)
+		if err == nil {
+			break
+		}
+		time.Sleep(dtcommon.RetryInterval)
+	}
+	if err != nil {
+		klog.Errorf("Update device twin failed due to writing sql error: %v", err)
+		for deviceID, ctx := range deviceContexts {
+			if syncErr := SyncDeviceFromSqlite(ctx, deviceID); syncErr != nil {
+				klog.Error(syncErr)
+			}
+		}
+	}
+
+	*adds = nil
+	*deletes = nil
+	*updates = nil
+	for k := range deviceContexts {
+		delete(deviceContexts, k)
+	}
+}
+
 // Start worker
 func (tw TwinWorker) Start() {
 	initTwinActionCallBack()
@@ -234,19 +305,29 @@ func DealDeviceTwin(context *dtcontext.DTContext, deviceID string, eventID strin
 		return err
 	}
 	if len(add) != 0 || len(deletes) != 0 || len(update) != 0 {
-		for i := 1; i <= dtcommon.RetryTimes; i++ {
-			err = TwinServiceFactory().DeviceTwinTrans(add, deletes, update)
-			if err == nil {
-				break
+		if dealType == RestDealType {
+			for i := 1; i <= dtcommon.RetryTimes; i++ {
+				err = TwinServiceFactory().DeviceTwinTrans(add, deletes, update)
+				if err == nil {
+					break
+				}
+				time.Sleep(dtcommon.RetryInterval)
 			}
-			time.Sleep(dtcommon.RetryInterval)
-		}
-		if err != nil {
-			if err := SyncDeviceFromSqlite(context, deviceID); err != nil {
-				// TODO: handle error
-				klog.Error(err)
+			if err != nil {
+				if err := SyncDeviceFromSqlite(context, deviceID); err != nil {
+					// TODO: handle error
+					klog.Error(err)
+				}
+				klog.Errorf("Update device twin failed due to writing sql error: %v", err)
 			}
-			klog.Errorf("Update device twin failed due to writing sql error: %v", err)
+		} else {
+			twinDBBatchChan <- twinDBBatch{
+				adds:     add,
+				deletes:  deletes,
+				updates:  update,
+				deviceID: deviceID,
+				context:  context,
+			}
 		}
 	}
 
