@@ -273,22 +273,7 @@ func (im *Manager) listenCloudCore(ctx context.Context) {
 	_, err := podInformer.Informer().AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
 			DeleteFunc: func(obj interface{}) {
-				// listen pod delete event
-				pod, ok := obj.(*v1.Pod)
-				if !ok {
-					klog.Warningf("object type: %T unsupported when listen CloudCore pod delete", obj)
-					return
-				}
-				value, ok := pod.Labels[constants.SystemName]
-				if ok && value == constants.CloudConfigMapName {
-					// only handle coudcore pod delete
-					podIP := pod.Status.PodIP
-					if len(podIP) == 0 {
-						return
-					}
-					// find deleted cloudcore pod, put it in queue
-					im.enqueuePod(pod)
-				}
+				im.handleCloudCorePodDelete(obj)
 			},
 		},
 	)
@@ -296,6 +281,29 @@ func (im *Manager) listenCloudCore(ctx context.Context) {
 		klog.Fatalf("new podInformer failed, add event handler err: %v", err)
 	}
 	podInformer.Informer().Run(ctx.Done())
+}
+
+func (im *Manager) handleCloudCorePodDelete(obj interface{}) {
+	if tombstone, ok := obj.(cache.DeletedFinalStateUnknown); ok {
+		obj = tombstone.Obj
+	}
+
+	pod, ok := obj.(*v1.Pod)
+	if !ok {
+		klog.Warningf("object type: %T unsupported when listen CloudCore pod delete", obj)
+		return
+	}
+
+	value, ok := pod.Labels[constants.SystemName]
+	if ok && value == constants.CloudConfigMapName {
+		// only handle coudcore pod delete
+		podIP := pod.Status.PodIP
+		if len(podIP) == 0 {
+			return
+		}
+		// find deleted cloudcore pod, put it in queue
+		im.enqueuePod(pod)
+	}
 }
 
 func (im *Manager) CleanCloudCoreIPPort(ctx context.Context, pod *v1.Pod) error {
