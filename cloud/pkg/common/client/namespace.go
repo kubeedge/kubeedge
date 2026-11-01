@@ -23,6 +23,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// CreateNamespaceIfNeeded ensures the given namespace exists in the cluster.
+// If the namespace already exists the function returns nil. Concurrent
+// creation races are handled gracefully via an AlreadyExists check.
 func CreateNamespaceIfNeeded(ctx context.Context, ns string) error {
 	cli := GetKubeClient()
 	c := cli.CoreV1()
