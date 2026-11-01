@@ -674,6 +674,47 @@ func TestEventHandlerObjectConversion(t *testing.T) {
 		}
 	})
 
+	t.Run("Delete tombstone object", func(t *testing.T) {
+		freshHandler := &CommonResourceEventHandler{
+			events: make(chan watch.Event, 10),
+		}
+
+		freshHandler.objToEvent(watch.Deleted, cache.DeletedFinalStateUnknown{
+			Key: "default/test-deployment",
+			Obj: testObj,
+		})
+
+		select {
+		case event := <-freshHandler.events:
+			assert.Equal(t, watch.Deleted, event.Type)
+			actualObj, ok := event.Object.(*unstructured.Unstructured)
+			if assert.True(t, ok, "Expected *unstructured.Unstructured, got %T", event.Object) {
+				assert.Equal(t, testObj.GetName(), actualObj.GetName())
+				assert.Equal(t, testObj.GetNamespace(), actualObj.GetNamespace())
+				assert.Equal(t, testObj.GetLabels(), actualObj.GetLabels())
+			}
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("No event received for tombstone object")
+		}
+	})
+
+	t.Run("Delete invalid tombstone object", func(t *testing.T) {
+		freshHandler := &CommonResourceEventHandler{
+			events: make(chan watch.Event, 10),
+		}
+
+		freshHandler.objToEvent(watch.Deleted, cache.DeletedFinalStateUnknown{
+			Key: "default/test-deployment",
+			Obj: "not-a-runtime-object",
+		})
+
+		select {
+		case <-freshHandler.events:
+			t.Fatal("Unexpected event received for invalid tombstone object")
+		default:
+		}
+	})
+
 	t.Run("SetMetaType error", func(t *testing.T) {
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
