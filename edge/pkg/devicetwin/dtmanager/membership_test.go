@@ -498,6 +498,51 @@ func TestDealMembershipUpdate(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "remove device db error",
+			update: dttype.MembershipUpdate{
+				BaseMessage: dttype.BaseMessage{
+					EventID: "test-event",
+				},
+				RemoveDevices: []dttype.Device{validDevice},
+			},
+			setupMock: func(m *mocks.MockDeviceService) {
+				m.DeleteDeviceTransFunc = func(deletes []string) error {
+					return errors.New("db error")
+				}
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid add device",
+			update: dttype.MembershipUpdate{
+				BaseMessage: dttype.BaseMessage{
+					EventID: "test-event",
+				},
+				AddDevices: []dttype.Device{validDevice},
+			},
+			setupMock: func(m *mocks.MockDeviceService) {
+				m.AddDeviceTransFunc = func(adds []models.Device, addAttrs []models.DeviceAttr, addTwins []models.DeviceTwin) error {
+					return nil
+				}
+			},
+			wantErr: false,
+		},
+		{
+			name: "add device db error",
+			update: dttype.MembershipUpdate{
+				BaseMessage: dttype.BaseMessage{
+					EventID: "test-event",
+				},
+				AddDevices: []dttype.Device{validDevice},
+			},
+			setupMock: func(m *mocks.MockDeviceService) {
+				m.AddDeviceTransFunc = func(adds []models.Device, addAttrs []models.DeviceAttr, addTwins []models.DeviceTwin) error {
+					return errors.New("db error")
+				}
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
