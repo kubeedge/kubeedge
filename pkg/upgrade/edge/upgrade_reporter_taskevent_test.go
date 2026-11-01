@@ -34,6 +34,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	edgeconfig "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	fsmv1alpha1 "github.com/kubeedge/api/apis/fsm/v1alpha1"
@@ -50,19 +51,19 @@ func makeTLSServerSignedByCA(
 	t.Helper()
 
 	serverKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	serverTemplate := &x509.Certificate{
 		SerialNumber: big.NewInt(99),
 		Subject:      pkix.Name{CommonName: "127.0.0.1"},
 		DNSNames:     []string{"localhost"},
-		IPAddresses:  []net.IP{net.ParseIP("127.0.0.1")}, // ← add this
+		IPAddresses:  []net.IP{net.ParseIP("127.0.0.1")},
 		NotBefore:    time.Now().Add(-time.Minute),
 		NotAfter:     time.Now().Add(time.Hour),
 	}
 
 	serverDER, err := x509.CreateCertificate(rand.Reader, serverTemplate, caCert, &serverKey.PublicKey, caKey)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	srv := httptest.NewUnstartedServer(handler)
 	srv.TLS = &tls.Config{
@@ -89,9 +90,8 @@ func TestNewTaskEventReporter(t *testing.T) {
 }
 
 func TestReport(t *testing.T) {
-	// ── Build a test CA ──────────────────────────────────────────────────────
 	caKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	caTemplate := &x509.Certificate{
 		SerialNumber:          big.NewInt(1),
@@ -102,32 +102,48 @@ func TestReport(t *testing.T) {
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 		BasicConstraintsValid: true,
 	}
+
 	caDER, err := x509.CreateCertificate(rand.Reader, caTemplate, caTemplate, &caKey.PublicKey, caKey)
-	assert.NoError(t, err)
+	require.NoError(t, err)
+
 	caCert, err := x509.ParseCertificate(caDER)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	// Write CA cert PEM to a temp file — this is what os.ReadFile reads in
-	// ReportTaskResult.
 	caFile, err := os.CreateTemp("", "test-ca-*.crt")
-	assert.NoError(t, err)
-	defer os.Remove(caFile.Name())
-	assert.NoError(t, pem.Encode(caFile, &pem.Block{Type: "CERTIFICATE", Bytes: caDER}))
-	assert.NoError(t, caFile.Close())
+	require.NoError(t, err)
+	defer func() { _ = os.Remove(caFile.Name()) }()
+	require.NoError(t, pem.Encode(caFile, &pem.Block{Type: "CERTIFICATE", Bytes: caDER}))
+	require.NoError(t, caFile.Close())
 
-	// Empty temp files for TLSCertFile / TLSPrivateKeyFile.
-	// LoadX509KeyPair will fail on these but the error is ignored in source.
-	dummyCert, err := os.CreateTemp("", "dummy-cert-*.crt")
-	assert.NoError(t, err)
-	defer os.Remove(dummyCert.Name())
-	dummyCert.Close()
+	// Generate a valid client certificate signed by the CA
+	clientKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
 
-	dummyKey, err := os.CreateTemp("", "dummy-key-*.key")
-	assert.NoError(t, err)
-	defer os.Remove(dummyKey.Name())
-	dummyKey.Close()
+	clientTemplate := &x509.Certificate{
+		SerialNumber: big.NewInt(2),
+		Subject:      pkix.Name{CommonName: "test-client"},
+		NotBefore:    time.Now().Add(-time.Minute),
+		NotAfter:     time.Now().Add(time.Hour),
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
 
-	// ── Table-driven cases ───────────────────────────────────────────────────
+	clientDER, err := x509.CreateCertificate(rand.Reader, clientTemplate, caTemplate, &clientKey.PublicKey, caKey)
+	require.NoError(t, err)
+
+	dummyCert, err := os.CreateTemp("", "test-client-*.crt")
+	require.NoError(t, err)
+	defer func() { _ = os.Remove(dummyCert.Name()) }()
+	require.NoError(t, pem.Encode(dummyCert, &pem.Block{Type: "CERTIFICATE", Bytes: clientDER}))
+	require.NoError(t, dummyCert.Close())
+
+	dummyKey, err := os.CreateTemp("", "test-client-*.key")
+	require.NoError(t, err)
+	defer func() { _ = os.Remove(dummyKey.Name()) }()
+	clientKeyBytes, err := x509.MarshalPKCS8PrivateKey(clientKey)
+	require.NoError(t, err)
+	require.NoError(t, pem.Encode(dummyKey, &pem.Block{Type: "PRIVATE KEY", Bytes: clientKeyBytes}))
+	require.NoError(t, dummyKey.Close())
+
 	tests := []struct {
 		name           string
 		reportErr      error
@@ -147,7 +163,6 @@ func TestReport(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Buffered so the handler never blocks.
 			actionCh := make(chan fsmv1alpha1.Action, 1)
 
 			mockServer := makeTLSServerSignedByCA(t, caCert, caKey,
@@ -167,8 +182,7 @@ func TestReport(t *testing.T) {
 					TLSCAFile:         caFile.Name(),
 					TLSCertFile:       dummyCert.Name(),
 					TLSPrivateKeyFile: dummyKey.Name(),
-					// mockServer.URL is "https://127.0.0.1:<port>"
-					HTTPServer: mockServer.URL,
+					HTTPServer:        mockServer.URL,
 				},
 				Edged: &edgeconfig.Edged{
 					TailoredKubeletFlag: edgeconfig.TailoredKubeletFlag{
@@ -184,23 +198,19 @@ func TestReport(t *testing.T) {
 			}
 
 			reportErr := reporter.Report(tt.reportErr)
-			// TLS handshake succeeds (server cert chained to our CA) and the
-			// mock returns 200, so Report() should return nil.
 			assert.NoError(t, reportErr)
 
 			select {
 			case got := <-actionCh:
 				assert.Equal(t, tt.expectedAction, got,
 					"action sent in POST body did not match expected mapping")
-			default:
-				t.Error("mock server did not receive a request — check TLS handshake")
+			case <-time.After(3 * time.Second):
+				t.Error("timed out waiting for mock server to receive request")
 			}
 		})
 	}
 }
 
-// TestReportTaskResult_MissingCAFile verifies that a missing CA file produces
-// a clear error before any network activity occurs.
 func TestReportTaskResult_MissingCAFile(t *testing.T) {
 	config := &edgeconfig.EdgeCoreConfig{}
 	config.Modules = &edgeconfig.Modules{
@@ -217,4 +227,33 @@ func TestReportTaskResult_MissingCAFile(t *testing.T) {
 	err := ReportTaskResult(config, TaskTypeUpgrade, "job1", fsm.Event{})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to read ca")
+}
+
+func TestReportTaskResult_InvalidClientCert(t *testing.T) {
+	caFile, err := os.CreateTemp("", "test-ca-*.crt")
+	require.NoError(t, err)
+	defer func() { _ = os.Remove(caFile.Name()) }()
+	
+	// Create dummy non-empty file for CA to pass the read check
+	_, err = caFile.Write([]byte("dummy-ca"))
+	require.NoError(t, err)
+	require.NoError(t, caFile.Close())
+
+	config := &edgeconfig.EdgeCoreConfig{}
+	config.Modules = &edgeconfig.Modules{
+		EdgeHub: &edgeconfig.EdgeHub{
+			TLSCAFile:         caFile.Name(),
+			TLSCertFile:       "/invalid/cert/path",
+			TLSPrivateKeyFile: "/invalid/key/path",
+		},
+		Edged: &edgeconfig.Edged{
+			TailoredKubeletFlag: edgeconfig.TailoredKubeletFlag{
+				HostnameOverride: "test-node",
+			},
+		},
+	}
+
+	err = ReportTaskResult(config, TaskTypeUpgrade, "job1", fsm.Event{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to load client certificate")
 }
