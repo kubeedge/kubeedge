@@ -17,12 +17,37 @@ limitations under the License.
 package controller
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 
 	"github.com/kubeedge/api/apis/devices/v1beta1"
+	crdClientset "github.com/kubeedge/api/client/clientset/versioned"
+	"github.com/kubeedge/beehive/pkg/common"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/manager"
+	"github.com/kubeedge/kubeedge/cloud/pkg/devicecontroller/types"
 )
+
+type responseRecorder struct {
+	responses chan model.Message
+}
+
+func (r *responseRecorder) Send(model.Message) error { return nil }
+
+func (r *responseRecorder) Receive() (model.Message, error) { return model.Message{}, nil }
+
+func (r *responseRecorder) Response(message model.Message) error {
+	r.responses <- message
+	return nil
+}
 
 func TestNewUpstreamController(t *testing.T) {
 	assert := assert.New(t)
@@ -238,4 +263,83 @@ func TestFindTwinByName(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUpdateDeviceStatusRejectsOtherNode(t *testing.T) {
+	assert := assert.New(t)
+
+	var patches int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPatch {
+			atomic.AddInt32(&patches, 1)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte("{}"))
+	}))
+	defer server.Close()
+
+	crdClient, err := crdClientset.NewForConfig(&rest.Config{Host: server.URL})
+	assert.NoError(err)
+
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+
+	device := &v1beta1.Device{
+		ObjectMeta: metav1.ObjectMeta{Name: "sensor", Namespace: "default"},
+		Spec:       v1beta1.DeviceSpec{NodeName: "edge-a"},
+	}
+	deviceStatus := &v1beta1.DeviceStatus{
+		ObjectMeta: metav1.ObjectMeta{Name: "sensor", Namespace: "default"},
+		Status:     v1beta1.DeviceStatusStatus{State: "online"},
+	}
+	dc := &DownstreamController{
+		crdClient:           crdClient,
+		deviceManager:       &manager.DeviceManager{},
+		deviceStatusManager: &manager.DeviceStatusManager{},
+	}
+	dc.deviceManager.Device.Store("default/sensor", device)
+	dc.deviceStatusManager.DeviceStatus.Store("default/sensor", deviceStatus)
+
+	recorder := &responseRecorder{responses: make(chan model.Message, 4)}
+	uc := &UpstreamController{
+		crdClient:        crdClient,
+		messageLayer:     recorder,
+		deviceTwinsChan:  make(chan model.Message, 4),
+		deviceStatesChan: make(chan model.Message, 4),
+		dc:               dc,
+	}
+	go uc.updateDeviceStatus()
+
+	stateMsg := func(nodeID, state string) model.Message {
+		return *model.NewMessage("").
+			BuildRouter("edgehub", "twin", "node/"+nodeID+"/device/default/sensor/state/update", model.UpdateOperation).
+			FillBody(types.DeviceStateUpdate{Device: types.Device{State: state}})
+	}
+	twinMsg := func(nodeID string) model.Message {
+		value := "42"
+		return *model.NewMessage("").
+			BuildRouter("edgehub", "twin", "node/"+nodeID+"/device/default/sensor/twin/edge_updated", model.UpdateOperation).
+			FillBody(types.DeviceTwinUpdate{Twin: map[string]*types.MsgTwin{
+				"temperature": {Actual: &types.TwinValue{Value: &value}},
+			}})
+	}
+
+	// Updates from a node the device is not bound to must be dropped.
+	uc.deviceStatesChan <- stateMsg("edge-b", "offline")
+	uc.deviceTwinsChan <- twinMsg("edge-b")
+	time.Sleep(200 * time.Millisecond)
+	assert.Len(recorder.responses, 0)
+	assert.Equal(int32(0), atomic.LoadInt32(&patches))
+	assert.Equal("online", deviceStatus.Status.State)
+	assert.Empty(deviceStatus.Status.Twins)
+
+	// Updates from the owning node are still applied.
+	uc.deviceStatesChan <- stateMsg("edge-a", "offline")
+	select {
+	case resp := <-recorder.responses:
+		assert.Equal("node/edge-a/twin", resp.GetResource())
+	case <-time.After(5 * time.Second):
+		t.Fatal("no response for update from owning node")
+	}
+	assert.Equal(int32(1), atomic.LoadInt32(&patches))
+	assert.Equal("offline", deviceStatus.Status.State)
 }
