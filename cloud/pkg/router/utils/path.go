@@ -34,6 +34,33 @@ func IsMatch(reg, path string) bool {
 	return match
 }
 
+func pathPattern(reg string) string {
+	var pattern strings.Builder
+	last := 0
+	for _, param := range paramRegex.FindAllStringIndex(reg, -1) {
+		pattern.WriteString(regexp.QuoteMeta(reg[last:param[0]]))
+		pattern.WriteString(pathRegex)
+		last = param[1]
+	}
+	pattern.WriteString(regexp.QuoteMeta(reg[last:]))
+	return pattern.String()
+}
+
+func IsPathMatch(reg, path string) bool {
+	tail := "(/.*)?$"
+	if strings.HasSuffix(reg, "/") {
+		tail = "(/.*)$"
+		reg = strings.TrimSuffix(reg, "/")
+	}
+	pattern := "^" + pathPattern(reg) + tail
+	match, err := regexp.MatchString(pattern, path)
+	if err != nil {
+		klog.Errorf("failed to validate res %s and reqPath %s, err: %v", reg, path, err)
+		return false
+	}
+	return match
+}
+
 // RuleContains return true if rule 1 contains rule 2, e.g., path /a contains /a/b
 func RuleContains(rulePath, rule2Path string) bool {
 	path1 := strings.Split(rulePath, "/")
