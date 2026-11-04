@@ -2,12 +2,16 @@ package imitator
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
@@ -17,6 +21,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
+	metaserverconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver/config"
 )
 
 func TestMain(m *testing.M) {
@@ -25,6 +30,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	dao.Init(filepath.Join(dir, "edgecore.db"), &edgecorev1alpha2.MetaManager{Enable: true})
+	metaserverconfig.Config.NodeName = "edge-node"
 	code := m.Run()
 	os.RemoveAll(dir)
 	os.Exit(code)
@@ -369,5 +375,310 @@ func TestInjectDeleteWithoutRVPodPatchFails(t *testing.T) {
 	}
 	if n := len(storedPods(t, s)); n != 0 {
 		t.Errorf("meta_v2 holds %d pods after the delete, want 0", n)
+	}
+}
+
+func objMessage(op string, obj *unstructured.Unstructured) model.Message {
+	ns := obj.GetNamespace()
+	if ns == "" {
+		ns = "null"
+	}
+	return *model.NewMessage("").
+		BuildRouter("dynamiccontroller", "resource", ns+"/"+strings.ToLower(obj.GetKind())+"/"+obj.GetName(), op).
+		FillBody(obj.Object)
+}
+
+func testObj(apiVersion, kind, ns, name, uid, rv string) *unstructured.Unstructured {
+	obj := &unstructured.Unstructured{}
+	obj.SetAPIVersion(apiVersion)
+	obj.SetKind(kind)
+	obj.SetNamespace(ns)
+	obj.SetName(name)
+	obj.SetUID(k8stypes.UID(uid))
+	obj.SetResourceVersion(rv)
+	return obj
+}
+
+// namespaceStub is the body of the Namespace DELETE that synccontroller resends: no resourceVersion.
+func namespaceStub(name, uid string) *unstructured.Unstructured {
+	return testObj("v1", "Namespace", "", name, uid, "")
+}
+
+func storedKeys(t *testing.T) []string {
+	t.Helper()
+	var keys []string
+	if err := dao.GetDB().Raw("SELECT key FROM meta_v2 ORDER BY key").Scan(&keys).Error; err != nil {
+		t.Fatal(err)
+	}
+	return keys
+}
+
+// fillNamespaces stores namespace ns1 with a slice, a Service and a pod, and a slice in ns2.
+func fillNamespaces(s *imitator, ns1UID string) {
+	for _, obj := range []*unstructured.Unstructured{
+		testObj("v1", "Namespace", "", "ns1", ns1UID, "5"),
+		testObj("discovery.k8s.io/v1", "EndpointSlice", "ns1", "echo-abc", "uid-s1", "10"),
+		testObj("v1", "Service", "ns1", "echo", "uid-svc1", "11"),
+		testObj("discovery.k8s.io/v1", "EndpointSlice", "ns2", "echo-xyz", "uid-s2", "12"),
+	} {
+		s.Inject(objMessage(model.InsertOperation, obj))
+	}
+	s.Inject(podMessage(model.InsertOperation, fullPod("p", "13")))
+	pod := fullPod("q", "14")
+	pod.SetNamespace("ns1")
+	s.Inject(podMessage(model.InsertOperation, pod))
+}
+
+// The Namespace DELETE removes the rows the cloud never deleted, except this node's pods, and
+// every watch of them gets DELETED, whatever its revision.
+func TestInjectNamespaceDeleteRemovesContents(t *testing.T) {
+	s := newTestImitator(t)
+	fillNamespaces(s, "uid-ns1")
+	otherPod := fullPod("r", "15")
+	otherPod.SetNamespace("ns1")
+	otherPod.SetName("web-1")
+	_ = unstructured.SetNestedField(otherPod.Object, "other-node", "spec", "nodeName")
+	if err := s.InsertOrUpdateObj(context.TODO(), otherPod); err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	slices := s.Watch(ctx, "/discovery.k8s.io/v1/endpointslices", 100)
+	services := s.Watch(ctx, "/core/v1/services/ns1", 100)
+	pods := s.Watch(ctx, "/core/v1/pods/ns1", 100)
+
+	go s.Inject(objMessage(model.DeleteOperation, namespaceStub("ns1", "uid-ns1")))
+	// The watches are unbuffered and get their events in row order, so read them all at once.
+	deleted := map[string]string{}
+	for len(deleted) < 3 {
+		var e watch.Event
+		select {
+		case e = <-slices:
+		case e = <-services:
+		case e = <-pods:
+		case <-time.After(time.Second):
+			t.Fatalf("watches got only %v, want DELETED for echo-abc, echo and web-1", deleted)
+		}
+		obj := e.Object.(*unstructured.Unstructured)
+		if e.Type != watch.Deleted || obj.GetResourceVersion() == "" {
+			t.Errorf("watch got %s %s rv %q, want DELETED of the stored object", e.Type, obj.GetName(), obj.GetResourceVersion())
+		}
+		deleted[obj.GetName()] = obj.GetKind()
+	}
+	if want := map[string]string{"echo-abc": "EndpointSlice", "echo": "Service", "web-1": "Pod"}; !reflect.DeepEqual(deleted, want) {
+		t.Errorf("watches got DELETED for %v, want %v", deleted, want)
+	}
+	if e, ok := nextEvent(slices); ok {
+		t.Errorf("slice watch got a second event %s %s", e.Type, e.Object.(*unstructured.Unstructured).GetName())
+	}
+	want := []string{
+		"/core/v1/pods/default/web-0",
+		"/core/v1/pods/ns1/web-0",
+		"/discovery.k8s.io/v1/endpointslices/ns2/echo-xyz",
+	}
+	if got := storedKeys(t); !reflect.DeepEqual(got, want) {
+		t.Errorf("meta_v2 keys = %v, want %v", got, want)
+	}
+}
+
+// A late DELETE of an older namespace must not empty the namespace recreated under its name,
+// nor may a DELETE of a namespace that the edge never stored.
+func TestInjectNamespaceDeleteKeepsContents(t *testing.T) {
+	tests := []struct {
+		name    string
+		storeNS bool
+	}{
+		{"recreated namespace", true},
+		{"namespace not stored", false},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s := newTestImitator(t)
+			fillNamespaces(s, "uid-ns1-new")
+			if !test.storeNS {
+				if err := dao.GetDB().Exec("DELETE FROM meta_v2 WHERE key = '/core/v1/namespaces/null/ns1'").Error; err != nil {
+					t.Fatal(err)
+				}
+			}
+			before := storedKeys(t)
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			slices := s.Watch(ctx, "/discovery.k8s.io/v1/endpointslices", 0)
+
+			go s.Inject(objMessage(model.DeleteOperation, namespaceStub("ns1", "uid-ns1-old")))
+			if e, ok := nextEvent(slices); ok {
+				t.Errorf("slice watch got %s for the delete of another namespace", e.Type)
+			}
+			if got := storedKeys(t); !reflect.DeepEqual(got, before) {
+				t.Errorf("meta_v2 keys = %v, want %v", got, before)
+			}
+		})
+	}
+}
+
+// A late DELETE of the old namespace ns1 removes the rows created before ns1 was deleted, and
+// keeps the slice of the namespace recreated under the name, which the edge got while it still
+// held the old Namespace row.
+func TestInjectNamespaceDeleteKeepsNewerContents(t *testing.T) {
+	deleted := metav1.NewTime(time.Date(2026, 10, 29, 10, 0, 0, 0, time.UTC))
+	terminating := testObj("v1", "Namespace", "", "ns1", "uid-ns1", "6")
+	terminating.SetDeletionTimestamp(&deleted)
+	stampedStub := namespaceStub("ns1", "uid-ns1")
+	stampedStub.SetDeletionTimestamp(&deleted)
+	tests := []struct {
+		name     string
+		stored   *unstructured.Unstructured // the Namespace row when the DELETE arrives
+		deletion *unstructured.Unstructured
+	}{
+		{"DELETE with the last state", nil, terminating},
+		{"resent DELETE with deletionTimestamp", nil, stampedStub},
+		{"resent DELETE, stored namespace terminating", terminating, namespaceStub("ns1", "uid-ns1")},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s := newTestImitator(t)
+			fillNamespaces(s, "uid-ns1")
+			if test.stored != nil {
+				s.Inject(objMessage(model.UpdateOperation, test.stored))
+			}
+			oldSlice := testObj("discovery.k8s.io/v1", "EndpointSlice", "ns1", "echo-abc", "uid-s1", "10")
+			oldSlice.SetCreationTimestamp(metav1.NewTime(deleted.Add(-time.Hour)))
+			newSlice := testObj("discovery.k8s.io/v1", "EndpointSlice", "ns1", "echo-new", "uid-s3", "20")
+			newSlice.SetCreationTimestamp(metav1.NewTime(deleted.Add(time.Minute)))
+			s.Inject(objMessage(model.UpdateOperation, oldSlice))
+			s.Inject(objMessage(model.InsertOperation, newSlice))
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			slices := s.Watch(ctx, "/discovery.k8s.io/v1/endpointslices/ns1", 0)
+
+			go s.Inject(objMessage(model.DeleteOperation, test.deletion))
+			for {
+				e, ok := nextEvent(slices)
+				if !ok {
+					break
+				}
+				if name := e.Object.(*unstructured.Unstructured).GetName(); name != "echo-abc" {
+					t.Errorf("slice watch got %s %s, want only DELETED echo-abc", e.Type, name)
+				}
+			}
+			want := []string{
+				"/core/v1/pods/default/web-0",
+				"/core/v1/pods/ns1/web-0",
+				"/discovery.k8s.io/v1/endpointslices/ns1/echo-new",
+				"/discovery.k8s.io/v1/endpointslices/ns2/echo-xyz",
+			}
+			if got := storedKeys(t); !reflect.DeepEqual(got, want) {
+				t.Errorf("meta_v2 keys = %v, want %v", got, want)
+			}
+		})
+	}
+}
+
+// When the Namespace recreated under the name of ns1 replaces its row before the late DELETE of
+// the old one arrives, the rows created before the new namespace go then, and the newer stay.
+// An update of the same namespace removes nothing.
+func TestInjectNamespaceRecreatedRemovesOlderContents(t *testing.T) {
+	created := time.Date(2026, 10, 29, 10, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name    string
+		uid     string
+		deleted []string
+		want    []string
+	}{
+		{"recreated namespace", "uid-ns1-new", []string{"echo-abc"}, []string{
+			"/core/v1/namespaces/null/ns1",
+			"/core/v1/pods/default/web-0",
+			"/core/v1/pods/ns1/web-0",
+			"/discovery.k8s.io/v1/endpointslices/ns1/echo-new",
+			"/discovery.k8s.io/v1/endpointslices/ns2/echo-xyz",
+		}},
+		{"same namespace updated", "uid-ns1", nil, []string{
+			"/core/v1/namespaces/null/ns1",
+			"/core/v1/pods/default/web-0",
+			"/core/v1/pods/ns1/web-0",
+			"/core/v1/services/ns1/echo",
+			"/discovery.k8s.io/v1/endpointslices/ns1/echo-abc",
+			"/discovery.k8s.io/v1/endpointslices/ns1/echo-new",
+			"/discovery.k8s.io/v1/endpointslices/ns2/echo-xyz",
+		}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s := newTestImitator(t)
+			fillNamespaces(s, "uid-ns1")
+			oldSlice := testObj("discovery.k8s.io/v1", "EndpointSlice", "ns1", "echo-abc", "uid-s1", "10")
+			oldSlice.SetCreationTimestamp(metav1.NewTime(created.Add(-time.Hour)))
+			newSlice := testObj("discovery.k8s.io/v1", "EndpointSlice", "ns1", "echo-new", "uid-s3", "20")
+			newSlice.SetCreationTimestamp(metav1.NewTime(created))
+			s.Inject(objMessage(model.UpdateOperation, oldSlice))
+			s.Inject(objMessage(model.InsertOperation, newSlice))
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			slices := s.Watch(ctx, "/discovery.k8s.io/v1/endpointslices/ns1", 0)
+
+			ns := testObj("v1", "Namespace", "", "ns1", test.uid, "30")
+			ns.SetCreationTimestamp(metav1.NewTime(created))
+			go s.Inject(objMessage(model.InsertOperation, ns))
+			var deleted []string
+			for {
+				e, ok := nextEvent(slices)
+				if !ok {
+					break
+				}
+				deleted = append(deleted, e.Object.(*unstructured.Unstructured).GetName())
+			}
+			if !reflect.DeepEqual(deleted, test.deleted) {
+				t.Errorf("slice watch got DELETED for %v, want %v", deleted, test.deleted)
+			}
+			if got := storedKeys(t); !reflect.DeepEqual(got, test.want) {
+				t.Errorf("meta_v2 keys = %v, want %v", got, test.want)
+			}
+		})
+	}
+}
+
+// When a later chunk of a namespace's rows fails to delete, the earlier chunks stay too, and no
+// watch gets a DELETED for rows that are still there.
+func TestInjectNamespaceDeleteRollsBack(t *testing.T) {
+	s := newTestImitator(t)
+	s.Inject(objMessage(model.InsertOperation, testObj("v1", "Namespace", "", "ns1", "uid-ns1", "5")))
+	n := dbclient.DeleteByKeysChunk + 1
+	for i := 0; i < n; i++ {
+		name := fmt.Sprintf("cm-%04d", i)
+		value := fmt.Sprintf(`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":%q,"namespace":"ns1","uid":"u-%d","resourceVersion":"%d"}}`, name, i, 10+i)
+		if err := dbclient.NewMetaV2Service().InsertOrReplaceMetaV2(&models.MetaV2{Key: "/core/v1/configmaps/ns1/" + name,
+			GroupVersionResource: "/v1, Resource=configmaps", Namespace: "ns1", Name: name, ResourceVersion: uint64(10 + i), Value: value}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	last := fmt.Sprintf("/core/v1/configmaps/ns1/cm-%04d", n-1)
+	if err := dao.GetDB().Exec("CREATE TRIGGER fail_delete BEFORE DELETE ON meta_v2 WHEN old.key = '" + last +
+		"' BEGIN SELECT RAISE(ABORT, 'test failure'); END").Error; err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := dao.GetDB().Exec("DROP TRIGGER fail_delete").Error; err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	configMaps := s.Watch(ctx, "/core/v1/configmaps/ns1", 0)
+
+	go s.Inject(objMessage(model.DeleteOperation, namespaceStub("ns1", "uid-ns1")))
+	if e, ok := nextEvent(configMaps); ok {
+		t.Errorf("configmap watch got %s %s after a failed delete", e.Type, e.Object.(*unstructured.Unstructured).GetName())
+	}
+	var rows int
+	if err := dao.GetDB().Raw("SELECT count(*) FROM meta_v2 WHERE namespace = 'ns1'").Scan(&rows).Error; err != nil {
+		t.Fatal(err)
+	}
+	if rows != n {
+		t.Errorf("meta_v2 holds %d rows of ns1, want all %d", rows, n)
 	}
 }

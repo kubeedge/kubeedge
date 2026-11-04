@@ -120,6 +120,23 @@ func (s *MetaV2Service) CountByKey(key string) (int64, error) {
 	return count, err
 }
 
+// DeleteByKeysChunk is how many keys one DELETE of DeleteByKeys binds, below SQLite's limit.
+const DeleteByKeysChunk = 500
+
+// DeleteByKeys deletes the rows under keys in chunks, in one transaction, so that a failure
+// deletes none.
+func (s *MetaV2Service) DeleteByKeys(keys []string) error {
+	const chunk = DeleteByKeysChunk
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		for start := 0; start < len(keys); start += chunk {
+			if err := tx.Where(models.KEY+" IN ?", keys[start:min(start+chunk, len(keys))]).Delete(&models.MetaV2{}).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 // upgrade_db
 func (s *MetaV2Service) SaveNodeUpgradeJobRequestToMetaV2(nodeUpgradeJobReq commontypes.NodeUpgradeJobRequest) error {
 	db := s.db

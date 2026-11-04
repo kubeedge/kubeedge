@@ -19,6 +19,7 @@ package synccontroller
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -44,7 +45,7 @@ type testFuncBackup struct {
 	originalGetNodeNameFunc                func(string) string
 	originalGetObjectUIDFunc               func(string) string
 	originalCompareResourceVersionFunc     func(string, string) int
-	originalGcFunc                         func(*SyncController, *v1alpha1.ClusterObjectSync)
+	originalGcFunc                         func(*SyncController, *v1alpha1.ClusterObjectSync, metav1.Object)
 	originalDeleteFunc                     func(*SyncController, string) error
 }
 
@@ -279,7 +280,7 @@ func TestReconcileClusterObjectSync(t *testing.T) {
 				sendCalled = true
 			}
 
-			gcOrphanedClusterObjectSyncFunc = func(sctl *SyncController, sync *v1alpha1.ClusterObjectSync) {
+			gcOrphanedClusterObjectSyncFunc = func(sctl *SyncController, sync *v1alpha1.ClusterObjectSync, _ metav1.Object) {
 				gcCalled = true
 			}
 
@@ -370,7 +371,7 @@ func TestGcOrphanedClusterObjectSyncFunction(t *testing.T) {
 
 			ctrl := &SyncController{}
 
-			ctrl.gcOrphanedClusterObjectSyncImpl(tt.sync)
+			ctrl.gcOrphanedClusterObjectSyncImpl(tt.sync, nil)
 
 			assert.Equal(t, tt.expectSendCalled, sendCalled, "Send message expectation failed")
 			assert.Equal(t, tt.expectDeleteCalled, deleteCalled, "Delete called expectation failed")
@@ -384,7 +385,7 @@ func TestActualGcOrphanedClusterObjectSyncFunc(t *testing.T) {
 
 	implementationCalled := false
 
-	gcOrphanedClusterObjectSyncFunc = func(sctl *SyncController, sync *v1alpha1.ClusterObjectSync) {
+	gcOrphanedClusterObjectSyncFunc = func(sctl *SyncController, sync *v1alpha1.ClusterObjectSync, _ metav1.Object) {
 		implementationCalled = true
 	}
 
@@ -392,7 +393,7 @@ func TestActualGcOrphanedClusterObjectSyncFunc(t *testing.T) {
 
 	ctrl := &SyncController{}
 
-	ctrl.gcOrphanedClusterObjectSync(sync)
+	ctrl.gcOrphanedClusterObjectSync(sync, nil)
 
 	assert.True(t, implementationCalled, "gcOrphanedClusterObjectSyncFunc not called")
 }
@@ -553,7 +554,7 @@ func TestGcOrphanedClusterObjectSyncFuncIntegration(t *testing.T) {
 				return nil
 			}
 
-			gcOrphanedClusterObjectSyncFunc(testController, testSync)
+			gcOrphanedClusterObjectSyncFunc(testController, testSync, nil)
 
 			assert.Equal(t, tc.expectSendCalled, sendCalled, "Send called expectation failed")
 			assert.Equal(t, tc.expectDeleteCalled, deleteCalled, "Delete called expectation failed")
@@ -590,4 +591,56 @@ func ExecuteDeleteClusterObjectSyncFunc() {
 
 func TestExecuteDeleteClusterObjectSyncFunc(t *testing.T) {
 	ExecuteDeleteClusterObjectSyncFunc()
+}
+
+// The resent DELETE carries a deletionTimestamp a second before the creation of the object
+// recreated under the name, else a second before now, so the edge keeps the objects of a
+// Namespace recreated before or after the resend.
+func TestGcOrphanedClusterObjectSyncStampsRecreation(t *testing.T) {
+	backup := setupTest()
+	defer backup.restore()
+
+	created := metav1.NewTime(time.Date(2026, 10, 29, 10, 0, 0, 0, time.UTC))
+	recreated := &metav1.ObjectMeta{Name: "ns1", UID: "new-uid", CreationTimestamp: created}
+	tests := []struct {
+		name      string
+		recreated metav1.Object
+		want      *metav1.Time // nil: a second before the call
+	}{
+		{"object gone", nil, nil},
+		{"object recreated", recreated, &metav1.Time{Time: created.Add(-time.Second)}},
+		{"recreated without creationTimestamp", &metav1.ObjectMeta{Name: "ns1", UID: "new-uid"}, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var body *unstructured.Unstructured
+			buildEdgeControllerMessageFunc = func(_, _, _, _ string, _ string, content interface{}) *model.Message {
+				body = content.(*unstructured.Unstructured)
+				return &model.Message{}
+			}
+			sendToEdge = func(string, model.Message) {}
+
+			sync := createTestSync("node1-pod-12345", "ns1", "Namespace", "v1", "500")
+			// The body keeps the timestamp in whole seconds.
+			before := time.Now().Add(-time.Second).Truncate(time.Second)
+			(&SyncController{}).gcOrphanedClusterObjectSyncImpl(sync, tt.recreated)
+			after := time.Now().Add(-time.Second)
+
+			if body == nil {
+				t.Fatal("no DELETE was sent")
+			}
+			got := body.GetDeletionTimestamp()
+			switch {
+			case got == nil:
+				t.Error("the DELETE has no deletionTimestamp")
+			case tt.want != nil && !got.Equal(tt.want):
+				t.Errorf("deletionTimestamp = %v, want %v", got, tt.want)
+			case tt.want == nil && (got.Before(&metav1.Time{Time: before}) || got.Time.After(after)):
+				t.Errorf("deletionTimestamp = %v, want between %v and %v", got, before, after)
+			}
+			if body.GetUID() != "12345" {
+				t.Errorf("uid = %q, want the deleted object's 12345", body.GetUID())
+			}
+		})
+	}
 }
