@@ -76,80 +76,89 @@ func TestPodManager_merge(t *testing.T) {
 	type args struct {
 		event watch.Event
 	}
+	// Leave room for one duplicate output so the count assertion can report it.
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name     string
+		fields   fields
+		args     args
+		wantType watch.EventType
 	}{
 		{
 			"TestPodManager_merge(): Case 1: Add pod, deletiontimestamp is nil",
 			fields{
 				realEvents:   make(chan watch.Event, 1),
-				mergedEvents: make(chan watch.Event, 1),
+				mergedEvents: make(chan watch.Event, 2),
 			},
 			args{
 				event: watch.Event{Type: watch.Added, Object: TestOldPodObject},
 			},
+			watch.Added,
 		},
 		{
 			"TestPodManager_merge(): Case 2: Add pod, deletiontimestamp is not nil",
 			fields{
 				realEvents:   make(chan watch.Event, 1),
-				mergedEvents: make(chan watch.Event, 1),
+				mergedEvents: make(chan watch.Event, 2),
 			},
 			args{
 				event: watch.Event{Type: watch.Added, Object: TestDeletingPodObject},
 			},
+			watch.Modified,
 		},
 		{
 			"TestPodManager_merge(): Case 3: Modified pod",
 			fields{
 				realEvents:   make(chan watch.Event, 1),
-				mergedEvents: make(chan watch.Event, 1),
+				mergedEvents: make(chan watch.Event, 2),
 			},
 			args{
 				event: watch.Event{Type: watch.Modified, Object: TestNewPodObject},
 			},
+			watch.Modified,
 		},
 		{
 			"TestPodManager_merge(): Case 4: Modified pod, new pod is same with old pod",
 			fields{
 				realEvents:   make(chan watch.Event, 1),
-				mergedEvents: make(chan watch.Event, 1),
+				mergedEvents: make(chan watch.Event, 2),
 			},
 			args{
 				event: watch.Event{Type: watch.Modified, Object: TestOldPodObject},
 			},
+			watch.Modified,
 		},
 		{
 			"TestPodManager_merge(): Case 5: Modified pod, pod not exist",
 			fields{
 				realEvents:   make(chan watch.Event, 1),
-				mergedEvents: make(chan watch.Event, 1),
+				mergedEvents: make(chan watch.Event, 2),
 			},
 			args{
 				event: watch.Event{Type: watch.Modified, Object: TestNewPodObject},
 			},
+			watch.Modified,
 		},
 		{
 			"TestPodManager_merge(): Case 6: Deleted pod",
 			fields{
 				realEvents:   make(chan watch.Event, 1),
-				mergedEvents: make(chan watch.Event, 1),
+				mergedEvents: make(chan watch.Event, 2),
 			},
 			args{
 				event: watch.Event{Type: watch.Deleted, Object: TestOldPodObject},
 			},
+			watch.Deleted,
 		},
 		{
 			"TestPodManager_merge(): Case 7: Invalid event type",
 			fields{
 				realEvents:   make(chan watch.Event, 1),
-				mergedEvents: make(chan watch.Event, 1),
+				mergedEvents: make(chan watch.Event, 2),
 			},
 			args{
 				event: watch.Event{Type: "InvalidType", Object: TestOldPodObject},
 			},
+			"",
 		},
 	}
 	for _, tt := range tests {
@@ -159,8 +168,29 @@ func TestPodManager_merge(t *testing.T) {
 				mergedEvents: tt.fields.mergedEvents,
 			}
 
+			wantObject := tt.args.event.Object.DeepCopyObject()
 			tt.fields.realEvents <- tt.args.event
-			go pm.merge()
+			close(tt.fields.realEvents)
+			// Drain the closed input synchronously so assertions see the complete output.
+			pm.merge()
+
+			wantCount := 1
+			if tt.wantType == "" {
+				wantCount = 0
+			}
+			if got := len(pm.mergedEvents); got != wantCount {
+				t.Fatalf("merged event count = %d, want %d", got, wantCount)
+			}
+			if wantCount == 0 {
+				return
+			}
+			got := <-pm.mergedEvents
+			if got.Type != tt.wantType {
+				t.Errorf("merged event type = %q, want %q", got.Type, tt.wantType)
+			}
+			if !reflect.DeepEqual(got.Object, wantObject) {
+				t.Errorf("merged event object = %v, want original pod %v", got.Object, wantObject)
+			}
 		})
 	}
 }
