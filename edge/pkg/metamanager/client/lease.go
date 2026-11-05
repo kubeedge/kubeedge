@@ -112,6 +112,12 @@ func handleLeaseResp(content []byte) (*coordinationv1.Lease, error) {
 	}
 
 	if reflect.DeepEqual(leaseResp.Err, apierrors.StatusError{}) {
+		// A reply without an error must carry the lease. An empty lease means
+		// the request failed with an error that was lost on the way (older
+		// cloudcore).
+		if leaseResp.Object == nil || leaseResp.Object.Name == "" {
+			return nil, fmt.Errorf("invalid lease response: no error and no lease returned")
+		}
 		return leaseResp.Object, nil
 	}
 	return leaseResp.Object, &leaseResp.Err
