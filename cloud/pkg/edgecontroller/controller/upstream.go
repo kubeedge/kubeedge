@@ -999,7 +999,7 @@ func (uc *UpstreamController) registerNode() {
 			}
 
 			resMsg := model.NewMessage(msg.GetID()).
-				FillBody(&edgeapi.ObjectResp{Object: resp, Err: err}).
+				FillBody(&edgeapi.ObjectResp{Object: resp, Err: toAPIStatusError(err)}).
 				BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
 			if err = uc.messageLayer.Response(*resMsg); err != nil {
 				klog.Warningf("Response message: %s failed, response failed with error: %v", msg.GetID(), err)
@@ -1044,7 +1044,7 @@ func (uc *UpstreamController) patchNode() {
 
 			resMsg := model.NewMessage(msg.GetID()).
 				SetResourceVersion(node.ResourceVersion).
-				FillBody(&edgeapi.ObjectResp{Object: node, Err: err}).
+				FillBody(&edgeapi.ObjectResp{Object: node, Err: toAPIStatusError(err)}).
 				BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
 			if err = uc.messageLayer.Response(*resMsg); err != nil {
 				klog.Warningf("Message: %s process failure, response failed with error: %v", msg.GetID(), err)
@@ -1187,7 +1187,7 @@ func (uc *UpstreamController) patchPod() {
 
 			resMsg := model.NewMessage(msg.GetID()).
 				SetResourceVersion(updatedPod.ResourceVersion).
-				FillBody(&edgeapi.ObjectResp{Object: updatedPod, Err: err}).
+				FillBody(&edgeapi.ObjectResp{Object: updatedPod, Err: toAPIStatusError(err)}).
 				BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
 			if err = uc.messageLayer.Response(*resMsg); err != nil {
 				klog.Errorf("Message: %s process failure, response failed with error: %v", msg.GetID(), err)
@@ -1236,7 +1236,7 @@ func (uc *UpstreamController) createPod() {
 
 			resMsg := model.NewMessage(msg.GetID()).
 				SetResourceVersion(createPod.ResourceVersion).
-				FillBody(&edgeapi.ObjectResp{Object: createPod, Err: err}).
+				FillBody(&edgeapi.ObjectResp{Object: createPod, Err: toAPIStatusError(err)}).
 				BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
 			if err = uc.messageLayer.Response(*resMsg); err != nil {
 				klog.Errorf("Message: %s process failure, response failed with error: %v", msg.GetID(), err)
@@ -1366,7 +1366,7 @@ func (uc *UpstreamController) createOrUpdateLease() {
 				}
 
 				resMsg := model.NewMessage(msg.GetID()).
-					FillBody(&edgeapi.ObjectResp{Object: resp, Err: err}).
+					FillBody(&edgeapi.ObjectResp{Object: resp, Err: toAPIStatusError(err)}).
 					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
 				if err = uc.messageLayer.Response(*resMsg); err != nil {
 					klog.Warningf("Response message: %s failed, response failed with error: %v", msg.GetID(), err)
@@ -1382,7 +1382,7 @@ func (uc *UpstreamController) createOrUpdateLease() {
 				}
 
 				resMsg := model.NewMessage(msg.GetID()).
-					FillBody(&edgeapi.ObjectResp{Object: resp, Err: err}).
+					FillBody(&edgeapi.ObjectResp{Object: resp, Err: toAPIStatusError(err)}).
 					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
 				if err = uc.messageLayer.Response(*resMsg); err != nil {
 					klog.Warningf("Response message: %s failed, response failed with error: %v", msg.GetID(), err)
@@ -1423,7 +1423,7 @@ func (uc *UpstreamController) queryLease() {
 			}
 
 			resMsg := model.NewMessage(msg.GetID()).
-				FillBody(&edgeapi.ObjectResp{Object: object, Err: err}).
+				FillBody(&edgeapi.ObjectResp{Object: object, Err: toAPIStatusError(err)}).
 				BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
 			if err = uc.messageLayer.Response(*resMsg); err != nil {
 				klog.Warningf("Response message: %s failed, response failed with error: %v", msg.GetID(), err)
@@ -1469,7 +1469,7 @@ func (uc *UpstreamController) processCSR() {
 				}
 
 				resMsg := model.NewMessage(msg.GetID()).
-					FillBody(&edgeapi.ObjectResp{Object: csrResp, Err: err}).
+					FillBody(&edgeapi.ObjectResp{Object: csrResp, Err: toAPIStatusError(err)}).
 					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, msg.GetResource(), model.ResponseOperation)
 				if err = uc.messageLayer.Response(*resMsg); err != nil {
 					klog.Warningf("Response message: %s failed, response failed with error: %v", msg.GetID(), err)
@@ -1672,4 +1672,22 @@ func NewUpstreamController(config *v1alpha1.EdgeController, factory k8sinformer.
 	uc.ruleStatusChan = make(chan model.Message, config.Buffer.UpdateNodeStatus)
 	uc.certificasesSigningRequestChan = make(chan model.Message, config.Buffer.CertificateSigningRequest)
 	return uc, nil
+}
+
+// toAPIStatusError makes sure an error returned to the edge in an ObjectResp is
+// an API status error. The edge decodes ObjectResp.Err as apierrors.StatusError,
+// so any other error type (for example a *url.Error when kube-apiserver cannot be
+// reached) would arrive as an empty StatusError and be treated as success.
+// A wrapped *StatusError is unwrapped so that its code and reason (for example
+// NotFound or Conflict) still reach the edge, because JSON encodes the wrapper,
+// not the error it wraps.
+func toAPIStatusError(err error) error {
+	if err == nil {
+		return nil
+	}
+	var statusErr *errors.StatusError
+	if stderrors.As(err, &statusErr) {
+		return statusErr
+	}
+	return errors.NewInternalError(err)
 }
