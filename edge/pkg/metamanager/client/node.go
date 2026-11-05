@@ -151,6 +151,12 @@ func handleNodeResp(resource string, content []byte) (*api.Node, error) {
 	}
 
 	if reflect.DeepEqual(nodeResp.Err, apierrors.StatusError{}) {
+		// A reply without an error must carry the node. An empty node means the
+		// request failed with an error that was lost on the way (older
+		// cloudcore), so do not store it.
+		if nodeResp.Object == nil || nodeResp.Object.Name == "" {
+			return nil, fmt.Errorf("invalid node response for %s: no error and no node returned", resource)
+		}
 		if err = updateNodeDB(resource, nodeResp.Object); err != nil {
 			return nil, fmt.Errorf("update node meta failed, err: %v", err)
 		}
