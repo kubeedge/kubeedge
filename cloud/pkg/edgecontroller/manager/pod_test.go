@@ -168,6 +168,7 @@ func TestPodManager_merge(t *testing.T) {
 				mergedEvents: tt.fields.mergedEvents,
 			}
 
+			wantObject := tt.args.event.Object.DeepCopyObject()
 			tt.fields.realEvents <- tt.args.event
 			close(tt.fields.realEvents)
 			// Drain the closed input synchronously so assertions see the complete output.
@@ -187,8 +188,8 @@ func TestPodManager_merge(t *testing.T) {
 			if got.Type != tt.wantType {
 				t.Errorf("merged event type = %q, want %q", got.Type, tt.wantType)
 			}
-			if !reflect.DeepEqual(got.Object, tt.args.event.Object) {
-				t.Errorf("merged event object = %v, want original pod %v", got.Object, tt.args.event.Object)
+			if !reflect.DeepEqual(got.Object, wantObject) {
+				t.Errorf("merged event object = %v, want original pod %v", got.Object, wantObject)
 			}
 		})
 	}
