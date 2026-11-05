@@ -36,6 +36,9 @@ type EdgedAttachConnection struct {
 	URL      url.URL     `json:"url"`
 	Header   http.Header `json:"header"`
 	Method   string      `json:"method"`
+
+	// readGuard serializes CacheTunnelMessage with CloseReadChannel.
+	readGuard readChannelGuard
 }
 
 func (ah *EdgedAttachConnection) CreateConnectMessage() (*Message, error) {
@@ -55,11 +58,13 @@ func (ah *EdgedAttachConnection) String() string {
 }
 
 func (ah *EdgedAttachConnection) CacheTunnelMessage(msg *Message) {
-	ah.ReadChan <- msg
+	if !ah.readGuard.send(ah.ReadChan, msg) {
+		klog.V(6).Infof("%s is closed, drop message type %s", ah.String(), msg.MessageType.String())
+	}
 }
 
 func (ah *EdgedAttachConnection) CloseReadChannel() {
-	close(ah.ReadChan)
+	ah.readGuard.close(ah.ReadChan)
 }
 
 func (ah *EdgedAttachConnection) CleanChannel() {
