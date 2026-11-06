@@ -160,6 +160,49 @@ func TestNodeUpgradeJobCheckItems(t *testing.T) {
 		assert.True(t, pullImageCalled)
 		assert.True(t, copyResourcesCalled)
 	})
+
+	t.Run("failed to get image digest", func(t *testing.T) {
+		digestSpecser := &cachedSpecSerializer{
+			spec: &operationsv1alpha2.NodeUpgradeJobSpec{
+				Image:   "kubeedge/installation-package",
+				Version: "v1.21.0",
+				ImageDigestGetter: &operationsv1alpha2.ImageDigestGetter{
+					ARM64: "sha256:arm64",
+					AMD64: "sha256:amd64",
+				},
+			},
+		}
+		var copyResourcesCalled bool
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyFunc(options.GetEdgeCoreConfig, func() *cfgv1alpha2.EdgeCoreConfig {
+			return cfg
+		})
+		patches.ApplyFunc(containers.NewContainerRuntime, func(endpoint, cgroupDriver string,
+		) (containers.ContainerRuntime, error) {
+			return &containers.ContainerRuntimeImpl{}, nil
+		})
+		patches.ApplyMethodFunc(reflect.TypeOf(&containers.ContainerRuntimeImpl{}), "PullImage",
+			func(_ctx context.Context, _image string, _authConfig *runtimeapi.AuthConfig,
+				_sandboxConfig *runtimeapi.PodSandboxConfig) error {
+				return nil
+			})
+		patches.ApplyMethodFunc(reflect.TypeOf(&containers.ContainerRuntimeImpl{}), "GetImageDigest",
+			func(_ctx context.Context, _image string) (string, error) {
+				return "", errors.New("test get image digest error")
+			})
+		patches.ApplyMethodFunc(reflect.TypeOf(&containers.ContainerRuntimeImpl{}), "CopyResources",
+			func(_ctx context.Context, _edgeImage string, _files map[string]string) error {
+				copyResourcesCalled = true
+				return nil
+			})
+
+		resp := h.checkItems(ctx, "", "", digestSpecser)
+		require.ErrorContains(t, resp.Error(), "failed to get image digest")
+		assert.NotContains(t, resp.Error().Error(), "is not correct")
+		assert.False(t, copyResourcesCalled)
+	})
 }
 
 func TestNodeUpgradeJobWaitingConfirmation(t *testing.T) {
