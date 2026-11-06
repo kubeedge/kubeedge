@@ -21,8 +21,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,6 +37,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
 	commonmsg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
@@ -86,7 +85,7 @@ keadm debug get all -o yaml`
 		"endpoint":   constants.ResourceTypeEndpoints,
 		"endpoints":  constants.ResourceTypeEndpoints,
 	}
-	ms = dbclient.NewMetaService()
+	ms *dbclient.MetaService
 )
 
 // NewCmdDebugGet returns keadm debug get command.
@@ -457,25 +456,12 @@ func isFileExist(path string) bool {
 
 // InitDB Init DB info
 func InitDB(driverName, dbName, dataSource string) error {
-	// Initialize GORM database connection
-	var err error
-	var db *gorm.DB
-
-	if driverName == "sqlite" {
-		// Use GORM's SQLite driver to connect to the database
-		db, err = gorm.Open(sqlite.Open(dataSource), &gorm.Config{})
-	} else {
+	if driverName != edgecoreCfg.DataBaseDriverName {
 		return fmt.Errorf("unsupported driver: %v", driverName)
 	}
 
-	if err != nil {
-		return fmt.Errorf("failed to connect to the database: %v", err)
-	}
-
-	// Perform migrations (auto-create tables based on the models)
-	if err := db.AutoMigrate(&models.Meta{}); err != nil {
-		return fmt.Errorf("failed to auto-migrate the database: %v", err)
-	}
+	dao.Init(dataSource)
+	ms = dbclient.NewMetaService()
 
 	return nil
 }

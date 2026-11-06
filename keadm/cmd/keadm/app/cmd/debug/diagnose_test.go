@@ -29,6 +29,8 @@ import (
 
 	"github.com/kubeedge/api/apis/common/constants"
 	cfgv1alpha2 "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/util/files"
@@ -517,6 +519,17 @@ func TestDiagnosePod(t *testing.T) {
 		err := DiagnosePod(ops, "test-pod")
 		require.NoError(t, err)
 	})
+}
+
+func TestInitDB(t *testing.T) {
+	err := InitDB(cfgv1alpha2.DataBaseDriverName, cfgv1alpha2.DataBaseAliasName, ":memory:")
+	require.NoError(t, err)
+	require.NoError(t, dao.GetDB().AutoMigrate(&models.Meta{}))
+
+	require.NoError(t, ms.SaveMeta(&models.Meta{Key: "test-key", Type: "test-type", Value: "test-value"}))
+	values, err := ms.QueryMeta("key", "test-key")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"test-value"}, *values)
 }
 
 func TestDiagnoseInstall(t *testing.T) {
