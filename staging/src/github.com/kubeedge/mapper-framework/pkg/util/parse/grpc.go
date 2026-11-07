@@ -87,7 +87,7 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 		// get visitorConfig filed by grpc device instance
 		var visitorConfig []byte
 		recvAdapter := make(map[string]interface{})
-		for k, v := range pptv.Visitors.ConfigData.Data {
+		for k, v := range pptv.GetVisitors().GetConfigData().GetData() {
 			value, err := common.DecodeAnyValue(v)
 			if err != nil {
 				continue
@@ -95,7 +95,7 @@ func buildPropertiesFromGrpc(device *dmiapi.Device) []common.DeviceProperty {
 			recvAdapter[k] = value
 		}
 		customizedProtocol := make(map[string]interface{})
-		customizedProtocol["protocolName"] = pptv.Visitors.ProtocolName
+		customizedProtocol["protocolName"] = pptv.GetVisitors().GetProtocolName()
 		customizedProtocol["configData"] = recvAdapter
 		visitorConfig, err = json.Marshal(customizedProtocol)
 		if err != nil {
@@ -323,11 +323,18 @@ func GetDeviceFromGrpc(device *dmiapi.Device, commonModel *common.DeviceModel) (
 		}
 		propertiesMap[instance.Properties[i].PProperty.Name] = instance.Properties[i]
 	}
-	for i := range instance.Twins {
-		if v, ok := propertiesMap[instance.Twins[i].PropertyName]; ok {
-			instance.Twins[i].Property = &v
+	// Mappers dereference twin.Property, so a twin without one must not be kept.
+	twins := instance.Twins[:0]
+	for _, twin := range instance.Twins {
+		v, ok := propertiesMap[twin.PropertyName]
+		if !ok {
+			klog.Errorf("device %s: property %s is not defined in device model %s, ignoring it", instance.ID, twin.PropertyName, instance.Model)
+			continue
 		}
+		twin.Property = &v
+		twins = append(twins, twin)
 	}
+	instance.Twins = twins
 	klog.V(2).Infof("final instance data from grpc = %v", instance)
 	return instance, nil
 }

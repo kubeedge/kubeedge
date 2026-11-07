@@ -145,6 +145,8 @@ jobs:
 
       - run: make test PROFILE=y
 
+      - run: for m in api beehive mapper-framework; do (cd staging/src/github.com/kubeedge/$m && go test ./...); done
+
       - name: Upload coverage to Codecov
         # Prevent running from the forked repository that doesn't need to upload coverage.
         # In addition, running on the forked repository would fail as missing the necessary secret.
