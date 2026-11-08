@@ -1428,3 +1428,69 @@ func TestCreateNodeReservedLabelPatch(t *testing.T) {
 		require.Equal(t, "value", node.Labels["custom-label"])
 	})
 }
+
+// chanMessageLayer feeds dispatchMessage from a channel, so Receive blocks
+// like the real beehive message layer instead of spinning on an error.
+type chanMessageLayer struct {
+	in chan model.Message
+}
+
+func (c *chanMessageLayer) Send(model.Message) error     { return nil }
+func (c *chanMessageLayer) Response(model.Message) error { return nil }
+func (c *chanMessageLayer) Receive() (model.Message, error) {
+	return <-c.in, nil
+}
+
+func TestDispatchMessageNotBlockedByFullQueue(t *testing.T) {
+	in := make(chan model.Message, 10)
+	uc := &UpstreamController{
+		messageLayer:    &chanMessageLayer{in: in},
+		podStatusChan:   make(chan model.Message, 1),
+		createLeaseChan: make(chan model.Message, 1),
+	}
+	go uc.dispatchMessage()
+
+	// node-a sends more pod status messages than its queue can hold,
+	// and nothing reads the queue.
+	for i := 0; i < 3; i++ {
+		in <- model.Message{
+			Header: model.MessageHeader{ID: fmt.Sprintf("podstatus-%d", i)},
+			Router: model.MessageRoute{Resource: "node/node-a/default/podstatus/pod", Operation: model.UpdateOperation},
+		}
+	}
+	// node-b renews its lease.
+	in <- model.Message{
+		Header: model.MessageHeader{ID: "lease-node-b"},
+		Router: model.MessageRoute{Resource: "node/node-b/kube-node-lease/lease/node-b", Operation: model.UpdateOperation},
+	}
+
+	select {
+	case msg := <-uc.createLeaseChan:
+		require.Equal(t, "lease-node-b", msg.GetID())
+	case <-time.After(5 * time.Second):
+		t.Fatal("lease of node-b is stuck behind the full pod status queue of node-a")
+	}
+	require.Len(t, uc.podStatusChan, 1)
+}
+
+func TestDispatchTo(t *testing.T) {
+	ch := make(chan model.Message, 1)
+
+	dispatchTo(ch, model.Message{Header: model.MessageHeader{ID: "first"}})
+	require.Len(t, ch, 1)
+
+	done := make(chan struct{})
+	go func() {
+		dispatchTo(ch, model.Message{Header: model.MessageHeader{ID: "second"}})
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("dispatchTo blocked on a full channel")
+	}
+
+	require.Len(t, ch, 1)
+	kept := <-ch
+	require.Equal(t, "first", kept.GetID())
+}
