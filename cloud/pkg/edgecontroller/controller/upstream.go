@@ -1341,7 +1341,7 @@ func (uc *UpstreamController) createOrUpdateLease() {
 			namespace, err := messagelayer.GetNamespace(msg)
 			if err != nil {
 				klog.Warningf("message: %s process failure, get namespace failed with error: %v", msg.GetID(), err)
-				return
+				continue
 			}
 			name, err := messagelayer.GetResourceName(msg)
 			if err != nil {
@@ -1409,12 +1409,12 @@ func (uc *UpstreamController) queryLease() {
 			namespace, err := messagelayer.GetNamespace(msg)
 			if err != nil {
 				klog.Warningf("message: %s process failure, get namespace failed with error: %v", msg.GetID(), err)
-				return
+				continue
 			}
 			name, err := messagelayer.GetResourceName(msg)
 			if err != nil {
 				klog.Warningf("message: %s process failure, get resource name failed with error: %v", msg.GetID(), err)
-				return
+				continue
 			}
 
 			object, err := kubeClientGet(uc, namespace, name, model.ResourceTypeLease, msg)
