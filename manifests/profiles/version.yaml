@@ -58,6 +58,10 @@ cloudCore:
       enable: false
     router:
       enable: false
+      tls:
+        enable: false
+      restTargetTLS:
+        insecureSkipVerify: true
     taskManager:
       enable: false
   service:

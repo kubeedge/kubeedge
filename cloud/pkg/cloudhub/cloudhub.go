@@ -26,6 +26,11 @@ import (
 )
 
 var DoneTLSTunnelCerts = make(chan bool, 1)
+
+// CertsReady is closed once the CloudCore CA and certificate are prepared.
+// Unlike DoneTLSTunnelCerts, any number of modules can wait on it.
+var CertsReady = make(chan struct{})
+
 var sessionMgr *session.Manager
 
 type cloudHub struct {
@@ -114,6 +119,7 @@ func (ch *cloudHub) Start() {
 	// TODO: Will improve in the future
 	DoneTLSTunnelCerts <- true
 	close(DoneTLSTunnelCerts)
+	close(CertsReady)
 
 	// generate Token
 	if err := httpserver.GenerateAndRefreshToken(ctx); err != nil {

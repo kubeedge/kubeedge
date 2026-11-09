@@ -539,6 +539,32 @@ type Router struct {
 	Address     string `json:"address,omitempty"`
 	Port        uint32 `json:"port,omitempty"`
 	RestTimeout uint32 `json:"restTimeout,omitempty"`
+	// TLS indicates the TLS config of the router REST listener
+	TLS *RouterTLS `json:"tls,omitempty"`
+	// RestTargetTLS indicates how the router verifies the certificates of https REST targets
+	RestTargetTLS *RouterRestTargetTLS `json:"restTargetTLS,omitempty"`
+}
+
+// RouterTLS indicates the TLS config of the router REST listener
+type RouterTLS struct {
+	// Enable indicates whether the REST listener serves HTTPS
+	// default false
+	Enable bool `json:"enable"`
+	// CertFile indicates the server certificate file path.
+	// If CertFile and PrivateKeyFile are both empty, the CloudCore certificate is used.
+	CertFile string `json:"certFile,omitempty"`
+	// PrivateKeyFile indicates the server private key file path
+	PrivateKeyFile string `json:"privateKeyFile,omitempty"`
+}
+
+// RouterRestTargetTLS indicates how the router verifies the certificates of https REST targets
+type RouterRestTargetTLS struct {
+	// CAFile indicates a CA bundle file used, in addition to the system roots,
+	// to verify the certificates of https REST targets
+	CAFile string `json:"caFile,omitempty"`
+	// InsecureSkipVerify indicates whether to skip verifying the certificates of https REST targets
+	// default true
+	InsecureSkipVerify bool `json:"insecureSkipVerify"`
 }
 
 // IptablesManager indicates the config of Iptables

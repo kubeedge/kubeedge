@@ -52,6 +52,10 @@ data:
         enable: {{ .Values.cloudCore.modules.dynamicController.enable }}
       router:
         enable: {{ .Values.cloudCore.modules.router.enable }}
+        tls:
+          enable: {{ .Values.cloudCore.modules.router.tls.enable }}
+        restTargetTLS:
+          insecureSkipVerify: {{ .Values.cloudCore.modules.router.restTargetTLS.insecureSkipVerify }}
       iptablesManager:
         enable: {{ .Values.iptablesManager.enable }}
         mode: {{ .Values.iptablesManager.mode }}
