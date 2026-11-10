@@ -51,13 +51,7 @@ func IsKubeEdgeProcessRunning(proc string) (bool, error) {
 }
 
 // HasSystemd checks if systemd exist.
-// if command run failed, then check it by sd_booted.
 func HasSystemd() bool {
-	cmd := "file /sbin/init"
-
-	if err := execs.NewCommand(cmd).Exec(); err == nil {
-		return true
-	}
 	// checks whether `SystemdBootPath` exists and is a directory
 	// reference http://www.freedesktop.org/software/systemd/man/sd_booted.html
 	fi, err := os.Lstat(types.SystemdBootPath)
