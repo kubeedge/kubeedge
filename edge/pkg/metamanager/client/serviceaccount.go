@@ -154,7 +154,7 @@ func newestCachedGeneration(name, namespace string, tr *authenticationv1.TokenRe
 		klog.Errorf("query meta by prefix %s failed: %v", prefix, err)
 		return nil, err
 	}
-	if metas == nil || len(*metas) == 0 {
+	if len(metas) == 0 {
 		return nil, fmt.Errorf("no cached token for %s", prefix)
 	}
 
@@ -164,7 +164,7 @@ func newestCachedGeneration(name, namespace string, tr *authenticationv1.TokenRe
 	// one is what we want to return to the caller.
 	now := time.Now()
 	var newest *authenticationv1.TokenRequest
-	for _, v := range *metas {
+	for _, v := range metas {
 		var cur authenticationv1.TokenRequest
 		if err := json.Unmarshal([]byte(v), &cur); err != nil {
 			klog.Errorf("unmarshal cached token under prefix %s failed: %v", prefix, err)

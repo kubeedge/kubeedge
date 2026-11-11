@@ -502,7 +502,7 @@ func TestGetTokenLocally(t *testing.T) {
 
 	// DB error.
 	patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.MetaService)(nil)), "QueryMetaByKeyPrefix",
-		func(string) (*[]string, error) { return nil, errors.New("db error") })
+		func(string) ([]string, error) { return nil, errors.New("db error") })
 	result, err := getTokenLocally(name, namespace, tr)
 	assert.Error(err)
 	assert.Nil(result)
@@ -511,7 +511,7 @@ func TestGetTokenLocally(t *testing.T) {
 	// nil result → no cached token.
 	patches.Reset()
 	patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.MetaService)(nil)), "QueryMetaByKeyPrefix",
-		func(string) (*[]string, error) { return nil, nil })
+		func(string) ([]string, error) { return nil, nil })
 	result, err = getTokenLocally(name, namespace, tr)
 	assert.Error(err)
 	assert.Nil(result)
@@ -520,7 +520,7 @@ func TestGetTokenLocally(t *testing.T) {
 	// Empty slice → no cached token.
 	patches.Reset()
 	patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.MetaService)(nil)), "QueryMetaByKeyPrefix",
-		func(string) (*[]string, error) { return &[]string{}, nil })
+		func(string) ([]string, error) { return []string{}, nil })
 	result, err = getTokenLocally(name, namespace, tr)
 	assert.Error(err)
 	assert.Nil(result)
@@ -529,7 +529,7 @@ func TestGetTokenLocally(t *testing.T) {
 	// Single valid unexpired generation.
 	patches.Reset()
 	patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.MetaService)(nil)), "QueryMetaByKeyPrefix",
-		func(string) (*[]string, error) { return &[]string{string(freshBytes)}, nil })
+		func(string) ([]string, error) { return []string{string(freshBytes)}, nil })
 	result, err = getTokenLocally(name, namespace, tr)
 	assert.NoError(err)
 	assert.NotNil(result)
@@ -538,7 +538,7 @@ func TestGetTokenLocally(t *testing.T) {
 	// Multiple generations → newest unexpired wins.
 	patches.Reset()
 	patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.MetaService)(nil)), "QueryMetaByKeyPrefix",
-		func(string) (*[]string, error) { return &[]string{string(freshBytes), string(newerBytes)}, nil })
+		func(string) ([]string, error) { return []string{string(freshBytes), string(newerBytes)}, nil })
 	result, err = getTokenLocally(name, namespace, tr)
 	assert.NoError(err)
 	assert.NotNil(result)
@@ -547,7 +547,7 @@ func TestGetTokenLocally(t *testing.T) {
 	// All expired → no un-expired cached token.
 	patches.Reset()
 	patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.MetaService)(nil)), "QueryMetaByKeyPrefix",
-		func(string) (*[]string, error) { return &[]string{string(expiredBytes)}, nil })
+		func(string) ([]string, error) { return []string{string(expiredBytes)}, nil })
 	result, err = getTokenLocally(name, namespace, tr)
 	assert.Error(err)
 	assert.Nil(result)
@@ -556,7 +556,7 @@ func TestGetTokenLocally(t *testing.T) {
 	// All invalid JSON → no un-expired cached token.
 	patches.Reset()
 	patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.MetaService)(nil)), "QueryMetaByKeyPrefix",
-		func(string) (*[]string, error) { return &[]string{"invalid-json"}, nil })
+		func(string) ([]string, error) { return []string{"invalid-json"}, nil })
 	result, err = getTokenLocally(name, namespace, tr)
 	assert.Error(err)
 	assert.Nil(result)
@@ -565,8 +565,8 @@ func TestGetTokenLocally(t *testing.T) {
 	// Mixed: invalid + expired + valid → returns valid.
 	patches.Reset()
 	patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.MetaService)(nil)), "QueryMetaByKeyPrefix",
-		func(string) (*[]string, error) {
-			return &[]string{"invalid-json", string(expiredBytes), string(freshBytes)}, nil
+		func(string) ([]string, error) {
+			return []string{"invalid-json", string(expiredBytes), string(freshBytes)}, nil
 		})
 	result, err = getTokenLocally(name, namespace, tr)
 	assert.NoError(err)
@@ -577,7 +577,7 @@ func TestGetTokenLocally(t *testing.T) {
 	patches.Reset()
 	var deletedKey string
 	patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.MetaService)(nil)), "QueryMetaByKeyPrefix",
-		func(string) (*[]string, error) { return &[]string{string(nearExpiryBytes)}, nil })
+		func(string) ([]string, error) { return []string{string(nearExpiryBytes)}, nil })
 	patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.MetaService)(nil)), "DeleteMetaByKey",
 		func(k string) error { deletedKey = k; return nil })
 	result, err = getTokenLocally(name, namespace, tr)
@@ -693,8 +693,8 @@ func TestTokenCoexistenceDuringRefreshWindow(t *testing.T) {
 
 	// getTokenLocally must return the newer generation, not the near-expiry old one.
 	patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.MetaService)(nil)), "QueryMetaByKeyPrefix",
-		func(string) (*[]string, error) {
-			return &[]string{string(oldTokenBytes), string(newTokenBytes)}, nil
+		func(string) ([]string, error) {
+			return []string{string(oldTokenBytes), string(newTokenBytes)}, nil
 		})
 	tr := &authenticationv1.TokenRequest{Spec: authenticationv1.TokenRequestSpec{ExpirationSeconds: sec(3600)}}
 	got, err := getTokenLocally("sa", "ns", tr)
@@ -762,7 +762,7 @@ func TestGetServiceAccountToken(t *testing.T) {
 		},
 	}
 
-	patches.ApplyFunc(getTokenLocally, func(n, ns string, t *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
+	patches.ApplyFunc(newestCachedGeneration, func(n, ns string, t *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
 		assert.Equal(name, n)
 		assert.Equal(namespace, ns)
 		assert.Equal(tr, t)
@@ -774,7 +774,7 @@ func TestGetServiceAccountToken(t *testing.T) {
 	assert.Equal(localToken, result)
 
 	patches.Reset()
-	patches.ApplyFunc(getTokenLocally, func(n, ns string, t *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
+	patches.ApplyFunc(newestCachedGeneration, func(n, ns string, t *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
 		return nil, errors.New("local token not found")
 	})
 
@@ -804,7 +804,7 @@ func TestGetServiceAccountToken(t *testing.T) {
 	assert.Equal("remote-token", result.Status.Token)
 
 	patches.Reset()
-	patches.ApplyFunc(getTokenLocally, func(n, ns string, t *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
+	patches.ApplyFunc(newestCachedGeneration, func(n, ns string, t *authenticationv1.TokenRequest) (*authenticationv1.TokenRequest, error) {
 		return nil, errors.New("local token not found")
 	})
 

@@ -105,8 +105,8 @@ func TestGenerationsCoexistAcrossRefresh(t *testing.T) {
 	if err != nil {
 		t.Fatalf("query by prefix: %v", err)
 	}
-	if rows == nil || len(*rows) != 2 {
-		t.Fatalf("cached generations = %d, want 2", len(*rows))
+	if len(rows) != 2 {
+		t.Fatalf("cached generations = %d, want 2", len(rows))
 	}
 
 	// Both remain usable for authentication while they are un-expired.
@@ -167,6 +167,84 @@ func TestGetServiceAccountTokenFailsWithNoCacheWhenOffline(t *testing.T) {
 	c := &serviceAccountToken{send: offlineSend{}}
 	if _, err := c.GetServiceAccountToken("default", "absent", specOf(projectedTTL)); err == nil {
 		t.Fatal("expected an error when no token is cached")
+	}
+}
+
+// With nothing cached, the token is fetched from the cloud. This is the first
+// request for every new pod, so a cache miss must not end the lookup.
+func TestGetServiceAccountTokenFetchesRemotelyWithNoCache(t *testing.T) {
+	exp := projectedTTL
+	remote := &authenticationv1.TokenRequest{
+		Spec: authenticationv1.TokenRequestSpec{ExpirationSeconds: &exp},
+		Status: authenticationv1.TokenRequestStatus{
+			Token:               "tok-remote",
+			ExpirationTimestamp: metav1.NewTime(time.Now().Add(time.Hour)),
+		},
+	}
+	send := &fakeSend{syncHandler: func(*model.Message) (*model.Message, error) {
+		return model.NewMessage("").FillBody(remote), nil
+	}}
+
+	c := &serviceAccountToken{send: send}
+	got, err := c.GetServiceAccountToken("default", "first-request", specOf(projectedTTL))
+	if err != nil {
+		t.Fatalf("GetServiceAccountToken: %v", err)
+	}
+	if got.Status.Token != "tok-remote" {
+		t.Errorf("token = %q, want %q", got.Status.Token, "tok-remote")
+	}
+}
+
+// The prefix lookup matches the cached key exactly. A token cached for a
+// different audience must not be returned when the audiences differ only in
+// case, or by a character that SQL LIKE would treat as a wildcard.
+func TestQueryMetaByKeyPrefixIsExact(t *testing.T) {
+	const name, namespace = "exact-prefix", "default"
+	exp := projectedTTL
+	withAudience := func(aud string) *authenticationv1.TokenRequest {
+		return &authenticationv1.TokenRequest{
+			Spec: authenticationv1.TokenRequestSpec{ExpirationSeconds: &exp, Audiences: []string{aud}},
+		}
+	}
+	for _, aud := range []string{"Vault", "aXb", "café"} {
+		tr := withAudience(aud)
+		tr.Status = authenticationv1.TokenRequestStatus{
+			Token:               "tok-" + aud,
+			ExpirationTimestamp: metav1.NewTime(time.Now().Add(time.Hour)),
+		}
+		value, err := json.Marshal(tr)
+		if err != nil {
+			t.Fatalf("marshal token: %v", err)
+		}
+		if err := dbclient.NewMetaService().SaveMeta(&models.Meta{
+			Key:   KeyFunc(name, namespace, tr),
+			Type:  model.ResourceTypeServiceAccountToken,
+			Value: string(value),
+		}); err != nil {
+			t.Fatalf("save meta: %v", err)
+		}
+	}
+
+	for _, aud := range []string{"vault", "a_b", "a%b"} {
+		rows, err := dbclient.NewMetaService().QueryMetaByKeyPrefix(baseKey(name, namespace, withAudience(aud)))
+		if err != nil {
+			t.Fatalf("query by prefix for audience %q: %v", aud, err)
+		}
+		if len(rows) != 0 {
+			t.Errorf("audience %q matched %d cached rows of other audiences, want 0", aud, len(rows))
+		}
+	}
+
+	// Exact matches are still found, including a prefix with multi-byte
+	// characters, where a byte length and SQLite's character length differ.
+	for _, aud := range []string{"Vault", "café"} {
+		rows, err := dbclient.NewMetaService().QueryMetaByKeyPrefix(baseKey(name, namespace, withAudience(aud)))
+		if err != nil {
+			t.Fatalf("query by prefix for audience %q: %v", aud, err)
+		}
+		if len(rows) != 1 {
+			t.Errorf("audience %q matched %d rows, want 1", aud, len(rows))
+		}
 	}
 }
 
