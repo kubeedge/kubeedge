@@ -48,7 +48,7 @@ type Handler interface {
 	OnEdgeNodeDisconnect(info *model.HubInfo, connection conn.Connection)
 
 	// OnReadTransportErr is invoked when the connection read message err
-	OnReadTransportErr(nodeID, projectID string)
+	OnReadTransportErr(nodeID, projectID string, connection conn.Connection)
 }
 
 func NewMessageHandler(
@@ -196,12 +196,18 @@ func (mh *messageHandler) OnEdgeNodeDisconnect(info *model.HubInfo, _ conn.Conne
 	}
 }
 
-func (mh *messageHandler) OnReadTransportErr(nodeID, projectID string) {
+func (mh *messageHandler) OnReadTransportErr(nodeID, projectID string, connection conn.Connection) {
 	klog.Errorf("projectID %s node %s read message err", projectID, nodeID)
 
 	nodeSession, exist := mh.SessionManager.GetSession(nodeID)
 	if !exist {
 		klog.Errorf("session not found for node %s", nodeID)
+		return
+	}
+
+	// The error may come from the old connection of a node that just reconnected
+	if nodeSession.GetConnection() != connection {
+		klog.Warningf("read error is not from the current connection of node %s, ignore it", nodeID)
 		return
 	}
 
