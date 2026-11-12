@@ -392,7 +392,7 @@ func gcExpiredTokensOnce() {
 	for _, row := range *rows {
 		var tr authenticationv1.TokenRequest
 		if err := json.Unmarshal([]byte(row.Value), &tr); err != nil {
-			// Don't delete: an unparseable row is a separate bug; leave it
+			// Don't delete: an unparsable row is a separate bug; leave it
 			// for diagnosis rather than silently dropping it.
 			klog.Errorf("GC: unmarshal SA token row %s failed: %v", row.Key, err)
 			continue
