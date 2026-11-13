@@ -1,6 +1,7 @@
 package socket
 
 import (
+	gocontext "context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -70,6 +71,30 @@ func (s *Context) Send(module string, message model.Message) {
 // Receive receive
 func (s *Context) Receive(module string) (model.Message, error) {
 	return s.getContext(module).Receive(module)
+}
+
+// ReceiveWithContext receives a message, returning when ctx is cancelled.
+// The underlying socket read is not directly cancellable; the goroutine that
+// drives it will exit on its own once the connection is closed or a message arrives.
+func (s *Context) ReceiveWithContext(ctx gocontext.Context, module string) (model.Message, error) {
+	type result struct {
+		msg model.Message
+		err error
+	}
+	ch := make(chan result, 1)
+	go func() {
+		msg, err := s.Receive(module)
+		select {
+		case ch <- result{msg, err}:
+		default:
+		}
+	}()
+	select {
+	case <-ctx.Done():
+		return model.Message{}, ctx.Err()
+	case r := <-ch:
+		return r.msg, r.err
+	}
 }
 
 // SendSync send sync
