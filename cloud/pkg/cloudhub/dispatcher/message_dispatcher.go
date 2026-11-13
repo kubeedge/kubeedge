@@ -266,10 +266,24 @@ func (md *messageDispatcher) enqueueAckMessage(nodeID string, msg *beehivemodel.
 	item, exist, _ := nodeStore.GetByKey(messageKey)
 	if exist {
 		msgInStore := item.(*beehivemodel.Message)
-		if isDeleteMessage(msgInStore) ||
-			synccontroller.CompareResourceVersion(msg.GetResourceVersion(), msgInStore.GetResourceVersion()) <= 0 {
-			// If the message resource version is older than the message in store or the operation
-			// for the message in store is delete, The message will be discarded directly.
+		// If the operation for the message in store is delete, the message will be
+		// discarded directly, without comparing resource versions.
+		if isDeleteMessage(msgInStore) {
+			return
+		}
+		cmp, cmpErr := synccontroller.CompareResourceVersion(msg.GetResourceVersion(), msgInStore.GetResourceVersion())
+		if cmpErr != nil {
+			// resourceVersion is opaque per the Kubernetes API spec, so a value we
+			// cannot parse is not necessarily a bug. Treat it as newer than the
+			// stored one so the message is still delivered instead of silently
+			// discarded.
+			klog.Warningf("cannot compare resourceVersions (msg=%q store=%q): %v; keeping the message as fail-safe",
+				msg.GetResourceVersion(), msgInStore.GetResourceVersion(), cmpErr)
+			cmp = 1
+		}
+		if cmp <= 0 {
+			// The message resource version is older than the message in store,
+			// so the message will be discarded directly.
 			return
 		}
 		shouldEnqueue = true
@@ -299,7 +313,15 @@ func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *be
 
 	switch {
 	case err == nil && clusterObjectSync.Status.ObjectResourceVersion != "":
-		if synccontroller.CompareResourceVersion(msg.GetResourceVersion(), clusterObjectSync.Status.ObjectResourceVersion) > 0 {
+		cmp, cmpErr := synccontroller.CompareResourceVersion(msg.GetResourceVersion(), clusterObjectSync.Status.ObjectResourceVersion)
+		if cmpErr != nil {
+			// resourceVersion is opaque per the Kubernetes API spec; treat a version
+			// we cannot parse as newer so the message is still dispatched.
+			klog.Warningf("clusterobjectsync %s: cannot compare resourceVersions (msg=%q synced=%q): %v; dispatching as fail-safe",
+				clusterObjectSyncName, msg.GetResourceVersion(), clusterObjectSync.Status.ObjectResourceVersion, cmpErr)
+			cmp = 1
+		}
+		if cmp > 0 {
 			return true
 		}
 
@@ -363,7 +385,15 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 
 	switch {
 	case err == nil && objectSync.Status.ObjectResourceVersion != "":
-		if synccontroller.CompareResourceVersion(msg.GetResourceVersion(), objectSync.Status.ObjectResourceVersion) > 0 {
+		cmp, cmpErr := synccontroller.CompareResourceVersion(msg.GetResourceVersion(), objectSync.Status.ObjectResourceVersion)
+		if cmpErr != nil {
+			// resourceVersion is opaque per the Kubernetes API spec; treat a version
+			// we cannot parse as newer so the message is still dispatched.
+			klog.Warningf("objectsync %s: cannot compare resourceVersions (msg=%q synced=%q): %v; dispatching as fail-safe",
+				objectSyncName, msg.GetResourceVersion(), objectSync.Status.ObjectResourceVersion, cmpErr)
+			cmp = 1
+		}
+		if cmp > 0 {
 			return true
 		}
 

@@ -1,3 +1,19 @@
+/*
+Copyright 2021 The KubeEdge Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package synccontroller
 
 import (
@@ -30,7 +46,9 @@ var (
 
 	getObjectUIDFunc = getObjectUID
 
-	compareResourceVersionFunc = CompareResourceVersion
+	// compareResourceVersionFunc is a variable to allow test injection.
+	// Its signature matches CompareResourceVersion.
+	compareResourceVersionFunc func(string, string) (int, error) = CompareResourceVersion
 
 	gcOrphanedClusterObjectSyncFunc = func(sctl *SyncController, sync *v1alpha1.ClusterObjectSync) {
 		sctl.gcOrphanedClusterObjectSyncImpl(sync)
@@ -90,7 +108,7 @@ func (sctl *SyncController) gcOrphanedClusterObjectSync(sync *v1alpha1.ClusterOb
 
 // gcOrphanedClusterObjectSyncImpl try to send delete message to the edge node
 // to make sure that the resource is deleted in the edge node. After the
-// message ACK is received by `cloudHub`, the objectSync will be deleted
+// message ACK is received by `cloudHub`, the ClusterObjectSync will be deleted
 // directly in the `cloudHub`. But if message build failed, the ClusterObjectSync
 // will be deleted directly in the `syncController`.
 func (sctl *SyncController) gcOrphanedClusterObjectSyncImpl(sync *v1alpha1.ClusterObjectSync) {
@@ -122,9 +140,18 @@ func sendClusterObjectSyncEvent(nodeName string, sync *v1alpha1.ClusterObjectSyn
 		return
 	}
 
-	if compareResourceVersionFunc(objectResourceVersion, sync.Status.ObjectResourceVersion) > 0 {
-		// trigger the update event
-		klog.V(4).Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event", objectResourceVersion, resourceType, sync.Status.ObjectResourceVersion)
+	cmp, err := compareResourceVersionFunc(objectResourceVersion, sync.Status.ObjectResourceVersion)
+	if err != nil {
+		// ResourceVersion is opaque per the Kubernetes API spec; non-integer values are valid
+		// for non-standard API servers. Treat an unparseable version as "unknown — send the
+		// update" so the edge stays consistent rather than silently stalling forever.
+		klog.Warningf("clusterObjectSync %s: cannot compare resourceVersions (live=%q edge=%q): %v; sending update as fail-safe",
+			sync.Name, objectResourceVersion, sync.Status.ObjectResourceVersion, err)
+		cmp = 1
+	}
+	if cmp > 0 {
+		klog.V(4).Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event",
+			objectResourceVersion, resourceType, sync.Status.ObjectResourceVersion)
 		msg := buildEdgeControllerMessageFunc(nodeName, models.NullNamespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)
 		sendToEdge(commonconst.DefaultContextSendModuleName, *msg)
 	}
