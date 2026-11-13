@@ -162,6 +162,59 @@ func TestNodeSessionSendNoAckMessage(t *testing.T) {
 	}
 }
 
+// A Node delete without ACK ends the session only when it names the receiving node: a node
+// that watches Nodes also gets other Nodes' deletes, and must get them.
+func TestNodeSessionNoAckNodeDelete(t *testing.T) {
+	tests := []struct {
+		name     string
+		resource string
+		wantSent int
+		wantErr  int32
+	}{
+		{
+			name:     "delete of another Node is sent",
+			resource: "node/" + tf.TestNodeID + "/null/node/other-node",
+			wantSent: 1,
+			wantErr:  NoErr,
+		},
+		{
+			name:     "delete of the receiving Node ends the session",
+			resource: "node/" + tf.TestNodeID + "/namespace/node/" + tf.TestNodeID,
+			wantSent: 0,
+			wantErr:  NodeStopErr,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			wg := sync.WaitGroup{}
+			stopCh := make(chan struct{})
+
+			session, mockController, mockConn := openNodeSession(t, &wg, stopCh, tf.NormalSendKeepaliveInterval, &fake.Clientset{})
+			defer mockController.Finish()
+
+			mockConn.EXPECT().WriteMessageAsync(gomock.Any()).Return(nil).Times(tt.wantSent)
+			mockConn.EXPECT().Close().Return(nil).AnyTimes()
+
+			msg := beehivemodel.NewMessage("").
+				BuildRouter("edgecontroller", "resource", tt.resource, beehivemodel.DeleteOperation)
+			enqueueNoAckMessage(session.nodeMessagePool, msg)
+
+			// sleep 2 second to wait the message send
+			time.Sleep(2 * time.Second)
+
+			gotErr := session.GetTerminateErr()
+			close(stopCh)
+			session.Terminating()
+			wg.Wait()
+
+			if gotErr != tt.wantErr {
+				t.Errorf("terminate error: expected %d, got %d", tt.wantErr, gotErr)
+			}
+		})
+	}
+}
+
 // Test the real nodeSession SendAckMessage methods with a fake API server
 // and a fake connection. we call func `enqueueAckMessage` to simulate
 // resource update message that comes from edgeController module.

@@ -97,6 +97,18 @@ func TestNoAckRequired(t *testing.T) {
 			message: beehivemodel.NewMessage("").SetResourceOperation("node/edge-node/default/pod/test-pod", "update").SetRoute("edgecontroller", "resource"),
 			want:    false,
 		},
+		// synccontroller sends the cleanup DELETE of a gone Node as dynamiccontroller, because only
+		// the edge's ACK removes its ClusterObjectSync; as edgecontroller it would get none.
+		{
+			name:    "edgecontroller node delete",
+			message: beehivemodel.NewMessage("").SetResourceOperation("node/edge-node/null/node/other-node", "delete").SetRoute("edgecontroller", "resource"),
+			want:    true,
+		},
+		{
+			name:    "dynamiccontroller node delete",
+			message: beehivemodel.NewMessage("").SetResourceOperation("node/edge-node/null/node/other-node", "delete").SetRoute("dynamiccontroller", "resource"),
+			want:    false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
