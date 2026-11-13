@@ -31,7 +31,7 @@ type WSConnection struct {
 	autoRoute            bool
 	messageFifo          *fifo.MessageFifo
 	locker               sync.Mutex
-	OnReadTransportErr   func(nodeID, projectID string)
+	OnReadTransportErr   func(nodeID, projectID string, connection Connection)
 	readDeadlineInterval time.Duration
 }
 
@@ -203,7 +203,7 @@ func (conn *WSConnection) handleMessage() {
 
 			if conn.OnReadTransportErr != nil {
 				conn.OnReadTransportErr(conn.state.Headers.Get("node_id"),
-					conn.state.Headers.Get("project_id"))
+					conn.state.Headers.Get("project_id"), conn)
 			}
 
 			return

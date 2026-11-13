@@ -191,6 +191,8 @@ func newTestWSConn(t *testing.T, readDeadlineInterval time.Duration, serverReads
 func TestHandleMessageReadDeadlineFiresWithinInterval(t *testing.T) {
 	conn, srv := newTestWSConn(t, 100*time.Millisecond, false)
 	defer srv.Close()
+	var reported Connection
+	conn.OnReadTransportErr = func(_, _ string, c Connection) { reported = c }
 
 	done := make(chan struct{})
 	go func() {
@@ -202,6 +204,9 @@ func TestHandleMessageReadDeadlineFiresWithinInterval(t *testing.T) {
 	case <-done:
 	case <-time.After(2 * time.Second):
 		t.Fatal("handleMessage did not return within 2s; deadline not applied")
+	}
+	if reported != conn {
+		t.Fatal("OnReadTransportErr was not given the failed connection")
 	}
 
 	// messageFifo must be closed so callers blocked on Get() observe the
@@ -306,7 +311,7 @@ func TestNewWSConnWiresReadDeadlineInterval(t *testing.T) {
 		State:                &ConnectionState{State: api.StatConnected},
 		ConnUse:              api.UseTypeMessage,
 		AutoRoute:            true,
-		OnReadTransportErr:   func(string, string) { called = true },
+		OnReadTransportErr:   func(string, string, Connection) { called = true },
 		ReadDeadlineInterval: 5 * time.Second,
 	})
 
@@ -319,7 +324,7 @@ func TestNewWSConnWiresReadDeadlineInterval(t *testing.T) {
 	if conn.messageFifo == nil || conn.syncKeeper == nil {
 		t.Fatal("NewWSConn must initialize messageFifo and syncKeeper")
 	}
-	conn.OnReadTransportErr("", "")
+	conn.OnReadTransportErr("", "", nil)
 	if !called {
 		t.Fatal("OnReadTransportErr was not wired")
 	}
