@@ -84,7 +84,7 @@ type ConfigUpdateOptions struct {
 	BaseOptions
 
 	// Sets specify multiple or separate values to be modified for EdgeCore configuration
-	Sets string
+	Sets []string
 }
 
 // AddBaseFlags adds some common flags to the upgrade related commands, and use BaseOptions struct to map these flags.
@@ -151,6 +151,6 @@ func AddRollbackFlags(cmd *cobra.Command, opts *RollbackOptions) {
 func AddConfigUpdateFlags(cmd *cobra.Command, opts *ConfigUpdateOptions) {
 	AddBaseFlags(cmd, &opts.BaseOptions)
 
-	cmd.Flags().StringVar(&opts.Sets, "set", opts.Sets,
+	cmd.Flags().StringArrayVar(&opts.Sets, "set", opts.Sets,
 		"Set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
 }
