@@ -76,17 +76,33 @@ func (eh *EdgeHub) sendToCloud(message model.Message) error {
 }
 
 func (eh *EdgeHub) routeToCloud(stop <-chan struct{}) {
-	for {
+	// beehiveContext.Receive blocks until a message is queued for the module,
+	// so closing stop cannot release this goroutine on its own: the check above
+	// is only reached between messages. On a quiet node the goroutine stays
+	// parked inside Receive long after its connection is gone, and a new one is
+	// started for every reconnect — one leaked goroutine per reconnect cycle,
+	// each still holding a reference to the dead connection's client.
+	//
+	// Translate stop (and process shutdown, via the beehive global context)
+	// into a context so the receive itself is cancellable.
+	ctx, cancel := context.WithCancel(beehiveContext.GetContext())
+	defer cancel()
+	go func() {
 		select {
-		case <-beehiveContext.Done():
-			klog.Warning("EdgeHub RouteToCloud stop")
-			return
 		case <-stop:
-			return
-		default:
+			cancel()
+		case <-ctx.Done():
 		}
-		message, err := beehiveContext.Receive(modules.EdgeHubModuleName)
+	}()
+
+	for {
+		message, err := beehiveContext.ReceiveWithContext(ctx, modules.EdgeHubModuleName)
 		if err != nil {
+			if ctx.Err() != nil {
+				// stop was closed or the process is shutting down.
+				klog.Warning("EdgeHub RouteToCloud stop")
+				return
+			}
 			klog.Errorf("failed to receive message from edge: %v", err)
 			time.Sleep(time.Second)
 			continue
