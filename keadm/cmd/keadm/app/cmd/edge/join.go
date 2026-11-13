@@ -22,6 +22,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -169,6 +170,35 @@ func setEdgedNodeLabels(opt *common.JoinOptions) map[string]string {
 		}
 	}
 	return labelsMap
+}
+
+// setCertFiles points every module that uses the edge certificate and private
+// key (edgehub, edgestream, the eventbus MQTT client and the metaserver client
+// settings) at the directory given by --certPath, keeping the default file
+// names. The CA files are left alone, since by default the CA is not stored in
+// the certs directory.
+func setCertFiles(cfg *v1alpha2.EdgeCoreConfig, certPath string) error {
+	if certPath == "" {
+		return nil
+	}
+	// edgecore resolves a relative path against its own working directory,
+	// not the one keadm runs in, so store an absolute path.
+	absCertPath, err := filepath.Abs(certPath)
+	if err != nil {
+		return fmt.Errorf("get absolute path of %s failed: %v", certPath, err)
+	}
+	certFile := filepath.Join(absCertPath, filepath.Base(constants.DefaultCertFile))
+	keyFile := filepath.Join(absCertPath, filepath.Base(constants.DefaultKeyFile))
+
+	cfg.Modules.EdgeHub.TLSCertFile = certFile
+	cfg.Modules.EdgeHub.TLSPrivateKeyFile = keyFile
+	cfg.Modules.EdgeStream.TLSTunnelCertFile = certFile
+	cfg.Modules.EdgeStream.TLSTunnelPrivateKeyFile = keyFile
+	cfg.Modules.EventBus.TLS.TLSMqttCertFile = certFile
+	cfg.Modules.EventBus.TLS.TLSMqttPrivateKeyFile = keyFile
+	cfg.Modules.MetaManager.MetaServer.TLSCertFile = certFile
+	cfg.Modules.MetaManager.MetaServer.TLSPrivateKeyFile = keyFile
+	return nil
 }
 
 func createBootstrapFile(opt *common.JoinOptions) error {
