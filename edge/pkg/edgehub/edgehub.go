@@ -253,6 +253,7 @@ func (eh *EdgeHub) run(done <-chan struct{}) {
 			rotated = true
 		}
 		close(stop)
+		wakeRouteToCloud()
 		eh.chClient.UnInit()
 
 		// execute hook fun after disconnect
