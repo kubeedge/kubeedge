@@ -61,9 +61,9 @@ func (sf *servicebusFactory) GetSource(_ *v1.RuleEndpoint, sourceResource map[st
 }
 
 func (sb *ServiceBus) RegisterListener(handle listener.Handle) error {
-	listener.MessageHandlerInstance.AddListener(fmt.Sprintf("servicebus/%v/%v", path.Join("node", sb.nodeName), sb.TargetURL), handle)
+	listener.MessageHandlerInstance.AddListener("servicebus/"+sb.resource(), handle)
 	msg := model.NewMessage("")
-	msg.SetResourceOperation(fmt.Sprintf("%v/%v", path.Join("node", sb.nodeName), sb.TargetURL), "start")
+	msg.SetResourceOperation(sb.resource(), "start")
 	msg.SetRoute(modules.RouterSourceServiceBus, modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
 	return nil
@@ -71,10 +71,14 @@ func (sb *ServiceBus) RegisterListener(handle listener.Handle) error {
 
 func (sb *ServiceBus) UnregisterListener() {
 	msg := model.NewMessage("")
-	msg.SetResourceOperation(path.Join("node", sb.nodeName, sb.TargetURL), "stop")
+	msg.SetResourceOperation(sb.resource(), "stop")
 	msg.SetRoute(modules.RouterSourceServiceBus, modules.UserGroup)
 	beehiveContext.Send(modules.CloudHubModuleName, *msg)
-	listener.MessageHandlerInstance.RemoveListener(path.Join("servicebus/node", sb.nodeName, sb.TargetURL))
+	listener.MessageHandlerInstance.RemoveListener("servicebus/" + sb.resource())
+}
+
+func (sb *ServiceBus) resource() string {
+	return path.Join("node", sb.nodeName) + "/" + sb.TargetURL
 }
 
 func (sb *ServiceBus) Name() string {
