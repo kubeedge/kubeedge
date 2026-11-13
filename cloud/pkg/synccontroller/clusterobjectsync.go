@@ -48,8 +48,7 @@ func (sctl *SyncController) reconcileClusterObjectSync(sync *v1alpha1.ClusterObj
 	if err != nil {
 		return
 	}
-	resource := util.UnsafeKindToResource(sync.Spec.ObjectKind)
-	gvr := gv.WithResource(resource)
+	gvr := sctl.resourceFor(gv.WithKind(sync.Spec.ObjectKind))
 	nodeName := getNodeNameFunc(sync.Name)
 	resourceType := strings.ToLower(sync.Spec.ObjectKind)
 
