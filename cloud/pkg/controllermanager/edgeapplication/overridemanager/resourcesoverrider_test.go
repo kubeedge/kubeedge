@@ -515,3 +515,128 @@ func TestAcquireOverride(t *testing.T) {
 	assert.NoError(t, err)
 	assert.ElementsMatch(t, expectedPatches, patches)
 }
+
+func TestResourcesOverrider_ApplyOverridesQualifiedResources(t *testing.T) {
+	tests := []struct {
+		name             string
+		initialRequests  map[string]interface{}
+		initialLimits    map[string]interface{}
+		overrideRequests corev1.ResourceList
+		overrideLimits   corev1.ResourceList
+		wantRequests     map[string]interface{}
+		wantLimits       map[string]interface{}
+	}{
+		{
+			name:             "GPU request",
+			initialRequests:  map[string]interface{}{"nvidia.com/gpu": "1"},
+			initialLimits:    map[string]interface{}{"nvidia.com/gpu": "1"},
+			overrideRequests: corev1.ResourceList{"nvidia.com/gpu": resource.MustParse("2")},
+			wantRequests:     map[string]interface{}{"nvidia.com/gpu": "2"},
+			wantLimits:       map[string]interface{}{"nvidia.com/gpu": "1"},
+		},
+		{
+			name:            "GPU limit",
+			initialRequests: map[string]interface{}{"nvidia.com/gpu": "1"},
+			initialLimits:   map[string]interface{}{"nvidia.com/gpu": "1"},
+			overrideLimits:  corev1.ResourceList{"nvidia.com/gpu": resource.MustParse("2")},
+			wantRequests:    map[string]interface{}{"nvidia.com/gpu": "1"},
+			wantLimits:      map[string]interface{}{"nvidia.com/gpu": "2"},
+		},
+		{
+			name:             "GPU request and limit",
+			initialRequests:  map[string]interface{}{"nvidia.com/gpu": "1"},
+			initialLimits:    map[string]interface{}{"nvidia.com/gpu": "1"},
+			overrideRequests: corev1.ResourceList{"nvidia.com/gpu": resource.MustParse("2")},
+			overrideLimits:   corev1.ResourceList{"nvidia.com/gpu": resource.MustParse("2")},
+			wantRequests:     map[string]interface{}{"nvidia.com/gpu": "2"},
+			wantLimits:       map[string]interface{}{"nvidia.com/gpu": "2"},
+		},
+		{
+			name:             "ordinary CPU and memory",
+			initialRequests:  map[string]interface{}{"cpu": "100m", "memory": "128Mi"},
+			initialLimits:    map[string]interface{}{"cpu": "100m", "memory": "128Mi"},
+			overrideRequests: corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("200m")},
+			overrideLimits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("256Mi")},
+			wantRequests:     map[string]interface{}{"cpu": "200m", "memory": "128Mi"},
+			wantLimits:       map[string]interface{}{"cpu": "100m", "memory": "256Mi"},
+		},
+		{
+			name:             "non-NVIDIA extended resource",
+			initialRequests:  map[string]interface{}{"example.com/device": "1"},
+			initialLimits:    map[string]interface{}{"example.com/device": "1"},
+			overrideRequests: corev1.ResourceList{"example.com/device": resource.MustParse("2")},
+			overrideLimits:   corev1.ResourceList{"example.com/device": resource.MustParse("2")},
+			wantRequests:     map[string]interface{}{"example.com/device": "2"},
+			wantLimits:       map[string]interface{}{"example.com/device": "2"},
+		},
+	}
+
+	deploymentWithResources := func(requests, limits map[string]interface{}) *unstructured.Unstructured {
+		return &unstructured.Unstructured{Object: map[string]interface{}{
+			"kind": "Deployment",
+			"spec": map[string]interface{}{
+				"template": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"containers": []interface{}{
+							map[string]interface{}{
+								"name": "inference",
+								"resources": map[string]interface{}{
+									"requests": requests,
+									"limits":   limits,
+								},
+							},
+						},
+					},
+				},
+			},
+		}}
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			obj := deploymentWithResources(tt.initialRequests, tt.initialLimits)
+			overriders := OverriderInfo{Overriders: &v1alpha1.Overriders{
+				ResourcesOverriders: []v1alpha1.ResourcesOverrider{{
+					ContainerName: "inference",
+					Value: corev1.ResourceRequirements{
+						Requests: tt.overrideRequests,
+						Limits:   tt.overrideLimits,
+					},
+				}},
+			}}
+			err := (&ResourcesOverrider{}).ApplyOverrides(obj, overriders)
+			assert.NoError(t, err)
+			assert.Equal(t, deploymentWithResources(tt.wantRequests, tt.wantLimits).Object, obj.Object)
+		})
+	}
+}
+
+func TestAcquireOverrideEscapesResourceNames(t *testing.T) {
+	tests := []struct {
+		name       string
+		resource   corev1.ResourceName
+		wantSuffix string
+	}{
+		{name: "ordinary CPU", resource: corev1.ResourceCPU, wantSuffix: "cpu"},
+		{name: "ordinary memory", resource: corev1.ResourceMemory, wantSuffix: "memory"},
+		{name: "ordinary ephemeral storage", resource: corev1.ResourceEphemeralStorage, wantSuffix: "ephemeral-storage"},
+		{name: "GPU", resource: "nvidia.com/gpu", wantSuffix: "nvidia.com~1gpu"},
+		{name: "other extended resource", resource: "example.com/device", wantSuffix: "example.com~1device"},
+		{name: "RFC 6901 tilde and slash", resource: "foo~bar/baz", wantSuffix: "foo~0bar~1baz"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			quantity := resource.MustParse("2")
+			patches, err := acquireOverride("/spec/template/spec/containers/0/resources", corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{tt.resource: quantity},
+				Limits:   corev1.ResourceList{tt.resource: quantity},
+			})
+			assert.NoError(t, err)
+			assert.ElementsMatch(t, []overrideOption{
+				{Op: "replace", Path: "/spec/template/spec/containers/0/resources/requests/" + tt.wantSuffix, Value: "2"},
+				{Op: "replace", Path: "/spec/template/spec/containers/0/resources/limits/" + tt.wantSuffix, Value: "2"},
+			}, patches)
+		})
+	}
+}
