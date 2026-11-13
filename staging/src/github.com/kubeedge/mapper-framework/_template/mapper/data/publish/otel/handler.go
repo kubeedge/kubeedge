@@ -38,7 +38,7 @@ func DataHandler(ctx context.Context, twin *common.Twin, client *driver.Customiz
 		return
 	}
 
-	provider, err := cfg.InitProvider(time.Duration(twin.Property.ReportCycle), dataModel)
+	provider, err := cfg.InitProvider(time.Millisecond*time.Duration(twin.Property.ReportCycle), dataModel)
 	if err != nil {
 		klog.Errorf("init provider fail: %v", err)
 		return
