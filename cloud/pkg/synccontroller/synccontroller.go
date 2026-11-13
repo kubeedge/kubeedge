@@ -3,6 +3,7 @@ package synccontroller
 import (
 	"context"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/avast/retry-go"
@@ -31,6 +32,16 @@ const (
 	// maxRetries is the number of times trying to delete ObjectSyncs and ClusterObjectSyncs.
 	maxRetries       = 5
 	deleteSyncsDelay = 1 * time.Second
+
+	// deletedNodeSyncsRetention is how long the ObjectSyncs and ClusterObjectSyncs of a
+	// deleted node are kept. Deleting the Node object does not clean up the edge node: it
+	// keeps its local data and registers again under the same name when it comes back,
+	// e.g. after a cloud provider removed the Node object while the machine was powered
+	// off. The sync records are what the sync loop uses to send the edge node the
+	// deletions it missed in the meantime, so they have to outlive the Node object.
+	deletedNodeSyncsRetention = 24 * time.Hour
+	// deletedNodeSyncsGCPeriod is how often the sync records of deleted nodes are checked.
+	deletedNodeSyncsGCPeriod = 10 * time.Minute
 )
 
 // SyncController use beehive context message layer
@@ -49,16 +60,22 @@ type SyncController struct {
 	informersSyncedFuncs []cache.InformerSynced
 
 	informerManager informers.Manager
+
+	// nodeMissingSince records when each node that still has sync records was first
+	// found to be missing, so that its sync records are kept for deletedNodeSyncsRetention.
+	nodeMissingSince     map[string]time.Time
+	nodeMissingSinceLock sync.Mutex
 }
 
 var _ core.Module = (*SyncController)(nil)
 
 func newSyncController(enable bool) *SyncController {
 	var sctl = &SyncController{
-		enable:          enable,
-		crdclient:       keclient.GetCRDClient(),
-		kubeclient:      keclient.GetDynamicClient(),
-		informerManager: informers.GetInformersManager(),
+		enable:           enable,
+		crdclient:        keclient.GetCRDClient(),
+		kubeclient:       keclient.GetDynamicClient(),
+		informerManager:  informers.GetInformersManager(),
+		nodeMissingSince: make(map[string]time.Time),
 	}
 	// informer factory
 	k8sInformerFactory := informers.GetInformersManager().GetKubeInformerFactory()
@@ -68,10 +85,8 @@ func newSyncController(enable bool) *SyncController {
 	clusterObjectSyncsInformer := crdInformerFactory.Reliablesyncs().V1alpha1().ClusterObjectSyncs()
 	nodesInformer := k8sInformerFactory.Core().V1().Nodes()
 	_, err := nodesInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		DeleteFunc: func(obj interface{}) {
-			sctl.deleteObjectSyncs()
-			sctl.deleteClusterObjectSyncs()
-		},
+		AddFunc:    sctl.addNode,
+		DeleteFunc: sctl.deleteNode,
 	})
 	if err != nil {
 		klog.Fatalf("new synccontroller failed, add event handler err: %v", err)
@@ -120,8 +135,9 @@ func (sctl *SyncController) Start() {
 		return
 	}
 
-	sctl.deleteObjectSyncs() //check outdate sync before start to reconcile
-	sctl.deleteClusterObjectSyncs()
+	// The sync records of a deleted node are kept for deletedNodeSyncsRetention,
+	// so they are garbage collected periodically rather than when the node is deleted.
+	go wait.Until(sctl.gcDeletedNodeSyncs, deletedNodeSyncsGCPeriod, beehiveContext.Done())
 
 	go wait.Until(sctl.reconcileObjectSyncs, 5*time.Second, beehiveContext.Done())
 
@@ -154,6 +170,14 @@ func (sctl *SyncController) reconcileClusterObjectSyncs() {
 	for _, sync := range allClusterObjectSyncs {
 		sctl.reconcileClusterObjectSync(sync)
 	}
+}
+
+// gcDeletedNodeSyncs deletes the sync records of nodes that have been deleted for
+// longer than deletedNodeSyncsRetention.
+func (sctl *SyncController) gcDeletedNodeSyncs() {
+	sctl.deleteObjectSyncs()
+	sctl.deleteClusterObjectSyncs()
+	sctl.forgetNodesWithoutSyncs()
 }
 
 func (sctl *SyncController) deleteObjectSyncs() {
@@ -226,22 +250,91 @@ func (sctl *SyncController) deleteClusterObjectSyncs() {
 
 // checkObjectSync checks whether objectSync is outdated
 func (sctl *SyncController) checkObjectSync(sync *v1alpha1.ObjectSync) (bool, error) {
-	nodeName := getNodeName(sync.Name)
-	_, err := sctl.nodeLister.Get(nodeName)
-	if errors.IsNotFound(err) {
-		return true, nil
-	}
-	return false, err
+	return sctl.isNodeSyncsOutdated(getNodeName(sync.Name))
 }
 
 // checkClusterObjectSync checks whether ClusterObjectSync is outdated
 func (sctl *SyncController) checkClusterObjectSync(sync *v1alpha1.ClusterObjectSync) (bool, error) {
-	nodeName := getNodeName(sync.Name)
+	return sctl.isNodeSyncsOutdated(getNodeName(sync.Name))
+}
+
+// isNodeSyncsOutdated checks whether the sync records of a node are outdated, which is
+// the case once the node has been missing for longer than deletedNodeSyncsRetention.
+func (sctl *SyncController) isNodeSyncsOutdated(nodeName string) (bool, error) {
 	_, err := sctl.nodeLister.Get(nodeName)
-	if errors.IsNotFound(err) {
-		return true, nil
+	if err != nil && !errors.IsNotFound(err) {
+		return false, err
 	}
-	return false, err
+
+	sctl.nodeMissingSinceLock.Lock()
+	defer sctl.nodeMissingSinceLock.Unlock()
+	if err == nil {
+		// The node exists, or it has registered again after being deleted.
+		delete(sctl.nodeMissingSince, nodeName)
+		return false, nil
+	}
+	missingSince, ok := sctl.nodeMissingSince[nodeName]
+	if !ok {
+		// The node was deleted while the controller was not watching.
+		sctl.nodeMissingSince[nodeName] = time.Now()
+		return false, nil
+	}
+	return time.Since(missingSince) > deletedNodeSyncsRetention, nil
+}
+
+// addNode stops tracking a node as missing when it registers again, so that a later
+// deletion of the node starts a new retention period.
+func (sctl *SyncController) addNode(obj interface{}) {
+	nodeName, err := cache.MetaNamespaceKeyFunc(obj)
+	if err != nil {
+		klog.Errorf("Failed to get the name of the added node: %v", err)
+		return
+	}
+	sctl.nodeMissingSinceLock.Lock()
+	defer sctl.nodeMissingSinceLock.Unlock()
+	delete(sctl.nodeMissingSince, nodeName)
+}
+
+// deleteNode starts the retention period of the sync records of a deleted node.
+func (sctl *SyncController) deleteNode(obj interface{}) {
+	nodeName, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
+	if err != nil {
+		klog.Errorf("Failed to get the name of the deleted node: %v", err)
+		return
+	}
+	sctl.nodeMissingSinceLock.Lock()
+	defer sctl.nodeMissingSinceLock.Unlock()
+	sctl.nodeMissingSince[nodeName] = time.Now()
+}
+
+// forgetNodesWithoutSyncs stops tracking missing nodes that no longer have any sync records.
+func (sctl *SyncController) forgetNodesWithoutSyncs() {
+	objectSyncs, err := sctl.objectSyncLister.List(labels.Everything())
+	if err != nil {
+		klog.Errorf("Failed to list all the ObjectSyncs: %v", err)
+		return
+	}
+	clusterObjectSyncs, err := sctl.clusterObjectSyncLister.List(labels.Everything())
+	if err != nil {
+		klog.Errorf("Failed to list all the ClusterObjectSyncs: %v", err)
+		return
+	}
+
+	nodesWithSyncs := make(map[string]struct{})
+	for _, objectSync := range objectSyncs {
+		nodesWithSyncs[getNodeName(objectSync.Name)] = struct{}{}
+	}
+	for _, clusterObjectSync := range clusterObjectSyncs {
+		nodesWithSyncs[getNodeName(clusterObjectSync.Name)] = struct{}{}
+	}
+
+	sctl.nodeMissingSinceLock.Lock()
+	defer sctl.nodeMissingSinceLock.Unlock()
+	for nodeName := range sctl.nodeMissingSince {
+		if _, ok := nodesWithSyncs[nodeName]; !ok {
+			delete(sctl.nodeMissingSince, nodeName)
+		}
+	}
 }
 
 // BuildObjectSyncName builds the name of objectSync/clusterObjectSync
