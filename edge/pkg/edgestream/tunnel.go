@@ -58,7 +58,8 @@ func (s *TunnelSession) serveLogsConnection(m *stream.Message) error {
 	}
 
 	s.AddLocalConnection(m.ConnectID, logCon)
-	return logCon.Serve(s.Tunnel)
+	go s.serveLocalConnection(m, logCon)
+	return nil
 }
 
 func (s *TunnelSession) serveContainerExecConnection(m *stream.Message) error {
@@ -73,7 +74,8 @@ func (s *TunnelSession) serveContainerExecConnection(m *stream.Message) error {
 
 	s.AddLocalConnection(m.ConnectID, execCon)
 	klog.V(6).Infof("Get Exec Connection info: %+v", *execCon)
-	return execCon.Serve(s.Tunnel)
+	go s.serveLocalConnection(m, execCon)
+	return nil
 }
 
 func (s *TunnelSession) serveContainerAttachConnection(m *stream.Message) error {
@@ -88,7 +90,8 @@ func (s *TunnelSession) serveContainerAttachConnection(m *stream.Message) error 
 
 	s.AddLocalConnection(m.ConnectID, attachCon)
 	klog.V(6).Infof("Get Attach Connection info: %+v", *attachCon)
-	return attachCon.Serve(s.Tunnel)
+	go s.serveLocalConnection(m, attachCon)
+	return nil
 }
 
 func (s *TunnelSession) serveMetricsConnection(m *stream.Message) error {
@@ -102,7 +105,16 @@ func (s *TunnelSession) serveMetricsConnection(m *stream.Message) error {
 	}
 
 	s.AddLocalConnection(m.ConnectID, metricsCon)
-	return metricsCon.Serve(s.Tunnel)
+	go s.serveLocalConnection(m, metricsCon)
+	return nil
+}
+
+func (s *TunnelSession) serveLocalConnection(m *stream.Message, con stream.EdgedConnection) {
+	if err := con.Serve(s.Tunnel); err != nil {
+		klog.Errorf("Serve %s error %v", con.String(), err)
+	}
+	s.DeleteLocalConnection(m.ConnectID)
+	klog.V(6).Infof("Delete local connection MessageID %v Type %s", m.ConnectID, m.MessageType.String())
 }
 
 func (s *TunnelSession) ServeConnection(m *stream.Message) {
@@ -125,11 +137,7 @@ func (s *TunnelSession) ServeConnection(m *stream.Message) {
 		}
 	default:
 		klog.Errorf("Wrong message type %v", m.MessageType)
-		return
 	}
-
-	s.DeleteLocalConnection(m.ConnectID)
-	klog.V(6).Infof("Delete local connection MessageID %v Type %s", m.ConnectID, m.MessageType.String())
 }
 
 func (s *TunnelSession) Close() {
@@ -197,7 +205,8 @@ func (s *TunnelSession) Serve() error {
 			stream.MessageTypeExecConnect,
 			stream.MessageTypeMetricConnect,
 			stream.MessageTypeAttachConnect:
-			go s.ServeConnection(mess)
+			// Not a goroutine: the connection must be registered before the next message is read.
+			s.ServeConnection(mess)
 		case stream.MessageTypeData,
 			stream.MessageTypeRemoveConnect:
 			s.WriteToLocalConnection(mess)
