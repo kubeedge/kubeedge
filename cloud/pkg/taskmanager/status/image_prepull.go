@@ -60,6 +60,7 @@ func tryUpdateImagePrePullJobStatus(ctx context.Context, cli crdcliset.Interface
 	}
 
 	nodeStatus.Phase = opts.Phase
+	nodeStatus.Reason = opts.Reason
 	if opts.ExtendInfo != "" {
 		imageStatus, err := taskmsg.ParseImagePrePullJobExtend(opts.ExtendInfo)
 		if err != nil {

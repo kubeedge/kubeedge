@@ -99,4 +99,20 @@ func TestTryUpdateImagePrePullJobStatus(t *testing.T) {
 		require.Equal(t, operationsv1alpha2.ImagePrePullJobActionPull, actionStatus.Action)
 		require.Equal(t, metav1.ConditionTrue, actionStatus.Status)
 	})
+
+	t.Run("record the failure reason of the node task", func(t *testing.T) {
+		err := tryUpdateImagePrePullJobStatus(ctx, cli, TryUpdateStatusOptions{
+			JobName:  "test-job1",
+			NodeName: "node1",
+			Phase:    operationsv1alpha2.NodeTaskPhaseFailure,
+			Reason:   "the node node1 is not connected to the current cloudcore instance",
+		})
+		require.NoError(t, err)
+		job, err := cli.OperationsV1alpha2().ImagePrePullJobs().
+			Get(ctx, "test-job1", metav1.GetOptions{})
+		require.NoError(t, err)
+		nodeStatus := job.Status.NodeStatus[0]
+		require.Equal(t, operationsv1alpha2.NodeTaskPhaseFailure, nodeStatus.Phase)
+		require.Equal(t, "the node node1 is not connected to the current cloudcore instance", nodeStatus.Reason)
+	})
 }
