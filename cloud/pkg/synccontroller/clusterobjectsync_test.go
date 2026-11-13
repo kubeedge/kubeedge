@@ -36,27 +36,28 @@ import (
 	edgeinformers "github.com/kubeedge/api/client/informers/externalversions"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 )
 
 type testFuncBackup struct {
-	originalSendToEdge                     func(string, model.Message)
-	originalBuildEdgeControllerMessageFunc func(string, string, string, string, string, interface{}) *model.Message
-	originalGetNodeNameFunc                func(string) string
-	originalGetObjectUIDFunc               func(string) string
-	originalCompareResourceVersionFunc     func(string, string) int
-	originalGcFunc                         func(*SyncController, *v1alpha1.ClusterObjectSync)
-	originalDeleteFunc                     func(*SyncController, string) error
+	originalSendToEdge                 func(string, model.Message)
+	originalBuildSyncMessageFunc       func(string, string, string, string, string, interface{}) *model.Message
+	originalGetNodeNameFunc            func(string) string
+	originalGetObjectUIDFunc           func(string) string
+	originalCompareResourceVersionFunc func(string, string) int
+	originalGcFunc                     func(*SyncController, *v1alpha1.ClusterObjectSync)
+	originalDeleteFunc                 func(*SyncController, string) error
 }
 
 func setupTest() *testFuncBackup {
 	backup := &testFuncBackup{
-		originalSendToEdge:                     sendToEdge,
-		originalBuildEdgeControllerMessageFunc: buildEdgeControllerMessageFunc,
-		originalGetNodeNameFunc:                getNodeNameFunc,
-		originalGetObjectUIDFunc:               getObjectUIDFunc,
-		originalCompareResourceVersionFunc:     compareResourceVersionFunc,
-		originalGcFunc:                         gcOrphanedClusterObjectSyncFunc,
-		originalDeleteFunc:                     deleteClusterObjectSyncFunc,
+		originalSendToEdge:                 sendToEdge,
+		originalBuildSyncMessageFunc:       buildSyncMessageFunc,
+		originalGetNodeNameFunc:            getNodeNameFunc,
+		originalGetObjectUIDFunc:           getObjectUIDFunc,
+		originalCompareResourceVersionFunc: compareResourceVersionFunc,
+		originalGcFunc:                     gcOrphanedClusterObjectSyncFunc,
+		originalDeleteFunc:                 deleteClusterObjectSyncFunc,
 	}
 
 	getNodeNameFunc = mockGetNodeName
@@ -68,7 +69,7 @@ func setupTest() *testFuncBackup {
 
 func (b *testFuncBackup) restore() {
 	sendToEdge = b.originalSendToEdge
-	buildEdgeControllerMessageFunc = b.originalBuildEdgeControllerMessageFunc
+	buildSyncMessageFunc = b.originalBuildSyncMessageFunc
 	getNodeNameFunc = b.originalGetNodeNameFunc
 	getObjectUIDFunc = b.originalGetObjectUIDFunc
 	compareResourceVersionFunc = b.originalCompareResourceVersionFunc
@@ -283,7 +284,7 @@ func TestReconcileClusterObjectSync(t *testing.T) {
 				gcCalled = true
 			}
 
-			buildEdgeControllerMessageFunc = func(nodeID, namespace, resource, resourceID string, operation string, content interface{}) *model.Message {
+			buildSyncMessageFunc = func(nodeID, namespace, resource, resourceID string, operation string, content interface{}) *model.Message {
 				return &model.Message{}
 			}
 
@@ -353,7 +354,7 @@ func TestGcOrphanedClusterObjectSyncFunction(t *testing.T) {
 				sendCalled = true
 			}
 
-			buildEdgeControllerMessageFunc = func(nodeID, namespace, resource, resourceID string, operation string, content interface{}) *model.Message {
+			buildSyncMessageFunc = func(nodeID, namespace, resource, resourceID string, operation string, content interface{}) *model.Message {
 				if tt.sendMessage {
 					return &model.Message{}
 				}
@@ -408,14 +409,9 @@ func TestSendClusterObjectSyncEventDirect(t *testing.T) {
 		return 0
 	}
 
-	sendCalled := false
-
+	var sent *model.Message
 	sendToEdge = func(module string, msg model.Message) {
-		sendCalled = true
-	}
-
-	buildEdgeControllerMessageFunc = func(nodeID, namespace, resource, resourceID string, operation string, content interface{}) *model.Message {
-		return &model.Message{}
+		sent = &msg
 	}
 
 	nodeName := "node1"
@@ -426,7 +422,12 @@ func TestSendClusterObjectSyncEventDirect(t *testing.T) {
 
 	sendClusterObjectSyncEvent(nodeName, sync, resourceType, objectResourceVersion, obj)
 
-	assert.True(t, sendCalled, "Send should have been called")
+	if sent == nil {
+		t.Fatal("Send should have been called")
+	}
+	// The resent update must be one the edge ACKs, or its record never moves forward.
+	assert.Equal(t, modules.DynamicControllerModuleName, sent.GetSource())
+	assert.Equal(t, model.UpdateOperation, sent.GetOperation())
 }
 
 func TestDeleteClusterObjectSyncFunc(t *testing.T) {
@@ -532,7 +533,7 @@ func TestGcOrphanedClusterObjectSyncFuncIntegration(t *testing.T) {
 			sendCalled := false
 			deleteCalled := false
 
-			buildEdgeControllerMessageFunc = func(nodeID, namespace, resource, resourceID string, operation string, content interface{}) *model.Message {
+			buildSyncMessageFunc = func(nodeID, namespace, resource, resourceID string, operation string, content interface{}) *model.Message {
 				assert.Equal(t, "node1", nodeID)
 				assert.Equal(t, "pod", resource)
 				assert.Equal(t, "test-pod", resourceID)
@@ -590,4 +591,25 @@ func ExecuteDeleteClusterObjectSyncFunc() {
 
 func TestExecuteDeleteClusterObjectSyncFunc(t *testing.T) {
 	ExecuteDeleteClusterObjectSyncFunc()
+}
+
+// The DELETE of a gone Node must be one the edge ACKs, or its ClusterObjectSync is never removed.
+func TestGcOrphanedClusterObjectSyncSendsAckedDelete(t *testing.T) {
+	backup := setupTest()
+	defer backup.restore()
+
+	var sent *model.Message
+	sendToEdge = func(_ string, msg model.Message) { sent = &msg }
+	getNodeNameFunc = getNodeName
+	getObjectUIDFunc = getObjectUID
+
+	sync := createTestSync("edge-node-1.12345", "edge-node-2", "Node", "v1", "500")
+	(&SyncController{}).gcOrphanedClusterObjectSyncImpl(sync)
+
+	if sent == nil {
+		t.Fatal("no DELETE was sent")
+	}
+	assert.Equal(t, modules.DynamicControllerModuleName, sent.GetSource())
+	assert.Equal(t, model.DeleteOperation, sent.GetOperation())
+	assert.Equal(t, "node/edge-node-1/null/node/edge-node-2", sent.GetResource())
 }

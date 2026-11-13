@@ -85,7 +85,9 @@ func TestIsNodeStopped(t *testing.T) {
 	content, _ := json.Marshal(body)
 
 	msgResource := modelMessage("", "", 0, "", "", "", "Resource1", nil)
-	msgOpDelete := modelMessage("", "", 0, "", "", model.DeleteOperation, "node/edge-node/default/node/Node1", nil)
+	msgOpDelete := modelMessage("", "", 0, "", "", model.DeleteOperation, "node/edge-node/namespace/node/edge-node", nil)
+	msgOpDeleteOther := modelMessage("", "", 0, "", "", model.DeleteOperation, "node/edge-node/null/node/Node1", nil)
+	msgOpDeleteNoName := modelMessage("", "", 0, "", "", model.DeleteOperation, "node/edge-node/null/node", nil)
 	msgNoContent := modelMessage("", "", 0, "", "", "", "node/edge-node/default/node/Node1", nil)
 	msgContent := modelMessage("", "", 0, "", "", model.UpdateOperation, "node/edge-node/default/node/Node1", content)
 	msgNoAction := modelMessage("", "", 0, "", "", model.UpdateOperation, "node/edge-node/default/node/Node1", body)
@@ -103,6 +105,16 @@ func TestIsNodeStopped(t *testing.T) {
 			name:      "TestIsNodeStopped(): Case 2: UserGroup.Operation=OpDelete",
 			msg:       &msgOpDelete,
 			errorWant: true,
+		},
+		{
+			name:      "TestIsNodeStopped(): Case 2a: delete of another Node",
+			msg:       &msgOpDeleteOther,
+			errorWant: false,
+		},
+		{
+			name:      "TestIsNodeStopped(): Case 2b: delete with no Node name",
+			msg:       &msgOpDeleteNoName,
+			errorWant: false,
 		},
 		{
 			name:      "TestIsNodeStopped(): Case 3: msg.Content=nil",
