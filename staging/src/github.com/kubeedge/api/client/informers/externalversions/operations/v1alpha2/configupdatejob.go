@@ -61,13 +61,25 @@ func NewFilteredConfigUpdateJobInformer(client versioned.Interface, resyncPeriod
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.OperationsV1alpha2().ConfigUpdateJobs().List(context.TODO(), options)
+				return client.OperationsV1alpha2().ConfigUpdateJobs().List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.OperationsV1alpha2().ConfigUpdateJobs().Watch(context.TODO(), options)
+				return client.OperationsV1alpha2().ConfigUpdateJobs().Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.OperationsV1alpha2().ConfigUpdateJobs().List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.OperationsV1alpha2().ConfigUpdateJobs().Watch(ctx, options)
 			},
 		},
 		&apisoperationsv1alpha2.ConfigUpdateJob{},

@@ -258,7 +258,7 @@ func (r *ObjectSyncReactor) CheckObjectSyncs(expectedObjectSyncs []*v1alpha1.Obj
 	if !reflect.DeepEqual(expectedMap, gotMap) {
 		// Print ugly but useful diff of expected and received objects for
 		// easier debugging.
-		return fmt.Errorf("ObjectSync check failed [A-expected, B-got result]: %s", diff.ObjectDiff(expectedMap, gotMap))
+		return fmt.Errorf("ObjectSync check failed [A-expected, B-got result]: %s", diff.Diff(expectedMap, gotMap))
 	}
 	return nil
 }

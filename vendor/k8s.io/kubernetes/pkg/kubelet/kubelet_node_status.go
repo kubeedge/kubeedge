@@ -19,6 +19,7 @@ package kubelet
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net"
 	goruntime "runtime"
 	"sort"
@@ -313,9 +314,6 @@ func (kl *Kubelet) initialNode(ctx context.Context) (*v1.Node, error) {
 				"node-role.kubernetes.io/agent": "",
 			},
 		},
-		Spec: v1.NodeSpec{
-			Unschedulable: !kl.registerSchedulable,
-		},
 	}
 	osLabels, err := getOSSpecificLabels()
 	if err != nil {
@@ -506,18 +504,39 @@ func (kl *Kubelet) tryUpdateNodeStatus(ctx context.Context, tryNumber int) error
 	}
 
 	node, changed := kl.updateNode(ctx, originalNode)
-	shouldPatchNodeStatus := changed || kl.clock.Since(kl.lastStatusReportTime) >= kl.nodeStatusReportFrequency
+	shouldPatchNodeStatus := changed || kl.isUpdateStatusPeriodExpired()
 
 	if !shouldPatchNodeStatus {
 		kl.markVolumesFromNode(node)
 		return nil
 	}
 
+	// There are 3 possible conditions that make shouldPatchNodeStatus to be true:
+	// 1. node is changed
+	// 2. isUpdateStatusPeriodExpired returns true due to lastStatusReportTime has Zero value. This will happen when kubelet restarts.
+	// 3. isUpdateStatusPeriodExpired returns true due to lastStatusReportTime expires with non-zero value.
+	// We want to calculate a new random delay for condition 1 and 2, so that we can avoid all the periodic node status
+	// updates to reach the apiserver at the same time.
+	// When condition 3 happens, random interval has already been used, and we want to reset the random delay, so that
+	// the node updates its status with fixed interval going forward.
+	if changed || kl.lastStatusReportTime.IsZero() {
+		kl.delayAfterNodeStatusChange = kl.calculateDelay()
+	} else {
+		kl.delayAfterNodeStatusChange = 0
+	}
 	updatedNode, err := kl.patchNodeStatus(originalNode, node)
 	if err == nil {
 		kl.markVolumesFromNode(updatedNode)
 	}
 	return err
+}
+
+func (kl *Kubelet) isUpdateStatusPeriodExpired() bool {
+	return kl.clock.Since(kl.lastStatusReportTime) >= kl.nodeStatusReportFrequency+kl.delayAfterNodeStatusChange
+}
+
+func (kl *Kubelet) calculateDelay() time.Duration {
+	return time.Duration(float64(kl.nodeStatusReportFrequency) * (-0.5 + rand.Float64()))
 }
 
 // updateNode creates a copy of originalNode and runs update logic on it.
@@ -571,7 +590,6 @@ func (kl *Kubelet) patchNodeStatus(originalNode, node *v1.Node) (*v1.Node, error
 		return nil, err
 	}
 	kl.lastStatusReportTime = kl.clock.Now()
-	kl.setLastObservedNodeAddresses(updatedNode.Status.Addresses)
 
 	readyIdx, readyCondition := nodeutil.GetNodeCondition(&updatedNode.Status, v1.NodeReady)
 	if readyIdx >= 0 && readyCondition.Status == v1.ConditionTrue {
@@ -617,7 +635,7 @@ func (kl *Kubelet) recordNodeStatusEvent(eventType, event string) {
 
 // recordEvent records an event for this node, the Kubelet's nodeRef is passed to the recorder
 func (kl *Kubelet) recordEvent(eventType, event, message string) {
-	kl.recorder.Eventf(kl.nodeRef, eventType, event, message)
+	kl.recorder.Eventf(kl.nodeRef, eventType, event, "%s", message)
 }
 
 // record if node schedulable change.
@@ -648,26 +666,12 @@ func (kl *Kubelet) setNodeStatus(ctx context.Context, node *v1.Node) {
 	}
 }
 
-func (kl *Kubelet) setLastObservedNodeAddresses(addresses []v1.NodeAddress) {
-	kl.lastObservedNodeAddressesMux.Lock()
-	defer kl.lastObservedNodeAddressesMux.Unlock()
-	kl.lastObservedNodeAddresses = addresses
-}
-func (kl *Kubelet) getLastObservedNodeAddresses() []v1.NodeAddress {
-	kl.lastObservedNodeAddressesMux.RLock()
-	defer kl.lastObservedNodeAddressesMux.RUnlock()
-	return kl.lastObservedNodeAddresses
-}
-
 // defaultNodeStatusFuncs is a factory that generates the default set of
 // setNodeStatus funcs
 func (kl *Kubelet) defaultNodeStatusFuncs() []func(context.Context, *v1.Node) error {
-	// if cloud is not nil, we expect the cloud resource sync manager to exist
-	var nodeAddressesFunc func() ([]v1.NodeAddress, error)
-
 	var setters []func(ctx context.Context, n *v1.Node) error
 	setters = append(setters,
-		nodestatus.NodeAddress(kl.nodeIPs, kl.nodeIPValidator, kl.hostname, kl.hostnameOverridden, nodeAddressesFunc, utilnet.ResolveBindAddress),
+		nodestatus.NodeAddress(kl.nodeIPs, kl.nodeIPValidator, kl.hostname, utilnet.ResolveBindAddress),
 		nodestatus.MachineInfo(string(kl.nodeName), kl.maxPods, kl.podsPerCore, kl.GetCachedMachineInfo, kl.containerManager.GetCapacity,
 			kl.containerManager.GetDevicePluginResourceCapacity, kl.containerManager.GetNodeAllocatableReservation, kl.recordEvent, kl.supportLocalStorageCapacityIsolation()),
 		nodestatus.VersionInfo(kl.cadvisor.VersionInfo, kl.containerRuntime.Type, kl.containerRuntime.Version),

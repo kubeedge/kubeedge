@@ -62,13 +62,25 @@ func NewFilteredServiceAccountAccessInformer(client versioned.Interface, namespa
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.PolicyV1alpha1().ServiceAccountAccesses(namespace).List(context.TODO(), options)
+				return client.PolicyV1alpha1().ServiceAccountAccesses(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.PolicyV1alpha1().ServiceAccountAccesses(namespace).Watch(context.TODO(), options)
+				return client.PolicyV1alpha1().ServiceAccountAccesses(namespace).Watch(context.Background(), options)
+			},
+			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.PolicyV1alpha1().ServiceAccountAccesses(namespace).List(ctx, options)
+			},
+			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
+				if tweakListOptions != nil {
+					tweakListOptions(&options)
+				}
+				return client.PolicyV1alpha1().ServiceAccountAccesses(namespace).Watch(ctx, options)
 			},
 		},
 		&apispolicyv1alpha1.ServiceAccountAccess{},

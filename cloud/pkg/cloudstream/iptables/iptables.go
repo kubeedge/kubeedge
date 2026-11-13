@@ -25,7 +25,6 @@ import (
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog/v2"
 	utiliptables "k8s.io/kubernetes/pkg/util/iptables"
-	utilexec "k8s.io/utils/exec"
 
 	cloudcoreConfig "github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
@@ -77,8 +76,7 @@ var (
 
 func NewIptablesManager(config *cloudcoreConfig.KubeAPIConfig, streamPort int) *Manager {
 	protocol := utiliptables.ProtocolIPv4
-	exec := utilexec.New()
-	iptInterface := utiliptables.New(exec, protocol)
+	iptInterface := utiliptables.New(protocol)
 
 	iptablesMgr := &Manager{
 		iptables: iptInterface,

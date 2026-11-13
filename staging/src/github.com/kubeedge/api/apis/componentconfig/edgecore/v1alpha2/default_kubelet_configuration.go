@@ -78,6 +78,7 @@ func SetDefaultsKubeletConfiguration(obj *TailoredKubeletConfiguration) {
 	obj.ContentType = "application/json"
 	obj.SerializeImagePulls = ptr.To(true)
 	obj.EvictionHard = eviction.DefaultEvictionHard
+	obj.MergeDefaultEvictionSettings = ptr.To(false)
 	obj.EvictionPressureTransitionPeriod = metav1.Duration{Duration: 5 * time.Minute}
 	obj.EnableControllerAttachDetach = ptr.To(true)
 	obj.MakeIPTablesUtilChains = ptr.To(true)

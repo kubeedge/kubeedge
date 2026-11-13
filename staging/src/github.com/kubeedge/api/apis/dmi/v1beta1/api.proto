@@ -19,7 +19,7 @@ syntax = "proto3";
 
 //option go_package = "path;name";
 option go_package = "./;v1beta1";
-package v1beta1;
+package kubeedge.dmi.v1beta1;
 
 import "google/protobuf/any.proto";
 

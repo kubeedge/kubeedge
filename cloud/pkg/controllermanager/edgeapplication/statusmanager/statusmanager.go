@@ -167,7 +167,7 @@ func (s *statusManager) unmarkWatching(gvk schema.GroupVersionKind) {
 
 func (s *statusManager) startToWatch(ctx context.Context, gvk schema.GroupVersionKind) error {
 	controllerName := fmt.Sprintf("status-controller-for-%s/%s/%s", gvk.Group, gvk.Version, gvk.Kind)
-	controller, err := controller.NewUnmanaged(controllerName, s.mgr, controller.Options{
+	controller, err := controller.NewUnmanaged(controllerName, controller.Options{
 		Reconciler: &statusReconciler{
 			Client:              s.client,
 			GroupVersionKind:    gvk,

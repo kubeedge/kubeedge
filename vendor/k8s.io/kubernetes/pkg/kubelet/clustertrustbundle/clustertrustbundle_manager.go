@@ -25,17 +25,63 @@ import (
 	"time"
 
 	certificatesv1alpha1 "k8s.io/api/certificates/v1alpha1"
+	certificatesv1beta1 "k8s.io/api/certificates/v1beta1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	lrucache "k8s.io/apimachinery/pkg/util/cache"
 	"k8s.io/apimachinery/pkg/util/sets"
-	certlistersv1alpha1 "k8s.io/client-go/listers/certificates/v1alpha1"
 	"k8s.io/client-go/tools/cache"
 )
 
 const (
 	maxLabelSelectorLength = 100 * 1024
 )
+
+// clusterTrustBundle is a type constraint for version-independent ClusterTrustBundle API
+type clusterTrustBundle interface {
+	certificatesv1alpha1.ClusterTrustBundle | certificatesv1beta1.ClusterTrustBundle
+}
+
+// clusterTrustBundlesLister is an API-verion independent ClusterTrustBundles lister
+type clusterTrustBundlesLister[T clusterTrustBundle] interface {
+	Get(string) (*T, error)
+	List(labels.Selector) ([]*T, error)
+}
+
+type clusterTrustBundleHandlers[T clusterTrustBundle] interface {
+	GetName(*T) string
+	GetSignerName(*T) string
+	GetTrustBundle(*T) string
+}
+
+type alphaClusterTrustBundleHandlers struct{}
+
+type betaClusterTrustBundleHandlers struct{}
+
+func (b *alphaClusterTrustBundleHandlers) GetName(ctb *certificatesv1alpha1.ClusterTrustBundle) string {
+	return ctb.Name
+}
+
+func (b *alphaClusterTrustBundleHandlers) GetSignerName(ctb *certificatesv1alpha1.ClusterTrustBundle) string {
+	return ctb.Spec.SignerName
+}
+
+func (b *alphaClusterTrustBundleHandlers) GetTrustBundle(ctb *certificatesv1alpha1.ClusterTrustBundle) string {
+	return ctb.Spec.TrustBundle
+}
+
+func (b betaClusterTrustBundleHandlers) GetName(ctb *certificatesv1beta1.ClusterTrustBundle) string {
+	return ctb.Name
+}
+
+func (b *betaClusterTrustBundleHandlers) GetSignerName(ctb *certificatesv1beta1.ClusterTrustBundle) string {
+	return ctb.Spec.SignerName
+}
+
+func (b *betaClusterTrustBundleHandlers) GetTrustBundle(ctb *certificatesv1beta1.ClusterTrustBundle) string {
+	return ctb.Spec.TrustBundle
+}
 
 // Manager abstracts over the ability to get trust anchors.
 type Manager interface {
@@ -45,19 +91,21 @@ type Manager interface {
 
 // InformerManager is the "real" manager.  It uses informers to track
 // ClusterTrustBundle objects.
-type InformerManager struct {
+type InformerManager[T clusterTrustBundle] struct {
 	ctbInformer cache.SharedIndexInformer
-	ctbLister   certlistersv1alpha1.ClusterTrustBundleLister
+	ctbLister   clusterTrustBundlesLister[T]
+
+	ctbHandlers clusterTrustBundleHandlers[T]
 
 	normalizationCache *lrucache.LRUExpireCache
 	cacheTTL           time.Duration
 }
 
-var _ Manager = (*InformerManager)(nil)
+var _ Manager = (*InformerManager[certificatesv1beta1.ClusterTrustBundle])(nil)
 
 // GetTrustAnchorsByName returns normalized and deduplicated trust anchors from
 // a single named ClusterTrustBundle.
-func (m *InformerManager) GetTrustAnchorsByName(name string, allowMissing bool) ([]byte, error) {
+func (m *InformerManager[T]) GetTrustAnchorsByName(name string, allowMissing bool) ([]byte, error) {
 	if !m.ctbInformer.HasSynced() {
 		return nil, fmt.Errorf("ClusterTrustBundle informer has not yet synced")
 	}
@@ -76,7 +124,7 @@ func (m *InformerManager) GetTrustAnchorsByName(name string, allowMissing bool) 
 		return nil, fmt.Errorf("while getting ClusterTrustBundle: %w", err)
 	}
 
-	pemTrustAnchors, err := m.normalizeTrustAnchors([]*certificatesv1alpha1.ClusterTrustBundle{ctb})
+	pemTrustAnchors, err := m.normalizeTrustAnchors([]*T{ctb})
 	if err != nil {
 		return nil, fmt.Errorf("while normalizing trust anchors: %w", err)
 	}
@@ -88,7 +136,7 @@ func (m *InformerManager) GetTrustAnchorsByName(name string, allowMissing bool) 
 
 // GetTrustAnchorsBySigner returns normalized and deduplicated trust anchors
 // from a set of selected ClusterTrustBundles.
-func (m *InformerManager) GetTrustAnchorsBySigner(signerName string, labelSelector *metav1.LabelSelector, allowMissing bool) ([]byte, error) {
+func (m *InformerManager[T]) GetTrustAnchorsBySigner(signerName string, labelSelector *metav1.LabelSelector, allowMissing bool) ([]byte, error) {
 	if !m.ctbInformer.HasSynced() {
 		return nil, fmt.Errorf("ClusterTrustBundle informer has not yet synced")
 	}
@@ -115,9 +163,9 @@ func (m *InformerManager) GetTrustAnchorsBySigner(signerName string, labelSelect
 		return nil, fmt.Errorf("while listing ClusterTrustBundles matching label selector %v: %w", labelSelector, err)
 	}
 
-	ctbList := []*certificatesv1alpha1.ClusterTrustBundle{}
+	ctbList := []*T{}
 	for _, ctb := range rawCTBList {
-		if ctb.Spec.SignerName == signerName {
+		if m.ctbHandlers.GetSignerName(ctb) == signerName {
 			ctbList = append(ctbList, ctb)
 		}
 	}
@@ -139,11 +187,11 @@ func (m *InformerManager) GetTrustAnchorsBySigner(signerName string, labelSelect
 	return pemTrustAnchors, nil
 }
 
-func (m *InformerManager) normalizeTrustAnchors(ctbList []*certificatesv1alpha1.ClusterTrustBundle) ([]byte, error) {
+func (m *InformerManager[T]) normalizeTrustAnchors(ctbList []*T) ([]byte, error) {
 	// Deduplicate trust anchors from all ClusterTrustBundles.
 	trustAnchorSet := sets.Set[string]{}
 	for _, ctb := range ctbList {
-		rest := []byte(ctb.Spec.TrustBundle)
+		rest := []byte(m.ctbHandlers.GetTrustBundle(ctb))
 		var b *pem.Block
 		for {
 			b, rest = pem.Decode(rest)

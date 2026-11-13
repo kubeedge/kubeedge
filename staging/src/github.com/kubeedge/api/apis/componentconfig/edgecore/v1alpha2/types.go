@@ -211,6 +211,7 @@ type TailoredKubeletConfiguration struct {
 	ClusterDNS []string `json:"clusterDNS,omitempty"`
 	// streamingConnectionIdleTimeout is the maximum time a streaming connection
 	// can be idle before the connection is automatically closed.
+	// Deprecated: this field no longer has any effect.
 	// Default: "4h"
 	// +optional
 	StreamingConnectionIdleTimeout metav1.Duration `json:"streamingConnectionIdleTimeout,omitempty"`
@@ -447,6 +448,20 @@ type TailoredKubeletConfiguration struct {
 	// Default: nil
 	// +optional
 	MaxParallelImagePulls *int32 `json:"maxParallelImagePulls,omitempty"`
+	// imagePullCredentialsVerificationPolicy controls credential verification for
+	// images already present on the node. Valid values are NeverVerify,
+	// NeverVerifyPreloadedImages, NeverVerifyAllowlistedImages and AlwaysVerify.
+	// Default: NeverVerifyPreloadedImages when KubeletEnsureSecretPulledImages is enabled.
+	// Must not be set when the feature gate is disabled.
+	// +featureGate=KubeletEnsureSecretPulledImages
+	// +optional
+	ImagePullCredentialsVerificationPolicy tailoredkubeletconfigv1beta1.ImagePullCredentialsVerificationPolicy `json:"imagePullCredentialsVerificationPolicy,omitempty"`
+	// preloadedImagesVerificationAllowlist lists preloaded images exempt from
+	// credential verification when the policy is NeverVerifyAllowlistedImages.
+	// Entries must not contain tags or digests; a trailing /* matches a repository prefix.
+	// +featureGate=KubeletEnsureSecretPulledImages
+	// +optional
+	PreloadedImagesVerificationAllowlist []string `json:"preloadedImagesVerificationAllowlist,omitempty"`
 	// evictionHard is a map of signal names to quantities that defines hard eviction
 	// thresholds. For example: `{"memory.available": "300Mi"}`.
 	// To explicitly disable, pass a 0% or 100% threshold on an arbitrary resource.
@@ -488,6 +503,11 @@ type TailoredKubeletConfiguration struct {
 	// Default: nil
 	// +optional
 	EvictionMinimumReclaim map[string]string `json:"evictionMinimumReclaim,omitempty"`
+	// mergeDefaultEvictionSettings merges default eviction thresholds with explicitly
+	// configured thresholds, which take precedence. Currently only evictionHard has defaults.
+	// Default: false
+	// +optional
+	MergeDefaultEvictionSettings *bool `json:"mergeDefaultEvictionSettings,omitempty"`
 	// podsPerCore is the maximum number of pods per core. Cannot exceed maxPods.
 	// The value must be a non-negative integer.
 	// If 0, there is no limit on the number of Pods.
@@ -796,6 +816,12 @@ type TailoredKubeletConfiguration struct {
 	// Default: false
 	// +optional
 	FailCgroupV1 *bool `json:"failCgroupV1,omitempty"`
+	// userNamespaces configures Pod user namespaces on Linux.
+	// Its idsPerPod field defaults to 65536 and must be a multiple of 65536 below 2^32.
+	// Changing idsPerPod may require recreating all containers on the node.
+	// +featureGate=UserNamespacesSupport
+	// +optional
+	UserNamespaces *tailoredkubeletconfigv1beta1.UserNamespaces `json:"userNamespaces,omitempty"`
 }
 
 // TailoredKubeletFlag indicates the tailored kubelet flag
@@ -840,9 +866,8 @@ type TailoredKubeletFlag struct {
 	// maxContainerCount is the maximum number of old instances of containers
 	// to retain globally. Each container takes up some disk space.
 	MaxContainerCount int32 `json:"maxContainerCount,omitempty"`
-	// registerSchedulable tells the edgecore to register the node as
-	// schedulable. Won't have any effect if register-node is false.
-	// DEPRECATED: use registerWithTaints instead
+	// Deprecated: registerSchedulable no longer has any effect.
+	// Retained for configuration compatibility; use registerWithTaints instead.
 	RegisterSchedulable bool `json:"registerSchedulable,omitempty"`
 	// SeccompDefault enables the use of `RuntimeDefault` as the default seccomp profile for all workloads on the node.
 	// To use this flag, the corresponding SeccompDefault feature gate must be enabled.
@@ -855,8 +880,8 @@ type ContainerRuntimeOptions struct {
 
 	// RuntimeCgroups that container runtime is expected to be isolated in.
 	RuntimeCgroups string `json:"runtimeCgroups,omitempty"`
-	// PodSandboxImage is the image whose network/ipc namespaces
-	// containers in each pod will use.
+	// Deprecated: PodSandboxImage no longer has any effect.
+	// Configure the sandbox image in the container runtime instead.
 	// default kubeedge/pause:3.6
 	PodSandboxImage string `json:"podSandboxImage,omitempty"`
 }

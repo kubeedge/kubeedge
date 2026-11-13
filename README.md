@@ -53,13 +53,13 @@ KubeEdge consists of cloud part and edge part.
 
 ## Kubernetes compatibility
 
-|                        | Kubernetes 1.27 | Kubernetes 1.28 | Kubernetes 1.29 | Kubernetes 1.30 | Kubernetes 1.31 | Kubernetes 1.32 |
+|                        | Kubernetes 1.29 | Kubernetes 1.30 | Kubernetes 1.31 | Kubernetes 1.32 | Kubernetes 1.33 | Kubernetes 1.34 |
 |------------------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
-| KubeEdge 1.19          | ✓               | ✓               | ✓               | -               | -               | -               |
-| KubeEdge 1.20          | +               | ✓               | ✓               | ✓               | -               | -               |
-| KubeEdge 1.21          | +               | ✓               | ✓               | ✓               | -               | -               |
-| KubeEdge 1.22          | +               | +               | ✓               | ✓               | ✓               | -               |
-| KubeEdge 1.23          | +               | +               | +               | ✓               | ✓               | ✓               |
+| KubeEdge 1.19          | ✓               | -               | -               | -               | -               | -               |
+| KubeEdge 1.20          | ✓               | ✓               | -               | -               | -               | -               |
+| KubeEdge 1.21          | ✓               | ✓               | -               | -               | -               | -               |
+| KubeEdge 1.22          | ✓               | ✓               | ✓               | -               | -               | -               |
+| KubeEdge 1.23          | +               | ✓               | ✓               | ✓               | -               | -               |
 | KubeEdge HEAD (master) | +               | +               | +               | ✓               | ✓               | ✓               |
 
 Key:

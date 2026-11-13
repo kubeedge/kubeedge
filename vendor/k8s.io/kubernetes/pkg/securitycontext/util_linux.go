@@ -45,9 +45,9 @@ var possibleCPUsParsed = sync.OnceValue(func() (cpus []int) {
 		return nil
 	}
 
-	ranges := strings.Split(strings.TrimSpace(string(data)), ",")
+	ranges := strings.SplitSeq(strings.TrimSpace(string(data)), ",")
 
-	for _, r := range ranges {
+	for r := range ranges {
 		if rStart, rEnd, ok := strings.Cut(r, "-"); !ok {
 			cpu, err := strconv.Atoi(rStart)
 			if err != nil {
