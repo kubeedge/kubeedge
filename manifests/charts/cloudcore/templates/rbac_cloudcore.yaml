@@ -24,7 +24,7 @@ rules:
     resources: ["leases"]
     verbs: ["get", "list", "watch", "create", "update"]
   - apiGroups: ["devices.kubeedge.io"]
-    resources: ["devices", "devicemodels", "devices/status", "devicemodels/status"]
+    resources: ["devices", "devicemodels", "devices/status", "devicemodels/status", "devicestatuses", "devicestatuses/status"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
   - apiGroups: ["reliablesyncs.kubeedge.io"]
     resources: ["objectsyncs", "clusterobjectsyncs", "objectsyncs/status", "clusterobjectsyncs/status"]
