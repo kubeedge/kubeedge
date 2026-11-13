@@ -374,6 +374,11 @@ func (m *metaManager) processRemote(message model.Message) {
 			time.Duration(metaManagerConfig.Config.RemoteQueryTimeout)*time.Second)
 		if err != nil {
 			klog.Errorf("process remote failed, req[%s], err: %v", msgDebugInfo(&message), err)
+			// The response is correlated to the caller's sync channel by parent
+			// ID, and UpdateID above replaced the caller's request ID. Restore
+			// it, otherwise the error response is dropped and the caller times
+			// out instead of failing fast with this error.
+			message.BuildHeader(originalID, message.GetParentID(), message.GetTimestamp())
 			feedbackError(fmt.Errorf("failed to process remote: %s", err), message)
 			return
 		}
