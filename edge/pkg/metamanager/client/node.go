@@ -57,6 +57,9 @@ func (c *nodes) Create(cm *api.Node) (*api.Node, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create node failed, err: %v", err)
 	}
+	if err := errorFromResponse(resp); err != nil {
+		return nil, err
+	}
 
 	content, err := resp.GetContentData()
 	if err != nil {
@@ -82,6 +85,9 @@ func (c *nodes) Patch(name string, data []byte) (*api.Node, error) {
 	resp, err := c.send.SendSync(nodeMsg)
 	if err != nil {
 		return nil, fmt.Errorf("update node failed, err: %v", err)
+	}
+	if err := errorFromResponse(resp); err != nil {
+		return nil, err
 	}
 
 	content, err := resp.GetContentData()

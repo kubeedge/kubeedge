@@ -1,6 +1,8 @@
 package client
 
 import (
+	"errors"
+	"fmt"
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -140,6 +142,18 @@ func (s *send) SendSync(message *model.Message) (*model.Message, error) {
 
 func (s *send) Send(message *model.Message) {
 	beehiveContext.Send(modules.MetaManagerModuleName, *message)
+}
+
+// errorFromResponse returns the error metaManager reported in resp, if any.
+func errorFromResponse(resp *model.Message) error {
+	if resp.GetOperation() != model.ResponseErrorOperation {
+		return nil
+	}
+	content, err := resp.GetContentData()
+	if err != nil {
+		return fmt.Errorf("parse error response failed, err: %v", err)
+	}
+	return errors.New(string(content))
 }
 
 // MetaServiceInterface is interface for meta service operations
