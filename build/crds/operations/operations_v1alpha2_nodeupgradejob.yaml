@@ -39,6 +39,12 @@ spec:
           spec:
             description: Specification of the desired behavior of NodeUpgradeJob.
             properties:
+              allowDowngrade:
+                description: |-
+                  AllowDowngrade specifies whether the upgrade job is allowed to downgrade
+                  the EdgeCore version, e.g. from 1.17.0 to 1.16.3.
+                  The default AllowDowngrade value is false.
+                type: boolean
               checkItems:
                 description: |-
                   CheckItems specifies the items need to be checked before the task is executed.
@@ -150,6 +156,33 @@ spec:
                   RequireConfirmation specifies whether you need to confirm the upgrade.
                   The default RequireConfirmation value is false.
                 type: boolean
+              strategy:
+                description: |-
+                  Strategy specifies the strategy that the upgrade job uses to roll out the
+                  upgrade across the selected edge nodes.
+                  Note: this field is currently validated and defaulted by the admission
+                  webhook, but the upgrade execution path does not yet change its behavior
+                  based on Strategy.Type. Rollout behavior wiring is tracked as follow-up work.
+                properties:
+                  maxUnavailable:
+                    description: |-
+                      MaxUnavailable specifies the max number of edge nodes that can be upgraded
+                      at the same time under the Rolling strategy. It has no effect for the
+                      AtOnce or Canary strategy types.
+                      The default MaxUnavailable value is 1. Must be at least 1.
+                    format: int32
+                    minimum: 1
+                    type: integer
+                  type:
+                    description: |-
+                      Type of the upgrade rollout strategy. Can be "AtOnce", "Rolling" or "Canary".
+                      The default Type value is Rolling.
+                    enum:
+                    - AtOnce
+                    - Rolling
+                    - Canary
+                    type: string
+                type: object
               timeoutSeconds:
                 description: |-
                   TimeoutSeconds limits the duration of the node upgrade job.

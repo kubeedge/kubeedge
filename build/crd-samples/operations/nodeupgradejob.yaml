@@ -13,6 +13,10 @@ spec:
   failureTolerate: "0.3"
   concurrency: 2
   timeoutSeconds: 180
+  allowDowngrade: false
+  strategy:
+    type: Rolling
+    maxUnavailable: 1
   labelSelector:
     matchLabels:
       "node-role.kubernetes.io/edge": ""

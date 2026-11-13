@@ -129,7 +129,25 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 			expectedAllowed: true,
 		},
 		{
-			name:      "Invalid Update - Spec Change",
+			name:      "Invalid Update - Non-version Spec Change",
+			operation: admissionv1.Update,
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.0.0",
+					NodeNames: []string{"node1", "node2", "node3"},
+				},
+			},
+			oldUpgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.0.0",
+					NodeNames: []string{"node1", "node2"},
+				},
+			},
+			expectedAllowed: false,
+			expectedError:   "spec fields other than version and allowDowngrade are not allowed to update once it's created",
+		},
+		{
+			name:      "Valid Update - Version Upgrade",
 			operation: admissionv1.Update,
 			upgrade: &v1alpha1.NodeUpgradeJob{
 				Spec: v1alpha1.NodeUpgradeJobSpec{
@@ -143,8 +161,85 @@ func TestAdmitNodeUpgradeJob(t *testing.T) {
 					NodeNames: []string{"node1", "node2"},
 				},
 			},
+			expectedAllowed: true,
+		},
+		{
+			name:      "Invalid Update - Version Downgrade Without AllowDowngrade",
+			operation: admissionv1.Update,
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.16.3",
+					NodeNames: []string{"node1", "node2"},
+				},
+			},
+			oldUpgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.17.0",
+					NodeNames: []string{"node1", "node2"},
+				},
+			},
 			expectedAllowed: false,
-			expectedError:   "spec fields are not allowed to update once it's created",
+			expectedError:   "version change from v1.17.0 to v1.16.3 is a downgrade",
+		},
+		{
+			name:      "Valid Update - Version Downgrade With AllowDowngrade",
+			operation: admissionv1.Update,
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:        "v1.16.3",
+					NodeNames:      []string{"node1", "node2"},
+					AllowDowngrade: true,
+				},
+			},
+			oldUpgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.17.0",
+					NodeNames: []string{"node1", "node2"},
+				},
+			},
+			expectedAllowed: true,
+		},
+		{
+			name:      "Invalid Update - Version Change After Execution Started",
+			operation: admissionv1.Update,
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.0.1",
+					NodeNames: []string{"node1", "node2"},
+				},
+			},
+			oldUpgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.0.0",
+					NodeNames: []string{"node1", "node2"},
+				},
+				Status: v1alpha1.NodeUpgradeJobStatus{
+					State: "Checking",
+				},
+			},
+			expectedAllowed: false,
+			expectedError:   "version cannot be changed once the upgrade has started executing (current state: Checking)",
+		},
+		{
+			name:      "Valid Update - AllowDowngrade Only Change After Execution Started",
+			operation: admissionv1.Update,
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:        "v1.0.0",
+					NodeNames:      []string{"node1", "node2"},
+					AllowDowngrade: true,
+				},
+			},
+			oldUpgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.0.0",
+					NodeNames: []string{"node1", "node2"},
+				},
+				Status: v1alpha1.NodeUpgradeJobStatus{
+					State: "Upgrading",
+				},
+			},
+			expectedAllowed: true,
 		},
 		{
 			name:            "Valid Delete",
@@ -261,6 +356,68 @@ func TestValidateNodeUpgradeJob(t *testing.T) {
 			},
 			expectedErr: "",
 		},
+		{
+			name: "Valid strategy type",
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.0.0",
+					NodeNames: []string{"node1"},
+					Strategy:  &v1alpha1.UpdateStrategy{Type: v1alpha1.CanaryUpdateStrategyType},
+				},
+			},
+			expectedErr: "",
+		},
+		{
+			name: "Invalid strategy type",
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.0.0",
+					NodeNames: []string{"node1"},
+					Strategy:  &v1alpha1.UpdateStrategy{Type: "Unknown"},
+				},
+			},
+			expectedErr: "invalid strategy type Unknown, must be one of AtOnce, Rolling, Canary",
+		},
+		{
+			name: "Valid strategy maxUnavailable",
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.0.0",
+					NodeNames: []string{"node1"},
+					Strategy: &v1alpha1.UpdateStrategy{
+						Type:           v1alpha1.RollingUpdateStrategyType,
+						MaxUnavailable: func() *int32 { v := int32(2); return &v }(),
+					},
+				},
+			},
+			expectedErr: "",
+		},
+		{
+			name: "Zero strategy maxUnavailable",
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.0.0",
+					NodeNames: []string{"node1"},
+					Strategy: &v1alpha1.UpdateStrategy{
+						MaxUnavailable: func() *int32 { v := int32(0); return &v }(),
+					},
+				},
+			},
+			expectedErr: "invalid strategy maxUnavailable 0, must be at least 1",
+		},
+		{
+			name: "Negative strategy maxUnavailable",
+			upgrade: &v1alpha1.NodeUpgradeJob{
+				Spec: v1alpha1.NodeUpgradeJobSpec{
+					Version:   "v1.0.0",
+					NodeNames: []string{"node1"},
+					Strategy: &v1alpha1.UpdateStrategy{
+						MaxUnavailable: func() *int32 { v := int32(-1); return &v }(),
+					},
+				},
+			},
+			expectedErr: "invalid strategy maxUnavailable -1, must be at least 1",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -343,13 +500,19 @@ func TestMutatingNodeUpgradeJob(t *testing.T) {
 	var patch []map[string]interface{}
 	err = json.Unmarshal(response.Patch, &patch)
 	assert.NoError(err)
-	assert.Len(patch, 2)
+	assert.Len(patch, 3)
 	assert.Equal("add", patch[0]["op"])
 	assert.Equal("/spec/concurrency", patch[0]["path"])
 	assert.Equal(float64(1), patch[0]["value"])
 	assert.Equal("add", patch[1]["op"])
 	assert.Equal("/spec/timeoutSeconds", patch[1]["path"])
 	assert.Equal(float64(300), patch[1]["value"])
+	assert.Equal("add", patch[2]["op"])
+	assert.Equal("/spec/strategy", patch[2]["path"])
+	assert.Equal(map[string]interface{}{
+		"type":           "Rolling",
+		"maxUnavailable": float64(1),
+	}, patch[2]["value"])
 }
 
 func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
@@ -361,12 +524,16 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 		expectedPatch []patchValue
 	}{
 		{
-			name: "Concurrency and TimeoutSeconds both specified",
+			name: "Concurrency, TimeoutSeconds and Strategy all specified",
 			spec: v1alpha1.NodeUpgradeJobSpec{
 				Version:        "v1.0.0",
 				NodeNames:      []string{"node1"},
 				Concurrency:    2,
 				TimeoutSeconds: func() *uint32 { v := uint32(600); return &v }(),
+				Strategy: &v1alpha1.UpdateStrategy{
+					Type:           v1alpha1.CanaryUpdateStrategyType,
+					MaxUnavailable: func() *int32 { v := int32(2); return &v }(),
+				},
 			},
 			expectedPatch: []patchValue{},
 		},
@@ -387,6 +554,14 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 					Path:  "/spec/timeoutSeconds",
 					Value: func() *uint32 { v := uint32(300); return &v }(),
 				},
+				{
+					Op:   "add",
+					Path: "/spec/strategy",
+					Value: &v1alpha1.UpdateStrategy{
+						Type:           v1alpha1.RollingUpdateStrategyType,
+						MaxUnavailable: func() *int32 { v := int32(1); return &v }(),
+					},
+				},
 			},
 		},
 		{
@@ -395,6 +570,10 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 				Version:        "v1.0.0",
 				NodeNames:      []string{"node1"},
 				TimeoutSeconds: func() *uint32 { v := uint32(600); return &v }(),
+				Strategy: &v1alpha1.UpdateStrategy{
+					Type:           v1alpha1.CanaryUpdateStrategyType,
+					MaxUnavailable: func() *int32 { v := int32(2); return &v }(),
+				},
 			},
 			expectedPatch: []patchValue{
 				{
@@ -410,12 +589,54 @@ func TestGenerateNodeUpgradeJobPatch(t *testing.T) {
 				Version:     "v1.0.0",
 				NodeNames:   []string{"node1"},
 				Concurrency: 2,
+				Strategy: &v1alpha1.UpdateStrategy{
+					Type:           v1alpha1.CanaryUpdateStrategyType,
+					MaxUnavailable: func() *int32 { v := int32(2); return &v }(),
+				},
 			},
 			expectedPatch: []patchValue{
 				{
 					Op:    "add",
 					Path:  "/spec/timeoutSeconds",
 					Value: func() *uint32 { v := uint32(300); return &v }(),
+				},
+			},
+		},
+		{
+			name: "Strategy type missing",
+			spec: v1alpha1.NodeUpgradeJobSpec{
+				Version:        "v1.0.0",
+				NodeNames:      []string{"node1"},
+				Concurrency:    2,
+				TimeoutSeconds: func() *uint32 { v := uint32(600); return &v }(),
+				Strategy: &v1alpha1.UpdateStrategy{
+					MaxUnavailable: func() *int32 { v := int32(2); return &v }(),
+				},
+			},
+			expectedPatch: []patchValue{
+				{
+					Op:    "add",
+					Path:  "/spec/strategy/type",
+					Value: v1alpha1.RollingUpdateStrategyType,
+				},
+			},
+		},
+		{
+			name: "Strategy maxUnavailable missing",
+			spec: v1alpha1.NodeUpgradeJobSpec{
+				Version:        "v1.0.0",
+				NodeNames:      []string{"node1"},
+				Concurrency:    2,
+				TimeoutSeconds: func() *uint32 { v := uint32(600); return &v }(),
+				Strategy: &v1alpha1.UpdateStrategy{
+					Type: v1alpha1.CanaryUpdateStrategyType,
+				},
+			},
+			expectedPatch: []patchValue{
+				{
+					Op:    "add",
+					Path:  "/spec/strategy/maxUnavailable",
+					Value: func() *int32 { v := int32(1); return &v }(),
 				},
 			},
 		},
@@ -466,11 +687,16 @@ func TestValidateNodeUpgradeJobAllowsOptionalAndValidImage(t *testing.T) {
 
 func TestGenerateNodeUpgradeJobPatchReturnsEmptyWhenDefaultsSpecified(t *testing.T) {
 	timeoutSeconds := uint32(600)
+	maxUnavailable := int32(1)
 	patch := generateNodeUpgradeJobPatch(v1alpha1.NodeUpgradeJobSpec{
 		Version:        "v1.0.0",
 		NodeNames:      []string{"node1"},
 		Concurrency:    2,
 		TimeoutSeconds: &timeoutSeconds,
+		Strategy: &v1alpha1.UpdateStrategy{
+			Type:           v1alpha1.RollingUpdateStrategyType,
+			MaxUnavailable: &maxUnavailable,
+		},
 	})
 
 	if len(patch) != 0 {
