@@ -106,6 +106,22 @@ func (s *MetaService) QueryMeta(key string, condition string) (*[]string, error)
 	return &result, nil
 }
 
+// QueryMetaByKeyPrefix returns meta values whose Key starts with prefix.
+// The match is exact and case-sensitive. LIKE is not used because SQLite's
+// LIKE ignores ASCII case and treats "%" and "_" in the prefix as wildcards.
+func (s *MetaService) QueryMetaByKeyPrefix(prefix string) ([]string, error) {
+	var metas []models.Meta
+	err := s.db.Where("substr(key, 1, length(?)) = ?", prefix, prefix).Find(&metas).Error
+	if err != nil {
+		return nil, err
+	}
+	result := make([]string, 0, len(metas))
+	for _, v := range metas {
+		result = append(result, v.Value)
+	}
+	return result, nil
+}
+
 // QueryAllMeta returns all metas for given key and condition
 func (s *MetaService) QueryAllMeta(key string, condition string) (*[]models.Meta, error) {
 	var metas []models.Meta
