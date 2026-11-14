@@ -129,12 +129,11 @@ func NewOtherEdgeReset() *cobra.Command {
 
 // TearDownEdgeCore will bring down edge component,
 func TearDownEdgeCore() error {
+	service := constants.KubeEdgeBinaryName
 	extSystem, err := extsystem.GetExtSystem()
 	if err != nil {
-		return fmt.Errorf("failed to get init system, err: %v", err)
-	}
-	service := constants.KubeEdgeBinaryName
-	if extSystem.ServiceExists(service) {
+		klog.Warningf("failed to get init system, err: %v", err)
+	} else if extSystem.ServiceExists(service) {
 		klog.V(2).Info("edgecore service is exists")
 		if extSystem.ServiceIsActive(service) {
 			klog.V(2).Info("edgecore service is active, stopping it")
@@ -159,6 +158,14 @@ func TearDownEdgeCore() error {
 		klog.V(2).Info("removing edgecore service")
 		if err := extSystem.ServiceRemove(service); err != nil {
 			klog.Warningf("failed to remove edgecore service, err: %v", err)
+		}
+	}
+	if running, err := util.IsKubeEdgeProcessRunning(service); err != nil {
+		klog.Warningf("failed to check whether edgecore is running, err: %v", err)
+	} else if running {
+		klog.V(2).Info("edgecore is still running, killing it")
+		if err := util.KillKubeEdgeBinary(service); err != nil {
+			klog.Warningf("failed to kill edgecore, err: %v", err)
 		}
 	}
 	return nil
