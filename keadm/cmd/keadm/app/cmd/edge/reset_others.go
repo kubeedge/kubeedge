@@ -35,6 +35,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/extsystem"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 )
 
 var (
@@ -97,7 +98,7 @@ func NewOtherEdgeReset() *cobra.Command {
 			}
 			step.Printf("kill edgecore and remove edgecore service")
 			if err := TearDownEdgeCore(); err != nil {
-				return err
+				return fmt.Errorf("failed to tear down edgecore, skip cleaning up containers and directories: %w", err)
 			}
 			step.Printf("clean up containers managed by KubeEdge")
 			if err := util.RemoveContainers(reset.Endpoint); err != nil {
@@ -127,27 +128,33 @@ func NewOtherEdgeReset() *cobra.Command {
 	return cmd
 }
 
+var (
+	stopTimeout, stopInterval = 10 * time.Second, time.Second
+	systemdBootPath           = common.SystemdBootPath
+)
+
 // TearDownEdgeCore will bring down edge component,
 func TearDownEdgeCore() error {
+	service := constants.KubeEdgeBinaryName
 	extSystem, err := extsystem.GetExtSystem()
 	if err != nil {
-		return fmt.Errorf("failed to get init system, err: %v", err)
-	}
-	service := constants.KubeEdgeBinaryName
-	if extSystem.ServiceExists(service) {
+		if _, statErr := os.Lstat(systemdBootPath); !os.IsNotExist(statErr) {
+			return fmt.Errorf("failed to get init system, err: %v", err)
+		}
+		klog.Warningf("failed to get init system, err: %v", err)
+	} else if extSystem.ServiceExists(service) {
 		klog.V(2).Info("edgecore service is exists")
 		if extSystem.ServiceIsActive(service) {
 			klog.V(2).Info("edgecore service is active, stopping it")
 			if err := extSystem.ServiceStop(service); err != nil {
 				klog.Warningf("failed to stop edgecore service, err: %v", err)
 			}
-			timeout, interval := 10*time.Second, 1*time.Second
-			if err := wait.PollUntilContextTimeout(context.Background(), interval, timeout, false,
+			if err := wait.PollUntilContextTimeout(context.Background(), stopInterval, stopTimeout, false,
 				func(_ context.Context) (done bool, err error) {
 					return !extSystem.ServiceIsActive(service), nil
 				},
 			); err != nil {
-				klog.Warningf("failed to wait for edgecore service to stop, err: %v", err)
+				return fmt.Errorf("timed out after %v waiting for edgecore service to stop", stopTimeout)
 			}
 		}
 		if extSystem.ServiceIsEnabled(service) {
@@ -161,7 +168,33 @@ func TearDownEdgeCore() error {
 			klog.Warningf("failed to remove edgecore service, err: %v", err)
 		}
 	}
+	running, err := util.IsKubeEdgeProcessRunning(service)
+	if err != nil {
+		return fmt.Errorf("failed to check whether edgecore is running, err: %v", err)
+	}
+	if running {
+		klog.V(2).Info("edgecore is still running, killing it")
+		if err := killProcess(service); err != nil {
+			klog.Warningf("failed to kill edgecore, err: %v", err)
+		}
+		err = wait.PollUntilContextTimeout(context.Background(), stopInterval, stopTimeout, true,
+			func(context.Context) (bool, error) {
+				running, err := util.IsKubeEdgeProcessRunning(service)
+				return !running, err
+			},
+		)
+		if wait.Interrupted(err) {
+			return fmt.Errorf("timed out after %v waiting for edgecore to stop", stopTimeout)
+		}
+		if err != nil {
+			return fmt.Errorf("failed to check whether edgecore is running, err: %v", err)
+		}
+	}
 	return nil
+}
+
+func killProcess(name string) error {
+	return execs.NewCommand("pkill -x " + name).Exec()
 }
 
 func addResetFlags(cmd *cobra.Command, resetOpts *common.ResetOptions) {
