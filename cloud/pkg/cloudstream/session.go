@@ -96,7 +96,11 @@ func (s *Session) ProxyTunnelMessageToApiserver(message *stream.Message) error {
 	switch message.MessageType {
 	case stream.MessageTypeRemoveConnect:
 		klog.V(6).Infof("delete connection %v from %v", message.ConnectID, s.String())
-		kubeCon.SetEdgePeerDone()
+		if metrics, ok := kubeCon.(*ContainerMetricsConnection); ok {
+			metrics.setEdgePeerDone(string(message.Data) == stream.MetricsStreamSuccess)
+		} else {
+			kubeCon.SetEdgePeerDone()
+		}
 	case stream.MessageTypeData:
 		for i := 0; i < len(message.Data); {
 			n, err := kubeCon.WriteToAPIServer(message.Data[i:])

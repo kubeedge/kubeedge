@@ -17,11 +17,14 @@ limitations under the License.
 package cloudstream
 
 import (
+	"context"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/emicklei/go-restful"
 	"github.com/stretchr/testify/assert"
@@ -166,4 +169,64 @@ func TestSendConnection_Metrics(t *testing.T) {
 
 	assert.NotNil(mockTunneler.lastMessage)
 	assert.Equal(stream.MessageTypeMetricConnect, mockTunneler.lastMessage.MessageType)
+}
+
+func TestMetricsCompletionFromSession(t *testing.T) {
+	tests := []struct {
+		name       string
+		payload    string
+		disconnect bool
+		wantError  bool
+	}{
+		{name: "success", payload: "metrics-stream-success-v1"},
+		{name: "legacy", wantError: true},
+		{name: "invalid", payload: "invalid", wantError: true},
+		{name: "future version", payload: "metrics-stream-success-v2", wantError: true},
+		{name: "session failure", disconnect: true, wantError: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			session := &Session{tunnel: newMockTunnel(), apiConnlock: &sync.RWMutex{}}
+			metrics := &ContainerMetricsConnection{
+				MessageID: 1, ctx: context.Background(), session: session,
+				r:            &restful.Request{Request: &http.Request{URL: &url.URL{Path: "/metrics"}}},
+				edgePeerStop: make(chan struct{}), closeChan: make(chan bool),
+			}
+			session.apiServerConn = map[uint64]APIServerConnection{1: metrics}
+			result := make(chan error, 1)
+			go func() { result <- metrics.Serve() }()
+			if tt.disconnect {
+				session.Serve() // NextReader fails; the original Session.Close path runs.
+			} else {
+				assert.NoError(t, session.ProxyTunnelMessageToApiserver(stream.NewMessage(
+					1, stream.MessageTypeRemoveConnect, []byte(tt.payload))))
+			}
+			select {
+			case err := <-result:
+				assert.Equal(t, tt.wantError, err != nil, "Serve returned %v", err)
+			case <-time.After(time.Second):
+				t.Fatal("metrics handler did not finish")
+			}
+		})
+	}
+}
+
+func TestMetricsCompletionBeforeServe(t *testing.T) {
+	for _, successFirst := range []bool{true, false} {
+		metrics := &ContainerMetricsConnection{edgePeerStop: make(chan struct{})}
+		done := make(chan struct{})
+		go func() {
+			metrics.setEdgePeerDone(successFirst)
+			metrics.setEdgePeerDone(!successFirst)
+			metrics.SetEdgePeerDone() // A subsequent session shutdown must not block.
+			close(done)
+		}()
+		select {
+		case <-done:
+			<-metrics.EdgePeerDone()
+			assert.Equal(t, successFirst, metrics.metricsComplete)
+		case <-time.After(time.Second):
+			t.Fatal("completion blocked before the metrics handler started")
+		}
+	}
 }
