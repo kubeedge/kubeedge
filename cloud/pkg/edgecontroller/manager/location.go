@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	v1 "k8s.io/api/core/v1"
+	podutil "k8s.io/kubernetes/pkg/api/v1/pod"
 )
 
 // LocationCache cache the map of node, pod, configmap, secret
@@ -38,7 +39,7 @@ func (lc *LocationCache) PodConfigMapsAndSecrets(pod v1.Pod) (configMaps, secret
 		}
 	}
 	// used by envs
-	for _, s := range pod.Spec.Containers {
+	podutil.VisitContainers(&pod.Spec, podutil.AllContainers, func(s *v1.Container, _ podutil.ContainerType) bool {
 		for _, ef := range s.EnvFrom {
 			if ef.ConfigMapRef != nil {
 				configMaps = append(configMaps, ef.ConfigMapRef.Name)
@@ -58,7 +59,8 @@ func (lc *LocationCache) PodConfigMapsAndSecrets(pod v1.Pod) (configMaps, secret
 				secrets = append(secrets, e.ValueFrom.SecretKeyRef.Name)
 			}
 		}
-	}
+		return true
+	})
 	// used by ImagePullSecrets
 	for _, s := range pod.Spec.ImagePullSecrets {
 		secrets = append(secrets, s.Name)
