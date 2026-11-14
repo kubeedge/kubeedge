@@ -18,9 +18,14 @@ const (
 	CatEdgecoreLogCmd    = "cat ${KUBEEDGE_ROOT}/_output/local/bin/edgecore.log"
 )
 
-func CreateEdgeCoreConfigFile(nodeName string) error {
+// CreateEdgeCoreConfigFile writes the edgecore config used by the integration
+// suites. Set enableEdged only for suites that need edged: without a cloudcore
+// the node is never registered, so the kubelet in edged fails to initialize
+// CSINode and exits edgecore about 27 seconds after start.
+func CreateEdgeCoreConfigFile(nodeName string, enableEdged bool) error {
 	c := edgecore.NewDefaultEdgeCoreConfig()
 	c.EdgeCoreVersion = version.Get().String()
+	c.Modules.Edged.Enable = enableEdged
 	c.Modules.Edged.HostnameOverride = nodeName
 	c.Modules.EdgeHub.TLSCAFile = "/tmp/edgecore/rootCA.crt"
 	c.Modules.EdgeHub.TLSCertFile = "/tmp/edgecore/kubeedge.crt"
