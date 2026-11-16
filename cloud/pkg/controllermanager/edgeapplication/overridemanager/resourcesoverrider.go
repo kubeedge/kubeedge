@@ -24,6 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/klog/v2"
+	openapicommon "k8s.io/kube-openapi/pkg/common"
 
 	"github.com/kubeedge/api/apis/apps/v1alpha1"
 )
@@ -106,7 +107,7 @@ func acquireOverride(resourcesPath string, resourcesValue corev1.ResourceRequire
 	for resourceName, quantity := range resourcesValue.Requests {
 		// If quantity is non-zero, add a patch for this specific request
 		if !quantity.IsZero() {
-			requestPath := fmt.Sprintf("%s/requests/%s", resourcesPath, resourceName)
+			requestPath := fmt.Sprintf("%s/requests/%s", resourcesPath, openapicommon.EscapeJsonPointer(string(resourceName)))
 			patches = append(patches, overrideOption{
 				Op:    string(v1alpha1.OverriderOpReplace),
 				Path:  requestPath,
@@ -119,7 +120,7 @@ func acquireOverride(resourcesPath string, resourcesValue corev1.ResourceRequire
 	for resourceName, quantity := range resourcesValue.Limits {
 		// If quantity is non-zero, add a patch for this specific limit
 		if !quantity.IsZero() {
-			limitPath := fmt.Sprintf("%s/limits/%s", resourcesPath, resourceName)
+			limitPath := fmt.Sprintf("%s/limits/%s", resourcesPath, openapicommon.EscapeJsonPointer(string(resourceName)))
 			patches = append(patches, overrideOption{
 				Op:    string(v1alpha1.OverriderOpReplace),
 				Path:  limitPath,
