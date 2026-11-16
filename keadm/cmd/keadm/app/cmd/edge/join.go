@@ -173,10 +173,6 @@ func setEdgedNodeLabels(opt *common.JoinOptions) map[string]string {
 
 func createBootstrapFile(opt *common.JoinOptions) error {
 	bootstrapFile := constants.BootstrapFile
-	_, err := os.Create(bootstrapFile)
-	if err != nil {
-		return err
-	}
 
 	// write token to bootstrap-edgecore.conf file
 	token := []byte(opt.Token)
