@@ -156,6 +156,7 @@ type Tokenizer struct {
 	// incremented on each call to TagAttr.
 	pendingAttr   [2]span
 	attr          [][2]span
+	attrNames     map[string]bool
 	nAttrReturned int
 	// rawTag is the "script" in "</script>" that closes the next token. If
 	// non-empty, the subsequent call to Next will return a raw or RCDATA text
@@ -839,8 +840,22 @@ func (z *Tokenizer) readStartTag() TokenType {
 	if raw {
 		z.rawTag = strings.ToLower(string(z.buf[z.data.start:z.data.end]))
 	}
-	// Look for a self-closing token like "<br/>".
-	if z.err == nil && z.buf[z.raw.end-2] == '/' {
+	// Look for a self-closing token (e.g. <br/>).
+	//
+	// Originally, we did this by just checking that the last character of the
+	// tag (ignoring the closing bracket) was a solidus (/) character, but this
+	// is not always accurate.
+	//
+	// We need to be careful that we don't misinterpret a non-self-closing tag
+	// as self-closing, as can happen if the tag contains unquoted attribute
+	// values (i.e. <p a=/>).
+	//
+	// To avoid this, we check that the last non-bracket character of the tag
+	// (z.raw.end-2) isn't the same character as the last non-quote character of
+	// the last attribute of the tag (z.pendingAttr[1].end-1), if the tag has
+	// attributes.
+	nAttrs := len(z.attr)
+	if z.err == nil && z.buf[z.raw.end-2] == '/' && (nAttrs == 0 || z.raw.end-2 != z.attr[nAttrs-1][1].end-1) {
 		return SelfClosingTagToken
 	}
 	return StartTagToken
@@ -853,6 +868,7 @@ func (z *Tokenizer) readStartTag() TokenType {
 func (z *Tokenizer) readTag(saveAttr bool) {
 	z.attr = z.attr[:0]
 	z.nAttrReturned = 0
+	clear(z.attrNames)
 	// Read the tag name and attribute key/value pairs.
 	z.readTagName()
 	if z.skipWhiteSpace(); z.err != nil {
@@ -866,9 +882,11 @@ func (z *Tokenizer) readTag(saveAttr bool) {
 		z.raw.end--
 		z.readTagAttrKey()
 		z.readTagAttrVal()
-		// Save pendingAttr if saveAttr and that attribute has a non-empty key.
-		if saveAttr && z.pendingAttr[0].start != z.pendingAttr[0].end {
+		// Save pendingAttr if saveAttr and that attribute has a non-empty key, and the key hasn't been seen before.
+		key := strings.ToLower(string(z.buf[z.pendingAttr[0].start:z.pendingAttr[0].end]))
+		if saveAttr && z.pendingAttr[0].start != z.pendingAttr[0].end && !z.attrNames[key] {
 			z.attr = append(z.attr, z.pendingAttr)
+			z.attrNames[key] = true
 		}
 		if z.skipWhiteSpace(); z.err != nil {
 			break
@@ -1259,8 +1277,9 @@ func NewTokenizer(r io.Reader) *Tokenizer {
 // The input is assumed to be UTF-8 encoded.
 func NewTokenizerFragment(r io.Reader, contextTag string) *Tokenizer {
 	z := &Tokenizer{
-		r:   r,
-		buf: make([]byte, 0, 4096),
+		r:         r,
+		buf:       make([]byte, 0, 4096),
+		attrNames: make(map[string]bool),
 	}
 	if contextTag != "" {
 		switch s := strings.ToLower(contextTag); s {
