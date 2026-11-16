@@ -34,6 +34,9 @@ type EdgedLogsConnection struct {
 	MessID   uint64        // message id
 	URL      url.URL       `json:"url"`
 	Header   http.Header   `json:"header"`
+
+	// readGuard serializes CacheTunnelMessage with CloseReadChannel.
+	readGuard readChannelGuard
 }
 
 func (l *EdgedLogsConnection) GetMessageID() uint64 {
@@ -41,11 +44,13 @@ func (l *EdgedLogsConnection) GetMessageID() uint64 {
 }
 
 func (l *EdgedLogsConnection) CacheTunnelMessage(msg *Message) {
-	l.ReadChan <- msg
+	if !l.readGuard.send(l.ReadChan, msg) {
+		klog.V(6).Infof("%s is closed, drop message type %s", l.String(), msg.MessageType.String())
+	}
 }
 
 func (l *EdgedLogsConnection) CloseReadChannel() {
-	close(l.ReadChan)
+	l.readGuard.close(l.ReadChan)
 }
 
 func (l *EdgedLogsConnection) CleanChannel() {

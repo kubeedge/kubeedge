@@ -72,7 +72,7 @@ func (s *TunnelSession) serveContainerExecConnection(m *stream.Message) error {
 	}
 
 	s.AddLocalConnection(m.ConnectID, execCon)
-	klog.V(6).Infof("Get Exec Connection info: %+v", *execCon)
+	klog.V(6).Infof("Get Exec Connection info: %+v", execCon)
 	return execCon.Serve(s.Tunnel)
 }
 
@@ -87,7 +87,7 @@ func (s *TunnelSession) serveContainerAttachConnection(m *stream.Message) error 
 	}
 
 	s.AddLocalConnection(m.ConnectID, attachCon)
-	klog.V(6).Infof("Get Attach Connection info: %+v", *attachCon)
+	klog.V(6).Infof("Get Attach Connection info: %+v", attachCon)
 	return attachCon.Serve(s.Tunnel)
 }
 
