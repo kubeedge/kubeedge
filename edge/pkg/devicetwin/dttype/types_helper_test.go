@@ -277,6 +277,108 @@ func TestDeviceTwinToMsgTwin(t *testing.T) {
 	}
 }
 
+func TestDeviceTwinToMsgTwinMetadataUnmarshal(t *testing.T) {
+	validTwin := models.DeviceTwin{
+		Name:            "SensorTag",
+		Expected:        "ON",
+		Actual:          "ON",
+		ExpectedVersion: `{"cloud": 10, "edge": 11}`,
+		ActualVersion:   `{"cloud": 12, "edge": 13}`,
+		Optional:        true,
+		ExpectedMeta:    `{"timestamp": 100}`,
+		ActualMeta:      `{"timestamp": 200}`,
+		AttrType:        "Temperature",
+	}
+
+	tests := []struct {
+		name  string
+		twin  models.DeviceTwin
+		check func(*testing.T, *MsgTwin)
+	}{
+		{
+			name: "valid metadata still works",
+			twin: validTwin,
+			check: func(t *testing.T, twin *MsgTwin) {
+				assert.Equal(t, int64(100), twin.Expected.Metadata.Timestamp)
+				assert.Equal(t, int64(200), twin.Actual.Metadata.Timestamp)
+				assert.Equal(t, TwinVersion{CloudVersion: 10, EdgeVersion: 11}, *twin.ExpectedVersion)
+				assert.Equal(t, TwinVersion{CloudVersion: 12, EdgeVersion: 13}, *twin.ActualVersion)
+			},
+		},
+		{
+			name: "invalid ExpectedMeta remains nil",
+			twin: func() models.DeviceTwin {
+				twin := validTwin
+				twin.ExpectedMeta = "{"
+				return twin
+			}(),
+			check: func(t *testing.T, twin *MsgTwin) {
+				assert.Nil(t, twin.Expected.Metadata)
+				assert.NotNil(t, twin.Actual.Metadata)
+				assert.NotNil(t, twin.ExpectedVersion)
+				assert.NotNil(t, twin.ActualVersion)
+			},
+		},
+		{
+			name: "invalid ActualMeta remains nil",
+			twin: func() models.DeviceTwin {
+				twin := validTwin
+				twin.ActualMeta = "{"
+				return twin
+			}(),
+			check: func(t *testing.T, twin *MsgTwin) {
+				assert.NotNil(t, twin.Expected.Metadata)
+				assert.Nil(t, twin.Actual.Metadata)
+				assert.NotNil(t, twin.ExpectedVersion)
+				assert.NotNil(t, twin.ActualVersion)
+			},
+		},
+		{
+			name: "invalid ExpectedVersion remains nil",
+			twin: func() models.DeviceTwin {
+				twin := validTwin
+				twin.ExpectedVersion = "{"
+				return twin
+			}(),
+			check: func(t *testing.T, twin *MsgTwin) {
+				assert.NotNil(t, twin.Expected.Metadata)
+				assert.NotNil(t, twin.Actual.Metadata)
+				assert.Nil(t, twin.ExpectedVersion)
+				assert.NotNil(t, twin.ActualVersion)
+			},
+		},
+		{
+			name: "invalid ActualVersion remains nil",
+			twin: func() models.DeviceTwin {
+				twin := validTwin
+				twin.ActualVersion = "{"
+				return twin
+			}(),
+			check: func(t *testing.T, twin *MsgTwin) {
+				assert.NotNil(t, twin.Expected.Metadata)
+				assert.NotNil(t, twin.Actual.Metadata)
+				assert.NotNil(t, twin.ExpectedVersion)
+				assert.Nil(t, twin.ActualVersion)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got map[string]*MsgTwin
+			assert.NotPanics(t, func() {
+				got = DeviceTwinToMsgTwin([]models.DeviceTwin{tt.twin})
+			})
+
+			twin := got[tt.twin.Name]
+			if !assert.NotNil(t, twin) || !assert.NotNil(t, twin.Expected) || !assert.NotNil(t, twin.Actual) {
+				return
+			}
+			tt.check(t, twin)
+		})
+	}
+}
+
 // TestMsgAttrToDeviceAttr is function to test MsgAttrToDeviceAttr().
 func TestMsgAttrToDeviceAttr(t *testing.T) {
 	assert := assert.New(t)
