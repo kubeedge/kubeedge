@@ -2,11 +2,15 @@ package client
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	api "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
@@ -76,7 +80,12 @@ func (c *configMaps) Get(name string) (*api.ConfigMap, error) {
 		return remoteGet()
 	}
 
-	return handleConfigMapFromMetaDB(metas)
+	configMap, err := handleConfigMapFromMetaDB(metas)
+	var cachedErr *apierrors.StatusError
+	if errors.As(err, &cachedErr) && connect.IsConnected() {
+		return remoteGet()
+	}
+	return configMap, err
 }
 
 func handleConfigMapFromMetaDB(lists *[]string) (*api.ConfigMap, error) {
@@ -84,6 +93,9 @@ func handleConfigMapFromMetaDB(lists *[]string) (*api.ConfigMap, error) {
 		return nil, fmt.Errorf("ConfigMap length from meta db is %d", len(*lists))
 	}
 
+	if err := statusErrorFrom([]byte((*lists)[0])); err != nil {
+		return nil, err
+	}
 	var configMap api.ConfigMap
 	err := json.Unmarshal([]byte((*lists)[0]), &configMap)
 	if err != nil {
@@ -93,10 +105,22 @@ func handleConfigMapFromMetaDB(lists *[]string) (*api.ConfigMap, error) {
 }
 
 func handleConfigMapFromMetaManager(content []byte) (*api.ConfigMap, error) {
+	if err := statusErrorFrom(content); err != nil {
+		return nil, err
+	}
 	var configMap api.ConfigMap
 	err := json.Unmarshal(content, &configMap)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal message to ConfigMap failed, err: %v", err)
 	}
 	return &configMap, nil
+}
+
+// statusErrorFrom returns the API error that the cloud sent in place of an object, if data holds one.
+func statusErrorFrom(data []byte) error {
+	var statusErr apierrors.StatusError
+	if json.Unmarshal(data, &statusErr) == nil && statusErr.ErrStatus.Status == metav1.StatusFailure {
+		return &statusErr
+	}
+	return nil
 }

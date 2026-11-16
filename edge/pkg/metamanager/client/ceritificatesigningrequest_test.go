@@ -389,3 +389,18 @@ func TestHandleCertificatesSigningRequestResp(t *testing.T) {
 	assert.Nil(csr)
 	assert.Contains(err.Error(), "unmarshal message to CertificateSigningRequestResp failed")
 }
+
+func TestHandleCertificateSigningRequest_NotFound(t *testing.T) {
+	notFound, err := json.Marshal(apierrors.NewNotFound(v1.Resource("certificatesigningrequest"), "test-csr"))
+	assert.NoError(t, err)
+
+	result, err := handleCertificateSigningRequestFromMetaManager(notFound)
+	assert.Nil(t, result)
+	assert.True(t, apierrors.IsNotFound(err))
+
+	list, err := json.Marshal([]string{string(notFound)})
+	assert.NoError(t, err)
+	result, err = handleCertificateSigningRequestFromMetaDB(list)
+	assert.Nil(t, result)
+	assert.True(t, apierrors.IsNotFound(err))
+}

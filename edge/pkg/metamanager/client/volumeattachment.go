@@ -91,6 +91,9 @@ func handleVolumeAttachmentFromMetaDB(content []byte) (*api.VolumeAttachment, er
 		return nil, fmt.Errorf("volumeattachment length from meta db is %d", len(lists))
 	}
 
+	if err := statusErrorFrom([]byte(lists[0])); err != nil {
+		return nil, err
+	}
 	var va api.VolumeAttachment
 	err = json.Unmarshal([]byte(lists[0]), &va)
 	if err != nil {
@@ -100,6 +103,9 @@ func handleVolumeAttachmentFromMetaDB(content []byte) (*api.VolumeAttachment, er
 }
 
 func handleVolumeAttachmentFromMetaManager(content []byte) (*api.VolumeAttachment, error) {
+	if err := statusErrorFrom(content); err != nil {
+		return nil, err
+	}
 	var va api.VolumeAttachment
 	err := json.Unmarshal(content, &va)
 	if err != nil {

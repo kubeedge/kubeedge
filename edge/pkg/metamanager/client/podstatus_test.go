@@ -17,10 +17,14 @@ limitations under the License.
 package client
 
 import (
+	"encoding/json"
 	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -110,4 +114,22 @@ func TestPodStatus_Update(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPodsDeleteReplies(t *testing.T) {
+	conflict, err := json.Marshal(apierrors.NewConflict(corev1.Resource("pods"), "test-pod", errors.New("uid mismatch")))
+	assert.NoError(t, err)
+
+	deleteWithReply := func(content interface{}) error {
+		mockSend := &mockSendInterface{
+			sendSyncFunc: func(*model.Message) (*model.Message, error) {
+				return &model.Message{Content: content}, nil
+			},
+		}
+		return newPods("default", mockSend).Delete("test-pod", metav1.DeleteOptions{})
+	}
+
+	assert.NoError(t, deleteWithReply([]byte(constants.MessageSuccessfulContent)))
+	assert.NoError(t, deleteWithReply(constants.MessageSuccessfulContent))
+	assert.True(t, apierrors.IsConflict(deleteWithReply(conflict)))
 }

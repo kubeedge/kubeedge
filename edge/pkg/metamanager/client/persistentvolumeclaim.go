@@ -79,6 +79,9 @@ func handlePersistentVolumeClaimFromMetaDB(content []byte) (*api.PersistentVolum
 		return nil, fmt.Errorf("persistentvolumeclaim length from meta db is %d", len(lists))
 	}
 
+	if err := statusErrorFrom([]byte(lists[0])); err != nil {
+		return nil, err
+	}
 	var pvc api.PersistentVolumeClaim
 	err = json.Unmarshal([]byte(lists[0]), &pvc)
 	if err != nil {
@@ -88,6 +91,9 @@ func handlePersistentVolumeClaimFromMetaDB(content []byte) (*api.PersistentVolum
 }
 
 func handlePersistentVolumeClaimFromMetaManager(content []byte) (*api.PersistentVolumeClaim, error) {
+	if err := statusErrorFrom(content); err != nil {
+		return nil, err
+	}
 	var pvc api.PersistentVolumeClaim
 	err := json.Unmarshal(content, &pvc)
 	if err != nil {

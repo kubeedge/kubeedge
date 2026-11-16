@@ -81,12 +81,15 @@ func (c *pods) Delete(name string, options metav1.DeleteOptions) error {
 		return err
 	}
 
-	content, ok := msg.Content.(string)
-	if ok && content == constants.MessageSuccessfulContent {
+	content, _ := msg.GetContentData()
+	if string(content) == constants.MessageSuccessfulContent {
 		return nil
 	}
+	if err := statusErrorFrom(content); err != nil {
+		return err
+	}
 
-	err, ok = msg.Content.(error)
+	err, ok := msg.Content.(error)
 	if ok {
 		return err
 	}

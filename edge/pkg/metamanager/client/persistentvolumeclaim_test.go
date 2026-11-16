@@ -25,6 +25,7 @@ import (
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
 	api "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -288,4 +289,19 @@ func TestPersistentVolumeClaimsGet(t *testing.T) {
 		assert.Equal(model.QueryOperation, capturedOperation)
 		assert.Nil(capturedContent)
 	})
+}
+
+func TestHandlePersistentVolumeClaim_NotFound(t *testing.T) {
+	notFound, err := json.Marshal(apierrors.NewNotFound(api.Resource("persistentvolumeclaim"), "test-pvc"))
+	assert.NoError(t, err)
+
+	result, err := handlePersistentVolumeClaimFromMetaManager(notFound)
+	assert.Nil(t, result)
+	assert.True(t, apierrors.IsNotFound(err))
+
+	list, err := json.Marshal([]string{string(notFound)})
+	assert.NoError(t, err)
+	result, err = handlePersistentVolumeClaimFromMetaDB(list)
+	assert.Nil(t, result)
+	assert.True(t, apierrors.IsNotFound(err))
 }
