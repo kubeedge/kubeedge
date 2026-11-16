@@ -166,6 +166,12 @@ func (h *NodeUpgradeJobReconcileHandler) CheckTimeout(ctx context.Context, jobNa
 	if err != nil {
 		return err
 	}
+	// The job can be gone while its timeout job is still running, e.g. when
+	// its finalizer is removed manually and the reconciler never releases it.
+	if job == nil {
+		logger.V(2).Info("job is not found, no need to check timeout")
+		return nil
+	}
 	if job.Status.Phase != operationsv1alpha2.JobPhaseInProgress {
 		logger.V(3).Info("job is not in InProgress phase, no need to check timeout")
 		return nil

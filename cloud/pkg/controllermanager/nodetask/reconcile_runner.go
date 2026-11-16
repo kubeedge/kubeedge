@@ -135,6 +135,11 @@ func RunReconcile[T NodeJobType](
 			if err != nil {
 				return err
 			}
+			// The job may be deleted after it was fetched at the start of the reconcile.
+			if job == nil {
+				logger.V(2).Info("the node job is not found, no need to calculate status")
+				return nil
+			}
 			changed := handler.CalculateStatus(ctx, job)
 			if changed {
 				return handler.UpdateJobStatus(ctx, job)
