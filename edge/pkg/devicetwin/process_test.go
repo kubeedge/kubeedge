@@ -428,6 +428,11 @@ func Test_classifyMsg(t *testing.T) {
 	//Encoded eventbus resource
 	eventbusTopic := "$hw/events/device/+/+/state/update"
 	eventbusResource := base64.URLEncoding.EncodeToString([]byte(eventbusTopic))
+	//Encoded resources whose namespace or node name also appears in the topic prefix
+	devNamespaceTopic := dtcommon.DeviceETPrefix + "dev/sensor" + dtcommon.TwinETUpdateSuffix
+	devNamespaceResource := base64.URLEncoding.EncodeToString([]byte(devNamespaceTopic))
+	nodeNameTopic := dtcommon.MemETPrefix + "node" + dtcommon.MemETGetSuffix
+	nodeNameResource := base64.URLEncoding.EncodeToString([]byte(nodeNameTopic))
 
 	content := testutil.GenerateAddDevicePalyloadMsg(t)
 	tests := []struct {
@@ -498,6 +503,34 @@ func Test_classifyMsg(t *testing.T) {
 					Router: model.MessageRoute{
 						Source:   "bus",
 						Resource: eventbusResource,
+					},
+					Content: string(content),
+				},
+			},
+			wantBool: true,
+		},
+		{
+			//Success Case
+			name: "classifyMessageTest-Source:bus-Namespace:dev",
+			message: &dttype.DTMessage{
+				Msg: &model.Message{
+					Router: model.MessageRoute{
+						Source:   "bus",
+						Resource: devNamespaceResource,
+					},
+					Content: string(content),
+				},
+			},
+			wantBool: true,
+		},
+		{
+			//Success Case
+			name: "classifyMessageTest-Source:bus-NodeName:node",
+			message: &dttype.DTMessage{
+				Msg: &model.Message{
+					Router: model.MessageRoute{
+						Source:   "bus",
+						Resource: nodeNameResource,
 					},
 					Content: string(content),
 				},
