@@ -33,7 +33,6 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/containers"
 	upgrdeedge "github.com/kubeedge/kubeedge/pkg/upgrade/edge"
-	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
 
 func TestUpgradeRun(t *testing.T) {
@@ -271,7 +270,7 @@ func TestUpgradeExecutorUpgrade(t *testing.T) {
 		edgecoreBin = "/etc/kubeedge/v1.0.0/edgecore"
 	)
 
-	var fileChecked bool
+	var fileChecked, edgecoreStopped bool
 
 	patches := gomonkey.NewPatches()
 	defer patches.Reset()
@@ -284,13 +283,13 @@ func TestUpgradeExecutorUpgrade(t *testing.T) {
 		return nil
 	})
 	patches.ApplyFunc(util.KillKubeEdgeBinary, func(_proc string) error {
+		edgecoreStopped = true
 		return nil
 	})
-	patches.ApplyFunc(files.FileCopy, func(src, dst string) error {
-		assert.Equal(t, edgecoreBin, src)
-		assert.Equal(t, "/usr/local/bin/edgecore", dst)
+	patches.ApplyFunc(replaceFiles, func(srcToDest map[string]string, stop func() error) error {
+		assert.Equal(t, map[string]string{edgecoreBin: "/usr/local/bin/edgecore"}, srcToDest)
 		fileChecked = true
-		return nil
+		return stop()
 	})
 	patches.ApplyFunc(runEdgeCore, func() error {
 		return nil
@@ -305,6 +304,7 @@ func TestUpgradeExecutorUpgrade(t *testing.T) {
 	err := executor.upgrade(context.TODO(), opts)
 	assert.NoError(t, err)
 	assert.True(t, fileChecked)
+	assert.True(t, edgecoreStopped)
 }
 
 func TestGetEdgeCoreBinary(t *testing.T) {

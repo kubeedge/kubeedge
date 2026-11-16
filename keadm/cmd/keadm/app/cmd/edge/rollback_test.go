@@ -175,42 +175,35 @@ func TestRollbackExecutorPreRun(t *testing.T) {
 }
 
 func TestRollbackExecutorRollback(t *testing.T) {
-	var fileChecked int
+	var fileChecked, edgecoreStopped bool
 	executor := newRollbackExecutor()
 	executor.cfg = &cfgv1alpha2.EdgeCoreConfig{
 		DataBase: &cfgv1alpha2.DataBase{
-			DataSource: cfgv1alpha2.DataBaseDataSource,
+			DataSource: "/data/kubeedge/edge.db",
 		},
 	}
 	opts := RollbackOptions{
 		HistoricalVersion: "v1.0.0",
 		BaseOptions: BaseOptions{
-			Config: constants.EdgecoreConfigPath,
+			Config: "/data/kubeedge/edge.yaml",
 		},
 	}
 	patches := gomonkey.NewPatches()
 	defer patches.Reset()
 
 	patches.ApplyFunc(util.KillKubeEdgeBinary, func(_proc string) error {
+		edgecoreStopped = true
 		return nil
 	})
-	patches.ApplyFunc(files.FileCopy, func(src, dst string) error {
+	patches.ApplyFunc(replaceFiles, func(srcToDest map[string]string, stop func() error) error {
 		backupPath := filepath.Join(common.KubeEdgeBackupPath, opts.HistoricalVersion)
-		assert.Equal(t, backupPath, filepath.Dir(src))
-
-		switch filepath.Base(src) {
-		case "edgecore.db":
-			assert.Equal(t, executor.cfg.DataBase.DataSource, dst)
-			fileChecked++
-		case "edgecore.yaml":
-			assert.Equal(t, opts.Config, dst)
-			fileChecked++
-		case "edgecore":
-			want := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
-			assert.Equal(t, want, dst)
-			fileChecked++
-		}
-		return nil
+		assert.Equal(t, map[string]string{
+			filepath.Join(backupPath, "edgecore.db"):   executor.cfg.DataBase.DataSource,
+			filepath.Join(backupPath, "edgecore.yaml"): opts.Config,
+			filepath.Join(backupPath, "edgecore"):      filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName),
+		}, srcToDest)
+		fileChecked = true
+		return stop()
 	})
 	patches.ApplyFunc(runEdgeCore, func() error {
 		return nil
@@ -218,5 +211,6 @@ func TestRollbackExecutorRollback(t *testing.T) {
 
 	err := executor.rollback(opts)
 	assert.NoError(t, err)
-	assert.Equal(t, 3, fileChecked)
+	assert.True(t, fileChecked)
+	assert.True(t, edgecoreStopped)
 }

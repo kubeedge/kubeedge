@@ -33,7 +33,6 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	"github.com/kubeedge/kubeedge/pkg/containers"
 	upgrdeedge "github.com/kubeedge/kubeedge/pkg/upgrade/edge"
-	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
 
 const upgradeTips = `WARNING: The upgrade command no longer automatically execute backup. 
@@ -125,14 +124,13 @@ func (executor *upgradeExecutor) upgrade(ctx context.Context, opts UpgradeOption
 		}
 	}()
 	klog.Infof("Upgrade process start ...")
-	// Stop origin edgecore.
-	if err := util.KillKubeEdgeBinary(constants.KubeEdgeBinaryName); err != nil {
-		return fmt.Errorf("failed to stop edgecore, err: %v", err)
-	}
-	// Copy new edgecore to /usr/local/bin.
+	// Stop origin edgecore and copy new edgecore to /usr/local/bin.
 	dest := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
-	if err := files.FileCopy(edgecorePath, dest); err != nil {
-		return fmt.Errorf("failed to copy edgecore to %s, err: %v", dest, err)
+	err = replaceFiles(map[string]string{edgecorePath: dest}, func() error {
+		return util.KillKubeEdgeBinary(constants.KubeEdgeBinaryName)
+	})
+	if err != nil {
+		return err
 	}
 	// Start new edgecore.
 	if err := runEdgeCore(); err != nil {
