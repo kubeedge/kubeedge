@@ -140,67 +140,33 @@ func (uc *UpstreamController) Start() error {
 
 	go uc.dispatchMessage()
 
-	for i := 0; i < int(uc.config.Load.UpdateNodeStatusWorkers); i++ {
-		go uc.updateNodeStatus()
-	}
-	for i := 0; i < int(uc.config.Load.ProcessEventWorkers); i++ {
-		go uc.processEvent()
-	}
-	for i := 0; i < int(uc.config.Load.UpdatePodStatusWorkers); i++ {
-		go uc.updatePodStatus()
-	}
-	for i := 0; i < int(uc.config.Load.QueryConfigMapWorkers); i++ {
-		go uc.queryConfigMap()
-	}
-	for i := 0; i < int(uc.config.Load.QuerySecretWorkers); i++ {
-		go uc.querySecret()
-	}
-	for i := 0; i < int(uc.config.Load.ServiceAccountTokenWorkers); i++ {
-		go uc.processServiceAccountToken()
-	}
-	for i := 0; i < int(uc.config.Load.QueryPersistentVolumeWorkers); i++ {
-		go uc.queryPersistentVolume()
-	}
-	for i := 0; i < int(uc.config.Load.QueryPersistentVolumeClaimWorkers); i++ {
-		go uc.queryPersistentVolumeClaim()
-	}
-	for i := 0; i < int(uc.config.Load.QueryVolumeAttachmentWorkers); i++ {
-		go uc.queryVolumeAttachment()
-	}
-	for i := 0; i < int(uc.config.Load.CreateNodeWorkers); i++ {
-		go uc.registerNode()
-	}
-	for i := 0; i < int(uc.config.Load.PatchNodeWorkers); i++ {
-		go uc.patchNode()
-	}
-	for i := 0; i < int(uc.config.Load.QueryNodeWorkers); i++ {
-		go uc.queryNode()
-	}
-	for i := 0; i < int(uc.config.Load.UpdateNodeWorkers); i++ {
-		go uc.updateNode()
-	}
-	for i := 0; i < int(uc.config.Load.PatchPodWorkers); i++ {
-		go uc.patchPod()
-	}
-	for i := 0; i < int(uc.config.Load.DeletePodWorkers); i++ {
-		go uc.deletePod()
-	}
-	for i := 0; i < int(uc.config.Load.CreateLeaseWorkers); i++ {
-		go uc.createOrUpdateLease()
-	}
-	for i := 0; i < int(uc.config.Load.QueryLeaseWorkers); i++ {
-		go uc.queryLease()
-	}
-	for i := 0; i < int(uc.config.Load.UpdateRuleStatusWorkers); i++ {
-		go uc.updateRuleStatus()
-	}
-	for i := 0; i < int(uc.config.Load.CreatePodWorks); i++ {
-		go uc.createPod()
-	}
-	for i := 0; i < int(uc.config.Load.CertificateSigningRequestWorkers); i++ {
-		go uc.processCSR()
-	}
+	startWorkers(uc.config.Load.UpdateNodeStatusWorkers, uc.updateNodeStatus)
+	startWorkers(uc.config.Load.ProcessEventWorkers, uc.processEvent)
+	startWorkers(uc.config.Load.UpdatePodStatusWorkers, uc.updatePodStatus)
+	startWorkers(uc.config.Load.QueryConfigMapWorkers, uc.queryConfigMap)
+	startWorkers(uc.config.Load.QuerySecretWorkers, uc.querySecret)
+	startWorkers(uc.config.Load.ServiceAccountTokenWorkers, uc.processServiceAccountToken)
+	startWorkers(uc.config.Load.QueryPersistentVolumeWorkers, uc.queryPersistentVolume)
+	startWorkers(uc.config.Load.QueryPersistentVolumeClaimWorkers, uc.queryPersistentVolumeClaim)
+	startWorkers(uc.config.Load.QueryVolumeAttachmentWorkers, uc.queryVolumeAttachment)
+	startWorkers(uc.config.Load.CreateNodeWorkers, uc.registerNode)
+	startWorkers(uc.config.Load.PatchNodeWorkers, uc.patchNode)
+	startWorkers(uc.config.Load.QueryNodeWorkers, uc.queryNode)
+	startWorkers(uc.config.Load.UpdateNodeWorkers, uc.updateNode)
+	startWorkers(uc.config.Load.PatchPodWorkers, uc.patchPod)
+	startWorkers(uc.config.Load.DeletePodWorkers, uc.deletePod)
+	startWorkers(uc.config.Load.CreateLeaseWorkers, uc.createOrUpdateLease)
+	startWorkers(uc.config.Load.QueryLeaseWorkers, uc.queryLease)
+	startWorkers(uc.config.Load.UpdateRuleStatusWorkers, uc.updateRuleStatus)
+	startWorkers(uc.config.Load.CreatePodWorks, uc.createPod)
+	startWorkers(uc.config.Load.CertificateSigningRequestWorkers, uc.processCSR)
 	return nil
+}
+
+func startWorkers(count int32, worker func()) {
+	for i := 0; i < int(count); i++ {
+		go worker()
+	}
 }
 
 func (uc *UpstreamController) dispatchMessage() {
@@ -228,63 +194,67 @@ func (uc *UpstreamController) dispatchMessage() {
 
 		klog.V(5).Infof("message: %s, operation type is: %s", msg.GetID(), msg.GetOperation())
 
-		switch resourceType {
-		case model.ResourceTypeNodeStatus:
-			uc.nodeStatusChan <- msg
-		case model.ResourceTypePodStatus:
-			uc.podStatusChan <- msg
-		case model.ResourceTypeEvent:
-			uc.eventChan <- msg
-		case model.ResourceTypeConfigmap:
-			uc.configMapChan <- msg
-		case model.ResourceTypeSecret:
-			uc.secretChan <- msg
-		case model.ResourceTypeServiceAccountToken:
-			uc.serviceAccountTokenChan <- msg
-		case common.ResourceTypePersistentVolume:
-			uc.persistentVolumeChan <- msg
-		case common.ResourceTypePersistentVolumeClaim:
-			uc.persistentVolumeClaimChan <- msg
-		case common.ResourceTypeVolumeAttachment:
-			uc.volumeAttachmentChan <- msg
-		case model.ResourceTypeNode:
-			switch msg.GetOperation() {
-			case model.InsertOperation:
-				uc.createNodeChan <- msg
-			case model.QueryOperation:
-				uc.queryNodeChan <- msg
-			case model.UpdateOperation:
-				uc.updateNodeChan <- msg
-			default:
-				klog.Errorf("message: %s, operation type: %s unsupported", msg.GetID(), msg.GetOperation())
-			}
-		case model.ResourceTypeNodePatch:
-			uc.patchNodeChan <- msg
-		case model.ResourceTypePodPatch:
-			uc.patchPodChan <- msg
-		case model.ResourceTypePod:
-			switch msg.GetOperation() {
-			case model.DeleteOperation:
-				uc.podDeleteChan <- msg
-			case model.InsertOperation:
-				uc.createPodChan <- msg
-			default:
-				klog.Errorf("message: %s, operation type: %s unsupported", msg.GetID(), msg.GetOperation())
-			}
-		case model.ResourceTypeRuleStatus:
-			uc.ruleStatusChan <- msg
-		case model.ResourceTypeLease:
-			switch msg.GetOperation() {
-			case model.InsertOperation, model.UpdateOperation:
-				uc.createLeaseChan <- msg
-			case model.QueryOperation:
-				uc.queryLeaseChan <- msg
-			}
-		case model.ResourceTypeCSR:
-			uc.certificasesSigningRequestChan <- msg
+		uc.dispatchMessageToChannel(msg, resourceType)
+	}
+}
+
+func (uc *UpstreamController) dispatchMessageToChannel(msg model.Message, resourceType string) {
+	switch resourceType {
+	case model.ResourceTypeNodeStatus:
+		uc.nodeStatusChan <- msg
+	case model.ResourceTypePodStatus:
+		uc.podStatusChan <- msg
+	case model.ResourceTypeEvent:
+		uc.eventChan <- msg
+	case model.ResourceTypeConfigmap:
+		uc.configMapChan <- msg
+	case model.ResourceTypeSecret:
+		uc.secretChan <- msg
+	case model.ResourceTypeServiceAccountToken:
+		uc.serviceAccountTokenChan <- msg
+	case common.ResourceTypePersistentVolume:
+		uc.persistentVolumeChan <- msg
+	case common.ResourceTypePersistentVolumeClaim:
+		uc.persistentVolumeClaimChan <- msg
+	case common.ResourceTypeVolumeAttachment:
+		uc.volumeAttachmentChan <- msg
+	case model.ResourceTypeNode:
+		switch msg.GetOperation() {
+		case model.InsertOperation:
+			uc.createNodeChan <- msg
+		case model.QueryOperation:
+			uc.queryNodeChan <- msg
+		case model.UpdateOperation:
+			uc.updateNodeChan <- msg
 		default:
-			klog.Errorf("message: %s, resource type: %s unsupported", msg.GetID(), resourceType)
+			klog.Errorf("message: %s, operation type: %s unsupported", msg.GetID(), msg.GetOperation())
 		}
+	case model.ResourceTypeNodePatch:
+		uc.patchNodeChan <- msg
+	case model.ResourceTypePodPatch:
+		uc.patchPodChan <- msg
+	case model.ResourceTypePod:
+		switch msg.GetOperation() {
+		case model.DeleteOperation:
+			uc.podDeleteChan <- msg
+		case model.InsertOperation:
+			uc.createPodChan <- msg
+		default:
+			klog.Errorf("message: %s, operation type: %s unsupported", msg.GetID(), msg.GetOperation())
+		}
+	case model.ResourceTypeRuleStatus:
+		uc.ruleStatusChan <- msg
+	case model.ResourceTypeLease:
+		switch msg.GetOperation() {
+		case model.InsertOperation, model.UpdateOperation:
+			uc.createLeaseChan <- msg
+		case model.QueryOperation:
+			uc.queryLeaseChan <- msg
+		}
+	case model.ResourceTypeCSR:
+		uc.certificasesSigningRequestChan <- msg
+	default:
+		klog.Errorf("message: %s, resource type: %s unsupported", msg.GetID(), resourceType)
 	}
 }
 
