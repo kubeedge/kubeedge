@@ -43,7 +43,7 @@ func CalculatePhaseWithCounts(total, proc, fail int64,
 	if failureTolerateSpec != "" {
 		parsed, err := strconv.ParseFloat(failureTolerateSpec, 64)
 		if err != nil {
-			klog.Errorf("failed to parse failureTolerate, use default value 1, err: %v", err)
+			klog.Errorf("failed to parse failureTolerate, use default value 0, err: %v", err)
 		} else {
 			failureTolerate = parsed
 		}

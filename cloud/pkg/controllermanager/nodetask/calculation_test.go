@@ -71,6 +71,62 @@ func TestCalculateStatusWithCounts(t *testing.T) {
 			failureTolerateSpec: "0.5",
 			wantStatus:          operationsv1alpha2.JobPhaseCompleted,
 		},
+		{
+			name:                "invalid string input defaults to 0.0 (some failures -> failure)",
+			total:               10,
+			fail:                5,
+			failureTolerateSpec: "abc",
+			wantStatus:          operationsv1alpha2.JobPhaseFailure,
+		},
+		{
+			name:                "invalid string input defaults to 0.0 (all failures -> failure)",
+			total:               10,
+			fail:                10,
+			failureTolerateSpec: "invalid_float",
+			wantStatus:          operationsv1alpha2.JobPhaseFailure,
+		},
+		{
+			name:                "explicit empty value defaults to 0.0 (one failure)",
+			total:               10,
+			fail:                1,
+			failureTolerateSpec: "",
+			wantStatus:          operationsv1alpha2.JobPhaseFailure,
+		},
+		{
+			name:                "explicit empty value defaults to 0.0 (no failures)",
+			total:               10,
+			fail:                0,
+			failureTolerateSpec: "",
+			wantStatus:          operationsv1alpha2.JobPhaseCompleted,
+		},
+		{
+			name:                "boundary value 0.0 with one failure",
+			total:               10,
+			fail:                1,
+			failureTolerateSpec: "0",
+			wantStatus:          operationsv1alpha2.JobPhaseFailure,
+		},
+		{
+			name:                "boundary value 0.0 with no failures",
+			total:               10,
+			fail:                0,
+			failureTolerateSpec: "0",
+			wantStatus:          operationsv1alpha2.JobPhaseCompleted,
+		},
+		{
+			name:                "boundary value 1.0 with all failures",
+			total:               10,
+			fail:                10,
+			failureTolerateSpec: "1",
+			wantStatus:          operationsv1alpha2.JobPhaseCompleted,
+		},
+		{
+			name:                "boundary value 1.0 with partial failures",
+			total:               10,
+			fail:                5,
+			failureTolerateSpec: "1.0",
+			wantStatus:          operationsv1alpha2.JobPhaseCompleted,
+		},
 	}
 
 	for _, c := range cases {
