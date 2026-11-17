@@ -144,6 +144,9 @@ func TestREST_Exec(t *testing.T) {
 		isRemoteRuntimeService bool
 		isListContainersFailed bool
 		isExecSyncFailed       bool
+		execSyncStdout         string
+		execSyncStderr         string
+		execSyncErr            error
 		isExecFailed           bool
 		isParseExecURLFailed   bool
 		expectedExecResponse   *types.ExecResponse
@@ -151,6 +154,7 @@ func TestREST_Exec(t *testing.T) {
 	}
 
 	cases := testCase{}
+	newRuntimeServiceCalls := 0
 
 	patch := gomonkey.NewPatches()
 	defer patch.Reset()
@@ -163,6 +167,7 @@ func TestREST_Exec(t *testing.T) {
 			},
 		},
 	}).ApplyFunc(remote.NewRemoteRuntimeService, func(endpoint string, timeout time.Duration, tracerProvider trace.TracerProvider) (cri.RuntimeService, error) {
+		newRuntimeServiceCalls++
 		if !cases.isRemoteRuntimeService {
 			return nil, fmt.Errorf("err in NewRemoteRuntimeService")
 		}
@@ -184,7 +189,7 @@ func TestREST_Exec(t *testing.T) {
 				if cases.isExecSyncFailed {
 					return nil, nil, fmt.Errorf("err in ExecSync")
 				}
-				return []byte("stdout"), []byte("stderr"), nil
+				return []byte(cases.execSyncStdout), []byte(cases.execSyncStderr), cases.execSyncErr
 			},
 			ExecF: func(ctx context.Context, req *runtimeapi.ExecRequest) (*runtimeapi.ExecResponse, error) {
 				if cases.isExecFailed {
@@ -338,6 +343,8 @@ func TestREST_Exec(t *testing.T) {
 				},
 				isEdgedEnabled:         true,
 				isRemoteRuntimeService: true,
+				execSyncStdout:         "stdout",
+				execSyncStderr:         "stderr",
 				expectedExecResponse: &types.ExecResponse{
 					ErrMessages:    []string{},
 					RunOutMessages: []string{"stdout"},
@@ -345,6 +352,68 @@ func TestREST_Exec(t *testing.T) {
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "test exec sync stdout only",
+			cases: testCase{
+				execInfo: common.ExecInfo{
+					Namespace: "default",
+					PodName:   "pod-name",
+					Container: "container-name",
+					Commands:  []string{"ls"},
+				},
+				isEdgedEnabled:         true,
+				isRemoteRuntimeService: true,
+				execSyncStdout:         "stdout",
+				expectedExecResponse: &types.ExecResponse{
+					ErrMessages:    []string{},
+					RunOutMessages: []string{"stdout"},
+					RunErrMessages: []string{},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "test exec sync stderr only",
+			cases: testCase{
+				execInfo: common.ExecInfo{
+					Namespace: "default",
+					PodName:   "pod-name",
+					Container: "container-name",
+					Commands:  []string{"ls"},
+				},
+				isEdgedEnabled:         true,
+				isRemoteRuntimeService: true,
+				execSyncStderr:         "stderr",
+				expectedExecResponse: &types.ExecResponse{
+					ErrMessages:    []string{},
+					RunOutMessages: []string{},
+					RunErrMessages: []string{"stderr"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "test exec sync non-zero exit code",
+			cases: testCase{
+				execInfo: common.ExecInfo{
+					Namespace: "default",
+					PodName:   "pod-name",
+					Container: "container-name",
+					Commands:  []string{"ls"},
+				},
+				isEdgedEnabled:         true,
+				isRemoteRuntimeService: true,
+				execSyncStdout:         "stdout",
+				execSyncStderr:         "stderr",
+				execSyncErr:            fmt.Errorf("command 'ls' exited with 1: stderr"),
+				expectedExecResponse: &types.ExecResponse{
+					ErrMessages:    []string{"failed to exec command [ls] for container container-name for pod \"/default/pod-name\" with err:command 'ls' exited with 1: stderr"},
+					RunOutMessages: []string{"stdout"},
+					RunErrMessages: []string{"stderr"},
+				},
+			},
+			wantErr: true,
 		},
 		{
 			name: "test exec success",
@@ -382,6 +451,25 @@ func TestREST_Exec(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("test remote runtime service reused", func(t *testing.T) {
+		rest := &REST{}
+		execInfo := common.ExecInfo{
+			Namespace: "default",
+			PodName:   "pod-name",
+			Container: "container-name",
+			Commands:  []string{"ls"},
+		}
+		newRuntimeServiceCalls = 0
+		cases = testCase{isRemoteRuntimeService: false}
+		rest.Exec(context.TODO(), execInfo)
+		cases = testCase{isRemoteRuntimeService: true}
+		rest.Exec(context.TODO(), execInfo)
+		rest.Exec(context.TODO(), execInfo)
+		if newRuntimeServiceCalls != 2 {
+			t.Errorf("NewRemoteRuntimeService() called %d times, want 2", newRuntimeServiceCalls)
+		}
+	})
 }
 
 func TestREST_Logs(t *testing.T) {
