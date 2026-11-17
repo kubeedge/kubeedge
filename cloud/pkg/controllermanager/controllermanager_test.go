@@ -67,7 +67,13 @@ func TestSetupControllers(t *testing.T) {
 func TestNewControllerManager(t *testing.T) {
 	// Setting up the controllers needs the API server, so it fails here and the
 	// error has to be returned instead of a manager.
-	mgr, err := NewControllerManager(context.Background(), &rest.Config{Host: unreachableAPIServer}, "")
+	mgr, err := NewControllerManager(
+		context.Background(),
+		&rest.Config{Host: unreachableAPIServer},
+		"",
+		-1,
+		"",
+	)
 	assert.Error(t, err)
 	assert.Nil(t, mgr)
 }
