@@ -131,6 +131,13 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 	if internalIP == "" {
 		internalIP = strings.Split(r.Request.RemoteAddr, ":")[0]
 	}
+	if err := verifyPeerNodeName(r.Request, hostNameOverride); err != nil {
+		klog.Errorf("Reject tunnel connection for node %q: %v", hostNameOverride, err)
+		if werr := w.WriteErrorString(http.StatusForbidden, err.Error()); werr != nil {
+			klog.Errorf("failed to write http response, err: %v", werr)
+		}
+		return
+	}
 	con, err := s.upgrader.Upgrade(w, r.Request, nil)
 	if err != nil {
 		klog.Errorf("Failed to upgrade the HTTP server connection to the WebSocket protocol: %v", err)
@@ -159,6 +166,23 @@ func (s *TunnelServer) connect(r *restful.Request, w *restful.Response) {
 	s.addSession(internalIP, session)
 	s.addNodeIP(hostNameOverride, internalIP)
 	session.Serve()
+}
+
+// verifyPeerNodeName checks that the client certificate presented on the
+// tunnel connection belongs to the node named in the request header, so that
+// one edge node cannot register a session for another node.
+func verifyPeerNodeName(r *http.Request, nodeName string) error {
+	if nodeName == "" {
+		return fmt.Errorf("node name is empty")
+	}
+	if r.TLS == nil || len(r.TLS.PeerCertificates) == 0 {
+		return fmt.Errorf("no client certificate provided")
+	}
+	cn := r.TLS.PeerCertificates[0].Subject.CommonName
+	if cn != fmt.Sprintf("system:node:%s", nodeName) {
+		return fmt.Errorf("certificate CN %s does not match node name %s", cn, nodeName)
+	}
+	return nil
 }
 
 func (s *TunnelServer) Start() {

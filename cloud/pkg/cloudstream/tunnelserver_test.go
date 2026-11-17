@@ -18,6 +18,9 @@ package cloudstream
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -301,6 +304,71 @@ func TestConnect(t *testing.T) {
 			// In our test cases, WebSocket upgrade should always fail since we're not setting up
 			// a proper WebSocket connection
 			assert.True(t, resp.Code != http.StatusOK, "connect should fail when WebSocket upgrade fails")
+		})
+	}
+}
+
+func TestConnectVerifiesPeerNodeName(t *testing.T) {
+	peerCert := func(cn string) *tls.ConnectionState {
+		return &tls.ConnectionState{
+			PeerCertificates: []*x509.Certificate{{Subject: pkix.Name{CommonName: cn}}},
+		}
+	}
+
+	testCases := []struct {
+		name      string
+		nodeName  string
+		tlsState  *tls.ConnectionState
+		forbidden bool
+	}{
+		{
+			name:     "CertificateMatchesNode",
+			nodeName: testNodeName,
+			tlsState: peerCert("system:node:" + testNodeName),
+		},
+		{
+			name:      "CertificateForOtherNode",
+			nodeName:  testNodeName,
+			tlsState:  peerCert("system:node:other-node"),
+			forbidden: true,
+		},
+		{
+			name:      "NoClientCertificate",
+			nodeName:  testNodeName,
+			forbidden: true,
+		},
+		{
+			name:      "EmptyNodeName",
+			tlsState:  peerCert("system:node:"),
+			forbidden: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			fakeClient := fake.NewSimpleClientset(&corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{Name: testNodeName},
+			})
+			ts := newTunnelServerWithClient(testTunnelPort, fakeClient.CoreV1(), time.Millisecond*10, time.Millisecond*100)
+
+			req := httptest.NewRequest("GET", "/v1/kubeedge/connect", nil)
+			req.Header.Set(stream.SessionKeyHostNameOverride, tc.nodeName)
+			req.Header.Set(stream.SessionKeyInternalIP, "192.168.1.2")
+			req.TLS = tc.tlsState
+			resp := httptest.NewRecorder()
+
+			ts.connect(restful.NewRequest(req), restful.NewResponse(resp))
+
+			if tc.forbidden {
+				assert.Equal(t, http.StatusForbidden, resp.Code)
+				_, ok := ts.getSession(tc.nodeName)
+				assert.False(t, ok, "session should not be registered")
+				node, err := fakeClient.CoreV1().Nodes().Get(context.Background(), testNodeName, metav1.GetOptions{})
+				assert.NoError(t, err)
+				assert.Equal(t, int32(0), node.Status.DaemonEndpoints.KubeletEndpoint.Port)
+			} else {
+				assert.NotEqual(t, http.StatusForbidden, resp.Code)
+			}
 		})
 	}
 }
