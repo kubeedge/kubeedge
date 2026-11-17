@@ -97,6 +97,8 @@ func (ah *ContainerAttachConnection) SendConnection() (stream.EdgedConnection, e
 func (ah *ContainerAttachConnection) Serve() error {
 	defer func() {
 		close(ah.closeChan)
+		// Unblock any stuck write to the client; removing this connection waits for it.
+		ah.Conn.Close()
 		klog.V(6).Infof("%s stop successfully", ah.String())
 	}()
 
@@ -131,26 +133,23 @@ func (ah *ContainerAttachConnection) Serve() error {
 			return fmt.Errorf("%s find edge peer done, so stop this connection", ah.String())
 		default:
 		}
-		func() {
-			n, err := ah.Conn.Read(data[:])
-			if err != nil {
-				if !errors.Is(err, io.EOF) {
-					klog.Errorf("%s failed to read from client: %v", ah.String(), err)
-					return
-				}
+		n, err := ah.Conn.Read(data[:])
+		if err != nil {
+			if !errors.Is(err, io.EOF) {
+				klog.Errorf("%s failed to read from client: %v", ah.String(), err)
+			} else {
 				klog.V(6).Infof("%s read EOF from client", ah.String())
-				sendCloseMessage()
-				return
 			}
-			if n <= 0 {
-				return
-			}
-			msg := stream.NewMessage(connector.GetMessageID(), stream.MessageTypeData, data[:n])
-			if err := ah.WriteToTunnel(msg); err != nil {
-				klog.Errorf("%s failed to write to tunnel server, err: %v", ah.String(), err)
-				return
-			}
-		}()
+			sendCloseMessage()
+			return nil
+		}
+		if n <= 0 {
+			continue
+		}
+		msg := stream.NewMessage(connector.GetMessageID(), stream.MessageTypeData, data[:n])
+		if err := ah.WriteToTunnel(msg); err != nil {
+			klog.Errorf("%s failed to write to tunnel server, err: %v", ah.String(), err)
+		}
 	}
 }
 

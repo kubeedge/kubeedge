@@ -19,8 +19,11 @@ package cloudstream
 import (
 	"context"
 	"errors"
+	"io"
+	"net"
 	"net/http"
 	"net/url"
+	"sync"
 	"testing"
 	"time"
 
@@ -244,14 +247,11 @@ func TestServe_Exec(t *testing.T) {
 					r:            r,
 					Conn:         conn,
 					session:      session,
-					edgePeerStop: make(chan struct{}),
+					edgePeerStop: make(chan struct{}, 1),
 					closeChan:    make(chan bool),
 				}
 
-				go func() {
-					time.Sleep(50 * time.Millisecond)
-					execConn.EdgePeerDone() <- struct{}{}
-				}()
+				execConn.EdgePeerDone() <- struct{}{}
 
 				return execConn, cancel
 			},
@@ -291,6 +291,131 @@ func TestServe_Exec(t *testing.T) {
 				if err != nil {
 					t.Logf("Expected no error but got: %v. This is acceptable in this test case.", err)
 				}
+			}
+		})
+	}
+}
+
+type readErrConn struct {
+	MockConn
+	err   error
+	reads int
+}
+
+func (m *readErrConn) Read(b []byte) (int, error) {
+	m.reads++
+	if m.reads == 1 {
+		return 0, nil
+	}
+	if m.readBuffer.Len() > 0 {
+		return m.readBuffer.Read(b)
+	}
+	return 0, m.err
+}
+
+type countingTunneler struct {
+	MockTunneler
+	sent map[stream.MessageType]int
+}
+
+func (m *countingTunneler) WriteMessage(message *stream.Message) error {
+	m.sent[message.MessageType]++
+	if message.MessageType == stream.MessageTypeData {
+		return assert.AnError
+	}
+	return nil
+}
+
+type blockedWriteConn struct {
+	MockConn
+	writing chan struct{}
+	closed  chan struct{}
+}
+
+func (m *blockedWriteConn) Read([]byte) (int, error) {
+	<-m.writing
+	return 0, io.EOF
+}
+
+func (m *blockedWriteConn) Write([]byte) (int, error) {
+	close(m.writing)
+	<-m.closed
+	return 0, net.ErrClosed
+}
+
+func (m *blockedWriteConn) Close() error {
+	close(m.closed)
+	return nil
+}
+
+func TestServe_ClientClosed(t *testing.T) {
+	r := &restful.Request{Request: &http.Request{URL: &url.URL{}}}
+	testCases := []struct {
+		name    string
+		newConn func(net.Conn, *Session) APIServerConnection
+	}{
+		{
+			name: "exec",
+			newConn: func(conn net.Conn, session *Session) APIServerConnection {
+				return &ContainerExecConnection{
+					ctx:          context.Background(),
+					r:            r,
+					Conn:         conn,
+					session:      session,
+					edgePeerStop: make(chan struct{}),
+					closeChan:    make(chan bool),
+				}
+			},
+		},
+		{
+			name: "attach",
+			newConn: func(conn net.Conn, session *Session) APIServerConnection {
+				return &ContainerAttachConnection{
+					ctx:          context.Background(),
+					r:            r,
+					Conn:         conn,
+					session:      session,
+					edgePeerStop: make(chan struct{}),
+					closeChan:    make(chan bool),
+				}
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		for _, readErr := range []error{io.EOF, errors.New("connection reset by peer")} {
+			t.Run(tc.name+" "+readErr.Error(), func(t *testing.T) {
+				assert := assert.New(t)
+				conn := &readErrConn{err: readErr}
+				conn.readBuffer.WriteString("ls\n")
+				tun := &countingTunneler{sent: map[stream.MessageType]int{}}
+				apiConn := tc.newConn(conn, &Session{tunnel: tun})
+				time.AfterFunc(time.Second, apiConn.SetEdgePeerDone)
+
+				assert.NoError(apiConn.Serve())
+				assert.Equal(3, conn.reads)
+				assert.Equal(1, tun.sent[stream.MessageTypeData])
+				assert.Equal(1, tun.sent[stream.MessageTypeRemoveConnect])
+			})
+		}
+
+		t.Run(tc.name+" blocked write", func(t *testing.T) {
+			assert := assert.New(t)
+			conn := &blockedWriteConn{writing: make(chan struct{}), closed: make(chan struct{})}
+			session := &Session{tunnel: &MockTunneler{}, apiConnlock: &sync.RWMutex{}}
+			apiConn := tc.newConn(conn, session)
+			session.apiServerConn = map[uint64]APIServerConnection{0: apiConn}
+			proxyErr := make(chan error, 1)
+			go func() {
+				proxyErr <- session.ProxyTunnelMessageToApiserver(stream.NewMessage(0, stream.MessageTypeData, []byte("x")))
+			}()
+
+			assert.NoError(apiConn.Serve())
+			select {
+			case err := <-proxyErr:
+				assert.ErrorIs(err, net.ErrClosed)
+			case <-time.After(time.Second):
+				t.Fatal("client write still blocked after Serve returned, so DeleteAPIServerConnection would hang")
 			}
 		})
 	}

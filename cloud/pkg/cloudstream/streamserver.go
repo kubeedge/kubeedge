@@ -276,10 +276,7 @@ func (s *StreamServer) getExec(request *restful.Request, response *restful.Respo
 	}
 
 	defer func() {
-		if err != nil {
-			session.DeleteAPIServerConnection(execConnection)
-			klog.Infof("Delete %s from %s", execConnection.String(), session.String())
-		}
+		session.DeleteAPIServerConnection(execConnection)
 	}()
 
 	if err = execConnection.Serve(); err != nil {
@@ -346,10 +343,7 @@ func (s *StreamServer) getAttach(request *restful.Request, response *restful.Res
 	}
 
 	defer func() {
-		if err != nil {
-			session.DeleteAPIServerConnection(attachConnection)
-			klog.Infof("Delete %s from %s", attachConnection.String(), session.String())
-		}
+		session.DeleteAPIServerConnection(attachConnection)
 	}()
 
 	if err = attachConnection.Serve(); err != nil {

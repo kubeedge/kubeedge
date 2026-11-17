@@ -3,6 +3,8 @@ package edgestream
 import (
 	"bytes"
 	"io"
+	"net"
+	"net/url"
 	"testing"
 	"time"
 
@@ -149,5 +151,40 @@ func TestServeDispatchUnsupportedMessageType(t *testing.T) {
 	// 3. Channels should not be closed or cleaned
 	if mockConn.cleanCalled || mockConn.closeCalled {
 		t.Errorf("Expected clean/close not to be called on local connection")
+	}
+}
+
+func TestServeQueuesMessageForNewConnection(t *testing.T) {
+	// Nothing answers the TLS handshake, so the connection never starts reading ReadChan.
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ln.Close()
+
+	connect, err := (&stream.EdgedExecConnection{
+		MessID: 1,
+		URL:    url.URL{Scheme: "https", Host: ln.Addr().String()},
+	}).CreateConnectMessage()
+	if err != nil {
+		t.Fatal(err)
+	}
+	session := &TunnelSession{
+		Tunnel: &mockTunneler{
+			messages: []*stream.Message{connect, stream.NewMessage(1, stream.MessageTypeRemoveConnect, nil)},
+		},
+		localCons: make(map[uint64]stream.EdgedConnection),
+	}
+
+	if err := session.Serve(); err != io.EOF {
+		t.Fatalf("Expected io.EOF, got %v", err)
+	}
+
+	con, ok := session.GetLocalConnection(1)
+	if !ok {
+		t.Fatal("Expected the exec connection to be registered")
+	}
+	if n := len(con.(*stream.EdgedExecConnection).ReadChan); n != 1 {
+		t.Fatalf("Expected the RemoveConnect to be queued for the connection, got %d queued messages", n)
 	}
 }
