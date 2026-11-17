@@ -12,7 +12,7 @@ The functions are as follows:
 - external cluster: used to create hollow edge nodes for the edgemark cluster
 
 ## Steps:
-1. Deploy CloudCore in edgemark cluster, refer to [CloudCore deploy](https://kubeedge.io/en/docs/setup/ha/) for more details.
+1. Deploy CloudCore in edgemark cluster, refer to [CloudCore deploy](https://kubeedge.io/docs/setup/deploy-ha) for more details.
 
 2. Build edgemark image
 
