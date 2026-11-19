@@ -47,6 +47,13 @@ const (
 	CertificatesDir = "/etc/kubeedge/pki/metaserver"
 )
 
+var (
+	// caPollInterval and caPollTimeout set how often and how long WaitForCAReady
+	// tries to get the CA. They are variables so that tests can shorten them.
+	caPollInterval = 5 * time.Second
+	caPollTimeout  = 4 * time.Minute
+)
+
 type ServerCertificateManager struct {
 	certificate.Manager
 }
@@ -116,18 +123,25 @@ func (scm *ServerCertificateManager) WaitForCertReady() error {
 	})
 }
 
+// WaitForCAReady gets the Kubernetes CA from the cloud, retrying until it succeeds
+// or caPollTimeout passes. A failed attempt does not stop the retries.
 func (scm *ServerCertificateManager) WaitForCAReady() error {
-	return wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 4*time.Minute, true, func(ctx context.Context) (bool, error) {
+	var lastErr error
+	err := wait.PollUntilContextTimeout(context.Background(), caPollInterval, caPollTimeout, true, func(ctx context.Context) (bool, error) {
 		if !cloudconnection.IsConnected() {
 			return false, nil
 		}
-		err := scm.getKubeAPIServerCA()
-		if err != nil {
-			klog.Errorf("get k8s CA failed, %v", err)
-			return false, err
+		if err := scm.getKubeAPIServerCA(); err != nil {
+			klog.Errorf("get k8s CA failed, will retry: %v", err)
+			lastErr = err
+			return false, nil
 		}
 		return true, nil
 	})
+	if err != nil && lastErr != nil {
+		return fmt.Errorf("%v, last error: %v", err, lastErr)
+	}
+	return err
 }
 
 func (scm *ServerCertificateManager) getKubeAPIServerCA() error {
