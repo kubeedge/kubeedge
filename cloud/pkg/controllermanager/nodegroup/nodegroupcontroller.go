@@ -111,7 +111,13 @@ func (c *Controller) syncNodeGroup(ctx context.Context, nodeGroup *appsv1alpha1.
 
 	newNodes, err := c.getNodesSelectedBy(ctx, nodeGroup)
 	if err != nil {
-		klog.Errorf("failed to get all new nodes, %s, continue with what have found.", err)
+		// getNodesSelectedBy already filters out NotFound errors for
+		// explicitly named nodes (those are expected and recorded as
+		// FailedSelection in the NodeGroup status). Any remaining error
+		// means the node set is unreliable and reconciliation must stop
+		// to prevent destructive eviction of existing members.
+		klog.Errorf("failed to get all new nodes for nodegroup %s, %s", nodeGroup.Name, err)
+		return controllerruntime.Result{Requeue: true}, err
 	}
 	debugLogNodes("get new nodes", newNodes)
 
@@ -266,8 +272,15 @@ func (c *Controller) getNodesSelectedBy(ctx context.Context, nodeGroup *appsv1al
 
 	nodesByName, err := c.getNodesByNodeName(ctx, nodeGroup.Spec.Nodes)
 	if err != nil {
-		klog.Errorf("failed to get all nodes specified in the NodeGroup.Spec.Nodes, %s.", err)
-		errs = append(errs, err)
+		// A NotFound error for an explicitly named node is expected;
+		// it is recorded later as FailedSelection in NodeGroup status.
+		// Only propagate non-NotFound errors (network, server, etc.)
+		// so the caller can abort reconciliation.
+		namedNodeErr := utilerrors.FilterOut(err, apierrors.IsNotFound)
+		if namedNodeErr != nil {
+			klog.Errorf("failed to get all nodes specified in the NodeGroup.Spec.Nodes, %s.", namedNodeErr)
+			errs = append(errs, namedNodeErr)
+		}
 	}
 	klog.V(4).Infof("get %d nodes that specified by name in nodegroup %s", len(nodesByName), nodeGroup.Name)
 	// remove duplicate nodes
