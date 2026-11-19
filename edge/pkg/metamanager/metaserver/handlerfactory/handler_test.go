@@ -555,7 +555,7 @@ func TestUpdateEdgeDeviceImplementation(t *testing.T) {
 		return responseBytes, nil
 	})
 
-	handler := updateEdgeDevice()
+	handler := updateEdgeDevice(&request.RequestInfo{Namespace: "default", Name: "test-device"})
 
 	device := &v1beta1.Device{
 		ObjectMeta: metav1.ObjectMeta{
@@ -577,7 +577,7 @@ func TestUpdateEdgeDeviceImplementation(t *testing.T) {
 
 func TestUpdateEdgeDeviceErrors(t *testing.T) {
 	t.Run("ReadBodyError", func(t *testing.T) {
-		handler := updateEdgeDevice()
+		handler := updateEdgeDevice(&request.RequestInfo{Namespace: "default", Name: "test-device"})
 
 		errorReader := &ErrorReadCloser{Err: errors.New("read error")}
 		req := httptest.NewRequest("PUT", "/apis/devices/v1beta1/namespaces/default/devices/test-device", nil)
@@ -591,7 +591,7 @@ func TestUpdateEdgeDeviceErrors(t *testing.T) {
 	})
 
 	t.Run("UnmarshalError", func(t *testing.T) {
-		handler := updateEdgeDevice()
+		handler := updateEdgeDevice(&request.RequestInfo{Namespace: "default", Name: "test-device"})
 
 		invalidJSON := "this is not valid JSON"
 		req := httptest.NewRequest("PUT", "/apis/devices/v1beta1/namespaces/default/devices/test-device", strings.NewReader(invalidJSON))
@@ -624,7 +624,7 @@ func TestUpdateEdgeDeviceErrors(t *testing.T) {
 			return model.Message{}, errors.New("send sync error")
 		})
 
-		handler := updateEdgeDevice()
+		handler := updateEdgeDevice(&request.RequestInfo{Namespace: "default", Name: "test-device"})
 
 		device := &v1beta1.Device{
 			ObjectMeta: metav1.ObjectMeta{
@@ -641,6 +641,68 @@ func TestUpdateEdgeDeviceErrors(t *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 		assert.Contains(t, w.Body.String(), "send sync error")
+	})
+}
+
+func TestUpdateEdgeDeviceRejectsMismatchedObject(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	sent := false
+	patches.ApplyFunc(beehiveContext.SendSync, func(string, model.Message, interface{}) (model.Message, error) {
+		sent = true
+		return model.Message{Content: []byte(`{}`)}, nil
+	})
+
+	reqInfo := &request.RequestInfo{Namespace: "default", Name: "test-device"}
+	cases := []struct {
+		name      string
+		namespace string
+		device    string
+	}{
+		{name: "OtherNamespace", namespace: "kube-system", device: "test-device"},
+		{name: "OtherName", namespace: "default", device: "other-device"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			sent = false
+			device := &v1beta1.Device{
+				ObjectMeta: metav1.ObjectMeta{Name: tc.device, Namespace: tc.namespace},
+			}
+			deviceBytes, err := json.Marshal(device)
+			assert.NoError(t, err)
+
+			req := httptest.NewRequest("PUT", "/apis/devices.kubeedge.io/v1beta1/namespaces/default/devices/test-device", bytes.NewReader(deviceBytes))
+			w := httptest.NewRecorder()
+			updateEdgeDevice(reqInfo).ServeHTTP(w, req)
+
+			assert.Equal(t, http.StatusBadRequest, w.Code)
+			assert.False(t, sent)
+		})
+	}
+
+	t.Run("NullBody", func(t *testing.T) {
+		sent = false
+		req := httptest.NewRequest("PUT", "/apis/devices.kubeedge.io/v1beta1/namespaces/default/devices/test-device", strings.NewReader("null"))
+		w := httptest.NewRecorder()
+		updateEdgeDevice(reqInfo).ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.False(t, sent)
+	})
+
+	t.Run("EmptyNamespaceDefaultsToRequest", func(t *testing.T) {
+		sent = false
+		device := &v1beta1.Device{ObjectMeta: metav1.ObjectMeta{Name: "test-device"}}
+		deviceBytes, err := json.Marshal(device)
+		assert.NoError(t, err)
+
+		req := httptest.NewRequest("PUT", "/apis/devices.kubeedge.io/v1beta1/namespaces/default/devices/test-device", bytes.NewReader(deviceBytes))
+		w := httptest.NewRecorder()
+		updateEdgeDevice(reqInfo).ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.True(t, sent)
 	})
 }
 
