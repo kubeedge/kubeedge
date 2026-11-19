@@ -8,8 +8,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2"
 
+	edgescheme "github.com/kubeedge/api/client/clientset/versioned/scheme"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
@@ -41,6 +43,19 @@ func (l *SelectorListener) sendAllObjects(rets []runtime.Object, handler *Common
 	}
 }
 
+// groupVersionKind returns the GVK of obj from the schemes of CloudCore's typed
+// informers (client-go for built-in types, KubeEdge for its CRDs), like
+// util.SetMetaType does, but without modifying obj. It falls back to the
+// listener's GVR, e.g. for objects of dynamic informers.
+func (l *SelectorListener) groupVersionKind(obj runtime.Object) schema.GroupVersionKind {
+	for _, s := range []*runtime.Scheme{scheme.Scheme, edgescheme.Scheme} {
+		if kinds, _, err := s.ObjectKinds(obj); err == nil && len(kinds) > 0 {
+			return kinds[0]
+		}
+	}
+	return l.gvr.GroupVersion().WithKind(util.UnsafeResourceToKind(l.gvr.Resource))
+}
+
 func (l *SelectorListener) sendObj(event watch.Event, messageLayer messagelayer.MessageLayer) {
 	accessor, err := meta.Accessor(event.Object)
 	if err != nil {
@@ -61,12 +76,25 @@ func (l *SelectorListener) sendObj(event watch.Event, messageLayer messagelayer.
 	}
 	filter.MessageFilter(content, l.nodeName)
 
+	// Objects listed from the informer cache (sendAllObjects) can still have
+	// an empty TypeMeta (the event handler sets it asynchronously, on the
+	// shared object), and the edge cannot decode an object without kind into
+	// unstructured.
+	if content.GetAPIVersion() == "" || content.GetKind() == "" {
+		gvk := l.groupVersionKind(event.Object)
+		if content.GetAPIVersion() == "" {
+			content.SetAPIVersion(gvk.GroupVersion().String())
+		}
+		if content.GetKind() == "" {
+			content.SetKind(gvk.Kind)
+		}
+	}
+
 	namespace := accessor.GetNamespace()
 	if namespace == "" {
 		namespace = models.NullNamespace
 	}
-	kind := util.UnsafeResourceToKind(l.gvr.Resource)
-	resourceType := strings.ToLower(kind)
+	resourceType := strings.ToLower(util.UnsafeResourceToKind(l.gvr.Resource))
 	resource, err := messagelayer.BuildResource(l.nodeName, namespace, resourceType, accessor.GetName())
 	if err != nil {
 		klog.Warningf("built message resource failed with error: %s", err)

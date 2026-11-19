@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
@@ -97,9 +98,29 @@ func sendEvents(nodeName string, sync *v1alpha1.ObjectSync, resourceType string,
 	if CompareResourceVersion(objectResourceVersion, sync.Status.ObjectResourceVersion) > 0 {
 		// trigger the update event
 		klog.V(4).Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event", objectResourceVersion, resourceType, sync.Status.ObjectResourceVersion)
-		msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)
+		msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, withTypeMeta(obj, sync))
 		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
 	}
+}
+
+// withTypeMeta returns obj with the apiVersion/kind recorded in the ObjectSync.
+// Objects from the informer cache have an empty TypeMeta (client-go clears it
+// when decoding), and the edge cannot decode an object without kind into
+// unstructured, so the update would be dropped by MetaServer. The GVK is set on
+// a copy to leave the shared informer cache untouched.
+func withTypeMeta(obj interface{}, sync *v1alpha1.ObjectSync) interface{} {
+	runtimeObj, ok := obj.(runtime.Object)
+	if !ok || runtimeObj.GetObjectKind().GroupVersionKind().Kind != "" || sync.Spec.ObjectKind == "" {
+		return obj
+	}
+	gv, err := schema.ParseGroupVersion(sync.Spec.ObjectAPIVersion)
+	if err != nil {
+		klog.Warningf("failed to parse apiVersion %q of objectsync %s: %v", sync.Spec.ObjectAPIVersion, sync.Name, err)
+		return obj
+	}
+	ret := runtimeObj.DeepCopyObject()
+	ret.GetObjectKind().SetGroupVersionKind(gv.WithKind(sync.Spec.ObjectKind))
+	return ret
 }
 
 func buildEdgeControllerMessage(nodeName, namespace, resourceType, resourceName, operationType string, obj interface{}) *model.Message {
