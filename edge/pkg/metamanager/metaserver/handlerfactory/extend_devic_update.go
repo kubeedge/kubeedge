@@ -46,7 +46,7 @@ func updateEdgeDevice() http.Handler {
 
 		source := modules.MetaManagerModuleName
 		target := modules.DeviceTwinModuleName
-		resource := device.Namespace + "/device/updated"
+		resource := device.Namespace + "/" + constants.ResourceTypeDevice + "/" + device.Name
 
 		operation := model.UpdateOperation
 

@@ -575,6 +575,33 @@ func TestUpdateEdgeDeviceImplementation(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "test-device")
 }
 
+func TestUpdateEdgeDeviceResourceKey(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	var resource string
+	patches.ApplyFunc(beehiveContext.SendSync, func(_ string, msg model.Message, _ interface{}) (model.Message, error) {
+		resource = msg.GetResource()
+		return model.Message{Content: []byte(`{"kind":"Device","metadata":{"name":"test-device"}}`)}, nil
+	})
+
+	device := &v1beta1.Device{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-device",
+			Namespace: "default",
+		},
+	}
+	deviceBytes, err := json.Marshal(device)
+	assert.NoError(t, err)
+
+	req := httptest.NewRequest("PUT", "/apis/devices/v1beta1/namespaces/default/devices/test-device", bytes.NewReader(deviceBytes))
+	w := httptest.NewRecorder()
+	updateEdgeDevice().ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "default/device/test-device", resource)
+}
+
 func TestUpdateEdgeDeviceErrors(t *testing.T) {
 	t.Run("ReadBodyError", func(t *testing.T) {
 		handler := updateEdgeDevice()
