@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
@@ -18,6 +19,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter"
 	edgectrconst "github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
@@ -61,7 +63,44 @@ func (sctl *SyncController) reconcileObjectSync(sync *v1alpha1.ObjectSync) {
 		return
 	}
 
-	sendEvents(nodeName, sync, resourceType, object.GetResourceVersion(), object)
+	// Filter only when the object is due, because filtering is expensive and
+	// most syncs find the edge node up to date.
+	if !needsUpdate(sync, resourceType, object.GetResourceVersion()) {
+		return
+	}
+	var body interface{} = object
+	if filtered := filterForNode(ret, gv.WithKind(sync.Spec.ObjectKind), nodeName); filtered != nil {
+		body = filtered
+	}
+	sendUpdate(nodeName, sync, resourceType, body)
+}
+
+// filterForNode returns the copy of obj that dynamiccontroller would send to
+// nodeName, or nil when no dynamiccontroller filter applies to obj. Without it
+// an edge node that is behind gets the object unfiltered: for an EndpointSlice,
+// the endpoints of every NodeGroup. The edge then keeps that copy, because
+// dynamiccontroller's filtered copy has the same resourceVersion.
+func filterForNode(obj runtime.Object, gvk schema.GroupVersionKind, nodeName string) *unstructured.Unstructured {
+	content, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
+	if err != nil {
+		klog.Errorf("failed to convert %s to unstructured: %v", gvk.Kind, err)
+		return nil
+	}
+	u := &unstructured.Unstructured{Object: content}
+	u.SetGroupVersionKind(gvk)
+
+	needed := false
+	for _, f := range filter.GetFilters() {
+		if f.NeedFilter(u) {
+			needed = true
+			break
+		}
+	}
+	if !needed {
+		return nil
+	}
+	filter.MessageFilter(u, nodeName)
+	return u
 }
 
 // gcOrphanedObjectSync try to send delete message to the edge node
@@ -89,17 +128,28 @@ func (sctl *SyncController) gcOrphanedObjectSync(sync *v1alpha1.ObjectSync) {
 
 func sendEvents(nodeName string, sync *v1alpha1.ObjectSync, resourceType string,
 	objectResourceVersion string, obj interface{}) {
+	if needsUpdate(sync, resourceType, objectResourceVersion) {
+		sendUpdate(nodeName, sync, resourceType, obj)
+	}
+}
+
+// needsUpdate reports whether the object in K8s is newer than the edge node's copy.
+func needsUpdate(sync *v1alpha1.ObjectSync, resourceType, objectResourceVersion string) bool {
 	if sync.Status.ObjectResourceVersion == "" {
 		klog.Errorf("The ObjectResourceVersion is empty in status of objectsync: %s", sync.Name)
-		return
+		return false
 	}
 
 	if CompareResourceVersion(objectResourceVersion, sync.Status.ObjectResourceVersion) > 0 {
-		// trigger the update event
 		klog.V(4).Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event", objectResourceVersion, resourceType, sync.Status.ObjectResourceVersion)
-		msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)
-		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
+		return true
 	}
+	return false
+}
+
+func sendUpdate(nodeName string, sync *v1alpha1.ObjectSync, resourceType string, obj interface{}) {
+	msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)
+	beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
 }
 
 func buildEdgeControllerMessage(nodeName, namespace, resourceType, resourceName, operationType string, obj interface{}) *model.Message {
