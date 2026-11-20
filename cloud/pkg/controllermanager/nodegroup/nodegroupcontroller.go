@@ -30,6 +30,7 @@ const (
 	NodeGroupControllerFinalizer  = "apps.kubeedge.io/nodegroup-controller"
 	ServiceTopologyAnnotation     = "apps.kubeedge.io/service-topology"
 	ServiceTopologyRangeNodegroup = "range-nodegroup"
+	ServiceTopologyRangeCluster   = "range-cluster"
 	LabelTopologyZone             = "topology.kubernetes.io/zone"
 )
 

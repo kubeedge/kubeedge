@@ -50,6 +50,9 @@ data:
         tunnelPort: 10004
       dynamicController:
         enable: {{ .Values.cloudCore.modules.dynamicController.enable }}
+        {{- with .Values.cloudCore.modules.dynamicController.defaultServiceTopology }}
+        defaultServiceTopology: {{ . | quote }}
+        {{- end }}
       router:
         enable: {{ .Values.cloudCore.modules.router.enable }}
       iptablesManager:
