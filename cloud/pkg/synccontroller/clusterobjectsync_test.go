@@ -493,18 +493,30 @@ func TestGcOrphanedClusterObjectSyncFuncIntegration(t *testing.T) {
 
 	testCases := []struct {
 		name               string
+		objectName         string
+		kind               string
+		apiVersion         string
+		resource           string
 		buildMessageNil    bool
 		expectSendCalled   bool
 		expectDeleteCalled bool
 	}{
 		{
 			name:               "Message built successfully - should send",
+			objectName:         "test-pod",
+			kind:               "Pod",
+			apiVersion:         "v1",
+			resource:           "pod",
 			buildMessageNil:    false,
 			expectSendCalled:   true,
 			expectDeleteCalled: false,
 		},
 		{
 			name:               "Message build failed - should delete",
+			objectName:         "default",
+			kind:               "ServiceAccountAccess",
+			apiVersion:         "policy.kubeedge.io/v1alpha1",
+			resource:           "serviceaccountaccess",
 			buildMessageNil:    true,
 			expectSendCalled:   false,
 			expectDeleteCalled: true,
@@ -518,9 +530,9 @@ func TestGcOrphanedClusterObjectSyncFuncIntegration(t *testing.T) {
 					Name: "node1-pod-12345",
 				},
 				Spec: v1alpha1.ObjectSyncSpec{
-					ObjectName:       "test-pod",
-					ObjectKind:       "Pod",
-					ObjectAPIVersion: "v1",
+					ObjectName:       tc.objectName,
+					ObjectKind:       tc.kind,
+					ObjectAPIVersion: tc.apiVersion,
 				},
 				Status: v1alpha1.ObjectSyncStatus{
 					ObjectResourceVersion: "1000",
@@ -534,8 +546,23 @@ func TestGcOrphanedClusterObjectSyncFuncIntegration(t *testing.T) {
 
 			buildEdgeControllerMessageFunc = func(nodeID, namespace, resource, resourceID string, operation string, content interface{}) *model.Message {
 				assert.Equal(t, "node1", nodeID)
-				assert.Equal(t, "pod", resource)
-				assert.Equal(t, "test-pod", resourceID)
+				assert.Equal(t, tc.resource, resource)
+				assert.Equal(t, tc.objectName, resourceID)
+
+				// The object is gone from K8s, so this body is fabricated here and
+				// the GVK is the one piece of it the edge cannot rebuild on its
+				// own. Without it the edge writes the delete to the v1 meta table
+				// but its meta_v2 writer rejects the body, stranding the object
+				// there forever.
+				obj, ok := content.(*unstructured.Unstructured)
+				if !ok {
+					t.Fatalf("message content is %T, want *unstructured.Unstructured", content)
+				}
+				assert.Equal(t, tc.apiVersion, obj.GetAPIVersion())
+				assert.Equal(t, tc.kind, obj.GetKind())
+				// the parts that already worked must keep working
+				assert.Equal(t, tc.objectName, obj.GetName())
+				assert.Equal(t, "12345", string(obj.GetUID()))
 
 				if tc.buildMessageNil {
 					return nil
