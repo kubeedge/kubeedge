@@ -24,6 +24,7 @@ import (
 	configv1alpha1 "github.com/kubeedge/api/apis/componentconfig/cloudcore/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
@@ -82,7 +83,25 @@ func (dctl *DynamicController) Start() {
 		}
 	}
 
+	dctl.startRefilter()
+
 	go dctl.receiveMessage()
+}
+
+// startRefilter starts the controller that makes edge nodes filter their
+// cached EndpointSlices again when the filter inputs change.
+func (dctl *DynamicController) startRefilter() {
+	factory := informers.GetInformersManager().GetKubeInformerFactory()
+	refilter, err := endpointresource.NewRefilterController(client.GetKubeClient(), factory,
+		config.Config.DynamicController.DefaultServiceTopology)
+	if err != nil {
+		klog.Errorf("Unable to start the EndpointSlice refilter controller: %v", err)
+		return
+	}
+	// cloudcore starts the informers manager after the modules, so start the
+	// new informers here rather than rely on the order.
+	factory.Start(beehiveContext.Done())
+	go refilter.Run(beehiveContext.GetContext())
 }
 
 func newDynamicController(enable bool) *DynamicController {

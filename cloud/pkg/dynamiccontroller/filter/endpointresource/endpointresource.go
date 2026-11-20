@@ -213,6 +213,9 @@ func filterEndpointsAddress(keep func(nodeName string) bool, address []v1.Endpoi
 	return tmpAddress
 }
 
+// filterEndpoints filters a core/v1 Endpoints object as it is sent. Unlike an
+// EndpointSlice, its edge copies are not filtered again when the filter inputs
+// change: the refilter controller leaves Endpoints out on purpose (refilter.go).
 func filterEndpoints(targetNode string, obj runtime.Object, defaultTopology string) {
 	unstruct, ok := obj.(*unstructured.Unstructured)
 	if !ok {
