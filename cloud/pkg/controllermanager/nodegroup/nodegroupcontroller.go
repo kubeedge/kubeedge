@@ -84,8 +84,11 @@ func (c *Controller) Reconcile(ctx context.Context, req controllerruntime.Reques
 	}
 
 	if !controllerutil.ContainsFinalizer(nodeGroup, NodeGroupControllerFinalizer) {
+		// a patch, so omitempty spec values (topologyEnabled: false, matchLabels: {}) stay;
+		// the lock gives a stale read a conflict, as the Update did
+		patch := client.MergeFromWithOptions(nodeGroup.DeepCopy(), client.MergeFromWithOptimisticLock{})
 		controllerutil.AddFinalizer(nodeGroup, NodeGroupControllerFinalizer)
-		if err := c.Client.Update(ctx, nodeGroup); err != nil {
+		if err := c.Client.Patch(ctx, nodeGroup, patch); err != nil {
 			klog.Errorf("failed to add finalizer for nodegroup %s, %s", nodeGroup.Name, err)
 			return controllerruntime.Result{Requeue: true}, err
 		}
@@ -247,8 +250,9 @@ func (c *Controller) removeFinalizer(ctx context.Context, nodeGroup *appsv1alpha
 	if !controllerutil.ContainsFinalizer(nodeGroup, NodeGroupControllerFinalizer) {
 		return nil
 	}
+	patch := client.MergeFromWithOptions(nodeGroup.DeepCopy(), client.MergeFromWithOptimisticLock{})
 	controllerutil.RemoveFinalizer(nodeGroup, NodeGroupControllerFinalizer)
-	if err := c.Client.Update(ctx, nodeGroup); err != nil {
+	if err := c.Client.Patch(ctx, nodeGroup, patch); err != nil {
 		klog.Errorf("failed to remove finalizer on nodegroup %s, %s", nodeGroup.Name, err)
 		return err
 	}
