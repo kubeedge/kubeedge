@@ -18,8 +18,10 @@ package manager
 
 import (
 	"reflect"
+	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -81,6 +83,291 @@ func TestAddOrUpdatePod(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			test.lc.AddOrUpdatePod(test.pod)
+		})
+	}
+}
+
+// configMapEnvVar returns an env var sourced from a configmap key.
+func configMapEnvVar(name string) v1.EnvVar {
+	return v1.EnvVar{
+		Name: "CONFIG_MAP_KEY",
+		ValueFrom: &v1.EnvVarSource{
+			ConfigMapKeyRef: &v1.ConfigMapKeySelector{
+				LocalObjectReference: v1.LocalObjectReference{Name: name},
+				Key:                  "key",
+			},
+		},
+	}
+}
+
+// secretEnvVar returns an env var sourced from a secret key.
+func secretEnvVar(name string) v1.EnvVar {
+	return v1.EnvVar{
+		Name: "SECRET_KEY",
+		ValueFrom: &v1.EnvVarSource{
+			SecretKeyRef: &v1.SecretKeySelector{
+				LocalObjectReference: v1.LocalObjectReference{Name: name},
+				Key:                  "key",
+			},
+		},
+	}
+}
+
+// configMapEnvFrom returns an envFrom source sourced from a configmap.
+func configMapEnvFrom(name string) v1.EnvFromSource {
+	return v1.EnvFromSource{
+		ConfigMapRef: &v1.ConfigMapEnvSource{LocalObjectReference: v1.LocalObjectReference{Name: name}},
+	}
+}
+
+// secretEnvFrom returns an envFrom source sourced from a secret.
+func secretEnvFrom(name string) v1.EnvFromSource {
+	return v1.EnvFromSource{
+		SecretRef: &v1.SecretEnvSource{LocalObjectReference: v1.LocalObjectReference{Name: name}},
+	}
+}
+
+// configMapVolume returns a volume sourced from a configmap.
+func configMapVolumeSource(name string) v1.VolumeSource {
+	return v1.VolumeSource{
+		ConfigMap: &v1.ConfigMapVolumeSource{LocalObjectReference: v1.LocalObjectReference{Name: name}},
+	}
+}
+
+// secretVolumeSource returns a volume sourced from a secret.
+func secretVolumeSource(name string) v1.VolumeSource {
+	return v1.VolumeSource{
+		Secret: &v1.SecretVolumeSource{SecretName: name},
+	}
+}
+
+// uniqueStrings returns values with duplicates removed, preserving first-seen order.
+func uniqueStrings(values []string) []string {
+	seen := make(map[string]struct{}, len(values))
+	unique := make([]string, 0, len(values))
+	for _, value := range values {
+		if _, ok := seen[value]; ok {
+			continue
+		}
+		seen[value] = struct{}{}
+		unique = append(unique, value)
+	}
+	return unique
+}
+
+// syncMapLen returns the number of entries stored in a sync.Map.
+func syncMapLen(m *sync.Map) int {
+	count := 0
+	m.Range(func(_, _ interface{}) bool {
+		count++
+		return true
+	})
+	return count
+}
+
+// podRefsCase describes a pod and the configmaps/secrets it references.
+type podRefsCase struct {
+	name           string
+	pod            v1.Pod
+	wantConfigMaps []string
+	wantSecrets    []string
+}
+
+// podRefsCases returns pods covering every container type and volume source that
+// PodConfigMapsAndSecrets has to resolve.
+func podRefsCases() []podRefsCase {
+	const namespace = "default"
+
+	return []podRefsCase{
+		{
+			name: "init container env refs",
+			pod: v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "init-env"},
+				Spec: v1.PodSpec{
+					NodeName: "node-init-env",
+					InitContainers: []v1.Container{{
+						Name: "init",
+						Env: []v1.EnvVar{
+							configMapEnvVar("init-env-cm"),
+							secretEnvVar("init-env-secret"),
+						},
+					}},
+				},
+			},
+			wantConfigMaps: []string{"init-env-cm"},
+			wantSecrets:    []string{"init-env-secret"},
+		},
+		{
+			name: "init container envFrom refs",
+			pod: v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "init-envfrom"},
+				Spec: v1.PodSpec{
+					NodeName: "node-init-envfrom",
+					InitContainers: []v1.Container{{
+						Name: "init",
+						EnvFrom: []v1.EnvFromSource{
+							configMapEnvFrom("init-envfrom-cm"),
+							secretEnvFrom("init-envfrom-secret"),
+						},
+					}},
+				},
+			},
+			wantConfigMaps: []string{"init-envfrom-cm"},
+			wantSecrets:    []string{"init-envfrom-secret"},
+		},
+		{
+			name: "ephemeral container env and envFrom refs",
+			pod: v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "ephemeral"},
+				Spec: v1.PodSpec{
+					NodeName: "node-ephemeral",
+					EphemeralContainers: []v1.EphemeralContainer{{
+						EphemeralContainerCommon: v1.EphemeralContainerCommon{
+							Name: "debugger",
+							Env: []v1.EnvVar{
+								configMapEnvVar("ephemeral-env-cm"),
+								secretEnvVar("ephemeral-env-secret"),
+							},
+							EnvFrom: []v1.EnvFromSource{
+								configMapEnvFrom("ephemeral-envfrom-cm"),
+								secretEnvFrom("ephemeral-envfrom-secret"),
+							},
+						},
+					}},
+				},
+			},
+			wantConfigMaps: []string{"ephemeral-env-cm", "ephemeral-envfrom-cm"},
+			wantSecrets:    []string{"ephemeral-env-secret", "ephemeral-envfrom-secret"},
+		},
+		{
+			name: "regular containers, volumes and imagePullSecrets",
+			pod: v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "regular"},
+				Spec: v1.PodSpec{
+					NodeName: "node-regular",
+					Volumes: []v1.Volume{
+						{Name: "cm", VolumeSource: configMapVolumeSource("vol-cm")},
+						{Name: "secret", VolumeSource: secretVolumeSource("vol-secret")},
+						{
+							Name: "projected",
+							VolumeSource: v1.VolumeSource{
+								Projected: &v1.ProjectedVolumeSource{
+									Sources: []v1.VolumeProjection{
+										{ConfigMap: &v1.ConfigMapProjection{LocalObjectReference: v1.LocalObjectReference{Name: "projected-cm"}}},
+										{Secret: &v1.SecretProjection{LocalObjectReference: v1.LocalObjectReference{Name: "projected-secret"}}},
+									},
+								},
+							},
+						},
+					},
+					Containers: []v1.Container{{
+						Name: "app",
+						EnvFrom: []v1.EnvFromSource{
+							configMapEnvFrom("regular-envfrom-cm"),
+							secretEnvFrom("regular-envfrom-secret"),
+						},
+						Env: []v1.EnvVar{
+							configMapEnvVar("regular-env-cm"),
+							secretEnvVar("regular-env-secret"),
+						},
+					}},
+					ImagePullSecrets: []v1.LocalObjectReference{{Name: "pull-secret"}},
+				},
+			},
+			wantConfigMaps: []string{"vol-cm", "projected-cm", "regular-envfrom-cm", "regular-env-cm"},
+			wantSecrets:    []string{"vol-secret", "projected-secret", "regular-envfrom-secret", "regular-env-secret", "pull-secret"},
+		},
+		{
+			name: "duplicate init container refs",
+			pod: v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "duplicate"},
+				Spec: v1.PodSpec{
+					NodeName: "node-duplicate",
+					InitContainers: []v1.Container{
+						{
+							Name: "init-a",
+							Env: []v1.EnvVar{
+								configMapEnvVar("dup-cm"),
+								secretEnvVar("dup-secret"),
+							},
+						},
+						{
+							Name: "init-b",
+							Env: []v1.EnvVar{
+								configMapEnvVar("dup-cm"),
+								secretEnvVar("dup-secret"),
+							},
+						},
+					},
+				},
+			},
+			wantConfigMaps: []string{"dup-cm"},
+			wantSecrets:    []string{"dup-secret"},
+		},
+		{
+			name: "pod without refs",
+			pod: v1.Pod{
+				ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "no-refs"},
+				Spec: v1.PodSpec{
+					NodeName:   "node-no-refs",
+					Containers: []v1.Container{{Name: "app", Image: "busybox"}},
+				},
+			},
+			wantConfigMaps: nil,
+			wantSecrets:    nil,
+		},
+	}
+}
+
+// TestPodConfigMapsAndSecrets is function to test PodConfigMapsAndSecrets
+func TestPodConfigMapsAndSecrets(t *testing.T) {
+	for _, test := range podRefsCases() {
+		t.Run(test.name, func(t *testing.T) {
+			locationCache := &LocationCache{}
+			configMaps, secrets := locationCache.PodConfigMapsAndSecrets(test.pod)
+
+			// Multiplicity in the returned slices is intentionally not asserted.
+			assert.ElementsMatch(t, uniqueStrings(test.wantConfigMaps), uniqueStrings(configMaps), "unexpected configmaps")
+			assert.ElementsMatch(t, uniqueStrings(test.wantSecrets), uniqueStrings(secrets), "unexpected secrets")
+			if len(test.wantConfigMaps) == 0 {
+				assert.Empty(t, configMaps, "expected no configmaps")
+			}
+			if len(test.wantSecrets) == 0 {
+				assert.Empty(t, secrets, "expected no secrets")
+			}
+		})
+	}
+}
+
+// TestPodConfigMapsAndSecretsNodes verifies that pods are mapped to their node
+// for every configmap and secret they reference, including those referenced
+// only by init or ephemeral containers.
+func TestPodConfigMapsAndSecretsNodes(t *testing.T) {
+	const namespace = "default"
+
+	for _, test := range podRefsCases() {
+		t.Run(test.name, func(t *testing.T) {
+			locationCache := &LocationCache{}
+			locationCache.AddOrUpdatePod(test.pod)
+
+			wantNodes := []string{test.pod.Spec.NodeName}
+			for _, name := range test.wantConfigMaps {
+				if nodes := locationCache.ConfigMapNodes(namespace, name); !reflect.DeepEqual(nodes, wantNodes) {
+					t.Errorf("Manager.TestPodConfigMapsAndSecretsNodes() configmap %q: got = %v, want = %v", name, nodes, wantNodes)
+				}
+			}
+			for _, name := range test.wantSecrets {
+				if nodes := locationCache.SecretNodes(namespace, name); !reflect.DeepEqual(nodes, wantNodes) {
+					t.Errorf("Manager.TestPodConfigMapsAndSecretsNodes() secret %q: got = %v, want = %v", name, nodes, wantNodes)
+				}
+			}
+
+			if got, want := syncMapLen(&locationCache.configMapNode), len(uniqueStrings(test.wantConfigMaps)); got != want {
+				t.Errorf("Manager.TestPodConfigMapsAndSecretsNodes() configmap node entries: got = %d, want = %d", got, want)
+			}
+			if got, want := syncMapLen(&locationCache.secretNode), len(uniqueStrings(test.wantSecrets)); got != want {
+				t.Errorf("Manager.TestPodConfigMapsAndSecretsNodes() secret node entries: got = %d, want = %d", got, want)
+			}
 		})
 	}
 }
