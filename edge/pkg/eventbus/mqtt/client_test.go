@@ -19,6 +19,7 @@ package mqtt
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"reflect"
 	"testing"
 	"time"
@@ -27,8 +28,10 @@ import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/kubeedge/edge/pkg/eventbus/common/util"
+	eventconfig "github.com/kubeedge/kubeedge/edge/pkg/eventbus/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/mocks"
 )
 
@@ -254,6 +257,55 @@ func TestInitSubClient(t *testing.T) {
 	}
 }
 
+// TestInitClientWithInvalidTLS checks that the init functions return an error,
+// instead of dereferencing nil client options, when the MQTT TLS files cannot be loaded.
+func TestInitClientWithInvalidTLS(t *testing.T) {
+	origTLS := eventconfig.Config.TLS
+	defer func() { eventconfig.Config.TLS = origTLS }()
+	missingDir := t.TempDir()
+	eventconfig.Config.TLS = &v1alpha2.EventBusTLS{
+		Enable:                true,
+		TLSMqttCAFile:         filepath.Join(missingDir, "ca.crt"),
+		TLSMqttCertFile:       filepath.Join(missingDir, "server.crt"),
+		TLSMqttPrivateKeyFile: filepath.Join(missingDir, "server.key"),
+	}
+
+	var connectCalled bool
+	patchLoopConnect := gomonkey.ApplyFunc(util.LoopConnect, func(clientID string, client MQTT.Client) {
+		connectCalled = true
+	})
+	defer patchLoopConnect.Reset()
+
+	tests := []struct {
+		name string
+		init func(c *Client) error
+		cli  func(c *Client) MQTT.Client
+	}{
+		{
+			name: "sub client",
+			init: func(c *Client) error { return c.InitSubClient() },
+			cli:  func(c *Client) MQTT.Client { return c.SubCli },
+		},
+		{
+			name: "pub client",
+			init: func(c *Client) error { return c.InitPubClient() },
+			cli:  func(c *Client) MQTT.Client { return c.PubCli },
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &Client{MQTTUrl: "tcp://localhost:1883"}
+
+			var err error
+			assert.NotPanics(t, func() { err = tt.init(client) })
+
+			assert.Error(t, err)
+			assert.Nil(t, tt.cli(client), "no client should be created")
+			assert.False(t, connectCalled, "no connection should be attempted")
+		})
+	}
+}
+
 func TestOnSubMessageReceived(t *testing.T) {
 	message := &TestMessage{
 		topic:   "SYS/dis/upload_records",
@@ -298,8 +350,9 @@ func TestOnPubConnectionLost(t *testing.T) {
 	MQTTHub = &Client{}
 
 	patch := gomonkey.ApplyMethod(reflect.TypeOf(MQTTHub), "InitPubClient",
-		func(_ *Client) {
+		func(_ *Client) error {
 			initCalled = true
+			return nil
 		})
 	defer patch.Reset()
 
@@ -318,8 +371,9 @@ func TestOnSubConnectionLost(t *testing.T) {
 	MQTTHub = &Client{}
 
 	patch := gomonkey.ApplyMethod(reflect.TypeOf(MQTTHub), "InitSubClient",
-		func(_ *Client) {
+		func(_ *Client) error {
 			initCalled = true
+			return nil
 		})
 	defer patch.Reset()
 

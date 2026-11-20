@@ -80,12 +80,20 @@ type AccessInfo struct {
 
 func onPubConnectionLost(_ MQTT.Client, err error) {
 	klog.Errorf("onPubConnectionLost with error: %v", err)
-	go MQTTHub.InitPubClient()
+	go func() {
+		if err := MQTTHub.InitPubClient(); err != nil {
+			klog.Errorf("reconnect hub-client pub failed: %v", err)
+		}
+	}()
 }
 
 func onSubConnectionLost(_ MQTT.Client, err error) {
 	klog.Errorf("onSubConnectionLost with error: %v", err)
-	go MQTTHub.InitSubClient()
+	go func() {
+		if err := MQTTHub.InitSubClient(); err != nil {
+			klog.Errorf("reconnect hub-client sub failed: %v", err)
+		}
+	}()
 }
 
 func onSubConnect(client MQTT.Client) {
@@ -123,8 +131,10 @@ func OnSubMessageReceived(_ MQTT.Client, msg MQTT.Message) {
 	NewMessageMux().Dispatch(msg.Topic(), msg.Payload())
 }
 
-// InitSubClient init sub client
-func (mq *Client) InitSubClient() {
+// InitSubClient init sub client.
+// It returns an error if the client options cannot be created, for example
+// when the MQTT TLS files cannot be loaded.
+func (mq *Client) InitSubClient() error {
 	timeStr := strconv.FormatInt(time.Now().UnixNano()/1e6, 10)
 	right := len(timeStr)
 	if right > 10 {
@@ -135,16 +145,22 @@ func (mq *Client) InitSubClient() {
 		mq.SubClientID = fmt.Sprintf("hub-client-sub-%s", timeStr[0:right])
 	}
 	subOpts := util.HubClientInit(mq.MQTTUrl, mq.SubClientID, mq.Username, mq.Password)
+	if subOpts == nil {
+		return fmt.Errorf("failed to create the options of mqtt client %s, check the eventBus TLS config", mq.SubClientID)
+	}
 	subOpts.OnConnect = onSubConnect
 	subOpts.AutoReconnect = false
 	subOpts.OnConnectionLost = onSubConnectionLost
 	mq.SubCli = MQTT.NewClient(subOpts)
 	util.LoopConnect(mq.SubClientID, mq.SubCli)
 	klog.Info("finish hub-client sub")
+	return nil
 }
 
-// InitPubClient init pub client
-func (mq *Client) InitPubClient() {
+// InitPubClient init pub client.
+// It returns an error if the client options cannot be created, for example
+// when the MQTT TLS files cannot be loaded.
+func (mq *Client) InitPubClient() error {
 	timeStr := strconv.FormatInt(time.Now().UnixNano()/1e6, 10)
 	right := len(timeStr)
 	if right > 10 {
@@ -155,9 +171,13 @@ func (mq *Client) InitPubClient() {
 		mq.PubClientID = fmt.Sprintf("hub-client-pub-%s", timeStr[0:right])
 	}
 	pubOpts := util.HubClientInit(mq.MQTTUrl, mq.PubClientID, mq.Username, mq.Password)
+	if pubOpts == nil {
+		return fmt.Errorf("failed to create the options of mqtt client %s, check the eventBus TLS config", mq.PubClientID)
+	}
 	pubOpts.OnConnectionLost = onPubConnectionLost
 	pubOpts.AutoReconnect = false
 	mq.PubCli = MQTT.NewClient(pubOpts)
 	util.LoopConnect(mq.PubClientID, mq.PubCli)
 	klog.Info("finish hub-client pub")
+	return nil
 }

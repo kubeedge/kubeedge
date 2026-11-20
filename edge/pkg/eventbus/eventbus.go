@@ -77,8 +77,14 @@ func (eb *eventbus) Start() {
 			Password:    eventconfig.Config.MqttPassword,
 		}
 		mqttBus.MQTTHub = hub
-		hub.InitSubClient()
-		hub.InitPubClient()
+		if err := hub.InitSubClient(); err != nil {
+			klog.Errorf("Init sub client for external mqtt broker %v failed: %v", eventconfig.Config.MqttServerExternal, err)
+			os.Exit(1)
+		}
+		if err := hub.InitPubClient(); err != nil {
+			klog.Errorf("Init pub client for external mqtt broker %v failed: %v", eventconfig.Config.MqttServerExternal, err)
+			os.Exit(1)
+		}
 		klog.Infof("Init Sub And Pub Client for external mqtt broker %v successfully", eventconfig.Config.MqttServerExternal)
 	}
 
