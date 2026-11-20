@@ -30,7 +30,7 @@ spec:
 
 ## Create k8s resources
 
-The manifests and scripts in `github.com/kubeedge/kubeedge/build/cloud/ha` will be used, so place these files to somewhere you can kubectl with (You have to make some modifications to manifests/scrips to suit your environment.)
+The manifests and scripts in `github.com/kubeedge/kubeedge/build/cloud/ha` will be used, so place these files to somewhere you can kubectl with (You have to make some modifications to manifests/scripts to suit your environment.)
 
 First, ensure your k8s cluster can pull cloudcore image. If the image not exist. We can make one, and push to your registry.
 
