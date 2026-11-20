@@ -68,16 +68,6 @@ type PodConfig struct {
 	// contains the list of all configured sources
 	sourcesLock sync.Mutex
 	sources     sets.Set[string]
-
-	podReady
-}
-
-// podReady holds the initPodReady flag and its lock
-type podReady struct {
-	// initPodReady is flag to check Pod ready status
-	initPodReady bool
-	// podReadyLock is used to guard initPodReady flag
-	podReadyLock sync.RWMutex
 }
 
 // NewPodConfig creates an object that can merge many configuration sources into a stream
@@ -106,16 +96,13 @@ func (c *PodConfig) Channel(ctx context.Context, source string) chan<- interface
 // SeenAllSources returns true if seenSources contains all sources in the
 // config, and also this config has received a SET message from each source.
 func (c *PodConfig) SeenAllSources(seenSources sets.Set[string]) bool {
-	c.podReadyLock.RLock()
-	defer c.podReadyLock.RUnlock()
-	return c.initPodReady
-}
-
-// SetInitPodReady is used to safely set initPodReady flag
-func (c *PodConfig) SetInitPodReady(readyStatus bool) {
-	c.podReadyLock.Lock()
-	defer c.podReadyLock.Unlock()
-	c.initPodReady = readyStatus
+	if c.pods == nil {
+		return false
+	}
+	c.sourcesLock.Lock()
+	defer c.sourcesLock.Unlock()
+	klog.V(5).InfoS("Looking for sources, have seen", "sources", sets.List(c.sources), "seenSources", seenSources)
+	return seenSources.HasAll(sets.List(c.sources)...) && c.pods.seenSources(sets.List(c.sources)...)
 }
 
 // Updates returns a channel of updates to the configuration, properly denormalized.
@@ -331,6 +318,12 @@ func (s *podStorage) markSourceSet(source string) {
 	s.sourcesSeenLock.Lock()
 	defer s.sourcesSeenLock.Unlock()
 	s.sourcesSeen.Insert(source)
+}
+
+func (s *podStorage) seenSources(sources ...string) bool {
+	s.sourcesSeenLock.RLock()
+	defer s.sourcesSeenLock.RUnlock()
+	return s.sourcesSeen.HasAll(sources...)
 }
 
 func filterInvalidPods(pods []*v1.Pod, source string, recorder record.EventRecorder) (filtered []*v1.Pod) {

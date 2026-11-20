@@ -6,3 +6,5 @@ use (
 	./staging/src/github.com/kubeedge/beehive
 	./staging/src/github.com/kubeedge/mapper-framework
 )
+
+replace k8s.io/kubernetes => github.com/2youio/kubeedge-kubernetes v1.32.10-kubeedge1.0.20251222183836-10305363f08e

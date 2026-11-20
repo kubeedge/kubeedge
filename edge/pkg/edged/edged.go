@@ -322,14 +322,12 @@ func (e *edged) syncPod(podCfg *config.PodConfig) {
 					klog.Errorf("handle podList failed: %v", err)
 					continue
 				}
-				podCfg.SetInitPodReady(true)
 			} else if op == model.ResponseOperation && resID == "" && result.GetSource() == metamanager.CloudControllerModel {
 				err := e.handlePodListFromEdgeController(content, rawUpdateChan)
 				if err != nil {
 					klog.Errorf("handle podList failed: %v", err)
 					continue
 				}
-				podCfg.SetInitPodReady(true)
 			} else if op == model.UnholdUpgradeOperation {
 				key := fmt.Sprintf("%s/%s", ns, resID)
 				if updates, exists := e.heldPodUpdates[key]; exists {
