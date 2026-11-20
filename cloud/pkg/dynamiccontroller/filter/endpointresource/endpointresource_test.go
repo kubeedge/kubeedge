@@ -17,22 +17,29 @@ limitations under the License.
 package endpointresource
 
 import (
+	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	discovery "k8s.io/api/discovery/v1"
-	"k8s.io/apimachinery/pkg/api/meta"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	"github.com/kubeedge/kubeedge/cloud/pkg/controllermanager/nodegroup"
 	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter/defaultmaster"
 )
 
 const (
@@ -42,6 +49,8 @@ const (
 
 type mockGenericInformer struct {
 	mockObj runtime.Object
+	// lister, when set, is handed out instead of one built from mockObj.
+	lister cache.GenericLister
 }
 
 func (m *mockGenericInformer) Informer() cache.SharedIndexInformer {
@@ -49,10 +58,38 @@ func (m *mockGenericInformer) Informer() cache.SharedIndexInformer {
 }
 
 func (m *mockGenericInformer) Lister() cache.GenericLister {
+	if m.lister != nil {
+		return m.lister
+	}
 	return &mockGenericLister{
 		mockObj: m.mockObj,
 	}
 }
+
+// recordingLister answers every lookup with obj, or with err when err is set,
+// and counts the lookups so a test can assert *which* lister the code consulted.
+type recordingLister struct {
+	obj  runtime.Object
+	err  error
+	gets int
+}
+
+func (r *recordingLister) List(labels.Selector) ([]runtime.Object, error) {
+	if r.err != nil {
+		return nil, r.err
+	}
+	return []runtime.Object{r.obj}, nil
+}
+
+func (r *recordingLister) Get(string) (runtime.Object, error) {
+	r.gets++
+	if r.err != nil {
+		return nil, r.err
+	}
+	return r.obj, nil
+}
+
+func (r *recordingLister) ByNamespace(string) cache.GenericNamespaceLister { return r }
 
 type mockGenericLister struct {
 	mockObj runtime.Object
@@ -85,7 +122,7 @@ func (m *mockGenericNamespaceLister) Get(name string) (runtime.Object, error) {
 }
 
 func setupPatches() *gomonkey.Patches {
-	svc := &v1.Service{
+	return setupPatchesForService(&v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-service",
 			Namespace: "default",
@@ -93,8 +130,12 @@ func setupPatches() *gomonkey.Patches {
 				nodegroup.ServiceTopologyAnnotation: nodegroup.ServiceTopologyRangeNodegroup,
 			},
 		},
-	}
+	})
+}
 
+// setupPatchesForService makes every Service lookup return svc, and puts only
+// node1 in the receiving node's group.
+func setupPatchesForService(svc *v1.Service) *gomonkey.Patches {
 	mockInformer := &mockGenericInformer{
 		mockObj: svc,
 	}
@@ -102,13 +143,10 @@ func setupPatches() *gomonkey.Patches {
 	patches := gomonkey.NewPatches()
 
 	patches.ApplyFuncReturn(filter.GetDynamicResourceInformer, mockInformer)
+	patches.ApplyFuncReturn(filter.GetSyncedResourceLister, mockInformer.Lister(), nil)
 
-	patches.ApplyFunc(meta.Accessor, func(obj interface{}) (metav1.Object, error) {
-		return svc.ObjectMeta.DeepCopy(), nil
-	})
-
-	patches.ApplyFunc(filter.IsBelongToSameGroup, func(node1, node2 string) bool {
-		return node2 == nodeName1
+	patches.ApplyFuncReturn(filter.SameGroupAs, func(nodeName string) bool {
+		return nodeName == nodeName1
 	})
 
 	return patches
@@ -116,20 +154,20 @@ func setupPatches() *gomonkey.Patches {
 
 func TestNewEndpointsliceFilter(t *testing.T) {
 	assert := assert.New(t)
-	fi := newEndpointsliceFilter()
+	fi := newEndpointsliceFilter("")
 	assert.NotNil(fi)
 }
 
 func TestName(t *testing.T) {
 	assert := assert.New(t)
-	fi := newEndpointsliceFilter()
+	fi := newEndpointsliceFilter("")
 	name := fi.Name()
 	assert.Equal(name, filterName)
 }
 
 func TestNeedFilter(t *testing.T) {
 	assert := assert.New(t)
-	filter := newEndpointsliceFilter()
+	filter := newEndpointsliceFilter("")
 
 	endpointSliceObj := &unstructured.Unstructured{}
 	endpointSliceObj.SetGroupVersionKind(schema.GroupVersionKind{Kind: resourceEpSliceName})
@@ -205,7 +243,7 @@ func TestFilterEndpointSlice(t *testing.T) {
 	assert.NoError(t, err)
 	epSliceUnstructured := &unstructured.Unstructured{Object: unstructEpSlice}
 
-	filterEndpointSlice("target-node", epSliceUnstructured)
+	filterEndpointSlice("target-node", epSliceUnstructured, "")
 
 	var result discovery.EndpointSlice
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(epSliceUnstructured.Object, &result)
@@ -291,7 +329,7 @@ func TestFilterEndpointsAddress(t *testing.T) {
 		},
 	}
 
-	result := filterEndpointsAddress("target-node", addresses)
+	result := filterEndpointsAddress(filter.SameGroupAs("target-node"), addresses)
 
 	assert.Len(t, result, 1, "Should only include addresses from node1")
 	assert.Equal(t, "192.168.1.1", result[0].IP)
@@ -450,5 +488,451 @@ func TestFilterEndpointSliceConversionError(t *testing.T) {
 		},
 	}
 
-	filterEndpointSlice("target-node", invalid)
+	filterEndpointSlice("target-node", invalid, "")
+}
+
+// annotatedService is the Service the endpoint slices in these tests belong to,
+// opted in to node-group scoping.
+func annotatedService() *v1.Service {
+	return &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-service",
+			Namespace: "default",
+			Annotations: map[string]string{
+				nodegroup.ServiceTopologyAnnotation: nodegroup.ServiceTopologyRangeNodegroup,
+			},
+		},
+	}
+}
+
+// twoNodeEpSlice is an EndpointSlice with one endpoint on node1 and one on
+// node2. With SameGroupAs stubbed to accept only node1, a filtered slice
+// keeps one endpoint and an unfiltered one keeps both, so the endpoint count
+// alone says whether filtering ran.
+func twoNodeEpSlice(t *testing.T) *unstructured.Unstructured {
+	t.Helper()
+
+	n1 := nodeName1
+	n2 := nodeName2
+	epSlice := &discovery.EndpointSlice{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-epslice",
+			Namespace: "default",
+			Labels: map[string]string{
+				discovery.LabelServiceName: "test-service",
+			},
+		},
+		Endpoints: []discovery.Endpoint{
+			{Addresses: []string{"192.168.1.1"}, NodeName: &n1},
+			{Addresses: []string{"192.168.1.2"}, NodeName: &n2},
+		},
+	}
+
+	raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(epSlice)
+	assert.NoError(t, err)
+	return &unstructured.Unstructured{Object: raw}
+}
+
+// TestFilterEndpointSliceIgnoresDynamicFactory reproduces the conditions under
+// which EndpointSlice topology filtering was a silent no-op in production.
+//
+// filterEndpointSlice used to resolve the owning Service through
+// filter.GetDynamicResourceInformer(services).Lister(). The informers manager
+// serves built-in resources such as services from the *typed* factory, so that
+// call lazily created a second informer nobody started: its cache stayed empty
+// for the process lifetime and every Get returned NotFound. filterEndpointSlice
+// logged "filter endpoint slice for svc test-service error: services
+// \"test-service\" not found" and returned early, leaving the slice untouched,
+// which is why edge nodes kept receiving the cluster-wide endpoint set no matter
+// how the Service was annotated.
+//
+// The other tests in this file miss that because setupPatches makes the dynamic
+// lister resolve the Service, which production never does. Here the dynamic
+// lister behaves as it really did - empty, NotFound - and only the synced lister
+// has the Service. So:
+//
+//	before the fix: dynamic lister consulted, NotFound, both endpoints survive
+//	after the fix:  synced lister consulted, filtering runs, one endpoint left
+func TestFilterEndpointSliceIgnoresDynamicFactory(t *testing.T) {
+	svc := annotatedService()
+
+	// The unstarted dynamic informer: a cache that never fills.
+	dynamicLister := &recordingLister{
+		err: apierrors.NewNotFound(v1.Resource("services"), svc.Name),
+	}
+	// The typed factory the informers manager actually starts and syncs.
+	syncedLister := &recordingLister{obj: svc}
+
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFuncReturn(filter.GetDynamicResourceInformer, &mockGenericInformer{lister: dynamicLister})
+	patches.ApplyFuncReturn(filter.GetSyncedResourceLister, cache.GenericLister(syncedLister), nil)
+	patches.ApplyFuncReturn(filter.SameGroupAs, func(epNodeName string) bool {
+		return epNodeName == nodeName1
+	})
+
+	epSliceUnstructured := twoNodeEpSlice(t)
+	filterEndpointSlice("target-node", epSliceUnstructured, "")
+
+	var result discovery.EndpointSlice
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(epSliceUnstructured.Object, &result)
+	assert.NoError(t, err)
+
+	// The point of the test: filtering has to happen even though the dynamic
+	// factory cannot resolve the Service.
+	assert.Len(t, result.Endpoints, 1,
+		"filtering must run off the synced lister; an empty dynamic informer made this a no-op")
+	assert.Equal(t, nodeName1, *result.Endpoints[0].NodeName)
+
+	// And it has to happen because the Service was resolved the right way, not
+	// by luck. GetDynamicResourceInformer must not be on the path at all.
+	assert.Equal(t, 0, dynamicLister.gets,
+		"services must not be resolved through the dynamic informer factory")
+	assert.Positive(t, syncedLister.gets, "the synced lister is the one that must be consulted")
+}
+
+// TestFilterEndpointSliceFallsBackToLiveGet covers the other half of getService:
+// while the informer is still syncing there is no lister, and rather than skip
+// filtering - the failure mode that hid this bug - it resolves the Service with
+// a live GET and filters anyway.
+func TestFilterEndpointSliceFallsBackToLiveGet(t *testing.T) {
+	svc := annotatedService()
+
+	rawSvc, err := runtime.DefaultUnstructuredConverter.ToUnstructured(svc)
+	assert.NoError(t, err)
+	unstructuredSvc := &unstructured.Unstructured{Object: rawSvc}
+	unstructuredSvc.SetGroupVersionKind(v1.SchemeGroupVersion.WithKind("Service"))
+
+	scheme := runtime.NewScheme()
+	assert.NoError(t, v1.AddToScheme(scheme))
+	fakeDynamic := dynamicfake.NewSimpleDynamicClient(scheme, unstructuredSvc)
+
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFuncReturn(filter.GetSyncedResourceLister, nil,
+		fmt.Errorf("informer for /v1, Resource=services has not synced yet"))
+	patches.ApplyFuncReturn(client.GetDynamicClient, dynamic.Interface(fakeDynamic))
+	patches.ApplyFuncReturn(filter.SameGroupAs, func(epNodeName string) bool {
+		return epNodeName == nodeName1
+	})
+
+	// client.GetDynamicClient is short enough for the compiler to inline, and an
+	// inlined call site ignores the patch above and hands back the real, unset
+	// client. `make test` passes -gcflags "all=-N -l" (hack/lib/golang.sh), which
+	// keeps the patch effective; a bare `go test` does not.
+	if client.GetDynamicClient() == nil {
+		t.Skip(`patching client.GetDynamicClient needs -gcflags "all=-N -l"; run this through make test`)
+	}
+
+	epSliceUnstructured := twoNodeEpSlice(t)
+	filterEndpointSlice("target-node", epSliceUnstructured, "")
+
+	var result discovery.EndpointSlice
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(epSliceUnstructured.Object, &result)
+	assert.NoError(t, err)
+
+	assert.Len(t, result.Endpoints, 1, "an unsynced lister must fall back to a live get, not skip filtering")
+	assert.Equal(t, nodeName1, *result.Endpoints[0].NodeName)
+}
+
+// TestFilterEndpointSliceNilNodeName covers endpoints carrying no nodeName,
+// which are valid and occur while the backing pod is being scheduled.
+// Dereferencing them panics the goroutine dispatching to the edge node.
+func TestFilterEndpointSliceNilNodeName(t *testing.T) {
+	patches := setupPatches()
+	defer patches.Reset()
+
+	n1 := nodeName1
+	epSlice := &discovery.EndpointSlice{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-epslice",
+			Namespace: "default",
+			Labels: map[string]string{
+				discovery.LabelServiceName: "test-service",
+			},
+		},
+		Endpoints: []discovery.Endpoint{
+			{Addresses: []string{"192.168.1.1"}, NodeName: &n1},
+			{Addresses: []string{"192.168.1.9"}, NodeName: nil},
+		},
+	}
+
+	unstructEpSlice, err := runtime.DefaultUnstructuredConverter.ToUnstructured(epSlice)
+	assert.NoError(t, err)
+	epSliceUnstructured := &unstructured.Unstructured{Object: unstructEpSlice}
+
+	assert.NotPanics(t, func() { filterEndpointSlice("target-node", epSliceUnstructured, "") })
+
+	var result discovery.EndpointSlice
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(epSliceUnstructured.Object, &result)
+	assert.NoError(t, err)
+
+	assert.Len(t, result.Endpoints, 1, "endpoint without nodeName cannot be matched to a node group and must be skipped")
+	assert.Equal(t, nodeName1, *result.Endpoints[0].NodeName)
+}
+
+func TestIsScoped(t *testing.T) {
+	selector := map[string]string{"app": "test"}
+	cases := []struct {
+		name            string
+		annotation      string
+		selector        map[string]string
+		defaultTopology string
+		want            bool
+	}{
+		{"annotated, default off", nodegroup.ServiceTopologyRangeNodegroup, selector, "", true},
+		{"annotated selectorless, default off", nodegroup.ServiceTopologyRangeNodegroup, nil, "", true},
+		{"unannotated, default off", "", selector, "", false},
+		{"unannotated, default on", "", selector, nodegroup.ServiceTopologyRangeNodegroup, true},
+		{"unannotated selectorless, default on", "", nil, nodegroup.ServiceTopologyRangeNodegroup, false},
+		{"opted out, default on", nodegroup.ServiceTopologyRangeCluster, selector, nodegroup.ServiceTopologyRangeNodegroup, false},
+		{"unknown value, default on", "range-zone", selector, nodegroup.ServiceTopologyRangeNodegroup, true},
+		{"unknown value, default off", "range-zone", selector, "", false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			svc := &v1.Service{Spec: v1.ServiceSpec{Selector: c.selector}}
+			if c.annotation != "" {
+				svc.Annotations = map[string]string{nodegroup.ServiceTopologyAnnotation: c.annotation}
+			}
+			assert.Equal(t, c.want, isScoped(svc, c.defaultTopology))
+		})
+	}
+}
+
+func newService(annotation string, selector map[string]string) *v1.Service {
+	svc := &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-service", Namespace: "default"},
+		Spec:       v1.ServiceSpec{Selector: selector},
+	}
+	if annotation != "" {
+		svc.Annotations = map[string]string{nodegroup.ServiceTopologyAnnotation: annotation}
+	}
+	return svc
+}
+
+func newEndpointSlice(t *testing.T) *unstructured.Unstructured {
+	n1, n2 := nodeName1, nodeName2
+	epSlice := &discovery.EndpointSlice{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-epslice",
+			Namespace: "default",
+			Labels:    map[string]string{discovery.LabelServiceName: "test-service"},
+		},
+		Endpoints: []discovery.Endpoint{
+			{Addresses: []string{"192.168.1.1"}, NodeName: &n1},
+			{Addresses: []string{"192.168.1.2"}, NodeName: &n2},
+		},
+	}
+	raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(epSlice)
+	assert.NoError(t, err)
+	obj := &unstructured.Unstructured{Object: raw}
+	obj.SetGroupVersionKind(discovery.SchemeGroupVersion.WithKind(resourceEpSliceName))
+	return obj
+}
+
+func newEndpoints(t *testing.T) *unstructured.Unstructured {
+	n1, n2 := nodeName1, nodeName2
+	ep := &v1.Endpoints{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-service", Namespace: "default"},
+		Subsets: []v1.EndpointSubset{{
+			Addresses: []v1.EndpointAddress{
+				{IP: "192.168.1.1", NodeName: &n1},
+				{IP: "192.168.1.2", NodeName: &n2},
+			},
+			NotReadyAddresses: []v1.EndpointAddress{
+				{IP: "192.168.1.3", NodeName: &n1},
+				{IP: "192.168.1.4", NodeName: &n2},
+			},
+		}},
+	}
+	raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(ep)
+	assert.NoError(t, err)
+	obj := &unstructured.Unstructured{Object: raw}
+	obj.SetGroupVersionKind(v1.SchemeGroupVersion.WithKind(resourceEpName))
+	return obj
+}
+
+// TestFilterResourceDefaultTopology checks both endpoint kinds against the
+// annotation and the default: the edge Prometheus reads legacy Endpoints.
+func TestFilterResourceDefaultTopology(t *testing.T) {
+	selector := map[string]string{"app": "test"}
+	cases := []struct {
+		name            string
+		svc             *v1.Service
+		defaultTopology string
+		wantScoped      bool
+	}{
+		{"unannotated, default off", newService("", selector), "", false},
+		{"unannotated, default on", newService("", selector), nodegroup.ServiceTopologyRangeNodegroup, true},
+		{"opted out, default on", newService(nodegroup.ServiceTopologyRangeCluster, selector), nodegroup.ServiceTopologyRangeNodegroup, false},
+		{"selectorless, default on", newService("", nil), nodegroup.ServiceTopologyRangeNodegroup, false},
+		{"annotated, default off", newService(nodegroup.ServiceTopologyRangeNodegroup, selector), "", true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			patches := setupPatchesForService(c.svc)
+			defer patches.Reset()
+			f := newEndpointsliceFilter(c.defaultTopology)
+			want := 2
+			if c.wantScoped {
+				want = 1
+			}
+
+			slice := newEndpointSlice(t)
+			f.FilterResource("target-node", slice)
+			var gotSlice discovery.EndpointSlice
+			assert.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(slice.Object, &gotSlice))
+			assert.Len(t, gotSlice.Endpoints, want)
+
+			ep := newEndpoints(t)
+			f.FilterResource("target-node", ep)
+			var gotEp v1.Endpoints
+			assert.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(ep.Object, &gotEp))
+			assert.Len(t, gotEp.Subsets[0].Addresses, want)
+			assert.Len(t, gotEp.Subsets[0].NotReadyAddresses, want)
+		})
+	}
+}
+
+// TestMessageFilterKeepsDefaultMaster: with scoping on by default, the
+// topology filter must leave default/kubernetes (no selector, no nodeName) for
+// defaultMaster, whatever order the filter map is ranged in.
+func TestMessageFilterKeepsDefaultMaster(t *testing.T) {
+	patches := setupPatchesForService(&v1.Service{
+		ObjectMeta: metav1.ObjectMeta{Name: "kubernetes", Namespace: "default"},
+	})
+	defer patches.Reset()
+	saved := filter.GetFilters()
+	t.Cleanup(func() {
+		for name := range filter.GetFilters() {
+			filter.Unregister(name)
+		}
+		for _, f := range saved {
+			filter.Register(f)
+		}
+	})
+	Register(nodegroup.ServiceTopologyRangeNodegroup)
+	defaultmaster.Register()
+
+	port, name := int32(16443), "https"
+	for i := 0; i < 20; i++ {
+		slice := &discovery.EndpointSlice{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "kubernetes",
+				Namespace: "default",
+				Labels:    map[string]string{discovery.LabelServiceName: "kubernetes"},
+			},
+			Endpoints: []discovery.Endpoint{{Addresses: []string{"10.200.120.41"}}},
+			Ports:     []discovery.EndpointPort{{Name: &name, Port: &port}},
+		}
+		raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(slice)
+		assert.NoError(t, err)
+		obj := &unstructured.Unstructured{Object: raw}
+		obj.SetGroupVersionKind(discovery.SchemeGroupVersion.WithKind(resourceEpSliceName))
+
+		filter.MessageFilter(obj, "target-node")
+
+		var got discovery.EndpointSlice
+		assert.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &got))
+		if assert.Len(t, got.Endpoints, 1) {
+			assert.Equal(t, []string{"127.0.0.1"}, got.Endpoints[0].Addresses)
+		}
+	}
+}
+
+// TestGetServiceNotInCacheYet: the Service and EndpointSlice watches are
+// independent, so a slice can be filtered before the cache has its Service.
+// getService must then ask the API server instead of failing.
+func TestGetServiceNotInCacheYet(t *testing.T) {
+	emptyCache := cache.NewGenericLister(cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{}), v1.Resource("services"))
+	svc := newService(nodegroup.ServiceTopologyRangeCluster, map[string]string{"app": "test"})
+	scheme := runtime.NewScheme()
+	require.NoError(t, v1.AddToScheme(scheme))
+
+	patches := gomonkey.ApplyFuncReturn(filter.GetSyncedResourceLister, emptyCache, nil)
+	defer patches.Reset()
+	patches.ApplyFuncReturn(client.GetDynamicClient, dynamicfake.NewSimpleDynamicClient(scheme, svc))
+
+	got, err := getService(svc.Namespace, svc.Name)
+	require.NoError(t, err)
+	assert.Equal(t, svc.Name, got.Name)
+	assert.Equal(t, nodegroup.ServiceTopologyRangeCluster, got.Annotations[nodegroup.ServiceTopologyAnnotation])
+
+	_, err = getService(svc.Namespace, "missing")
+	assert.True(t, apierrors.IsNotFound(err), "a Service missing from the API server too must stay an error: %v", err)
+}
+
+// TestFilterResourceServiceLookupFails: when the Service cannot be looked up
+// and scoping is on by default, the receiving node keeps only its own
+// endpoints rather than every NodeGroup's. With the default unset, or for
+// default/kubernetes, whose endpoints the defaultMaster filter needs, the
+// endpoints are sent unfiltered as before.
+func TestFilterResourceServiceLookupFails(t *testing.T) {
+	const target = "target-node"
+	cases := []struct {
+		name            string
+		namespace, svc  string
+		defaultTopology string
+		want            []string
+	}{
+		{"default on", "default", "test-service", nodegroup.ServiceTopologyRangeNodegroup, []string{target}},
+		{"default unset", "default", "test-service", "", []string{target, nodeName1, nodeName2}},
+		{"default on, default/kubernetes", "default", "kubernetes", nodegroup.ServiceTopologyRangeNodegroup, []string{target, nodeName1, nodeName2}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			// node1 is in the target's group, so keeping it would mean the
+			// slice was scoped to the NodeGroup instead of the node.
+			patches := setupPatches()
+			defer patches.Reset()
+			patches.ApplyFuncReturn(getService, nil, errors.New("services cache and API server unavailable"))
+			f := newEndpointsliceFilter(c.defaultTopology)
+
+			nodes := []string{target, nodeName1, nodeName2}
+			slice := &discovery.EndpointSlice{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      c.svc + "-abcde",
+					Namespace: c.namespace,
+					Labels:    map[string]string{discovery.LabelServiceName: c.svc},
+				},
+			}
+			ep := &v1.Endpoints{
+				ObjectMeta: metav1.ObjectMeta{Name: c.svc, Namespace: c.namespace},
+				Subsets:    []v1.EndpointSubset{{}},
+			}
+			for i := range nodes {
+				slice.Endpoints = append(slice.Endpoints, discovery.Endpoint{Addresses: []string{"10.0.0.1"}, NodeName: &nodes[i]})
+				ep.Subsets[0].Addresses = append(ep.Subsets[0].Addresses, v1.EndpointAddress{IP: "10.0.0.1", NodeName: &nodes[i]})
+			}
+
+			raw, err := runtime.DefaultUnstructuredConverter.ToUnstructured(slice)
+			require.NoError(t, err)
+			sliceObj := &unstructured.Unstructured{Object: raw}
+			sliceObj.SetGroupVersionKind(discovery.SchemeGroupVersion.WithKind(resourceEpSliceName))
+			f.FilterResource(target, sliceObj)
+			var gotSlice discovery.EndpointSlice
+			require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(sliceObj.Object, &gotSlice))
+			var sliceNodes []string
+			for _, e := range gotSlice.Endpoints {
+				sliceNodes = append(sliceNodes, *e.NodeName)
+			}
+			assert.Equal(t, c.want, sliceNodes, "EndpointSlice")
+
+			raw, err = runtime.DefaultUnstructuredConverter.ToUnstructured(ep)
+			require.NoError(t, err)
+			epObj := &unstructured.Unstructured{Object: raw}
+			epObj.SetGroupVersionKind(v1.SchemeGroupVersion.WithKind(resourceEpName))
+			f.FilterResource(target, epObj)
+			var gotEp v1.Endpoints
+			require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(epObj.Object, &gotEp))
+			var epNodes []string
+			for _, a := range gotEp.Subsets[0].Addresses {
+				epNodes = append(epNodes, *a.NodeName)
+			}
+			assert.Equal(t, c.want, epNodes, "Endpoints")
+		})
+	}
 }

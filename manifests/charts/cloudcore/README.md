@@ -33,6 +33,7 @@ helm upgrade --install cloudcore ./cloudcore --namespace kubeedge --create-names
 - `cloudCore.modules.cloudHub.https.enable`, default `true`.
 - `cloudCore.modules.cloudStream.enable`, default `true`.
 - `cloudCore.modules.dynamicController.enable`,  default `false`.
+- `cloudCore.modules.dynamicController.defaultServiceTopology`, default `""`. Set to `range-nodegroup` to scope the endpoints of every Service with a selector to the receiving edge node's NodeGroup; a Service annotated `apps.kubeedge.io/service-topology: range-cluster` opts out. Treat this as a one-way change: set it when you create the cluster, or before you add the Services that edge nodes use. Setting it back to `""` breaks edge Services that are not annotated `range-nodegroup`, because their endpoints are then no longer scoped.
 - `cloudCore.modules.router.enable`,  default `false`.
 - `cloudCore.service.type`,  default `NodePort`.
 - `cloudCore.service.cloudhubNodePort`,  default `30000`, which defines the exposed node port for cloudhub service.

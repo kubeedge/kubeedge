@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -37,6 +38,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/dynamiccontroller/filter"
 )
 
 func TestCompareResourceVersion(t *testing.T) {
@@ -251,4 +253,90 @@ func TestManageObjectSync(t *testing.T) {
 			}
 		})
 	}
+}
+
+// keepNodeFilter keeps only the EndpointSlice endpoints on the target node.
+type keepNodeFilter struct{}
+
+func (keepNodeFilter) Name() string { return "synccontrollerTestKeepNode" }
+
+func (keepNodeFilter) NeedFilter(content interface{}) bool {
+	u, ok := content.(*unstructured.Unstructured)
+	return ok && u.GetKind() == "EndpointSlice"
+}
+
+func (keepNodeFilter) FilterResource(targetNode string, obj runtime.Object) {
+	u := obj.(*unstructured.Unstructured)
+	endpoints, _, _ := unstructured.NestedSlice(u.Object, "endpoints")
+	var kept []interface{}
+	for _, ep := range endpoints {
+		if node, _, _ := unstructured.NestedString(ep.(map[string]interface{}), "nodeName"); node == targetNode {
+			kept = append(kept, ep)
+		}
+	}
+	_ = unstructured.SetNestedSlice(u.Object, kept, "endpoints")
+}
+
+func TestFilterForNode(t *testing.T) {
+	filter.Register(keepNodeFilter{})
+	defer filter.Unregister(keepNodeFilter{}.Name())
+
+	node1, node2 := "node1", "node2"
+	slice := &discoveryv1.EndpointSlice{
+		ObjectMeta: v1.ObjectMeta{Name: "svc-abc", Namespace: "default", ResourceVersion: "7"},
+		Endpoints: []discoveryv1.Endpoint{
+			{Addresses: []string{"10.0.0.1"}, NodeName: &node1},
+			{Addresses: []string{"10.0.0.2"}, NodeName: &node2},
+		},
+	}
+	gvk := discoveryv1.SchemeGroupVersion.WithKind("EndpointSlice")
+
+	got := filterForNode(slice, gvk, node1)
+	if got == nil {
+		t.Fatal("expected a filtered copy of the EndpointSlice")
+	}
+	if got.GroupVersionKind() != gvk {
+		t.Errorf("kind = %v, want %v", got.GroupVersionKind(), gvk)
+	}
+	if got.GetResourceVersion() != "7" {
+		t.Errorf("resourceVersion = %q, want 7", got.GetResourceVersion())
+	}
+	endpoints, _, _ := unstructured.NestedSlice(got.Object, "endpoints")
+	if len(endpoints) != 1 {
+		t.Errorf("got %d endpoints, want 1", len(endpoints))
+	}
+	if len(slice.Endpoints) != 2 {
+		t.Error("the cached object must not change")
+	}
+
+	cm := &corev1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "cm", Namespace: "default"}}
+	if got := filterForNode(cm, corev1.SchemeGroupVersion.WithKind("ConfigMap"), node1); got != nil {
+		t.Errorf("expected no copy for an object no filter applies to, got %v", got)
+	}
+}
+
+// TestFilterForNodeWhileFiltersRegister models cloudcore startup: beehive
+// starts every module in its own goroutine, so dynamiccontroller registers its
+// filters while synccontroller may already be filtering re-sent objects.
+func TestFilterForNodeWhileFiltersRegister(t *testing.T) {
+	defer filter.Unregister(keepNodeFilter{}.Name())
+
+	node1 := "node1"
+	slice := &discoveryv1.EndpointSlice{
+		ObjectMeta: v1.ObjectMeta{Name: "svc-abc", Namespace: "default", ResourceVersion: "7"},
+		Endpoints:  []discoveryv1.Endpoint{{Addresses: []string{"10.0.0.1"}, NodeName: &node1}},
+	}
+	gvk := discoveryv1.SchemeGroupVersion.WithKind("EndpointSlice")
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for i := 0; i < 1000; i++ {
+			filter.Register(keepNodeFilter{})
+		}
+	}()
+	for i := 0; i < 1000; i++ {
+		filterForNode(slice, gvk, node1)
+	}
+	<-done
 }

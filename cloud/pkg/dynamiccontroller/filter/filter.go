@@ -1,6 +1,8 @@
 package filter
 
 import (
+	"sync"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog/v2"
@@ -14,8 +16,10 @@ type Filter interface {
 }
 
 var (
-	// filters map
-	filters map[string]Filter
+	// filters map. dynamiccontroller registers its filters while other
+	// modules may already read the map, so filtersLock guards it.
+	filters     map[string]Filter
+	filtersLock sync.RWMutex
 )
 
 func init() {
@@ -24,13 +28,28 @@ func init() {
 
 // Register register filter
 func Register(f Filter) {
+	filtersLock.Lock()
 	filters[f.Name()] = f
+	filtersLock.Unlock()
 	klog.Infof("Filter %s registered successfully", f.Name())
 }
 
-// GetFilters gets filter map
+// Unregister removes the filter with the given name.
+func Unregister(name string) {
+	filtersLock.Lock()
+	defer filtersLock.Unlock()
+	delete(filters, name)
+}
+
+// GetFilters returns a copy of the filter map.
 func GetFilters() map[string]Filter {
-	return filters
+	filtersLock.RLock()
+	defer filtersLock.RUnlock()
+	copied := make(map[string]Filter, len(filters))
+	for name, f := range filters {
+		copied[name] = f
+	}
+	return copied
 }
 
 // MessageFilter filter message according to specify policy
