@@ -52,6 +52,8 @@ func TestSupportedMediaTypes(t *testing.T) {
 	factory := WithoutConversionCodecFactory{}
 	mediaTypes := factory.SupportedMediaTypes()
 
+	// No protobuf: an unstructured object cannot be encoded as protobuf, so offering
+	// it breaks custom-resource reads. Requests convert it instead.
 	assert.Len(mediaTypes, 2)
 
 	jsonInfo := mediaTypes[0]
@@ -73,6 +75,7 @@ func TestSupportedMediaTypes(t *testing.T) {
 	assert.Equal("yaml", yamlInfo.MediaTypeSubType)
 	assert.True(yamlInfo.EncodesAsText)
 	assert.IsType(&json.Serializer{}, yamlInfo.Serializer)
+	assert.IsType(&json.Serializer{}, yamlInfo.StrictSerializer, "the stock write handlers decode with it")
 }
 
 func TestEncoderForVersion(t *testing.T) {
