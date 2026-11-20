@@ -20,6 +20,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -150,10 +151,27 @@ func cleanDirectories(isEdgeNode bool) error {
 	}
 
 	if isEdgeNode {
+		if err := util.WaitForEdgeCoreToStop(); err != nil {
+			return err
+		}
 		dirToClean = append(dirToClean, "/var/lib/dockershim", "/var/run/kubernetes", "/var/lib/cni")
 	}
 
 	for _, dir := range dirToClean {
+		if isEdgeNode {
+			target, err := filepath.EvalSymlinks(dir)
+			if os.IsNotExist(err) {
+				continue
+			}
+			if err == nil {
+				_, err = util.UnmountBelow(target)
+			}
+			if err != nil {
+				fmt.Printf("Skip deleting directory %s: %v\n", dir, err)
+				continue
+			}
+			dir = target
+		}
 		if err := phases.CleanDir(dir); err != nil {
 			fmt.Printf("Failed to delete directory %s: %v\n", dir, err)
 		}
