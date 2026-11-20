@@ -64,12 +64,17 @@ cloudCore:
       enable: false
   service:
     enable: true
+    # NodePort or LoadBalancer. Ignored when hostNetWork is true, the service is ClusterIP then.
+    # LoadBalancer exposes TCP and UDP ports on one load balancer, which needs Kubernetes 1.26+.
     type: "NodePort"
     cloudhubNodePort: "30000"
     cloudhubQuicNodePort: "30001"
     cloudhubHttpsNodePort: "30002"
     cloudstreamNodePort: "30003"
     tunnelNodePort: "30004"
+    # Only used with type LoadBalancer
+    loadBalancerClass: ""
+    loadBalancerSourceRanges: []
     annotations: {}
 
 iptablesManager:
