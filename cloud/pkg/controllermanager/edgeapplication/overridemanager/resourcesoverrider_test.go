@@ -262,6 +262,16 @@ func TestBuildResourcesPatches(t *testing.T) {
 			},
 			expectedPatches: []overrideOption{
 				{
+					Op:    string(v1alpha1.OverriderOpAdd),
+					Path:  "/spec/containers/0/resources",
+					Value: map[string]interface{}{},
+				},
+				{
+					Op:    string(v1alpha1.OverriderOpAdd),
+					Path:  "/spec/containers/0/resources/limits",
+					Value: map[string]interface{}{},
+				},
+				{
 					Op:    "replace",
 					Path:  "/spec/containers/0/resources/limits/cpu",
 					Value: "200m",
@@ -302,6 +312,16 @@ func TestBuildResourcesPatches(t *testing.T) {
 				},
 			},
 			expectedPatches: []overrideOption{
+				{
+					Op:    string(v1alpha1.OverriderOpAdd),
+					Path:  "/spec/template/spec/containers/0/resources",
+					Value: map[string]interface{}{},
+				},
+				{
+					Op:    string(v1alpha1.OverriderOpAdd),
+					Path:  "/spec/template/spec/containers/0/resources/limits",
+					Value: map[string]interface{}{},
+				},
 				{
 					Op:    "replace",
 					Path:  "/spec/template/spec/containers/0/resources/limits/cpu",
@@ -396,6 +416,16 @@ func TestBuildResourcesPatchesWithPath(t *testing.T) {
 			},
 			expectedPatches: []overrideOption{
 				{
+					Op:    string(v1alpha1.OverriderOpAdd),
+					Path:  "/spec/containers/1/resources",
+					Value: map[string]interface{}{},
+				},
+				{
+					Op:    string(v1alpha1.OverriderOpAdd),
+					Path:  "/spec/containers/1/resources/limits",
+					Value: map[string]interface{}{},
+				},
+				{
 					Op:    "replace",
 					Path:  "/spec/containers/1/resources/limits/cpu",
 					Value: "200m",
@@ -436,6 +466,16 @@ func TestBuildResourcesPatchesWithPath(t *testing.T) {
 				},
 			},
 			expectedPatches: []overrideOption{
+				{
+					Op:    string(v1alpha1.OverriderOpAdd),
+					Path:  "/spec/template/spec/containers/0/resources",
+					Value: map[string]interface{}{},
+				},
+				{
+					Op:    string(v1alpha1.OverriderOpAdd),
+					Path:  "/spec/template/spec/containers/0/resources/limits",
+					Value: map[string]interface{}{},
+				},
 				{
 					Op:    "replace",
 					Path:  "/spec/template/spec/containers/0/resources/limits/cpu",
@@ -637,6 +677,115 @@ func TestAcquireOverrideEscapesResourceNames(t *testing.T) {
 				{Op: "replace", Path: "/spec/template/spec/containers/0/resources/requests/" + tt.wantSuffix, Value: "2"},
 				{Op: "replace", Path: "/spec/template/spec/containers/0/resources/limits/" + tt.wantSuffix, Value: "2"},
 			}, patches)
+		})
+	}
+}
+
+func TestResourcesOverrider_ApplyOverridesMissingFields(t *testing.T) {
+	cpu := func(q string) corev1.ResourceList {
+		return corev1.ResourceList{corev1.ResourceCPU: resource.MustParse(q)}
+	}
+	newDeployment := func(extra map[string]interface{}) *unstructured.Unstructured {
+		container := map[string]interface{}{"name": "inference"}
+		for k, v := range extra {
+			container[k] = v
+		}
+		return &unstructured.Unstructured{Object: map[string]interface{}{
+			"kind": "Deployment",
+			"spec": map[string]interface{}{
+				"template": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"containers": []interface{}{container},
+					},
+				},
+			},
+		}}
+	}
+	both := map[string]interface{}{
+		"requests": map[string]interface{}{"cpu": "100m"},
+		"limits":   map[string]interface{}{"cpu": "200m"},
+	}
+
+	tests := []struct {
+		name      string
+		container map[string]interface{}
+		override  corev1.ResourceRequirements
+		want      map[string]interface{}
+	}{
+		{
+			name:      "container without resources",
+			container: nil,
+			override:  corev1.ResourceRequirements{Requests: cpu("100m"), Limits: cpu("200m")},
+			want:      map[string]interface{}{"resources": both},
+		},
+		{
+			name:      "empty resources",
+			container: map[string]interface{}{"resources": map[string]interface{}{}},
+			override:  corev1.ResourceRequirements{Requests: cpu("100m"), Limits: cpu("200m")},
+			want:      map[string]interface{}{"resources": both},
+		},
+		{
+			name:      "null resources",
+			container: map[string]interface{}{"resources": nil},
+			override:  corev1.ResourceRequirements{Requests: cpu("100m"), Limits: cpu("200m")},
+			want:      map[string]interface{}{"resources": both},
+		},
+		{
+			name: "only limits set",
+			container: map[string]interface{}{"resources": map[string]interface{}{
+				"limits": map[string]interface{}{"memory": "128Mi"},
+			}},
+			override: corev1.ResourceRequirements{Requests: cpu("100m"), Limits: cpu("200m")},
+			want: map[string]interface{}{"resources": map[string]interface{}{
+				"requests": map[string]interface{}{"cpu": "100m"},
+				"limits":   map[string]interface{}{"cpu": "200m", "memory": "128Mi"},
+			}},
+		},
+		{
+			name: "only requests set",
+			container: map[string]interface{}{"resources": map[string]interface{}{
+				"requests": map[string]interface{}{"memory": "128Mi"},
+			}},
+			override: corev1.ResourceRequirements{Requests: cpu("100m"), Limits: cpu("200m")},
+			want: map[string]interface{}{"resources": map[string]interface{}{
+				"requests": map[string]interface{}{"cpu": "100m", "memory": "128Mi"},
+				"limits":   map[string]interface{}{"cpu": "200m"},
+			}},
+		},
+		{
+			name: "resource name that the container does not set yet",
+			container: map[string]interface{}{"resources": map[string]interface{}{
+				"requests": map[string]interface{}{"memory": "128Mi"},
+				"limits":   map[string]interface{}{"memory": "128Mi"},
+			}},
+			override: corev1.ResourceRequirements{Requests: cpu("100m"), Limits: cpu("200m")},
+			want: map[string]interface{}{"resources": map[string]interface{}{
+				"requests": map[string]interface{}{"cpu": "100m", "memory": "128Mi"},
+				"limits":   map[string]interface{}{"cpu": "200m", "memory": "128Mi"},
+			}},
+		},
+		{
+			name:      "only requests overridden",
+			container: nil,
+			override:  corev1.ResourceRequirements{Requests: cpu("100m")},
+			want: map[string]interface{}{"resources": map[string]interface{}{
+				"requests": map[string]interface{}{"cpu": "100m"},
+			}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			obj := newDeployment(tt.container)
+			overriders := OverriderInfo{Overriders: &v1alpha1.Overriders{
+				ResourcesOverriders: []v1alpha1.ResourcesOverrider{{
+					ContainerName: "inference",
+					Value:         tt.override,
+				}},
+			}}
+			err := (&ResourcesOverrider{}).ApplyOverrides(obj, overriders)
+			assert.NoError(t, err)
+			assert.Equal(t, newDeployment(tt.want).Object, obj.Object)
 		})
 	}
 }

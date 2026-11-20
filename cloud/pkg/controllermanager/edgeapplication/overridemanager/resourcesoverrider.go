@@ -78,9 +78,14 @@ func buildResourcesPatchesWithPath(specContainersPath string, rawObj *unstructur
 	}
 	klog.V(4).Infof("buildResourcesPatchesWithPath containers info (%+v)", containers)
 	for index, container := range containers {
-		if container.(map[string]interface{})["name"] == resourcesOverrider.ContainerName {
+		containerMap := container.(map[string]interface{})
+		if containerMap["name"] == resourcesOverrider.ContainerName {
 			resourcesPath := fmt.Sprintf("/%s/%d/resources", specContainersPath, index)
 			resourcesValue := resourcesOverrider.Value
+
+			// A JSON patch does not create missing parents, so create the maps
+			// that the container does not have yet before writing into them.
+			patches = append(patches, acquireMissingParents(resourcesPath, containerMap, resourcesValue)...)
 
 			// Acquire selective override patches based on non-zero fields in resourcesValue
 			patchList, err := acquireOverride(resourcesPath, resourcesValue)
@@ -93,6 +98,51 @@ func buildResourcesPatchesWithPath(specContainersPath string, rawObj *unstructur
 		}
 	}
 	return patches, nil
+}
+
+// acquireMissingParents returns the patches that create the resources, requests and limits
+// maps of the container, when the container does not have them and acquireOverride
+// is going to write into them.
+func acquireMissingParents(resourcesPath string, container map[string]interface{}, resourcesValue corev1.ResourceRequirements) []overrideOption {
+	patches := []overrideOption{}
+	resources, hasResources := container["resources"].(map[string]interface{})
+	for _, field := range []struct {
+		name string
+		list corev1.ResourceList
+	}{
+		{name: "requests", list: resourcesValue.Requests},
+		{name: "limits", list: resourcesValue.Limits},
+	} {
+		if !hasNonZeroQuantity(field.list) {
+			continue
+		}
+		if !hasResources {
+			patches = append(patches, overrideOption{
+				Op:    string(v1alpha1.OverriderOpAdd),
+				Path:  resourcesPath,
+				Value: map[string]interface{}{},
+			})
+			hasResources = true
+		}
+		if _, ok := resources[field.name].(map[string]interface{}); !ok {
+			patches = append(patches, overrideOption{
+				Op:    string(v1alpha1.OverriderOpAdd),
+				Path:  resourcesPath + "/" + field.name,
+				Value: map[string]interface{}{},
+			})
+		}
+	}
+	return patches
+}
+
+// hasNonZeroQuantity reports whether the list has a quantity that acquireOverride writes.
+func hasNonZeroQuantity(list corev1.ResourceList) bool {
+	for _, quantity := range list {
+		if !quantity.IsZero() {
+			return true
+		}
+	}
+	return false
 }
 
 // acquireOverrideOptions for adding selective resources override.
