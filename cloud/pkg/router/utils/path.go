@@ -46,7 +46,13 @@ func RuleContains(rulePath, rule2Path string) bool {
 		return false
 	}
 
-	for i := 0; i < len(path1) && i < len(path2); i++ {
+	// A rule with more segments is more specific, so it can't contain a shorter one.
+	// Without this, /a/b and /a would each be reported as containing the other.
+	if len(path1) > len(path2) {
+		return false
+	}
+
+	for i := 0; i < len(path1); i++ {
 		// rule1[i] contains rule2[i] when rule1[i] = {} or rule1[i] == rule2[i]
 		if path1[i] != path2[i] && URLToURLRegex(path1[i]) != URLToURLRegex(path2[i]) {
 			return false
