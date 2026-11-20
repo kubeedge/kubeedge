@@ -49,6 +49,13 @@ var (
 
 func Register(dc *configv1alpha1.DynamicController, enableAuthorization bool) {
 	config.InitConfigure(dc, enableAuthorization)
+	if dc.Enable {
+		// Register the filters here, before beehive starts the modules, so
+		// that synccontroller filters the objects it re-sends from its first
+		// pass.
+		endpointresource.Register(dc.DefaultServiceTopology)
+		defaultmaster.Register()
+	}
 	dynamicController = newDynamicController(dc.Enable)
 	core.Register(dynamicController)
 }
@@ -74,8 +81,6 @@ func (dctl *DynamicController) RestartPolicy() *core.ModuleRestartPolicy {
 
 // Start controller
 func (dctl *DynamicController) Start() {
-	endpointresource.Register(config.Config.DynamicController.DefaultServiceTopology)
-	defaultmaster.Register()
 	dctl.dynamicSharedInformerFactory.Start(beehiveContext.Done())
 	for gvr, cacheSync := range dctl.dynamicSharedInformerFactory.WaitForCacheSync(beehiveContext.Done()) {
 		if !cacheSync {

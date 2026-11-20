@@ -19,7 +19,6 @@ package endpointresource
 import (
 	"errors"
 	"fmt"
-	"maps"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
@@ -806,11 +805,14 @@ func TestMessageFilterKeepsDefaultMaster(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "kubernetes", Namespace: "default"},
 	})
 	defer patches.Reset()
-	saved := maps.Clone(filter.GetFilters())
+	saved := filter.GetFilters()
 	t.Cleanup(func() {
-		filters := filter.GetFilters()
-		clear(filters)
-		maps.Copy(filters, saved)
+		for name := range filter.GetFilters() {
+			filter.Unregister(name)
+		}
+		for _, f := range saved {
+			filter.Register(f)
+		}
 	})
 	Register(nodegroup.ServiceTopologyRangeNodegroup)
 	defaultmaster.Register()

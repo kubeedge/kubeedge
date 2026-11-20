@@ -279,7 +279,7 @@ func (keepNodeFilter) FilterResource(targetNode string, obj runtime.Object) {
 
 func TestFilterForNode(t *testing.T) {
 	filter.Register(keepNodeFilter{})
-	defer delete(filter.GetFilters(), keepNodeFilter{}.Name())
+	defer filter.Unregister(keepNodeFilter{}.Name())
 
 	node1, node2 := "node1", "node2"
 	slice := &discoveryv1.EndpointSlice{
@@ -313,4 +313,30 @@ func TestFilterForNode(t *testing.T) {
 	if got := filterForNode(cm, corev1.SchemeGroupVersion.WithKind("ConfigMap"), node1); got != nil {
 		t.Errorf("expected no copy for an object no filter applies to, got %v", got)
 	}
+}
+
+// TestFilterForNodeWhileFiltersRegister models cloudcore startup: beehive
+// starts every module in its own goroutine, so dynamiccontroller registers its
+// filters while synccontroller may already be filtering re-sent objects.
+func TestFilterForNodeWhileFiltersRegister(t *testing.T) {
+	defer filter.Unregister(keepNodeFilter{}.Name())
+
+	node1 := "node1"
+	slice := &discoveryv1.EndpointSlice{
+		ObjectMeta: v1.ObjectMeta{Name: "svc-abc", Namespace: "default", ResourceVersion: "7"},
+		Endpoints:  []discoveryv1.Endpoint{{Addresses: []string{"10.0.0.1"}, NodeName: &node1}},
+	}
+	gvk := discoveryv1.SchemeGroupVersion.WithKind("EndpointSlice")
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for i := 0; i < 1000; i++ {
+			filter.Register(keepNodeFilter{})
+		}
+	}()
+	for i := 0; i < 1000; i++ {
+		filterForNode(slice, gvk, node1)
+	}
+	<-done
 }
