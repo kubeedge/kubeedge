@@ -57,6 +57,7 @@ func tryUpdateConfigUpdateJobStatus(ctx context.Context, cli crdcliset.Interface
 		nodeStatus.ActionFlow = append(nodeStatus.ActionFlow, *actionStatus)
 	}
 	nodeStatus.Phase = opts.Phase
+	nodeStatus.Reason = opts.Reason
 
 	_, err = cli.OperationsV1alpha2().ConfigUpdateJobs().UpdateStatus(ctx, job, metav1.UpdateOptions{})
 	if err != nil {
