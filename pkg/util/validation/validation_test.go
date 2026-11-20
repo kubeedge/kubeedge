@@ -176,3 +176,30 @@ func TestValidateVersion(t *testing.T) {
 		})
 	}
 }
+
+func TestIsVersionDowngrade(t *testing.T) {
+	cases := []struct {
+		name       string
+		oldVersion string
+		newVersion string
+		want       bool
+		wantErr    bool
+	}{
+		{name: "upgrade", oldVersion: "v1.16.3", newVersion: "v1.17.0", want: false},
+		{name: "downgrade", oldVersion: "v1.17.0", newVersion: "v1.16.3", want: true},
+		{name: "same version", oldVersion: "v1.17.0", newVersion: "v1.17.0", want: false},
+		{name: "invalid old version", oldVersion: "v1.17", newVersion: "v1.16.3", wantErr: true},
+		{name: "invalid new version", oldVersion: "v1.17.0", newVersion: "v1.16", wantErr: true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got, err := IsVersionDowngrade(c.oldVersion, c.newVersion)
+			if c.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, c.want, got)
+		})
+	}
+}
