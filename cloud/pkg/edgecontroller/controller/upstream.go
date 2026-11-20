@@ -230,61 +230,76 @@ func (uc *UpstreamController) dispatchMessage() {
 
 		switch resourceType {
 		case model.ResourceTypeNodeStatus:
-			uc.nodeStatusChan <- msg
+			dispatchTo(uc.nodeStatusChan, msg)
 		case model.ResourceTypePodStatus:
-			uc.podStatusChan <- msg
+			dispatchTo(uc.podStatusChan, msg)
 		case model.ResourceTypeEvent:
-			uc.eventChan <- msg
+			dispatchTo(uc.eventChan, msg)
 		case model.ResourceTypeConfigmap:
-			uc.configMapChan <- msg
+			dispatchTo(uc.configMapChan, msg)
 		case model.ResourceTypeSecret:
-			uc.secretChan <- msg
+			dispatchTo(uc.secretChan, msg)
 		case model.ResourceTypeServiceAccountToken:
-			uc.serviceAccountTokenChan <- msg
+			dispatchTo(uc.serviceAccountTokenChan, msg)
 		case common.ResourceTypePersistentVolume:
-			uc.persistentVolumeChan <- msg
+			dispatchTo(uc.persistentVolumeChan, msg)
 		case common.ResourceTypePersistentVolumeClaim:
-			uc.persistentVolumeClaimChan <- msg
+			dispatchTo(uc.persistentVolumeClaimChan, msg)
 		case common.ResourceTypeVolumeAttachment:
-			uc.volumeAttachmentChan <- msg
+			dispatchTo(uc.volumeAttachmentChan, msg)
 		case model.ResourceTypeNode:
 			switch msg.GetOperation() {
 			case model.InsertOperation:
-				uc.createNodeChan <- msg
+				dispatchTo(uc.createNodeChan, msg)
 			case model.QueryOperation:
-				uc.queryNodeChan <- msg
+				dispatchTo(uc.queryNodeChan, msg)
 			case model.UpdateOperation:
-				uc.updateNodeChan <- msg
+				dispatchTo(uc.updateNodeChan, msg)
 			default:
 				klog.Errorf("message: %s, operation type: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
 		case model.ResourceTypeNodePatch:
-			uc.patchNodeChan <- msg
+			dispatchTo(uc.patchNodeChan, msg)
 		case model.ResourceTypePodPatch:
-			uc.patchPodChan <- msg
+			dispatchTo(uc.patchPodChan, msg)
 		case model.ResourceTypePod:
 			switch msg.GetOperation() {
 			case model.DeleteOperation:
-				uc.podDeleteChan <- msg
+				dispatchTo(uc.podDeleteChan, msg)
 			case model.InsertOperation:
-				uc.createPodChan <- msg
+				dispatchTo(uc.createPodChan, msg)
 			default:
 				klog.Errorf("message: %s, operation type: %s unsupported", msg.GetID(), msg.GetOperation())
 			}
 		case model.ResourceTypeRuleStatus:
-			uc.ruleStatusChan <- msg
+			dispatchTo(uc.ruleStatusChan, msg)
 		case model.ResourceTypeLease:
 			switch msg.GetOperation() {
 			case model.InsertOperation, model.UpdateOperation:
-				uc.createLeaseChan <- msg
+				dispatchTo(uc.createLeaseChan, msg)
 			case model.QueryOperation:
-				uc.queryLeaseChan <- msg
+				dispatchTo(uc.queryLeaseChan, msg)
 			}
 		case model.ResourceTypeCSR:
-			uc.certificasesSigningRequestChan <- msg
+			dispatchTo(uc.certificasesSigningRequestChan, msg)
 		default:
 			klog.Errorf("message: %s, resource type: %s unsupported", msg.GetID(), resourceType)
 		}
+	}
+}
+
+// dispatchTo hands msg to the workers reading ch without blocking.
+// dispatchMessage is the only path for every upstream message from every
+// edge node. If it waited on one full channel, all other resource types
+// would wait too, and lease updates of healthy nodes would stall until
+// they are marked NotReady. So when the workers of one resource type
+// fall behind, the message is dropped instead. Edge requests time out
+// and are retried, so a dropped message is sent again later.
+func dispatchTo(ch chan<- model.Message, msg model.Message) {
+	select {
+	case ch <- msg:
+	default:
+		klog.Warningf("message: %s dropped, the queue for resource %s is full", msg.GetID(), msg.GetResource())
 	}
 }
 
