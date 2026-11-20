@@ -175,6 +175,97 @@ func TestSendEvents(t *testing.T) {
 		})
 	}
 }
+
+// TestSendEventsSetsTypeMeta checks that an object from the informer cache,
+// which has an empty TypeMeta, is sent with the apiVersion/kind of its
+// ObjectSync, and that the cached object itself is not modified.
+func TestSendEventsSetsTypeMeta(t *testing.T) {
+	cloudHub := &common.ModuleInfo{
+		ModuleName: modules.CloudHubModuleName,
+		ModuleType: common.MsgCtxTypeChannel,
+	}
+	beehiveContext.InitContext([]string{common.MsgCtxTypeChannel})
+	beehiveContext.AddModule(cloudHub)
+	beehiveContext.AddModuleGroup(modules.CloudHubModuleName, modules.CloudHubModuleGroup)
+
+	cached := &corev1.Endpoints{
+		ObjectMeta: v1.ObjectMeta{
+			Name:            "websvc",
+			Namespace:       tf.TestNamespace,
+			UID:             "ep-uid",
+			ResourceVersion: "2",
+		},
+		Subsets: []corev1.EndpointSubset{{Addresses: []corev1.EndpointAddress{{IP: "192.0.2.10"}}}},
+	}
+	sync := tf.NewObjectSync(cached, "Endpoints")
+	sync.Status.ObjectResourceVersion = "1"
+
+	go sendEvents(tf.TestNodeID, sync, "endpoints", "2", cached)
+	message, err := beehiveContext.Receive(modules.CloudHubModuleName)
+	if err != nil {
+		t.Fatalf("Receive() error = %v", err)
+	}
+	if message.GetOperation() != model.UpdateOperation {
+		t.Errorf("operation = %v, want %v", message.GetOperation(), model.UpdateOperation)
+	}
+	sent, ok := message.GetContent().(*corev1.Endpoints)
+	if !ok {
+		t.Fatalf("message content is %T, want *corev1.Endpoints", message.GetContent())
+	}
+	wantGVK := schema.GroupVersionKind{Version: "v1", Kind: "Endpoints"}
+	if got := sent.GroupVersionKind(); got != wantGVK {
+		t.Errorf("sent GVK = %v, want %v", got, wantGVK)
+	}
+	if !reflect.DeepEqual(sent.Subsets, cached.Subsets) {
+		t.Errorf("sent subsets = %v, want %v", sent.Subsets, cached.Subsets)
+	}
+	if got := cached.GroupVersionKind(); !got.Empty() {
+		t.Errorf("cached object was modified, GVK = %v", got)
+	}
+}
+
+func TestWithTypeMeta(t *testing.T) {
+	sync := &v1alpha1.ObjectSync{
+		Spec: v1alpha1.ObjectSyncSpec{ObjectAPIVersion: "apps/v1", ObjectKind: "Deployment"},
+	}
+	t.Run("empty TypeMeta is filled on a copy", func(t *testing.T) {
+		obj := &unstructured.Unstructured{Object: map[string]interface{}{}}
+		ret := withTypeMeta(obj, sync).(runtime.Object)
+		want := schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}
+		if got := ret.GetObjectKind().GroupVersionKind(); got != want {
+			t.Errorf("GVK = %v, want %v", got, want)
+		}
+		if obj.GetKind() != "" {
+			t.Errorf("input object was modified: %v", obj.Object)
+		}
+	})
+	t.Run("existing TypeMeta is kept", func(t *testing.T) {
+		obj := newUnstructured("v1", "Pod", "ns", "name")
+		if ret := withTypeMeta(obj, sync); ret != interface{}(obj) {
+			t.Errorf("withTypeMeta() returned a new object for an object that has a kind")
+		}
+	})
+	t.Run("ObjectSync without kind", func(t *testing.T) {
+		obj := &unstructured.Unstructured{Object: map[string]interface{}{}}
+		if ret := withTypeMeta(obj, &v1alpha1.ObjectSync{}); ret != interface{}(obj) {
+			t.Errorf("withTypeMeta() returned a new object for an ObjectSync without kind")
+		}
+	})
+	t.Run("invalid apiVersion", func(t *testing.T) {
+		bad := sync.DeepCopy()
+		bad.Spec.ObjectAPIVersion = "a/b/c"
+		obj := &unstructured.Unstructured{Object: map[string]interface{}{}}
+		if ret := withTypeMeta(obj, bad); ret != interface{}(obj) {
+			t.Errorf("withTypeMeta() returned a new object for an invalid apiVersion")
+		}
+	})
+	t.Run("not a runtime.Object", func(t *testing.T) {
+		if ret := withTypeMeta("foo", sync); ret != "foo" {
+			t.Errorf("withTypeMeta() = %v, want foo", ret)
+		}
+	})
+}
+
 func newUnstructured(apiVersion, kind, namespace, name string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
