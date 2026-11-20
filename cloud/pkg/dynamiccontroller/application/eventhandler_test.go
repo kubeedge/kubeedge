@@ -39,6 +39,7 @@ import (
 )
 
 type MockInformer struct {
+	cache.SharedIndexInformer
 	addEventHandlerFunc func(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error)
 }
 
@@ -64,6 +65,28 @@ func (m *MockInformer) AddIndexers(_ cache.Indexers) error                   { r
 func (m *MockInformer) GetIndexer() cache.Indexer                            { return nil }
 
 type MockResourceEventHandlerRegistration struct{}
+
+type fakeInformerManager struct {
+	genericinformers.Manager
+	getInformerPair func(gvr schema.GroupVersionResource) (*genericinformers.InformerPair, error)
+}
+
+func (f *fakeInformerManager) GetInformerPair(gvr schema.GroupVersionResource) (*genericinformers.InformerPair, error) {
+	return f.getInformerPair(gvr)
+}
+
+func patchGetInformerPair(patches *gomonkey.Patches, getInformerPair func(gvr schema.GroupVersionResource) (*genericinformers.InformerPair, error)) {
+	patches.ApplyFunc(genericinformers.GetInformersManager, func() genericinformers.Manager {
+		return &fakeInformerManager{getInformerPair: getInformerPair}
+	})
+}
+
+func newMockInformerPair() *genericinformers.InformerPair {
+	return &genericinformers.InformerPair{
+		Lister:   &MockGenericLister{},
+		Informer: &MockInformer{},
+	}
+}
 
 func (m *MockResourceEventHandlerRegistration) HasSynced() bool { return true }
 func (m *MockResourceEventHandlerRegistration) Key() string     { return "mock-key" }
@@ -227,8 +250,9 @@ func TestHandlerCenter(t *testing.T) {
 
 		center.handlers[gvr] = mockHandler
 
-		handler := center.ForResource(gvr)
+		handler, err := center.ForResource(gvr)
 
+		assert.NoError(t, err)
 		assert.Equal(t, mockHandler, handler)
 	})
 
@@ -236,14 +260,54 @@ func TestHandlerCenter(t *testing.T) {
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
+		center := &handlerCenter{
+			listenerManager: newListenerManager(),
+			handlers:        make(map[schema.GroupVersionResource]*CommonResourceEventHandler),
+		}
+
+		informerPair := newMockInformerPair()
+		patchGetInformerPair(patches, func(_ schema.GroupVersionResource) (*genericinformers.InformerPair, error) {
+			// Waiting for an informer to sync must not block other handlerCenter callers.
+			if !center.handlerLock.TryLock() {
+				return nil, errors.New("handlerLock is held while getting the informer")
+			}
+			center.handlerLock.Unlock()
+			return informerPair, nil
+		})
 		patches.ApplyFunc(NewCommonResourceEventHandler,
-			func(gvr schema.GroupVersionResource, lm *listenerManager, ml messagelayer.MessageLayer) *CommonResourceEventHandler {
+			func(gvr schema.GroupVersionResource, pair *genericinformers.InformerPair, lm *listenerManager, ml messagelayer.MessageLayer) (*CommonResourceEventHandler, error) {
 				return &CommonResourceEventHandler{
 					listenerManager: lm,
 					messageLayer:    ml,
 					gvr:             gvr,
+					informer:        pair,
 					events:          make(chan watch.Event, 10),
-				}
+				}, nil
+			})
+
+		gvr := schema.GroupVersionResource{Group: "new", Version: "v1", Resource: "resources"}
+
+		handler, err := center.ForResource(gvr)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, handler)
+		assert.Equal(t, gvr, handler.gvr)
+		assert.Equal(t, informerPair, handler.informer)
+		assert.Contains(t, center.handlers, gvr)
+	})
+
+	t.Run("ForResource Returns Informer Error", func(t *testing.T) {
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patchGetInformerPair(patches, func(_ schema.GroupVersionResource) (*genericinformers.InformerPair, error) {
+			return nil, errors.New("no matches for kind")
+		})
+		handlerCreated := false
+		patches.ApplyFunc(NewCommonResourceEventHandler,
+			func(_ schema.GroupVersionResource, _ *genericinformers.InformerPair, _ *listenerManager, _ messagelayer.MessageLayer) (*CommonResourceEventHandler, error) {
+				handlerCreated = true
+				return nil, nil
 			})
 
 		center := &handlerCenter{
@@ -251,22 +315,52 @@ func TestHandlerCenter(t *testing.T) {
 			handlers:        make(map[schema.GroupVersionResource]*CommonResourceEventHandler),
 		}
 
-		gvr := schema.GroupVersionResource{Group: "new", Version: "v1", Resource: "resources"}
+		gvr := schema.GroupVersionResource{Group: "example.com", Version: "v1", Resource: "foos"}
 
-		handler := center.ForResource(gvr)
+		handler, err := center.ForResource(gvr)
 
-		assert.NotNil(t, handler)
-		assert.Equal(t, gvr, handler.gvr)
-		assert.Contains(t, center.handlers, gvr)
+		assert.Nil(t, handler)
+		assert.ErrorContains(t, err, "no matches for kind")
+		assert.False(t, handlerCreated)
+		assert.NotContains(t, center.handlers, gvr)
+	})
+
+	t.Run("ForResource Returns Handler Creation Error", func(t *testing.T) {
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patchGetInformerPair(patches, func(_ schema.GroupVersionResource) (*genericinformers.InformerPair, error) {
+			return newMockInformerPair(), nil
+		})
+		patches.ApplyFunc(NewCommonResourceEventHandler,
+			func(_ schema.GroupVersionResource, _ *genericinformers.InformerPair, _ *listenerManager, _ messagelayer.MessageLayer) (*CommonResourceEventHandler, error) {
+				return nil, errors.New("informer stopped")
+			})
+
+		center := &handlerCenter{
+			listenerManager: newListenerManager(),
+			handlers:        make(map[schema.GroupVersionResource]*CommonResourceEventHandler),
+		}
+
+		gvr := schema.GroupVersionResource{Group: "example.com", Version: "v1", Resource: "foos"}
+
+		handler, err := center.ForResource(gvr)
+
+		assert.Nil(t, handler)
+		assert.ErrorContains(t, err, "informer stopped")
+		assert.NotContains(t, center.handlers, gvr)
 	})
 
 	t.Run("AddListener Creates Handler", func(t *testing.T) {
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
+		patchGetInformerPair(patches, func(_ schema.GroupVersionResource) (*genericinformers.InformerPair, error) {
+			return newMockInformerPair(), nil
+		})
 		handlerCreated := false
 		patches.ApplyFunc(NewCommonResourceEventHandler,
-			func(gvr schema.GroupVersionResource, lm *listenerManager, ml messagelayer.MessageLayer) *CommonResourceEventHandler {
+			func(gvr schema.GroupVersionResource, _ *genericinformers.InformerPair, lm *listenerManager, ml messagelayer.MessageLayer) (*CommonResourceEventHandler, error) {
 				handlerCreated = true
 				handler := &CommonResourceEventHandler{
 					listenerManager: lm,
@@ -280,7 +374,7 @@ func TestHandlerCenter(t *testing.T) {
 						return nil
 					})
 
-				return handler
+				return handler, nil
 			})
 
 		gvr := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
@@ -301,6 +395,66 @@ func TestHandlerCenter(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.True(t, handlerCreated, "Handler should have been created")
+	})
+
+	t.Run("AddListener Returns Informer Error", func(t *testing.T) {
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patchGetInformerPair(patches, func(_ schema.GroupVersionResource) (*genericinformers.InformerPair, error) {
+			return nil, errors.New("failed waiting for informer to sync")
+		})
+
+		gvr := schema.GroupVersionResource{Group: "example.com", Version: "v1", Resource: "foos"}
+		selector := LabelFieldSelector{Label: labels.Everything(), Field: fields.Everything()}
+		listener := &SelectorListener{
+			gvr:      gvr,
+			nodeName: "test-node",
+			id:       "test-listener",
+			selector: selector,
+		}
+
+		center := &handlerCenter{
+			listenerManager: newListenerManager(),
+			handlers:        make(map[schema.GroupVersionResource]*CommonResourceEventHandler),
+		}
+
+		err := center.AddListener(listener)
+
+		assert.ErrorContains(t, err, "failed waiting for informer to sync")
+		assert.Nil(t, center.GetListenersForNode("test-node"))
+		assert.NotContains(t, center.handlers, gvr)
+	})
+}
+
+func TestNewCommonResourceEventHandler(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
+
+	t.Run("Success", func(t *testing.T) {
+		informerPair := newMockInformerPair()
+
+		handler, err := NewCommonResourceEventHandler(gvr, informerPair, newListenerManager(), nil)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, handler)
+		assert.Equal(t, gvr, handler.gvr)
+		assert.Equal(t, informerPair, handler.informer)
+	})
+
+	t.Run("AddEventHandler Error", func(t *testing.T) {
+		informerPair := &genericinformers.InformerPair{
+			Lister: &MockGenericLister{},
+			Informer: &MockInformer{
+				addEventHandlerFunc: func(_ cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
+					return nil, errors.New("informer has already stopped")
+				},
+			},
+		}
+
+		handler, err := NewCommonResourceEventHandler(gvr, informerPair, newListenerManager(), nil)
+
+		assert.Nil(t, handler)
+		assert.ErrorContains(t, err, "informer has already stopped")
 	})
 }
 

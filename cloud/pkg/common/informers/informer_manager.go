@@ -17,6 +17,7 @@ limitations under the License.
 package informers
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -26,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	k8sinformer "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -48,6 +50,12 @@ var (
 	// kubeEdgeScheme is KubeEdge CRD resources scheme for converting
 	// group, version, and kind information to and from Go schemas
 	kubeEdgeScheme = edgescheme.Scheme
+
+	// informerSyncTimeout bounds how long GetInformerPair waits for a new
+	// informer's cache to sync. A resource cloudcore is not allowed to list
+	// never syncs. It is kept below the 10s edge nodes wait for a metaserver
+	// Application response, so a rejection still reaches the edge.
+	informerSyncTimeout = 5 * time.Second
 )
 
 // InformerPair include informer and lister for resource
@@ -217,18 +225,13 @@ func (ifs *informers) GetLister(gvr schema.GroupVersionResource) (cache.GenericL
 
 func (ifs *informers) GetInformerPair(gvr schema.GroupVersionResource) (*InformerPair, error) {
 	ifs.lock.Lock()
-	defer ifs.lock.Unlock()
-
 	informer, ok := ifs.informersByGVR[gvr]
 	if ok {
+		ifs.lock.Unlock()
 		return informer, nil
 	}
-
-	return ifs.addInformerPair(gvr)
-}
-
-func (ifs *informers) addInformerPair(gvr schema.GroupVersionResource) (*InformerPair, error) {
 	genericInformer, err := ifs.forResource(gvr)
+	ifs.lock.Unlock()
 	if err != nil {
 		return nil, err
 	}
@@ -238,15 +241,22 @@ func (ifs *informers) addInformerPair(gvr schema.GroupVersionResource) (*Informe
 		Informer: genericInformer.Informer(),
 	}
 
-	ifs.informersByGVR[gvr] = informerPair
-
 	if !informerPair.Informer.HasSynced() {
 		klog.V(4).Infof("waiting for %s Informer to sync", gvr.String())
 		// Wait for it to sync before returning the Informer so that folks don't read from a stale cache.
-		if !cache.WaitForCacheSync(ifs.stopCh, informerPair.Informer.HasSynced) {
-			return nil, fmt.Errorf("failed waiting for %s Informer to sync", gvr.String())
+		// The wait is bounded and does not hold ifs.lock, so an informer that can never sync
+		// does not block callers for other resources.
+		ctx, cancel := context.WithTimeout(wait.ContextForChannel(ifs.stopCh), informerSyncTimeout)
+		defer cancel()
+		if !cache.WaitForCacheSync(ctx.Done(), informerPair.Informer.HasSynced) {
+			return nil, fmt.Errorf("failed waiting for %s Informer to sync within %v", gvr.String(), informerSyncTimeout)
 		}
 	}
+
+	// Only cache synced informers, so a later call for a resource that failed to sync waits again.
+	ifs.lock.Lock()
+	defer ifs.lock.Unlock()
+	ifs.informersByGVR[gvr] = informerPair
 
 	return informerPair, nil
 }

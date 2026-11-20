@@ -17,7 +17,11 @@ limitations under the License.
 package dynamiccontroller
 
 import (
+	"context"
+	"time"
+
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/klog/v2"
 
@@ -92,8 +96,21 @@ func newDynamicController(enable bool) *DynamicController {
 		dynamicSharedInformerFactory: informers.GetInformersManager().GetDynamicInformerFactory(),
 	}
 	dctl.applicationCenter = application.NewApplicationCenter(dctl.dynamicSharedInformerFactory)
-	dctl.applicationCenter.ForResource(v1.SchemeGroupVersion.WithResource("nodes"))
-	dctl.applicationCenter.ForResource(v1.SchemeGroupVersion.WithResource("services"))
+	for _, resource := range []string{"nodes", "services"} {
+		gvr := v1.SchemeGroupVersion.WithResource(resource)
+		// ForResource gives up waiting for an informer to sync after a while, but the informer
+		// keeps syncing, so retry until these handlers are ready before starting.
+		err := wait.PollUntilContextCancel(beehiveContext.GetContext(), time.Second, true, func(context.Context) (bool, error) {
+			if _, err := dctl.applicationCenter.ForResource(gvr); err != nil {
+				klog.Warningf("failed to prepare resourceEventHandler(%v), will retry: %v", gvr, err)
+				return false, nil
+			}
+			return true, nil
+		})
+		if err != nil {
+			klog.Exitf("failed to prepare resourceEventHandler(%v): %v", gvr, err)
+		}
+	}
 	return dctl
 }
 
