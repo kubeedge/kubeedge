@@ -14,6 +14,7 @@ import (
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 // DefaultV2Client is the only one client. Because of v2Client
@@ -21,6 +22,8 @@ import (
 // there are multi-clients.
 var DefaultV2Client = newV2Client()
 var Versioner = storage.APIObjectVersioner{}
+
+var registerMigrationOnce sync.Once
 
 type Client interface {
 	// This set of functions is for metamanager
@@ -63,4 +66,38 @@ func StorageInit() {
 
 	DefaultV2Client.SetRevision(meta.ResourceVersion)
 	klog.Infof("StorageInit set revision to: %d", meta.ResourceVersion)
+
+	initRESTMapper(util.DefaultRESTMapper())
+}
+
+// initRESTMapper keeps the objects saved by the imitator under the resource
+// known to mapper, and teaches mapper the mappings of the discovery documents
+// cached by previous runs. Objects saved under a guessed resource by a previous
+// version are moved as soon as the authoritative resource is learned.
+func initRESTMapper(mapper *util.RESTMapper) {
+	// StorageInit runs again when the module restarts, set up the mapper once.
+	registerMigrationOnce.Do(func() {
+		s, ok := DefaultV2Client.(*imitator)
+		if !ok {
+			return
+		}
+		// Mapping changes and the migration of the objects they move are
+		// applied under s.lock, the lock objects are read and written under.
+		mapper.SetChangeLocker(&s.lock)
+		mapper.AddMappingChangedListener(s.migrateResourceLocked)
+		// Load the saved list kinds before saving new ones.
+		klog.Infof("StorageInit loaded %d saved list kinds", loadListKinds(mapper))
+		mapper.AddListKindLearnedListener(s.saveListKind(mapper))
+	})
+
+	docs, err := dbclient.NewMetaV2Service().ListDiscoveryMetaV2()
+	if err != nil {
+		klog.Errorf("failed to load cached discovery documents: %v", err)
+		return
+	}
+	learned := 0
+	for _, doc := range *docs {
+		learned += mapper.LearnFromDiscovery([]byte(doc.Value))
+	}
+	klog.Infof("StorageInit learned %d resource mappings from cached discovery documents", learned)
 }

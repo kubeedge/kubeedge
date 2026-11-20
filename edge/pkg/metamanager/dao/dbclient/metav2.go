@@ -102,6 +102,63 @@ func (s *MetaV2Service) DeleteByKey(key string) error {
 	return s.db.Where(models.KEY+" = ?", key).Delete(&models.MetaV2{}).Error
 }
 
+// ListDiscoveryMetaV2 returns the API discovery documents saved for
+// pass-through requests to /api, /api/<version>, /apis and
+// /apis/<group>[/<version>]. Other pass-through responses, such as the
+// OpenAPI documents, are not loaded.
+func (s *MetaV2Service) ListDiscoveryMetaV2() (*[]models.MetaV2, error) {
+	var objs []models.MetaV2
+	err := s.db.Model(&models.MetaV2{}).
+		Where(models.GVR+" = ?", "").
+		Where(s.db.Where(models.KEY+" = ?", "/api").
+			Or(models.KEY+" LIKE ?", "/api/%").
+			Or(models.KEY+" = ?", "/apis").
+			Or(models.KEY+" LIKE ?", "/apis/%")).
+		Find(&objs).Error
+	if err != nil {
+		return nil, err
+	}
+	return &objs, nil
+}
+
+// ListMetaV2ByKeyPrefix returns the objects whose key starts with prefix.
+func (s *MetaV2Service) ListMetaV2ByKeyPrefix(prefix string) (*[]models.MetaV2, error) {
+	var objs []models.MetaV2
+	if err := s.db.Model(&models.MetaV2{}).Where(models.KEY+" LIKE ?", prefix+"%").Find(&objs).Error; err != nil {
+		return nil, err
+	}
+	return &objs, nil
+}
+
+// MoveMetaV2 replaces the objects saved under oldKeys with newObjs in a single
+// transaction. When an object is already saved under the key of a new object,
+// the one with the higher resource version is kept, so the newer object wins
+// whichever key it was saved under.
+func (s *MetaV2Service) MoveMetaV2(oldKeys []string, newObjs []models.MetaV2) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		for i := range newObjs {
+			var existing models.MetaV2
+			err := tx.Where(models.KEY+" = ?", newObjs[i].Key).Limit(1).Find(&existing).Error
+			if err != nil {
+				return err
+			}
+			if existing.Key != "" && existing.ResourceVersion >= newObjs[i].ResourceVersion {
+				continue
+			}
+			if err := tx.Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: models.KEY}},
+				UpdateAll: true,
+			}).Create(&newObjs[i]).Error; err != nil {
+				return err
+			}
+		}
+		if len(oldKeys) > 0 {
+			return tx.Where(models.KEY+" IN ?", oldKeys).Delete(&models.MetaV2{}).Error
+		}
+		return nil
+	})
+}
+
 // upgrade_db
 func (s *MetaV2Service) SaveNodeUpgradeJobRequestToMetaV2(nodeUpgradeJobReq commontypes.NodeUpgradeJobRequest) error {
 	db := s.db

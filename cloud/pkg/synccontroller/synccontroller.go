@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	corelisters "k8s.io/client-go/listers/core/v1"
@@ -25,6 +26,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/informers"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/synccontroller/config"
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 const (
@@ -154,6 +156,18 @@ func (sctl *SyncController) reconcileClusterObjectSyncs() {
 	for _, sync := range allClusterObjectSyncs {
 		sctl.reconcileClusterObjectSync(sync)
 	}
+}
+
+// resourceFor returns the GVR of the object recorded in an ObjectSync or a
+// ClusterObjectSync. The API server's RESTMapper is authoritative for CRDs and
+// irregular plurals; the local RESTMapper is only used if it fails.
+func (sctl *SyncController) resourceFor(gvk schema.GroupVersionKind) schema.GroupVersionResource {
+	gvr, err := sctl.informerManager.ResourceFor(gvk)
+	if err != nil {
+		klog.V(4).Infof("failed to get the resource of %s from the API server, fall back to the local mapping: %v", gvk.String(), err)
+		return util.ResourceFor(gvk)
+	}
+	return gvr
 }
 
 func (sctl *SyncController) deleteObjectSyncs() {

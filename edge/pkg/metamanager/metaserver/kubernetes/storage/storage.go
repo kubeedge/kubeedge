@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	oteltrace "go.opentelemetry.io/otel/trace"
@@ -87,17 +88,29 @@ func NewREST() (*REST, error) {
 func decorateList(ctx context.Context, list runtime.Object) {
 	info, ok := apirequest.RequestInfoFrom(ctx)
 	if ok && list.GetObjectKind().GroupVersionKind().Empty() {
-		gvk := schema.GroupVersionKind{
-			Group:   info.APIGroup,
-			Version: info.APIVersion,
-			Kind:    util.UnsafeResourceToKind(info.Resource) + "List",
-		}
-		list.GetObjectKind().SetGroupVersionKind(gvk)
+		list.GetObjectKind().SetGroupVersionKind(util.ListKindFor(requestGVR(info)))
 	}
+}
+
+// requestGVR returns the group, version and resource of a resource request.
+func requestGVR(info *apirequest.RequestInfo) schema.GroupVersionResource {
+	return schema.GroupVersionResource{Group: info.APIGroup, Version: info.APIVersion, Resource: info.Resource}
+}
+
+// learnListKind records the kind of the list returned by the cloud for the
+// resource of the request, which discovery documents don't carry, so that
+// lists served from the local storage use it.
+func learnListKind(ctx context.Context, list runtime.Object) {
+	info, ok := apirequest.RequestInfoFrom(ctx)
+	if !ok || !info.IsResourceRequest || info.Subresource != "" {
+		return
+	}
+	util.DefaultRESTMapper().LearnListKind(requestGVR(info), list)
 }
 
 func (r *REST) Get(ctx context.Context, _ string, options *metav1.GetOptions) (runtime.Object, error) {
 	info, _ := apirequest.RequestInfoFrom(ctx)
+	r.ensureMapping(ctx, info)
 	// First try to get the object from remote cloud
 	obj, err := func() (runtime.Object, error) {
 		app, err := r.Agent.Generate(ctx, metaserver.Get, *options, nil)
@@ -158,6 +171,7 @@ func (r *REST) PassThrough(ctx context.Context, options *metav1.GetOptions) ([]b
 		if err != nil {
 			klog.Warningf("[metaserver/passThrough] failed to insert version information into database: %v", err)
 		}
+		util.DefaultRESTMapper().LearnFromDiscovery(app.RespBody)
 		return app.RespBody, nil
 	}()
 	if err != nil {
@@ -167,6 +181,7 @@ func (r *REST) PassThrough(ctx context.Context, options *metav1.GetOptions) ([]b
 			return nil, errors.NewNotFound(schema.GroupResource{Group: info.APIGroup, Resource: info.Resource}, info.Name)
 		}
 		klog.Infof("[metaserver/reststorage] successfully process get req (%v) at local", info.Path)
+		util.DefaultRESTMapper().LearnFromDiscovery(resp)
 	}
 
 	klog.Infof("[metaserver/passThrough] successfully process request (%v)", info.Path)
@@ -175,6 +190,7 @@ func (r *REST) PassThrough(ctx context.Context, options *metav1.GetOptions) ([]b
 
 func (r *REST) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
 	info, _ := apirequest.RequestInfoFrom(ctx)
+	r.ensureMapping(ctx, info)
 	// First try to list the object from remote cloud
 	list, err := func() (runtime.Object, error) {
 		app, err := r.Agent.Generate(ctx, metaserver.List, *options, nil)
@@ -193,6 +209,7 @@ func (r *REST) List(ctx context.Context, options *metainternalversion.ListOption
 		if err != nil {
 			return nil, err
 		}
+		learnListKind(ctx, list)
 		// imitator.DefaultV2Client.InsertOrUpdateObj(context.TODO(), list)
 		klog.Infof("[metaserver/reststorage] successfully process list req (%v) through cloud", info.Path)
 		return list, nil
@@ -213,6 +230,7 @@ func (r *REST) List(ctx context.Context, options *metainternalversion.ListOption
 
 func (r *REST) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
 	info, _ := apirequest.RequestInfoFrom(ctx)
+	r.ensureMapping(ctx, info)
 
 	// First try watch from remote cloud
 	_, err := func() (runtime.Object, error) {
@@ -240,6 +258,75 @@ func (r *REST) Watch(ctx context.Context, options *metainternalversion.ListOptio
 	}
 
 	return r.Store.Watch(ctx, options)
+}
+
+// discoveryRetryInterval is the minimum interval between two requests for the
+// discovery document of a group version made by ensureMapping, so that a
+// resource the document does not resolve doesn't cost a request per watch.
+const discoveryRetryInterval = 5 * time.Minute
+
+// discoveryRequested records when ensureMapping last requested the discovery
+// document of a group version.
+var discoveryRequested sync.Map // schema.GroupVersion -> time.Time
+
+// ensureMapping makes sure the kind of the requested resource is known before
+// objects of it are stored, by a get or list, or pushed by the cloud for a
+// watch, so that they are stored under the requested resource. Clients that
+// read the discovery document first teach the mapping already. Otherwise the
+// discovery document of the group version is requested from the cloud, or read
+// from the local cache.
+func (r *REST) ensureMapping(ctx context.Context, info *apirequest.RequestInfo) {
+	if info == nil || !info.IsResourceRequest {
+		return
+	}
+	mapper := util.DefaultRESTMapper()
+	gvr := requestGVR(info)
+	if mapper.HasMapping(gvr) {
+		return
+	}
+	now := time.Now()
+	if last, ok := discoveryRequested.Load(gvr.GroupVersion()); ok && now.Sub(last.(time.Time)) < discoveryRetryInterval {
+		return
+	}
+	discoveryRequested.Store(gvr.GroupVersion(), now)
+	path := discoveryPath(gvr.GroupVersion())
+	if doc, err := r.getDiscovery(ctx, path); err == nil {
+		mapper.LearnFromDiscovery(doc)
+	} else if doc, err := imitator.DefaultV2Client.GetPassThroughObj(ctx, path); err == nil {
+		mapper.LearnFromDiscovery(doc)
+	} else {
+		klog.V(4).Infof("[metaserver/reststorage] no discovery document for %s, kind of %s is guessed", path, gvr.String())
+	}
+}
+
+// getDiscovery requests the discovery document at path from the cloud and
+// caches it like any discovery request passed through by the metaserver.
+func (r *REST) getDiscovery(ctx context.Context, path string) ([]byte, error) {
+	dctx := apirequest.WithRequestInfo(ctx, &apirequest.RequestInfo{
+		IsResourceRequest: false,
+		Path:              path,
+		Verb:              "get",
+	})
+	app, err := r.Agent.Generate(dctx, metaserver.ApplicationVerb("get"), metav1.GetOptions{}, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer app.Close()
+	if err := r.Agent.Apply(app); err != nil {
+		return nil, err
+	}
+	if err := imitator.DefaultV2Client.InsertOrUpdatePassThroughObj(context.TODO(), app.RespBody, app.Key); err != nil {
+		klog.Warningf("[metaserver/reststorage] failed to cache discovery document %s: %v", path, err)
+	}
+	return app.RespBody, nil
+}
+
+// discoveryPath returns the path of the discovery document of gv.
+func discoveryPath(gv schema.GroupVersion) string {
+	if gv.Group == "" {
+		return "/api/" + gv.Version
+	}
+	return "/apis/" + gv.Group + "/" + gv.Version
 }
 
 func (r *REST) Create(ctx context.Context, obj runtime.Object, _ rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
