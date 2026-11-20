@@ -6,6 +6,7 @@ import (
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	metamanagerconfig "github.com/kubeedge/kubeedge/edge/pkg/metamanager/config"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/metaserver"
@@ -62,6 +63,8 @@ func (m *metaManager) Start() {
 		imitator.StorageInit()
 		go metaserver.NewMetaServer().Start(beehiveContext.Done())
 	}
+
+	go client.RunExpiredTokenGC(beehiveContext.Done(), 0)
 
 	m.runMetaManager()
 }
