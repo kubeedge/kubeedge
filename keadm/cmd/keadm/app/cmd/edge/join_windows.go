@@ -129,6 +129,7 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 	if opt.EdgeNodeName != "" {
 		edgeCoreConfig.Modules.Edged.HostnameOverride = opt.EdgeNodeName
 	}
+	applyImageRepository(edgeCoreConfig, opt.ImageRepository)
 
 	if opt.RemoteRuntimeEndpoint != "" {
 		edgeCoreConfig.Modules.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint = opt.RemoteRuntimeEndpoint
