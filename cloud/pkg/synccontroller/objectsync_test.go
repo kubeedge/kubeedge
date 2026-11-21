@@ -41,30 +41,26 @@ import (
 
 func TestCompareResourceVersion(t *testing.T) {
 	tests := []struct {
-		name       string
-		testNumber []string
-		want       int
+		name    string
+		rva     string
+		rvb     string
+		want    int
+		wantErr bool
 	}{
-		{
-			name:       "test greater than",
-			testNumber: []string{"123", "124"},
-			want:       -1,
-		},
-		{
-			name:       "test less than",
-			testNumber: []string{"124", "123"},
-			want:       1,
-		},
-		{
-			name:       "test equal",
-			testNumber: []string{"123", "123"},
-			want:       0,
-		},
+		{name: "rva less than rvb", rva: "123", rvb: "124", want: -1},
+		{name: "rva greater than rvb", rva: "124", rvb: "123", want: 1},
+		{name: "rva equal to rvb", rva: "123", rvb: "123", want: 0},
+		{name: "non-numeric first argument", rva: "abc", rvb: "123", wantErr: true},
+		{name: "empty first argument", rva: "", rvb: "123", wantErr: true},
+		{name: "non-numeric second argument", rva: "123", rvb: "abc", wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := CompareResourceVersion(tt.testNumber[0], tt.testNumber[1])
-			if !reflect.DeepEqual(tt.want, got) {
+			got, err := CompareResourceVersion(tt.rva, tt.rvb)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("CompareResourceVersion() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !tt.wantErr && !reflect.DeepEqual(tt.want, got) {
 				t.Errorf("CompareResourceVersion() = %v, want %v", got, tt.want)
 			}
 		})
