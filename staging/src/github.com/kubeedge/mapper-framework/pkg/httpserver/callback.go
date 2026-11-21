@@ -146,6 +146,7 @@ func (rs *RestServer) MetaGetModel(writer http.ResponseWriter, request *http.Req
 			model, err := rs.devPanel.GetModel(modelID)
 			if err != nil {
 				http.Error(writer, fmt.Sprintf("Get device model error: %v", err), http.StatusInternalServerError)
+				return
 			}
 			response := &MetaGetModelResponse{
 				BaseResponse: NewBaseResponse(http.StatusOK),
