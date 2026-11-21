@@ -28,8 +28,19 @@ Generate certificates for kubeedge cloudstream server
 */}}
 {{- define "cloudcore.gen-certs" -}}
 {{- $altNames := list ( printf "%s.%s" (include "cloudcore.name" .) .Release.Namespace ) ( printf "%s.%s.svc" (include "cloudcore.name" .) .Release.Namespace ) -}}
+{{- $ips := list -}}
+{{- range .Values.cloudCore.modules.cloudHub.advertiseAddress -}}
+{{- if . -}}
+{{- $ips = append $ips . -}}
+{{- end -}}
+{{- end -}}
+{{- range .Values.cloudCore.modules.cloudHub.dnsNames -}}
+{{- if . -}}
+{{- $altNames = append $altNames . -}}
+{{- end -}}
+{{- end -}}
 {{- $ca := genCA "cloudcore-ca" 365 -}}
-{{- $cert := genSignedCert ( include "cloudcore.name" . ) nil $altNames 365 $ca -}}
+{{- $cert := genSignedCert ( include "cloudcore.name" . ) $ips $altNames 365 $ca -}}
 streamCA.crt: {{ $ca.Cert | b64enc }}
 stream.crt: {{ $cert.Cert | b64enc }}
 stream.key: {{ $cert.Key | b64enc }}
