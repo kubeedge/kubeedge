@@ -36,7 +36,9 @@ func (k *SyncKeeper) sendToKeepChannel(msg model.Message) error {
 }
 
 func (k *SyncKeeper) addKeepChannel(msgID string) chan model.Message {
-	channel := make(chan model.Message)
+	// sendToKeepChannel does not block, so the channel holds one message for a
+	// response that arrives before WaitResponse starts receiving.
+	channel := make(chan model.Message, 1)
 	k.keeper.Store(msgID, channel)
 	return channel
 }
