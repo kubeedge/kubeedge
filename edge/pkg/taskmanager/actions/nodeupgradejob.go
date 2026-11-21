@@ -172,6 +172,7 @@ func (nodeUpgradeJobActionHandler) checkItems(
 		local, err := ctrcli.GetImageDigest(ctx, image)
 		if err != nil {
 			resp.err = fmt.Errorf("failed to get image digest of %s, err: %v", image, err)
+			return resp
 		}
 		if local != expectedDigest {
 			resp.err = fmt.Errorf("image digest of %s is not correct, local: %s, expected: %s",
