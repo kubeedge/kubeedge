@@ -40,10 +40,16 @@ func (f *FilterImpl) Name() string {
 	return filterName
 }
 
+// isDefaultMasterEndpointSlice matches by Service label as well as by name,
+// because some managed control planes publish the default/kubernetes Service
+// through generated slice names such as "kubernetes-8gbjh".
 func isDefaultMasterEndpointSlice(obj *unstructured.Unstructured) bool {
-	return obj.GetObjectKind().GroupVersionKind().Kind == resourceName &&
-		obj.GetName() == defaultEndpointSliceName &&
-		obj.GetNamespace() == defaultEndpointSliceNameSpace
+	if obj.GetObjectKind().GroupVersionKind().Kind != resourceName ||
+		obj.GetNamespace() != defaultEndpointSliceNameSpace {
+		return false
+	}
+	return obj.GetName() == defaultEndpointSliceName ||
+		obj.GetLabels()[discovery.LabelServiceName] == defaultEndpointSliceName
 }
 
 func (f *FilterImpl) NeedFilter(content interface{}) bool {

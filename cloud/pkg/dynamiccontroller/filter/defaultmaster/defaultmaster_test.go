@@ -270,3 +270,24 @@ func TestFilterResourceOptionalEndpointPortFields(t *testing.T) {
 		})
 	}
 }
+
+func TestNeedFilterMatchesGeneratedDefaultMasterEndpointSlice(t *testing.T) {
+	filter := newDefaultMasterFilter()
+	generated := func(namespace, service string) *unstructured.Unstructured {
+		obj := &unstructured.Unstructured{}
+		obj.SetGroupVersionKind(discovery.SchemeGroupVersion.WithKind(resourceName))
+		obj.SetName("kubernetes-8gbjh")
+		obj.SetNamespace(namespace)
+		obj.SetLabels(map[string]string{discovery.LabelServiceName: service})
+		return obj
+	}
+
+	assert.True(t, filter.NeedFilter(generated(defaultEndpointSliceNameSpace, defaultEndpointSliceName)))
+	assert.False(t, filter.NeedFilter(generated(defaultEndpointSliceNameSpace, "application")))
+	assert.False(t, filter.NeedFilter(generated("kube-system", defaultEndpointSliceName)))
+
+	list := &unstructured.UnstructuredList{
+		Items: []unstructured.Unstructured{*generated(defaultEndpointSliceNameSpace, defaultEndpointSliceName)},
+	}
+	assert.True(t, filter.NeedFilter(list))
+}
