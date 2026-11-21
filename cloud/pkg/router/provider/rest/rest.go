@@ -8,13 +8,17 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
 	"k8s.io/klog/v2"
 
 	v1 "github.com/kubeedge/api/apis/rules/v1"
+	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
+	routerconfig "github.com/kubeedge/kubeedge/cloud/pkg/router/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/constants"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/listener"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/provider"
@@ -23,6 +27,12 @@ import (
 )
 
 var inited int32
+
+var (
+	targetClient     *http.Client
+	targetClientErr  error
+	targetClientOnce sync.Once
+)
 
 type restFactory struct {
 }
@@ -53,9 +63,23 @@ func (*restFactory) GetSource(ep *v1.RuleEndpoint, sourceResource map[string]str
 	if atomic.CompareAndSwapInt32(&inited, 0, 1) {
 		listener.InitHandler()
 		// guarantee that it will be executed only once
-		go listener.RestHandlerInstance.Serve()
+		go serveRestListener()
 	}
 	return cli
+}
+
+// serveRestListener starts the REST listener. With TLS, it first waits for
+// CloudHub to prepare the CloudCore CA and certificate.
+func serveRestListener() {
+	if listener.RestHandlerInstance.TLSEnabled() {
+		klog.Info("router REST listener is waiting for the CloudCore certificates")
+		select {
+		case <-cloudhub.CertsReady:
+		case <-beehiveContext.Done():
+			return
+		}
+	}
+	listener.RestHandlerInstance.Serve()
 }
 
 func (*restFactory) GetTarget(ep *v1.RuleEndpoint, targetResource map[string]string) provider.Target {
@@ -211,8 +235,38 @@ func (r *Rest) GoToTarget(data map[string]interface{}, _ chan struct{}) (interfa
 		return nil, err
 	}
 
-	client := httpUtils.NewHTTPClient()
+	client, err := getTargetClient()
+	if err != nil {
+		return nil, err
+	}
 	return httpUtils.SendRequest(req, client)
+}
+
+// getTargetClient returns the client shared by all REST targets. Reusing one
+// client keeps a single connection pool instead of leaving a transport, with
+// its idle connections and goroutines, behind for every request.
+func getTargetClient() (*http.Client, error) {
+	targetClientOnce.Do(func() {
+		caFile, insecureSkipVerify := "", true
+		if c := routerconfig.Config.RestTargetTLS; c != nil {
+			caFile, insecureSkipVerify = c.CAFile, c.InsecureSkipVerify
+		}
+		if insecureSkipVerify {
+			klog.Warning("certificates of https REST targets are not verified, " +
+				"set router.restTargetTLS.insecureSkipVerify to false to verify them")
+			if caFile != "" {
+				klog.Warningf("router.restTargetTLS.caFile %s is ignored because insecureSkipVerify is true", caFile)
+			}
+		}
+		tlsConfig, err := httpUtils.NewRestTargetTLSConfig(caFile, insecureSkipVerify)
+		if err != nil {
+			targetClientErr = fmt.Errorf("failed to create the REST target client: %v", err)
+			klog.Error(targetClientErr)
+			return
+		}
+		targetClient = httpUtils.NewHTTPClientWithTLSConfig(tlsConfig)
+	})
+	return targetClient, targetClientErr
 }
 
 func normalizeResource(resource string) string {

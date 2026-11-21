@@ -17,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
+	hubconfig "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/client"
 	routerConfig "github.com/kubeedge/kubeedge/cloud/pkg/router/config"
 	"github.com/kubeedge/kubeedge/cloud/pkg/router/utils"
@@ -35,6 +36,9 @@ type RestHandler struct {
 	handlers    sync.Map
 	port        int
 	bindAddress string
+	tlsEnabled  bool
+	// forwardClient forwards requests to the REST listener of another CloudCore
+	forwardClient *http.Client
 }
 
 func InitHandler() {
@@ -48,7 +52,14 @@ func InitHandler() {
 	if RestHandlerInstance.port <= 0 {
 		RestHandlerInstance.port = 9443
 	}
+	RestHandlerInstance.tlsEnabled = routerConfig.Config.TLS != nil && routerConfig.Config.TLS.Enable
+	RestHandlerInstance.forwardClient = &http.Client{Timeout: RestHandlerInstance.restTimeout + forwardTimeoutMargin}
 	klog.Infof("rest init: %v", RestHandlerInstance)
+}
+
+// TLSEnabled indicates whether the REST listener serves HTTPS
+func (rh *RestHandler) TLSEnabled() bool {
+	return rh.tlsEnabled
 }
 
 func (rh *RestHandler) Serve() {
@@ -58,11 +69,32 @@ func (rh *RestHandler) Serve() {
 	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", rh.bindAddress, rh.port),
 		Handler: mux,
-		// TODO: add tls for router
 	}
-	klog.Infof("router server listening in %d...", rh.port)
-	//err := server.ListenAndServeTLS("", "")
-	if err := server.ListenAndServe(); err != nil {
+
+	if !rh.tlsEnabled {
+		klog.Infof("router server listening in %d...", rh.port)
+		if err := server.ListenAndServe(); err != nil {
+			klog.Errorf("start rest endpoint failed, err: %v", err)
+		}
+		return
+	}
+
+	tlsConfig, err := newServerTLSConfig(routerConfig.Config.TLS)
+	if err != nil {
+		klog.Errorf("start rest endpoint failed, err: %v", err)
+		return
+	}
+	forwardClient, err := newForwardTLSClient(hubconfig.Config.Ca, tlsConfig.Certificates[0].Certificate[0],
+		rh.restTimeout+forwardTimeoutMargin)
+	if err != nil {
+		klog.Errorf("start rest endpoint failed, err: %v", err)
+		return
+	}
+	rh.forwardClient = forwardClient
+	server.TLSConfig = tlsConfig
+
+	klog.Infof("router server listening in %d with TLS...", rh.port)
+	if err := server.ListenAndServeTLS("", ""); err != nil {
 		klog.Errorf("start rest endpoint failed, err: %v", err)
 	}
 }
@@ -150,12 +182,11 @@ func (rh *RestHandler) httpHandler(w http.ResponseWriter, r *http.Request) {
 					return fmt.Errorf("failed to create forward request: %v", err)
 				}
 
-				forwardReq.TLS = r.TLS
 				forwardReq.Header = make(http.Header)
 				for key, values := range r.Header {
 					forwardReq.Header[key] = values
 				}
-				return requestForward(targetCloudCoreIP, w, forwardReq)
+				return rh.requestForward(targetCloudCoreIP, w, forwardReq)
 			}
 
 			matchPath, exist := rh.matchedPath(r.RequestURI)
@@ -265,8 +296,11 @@ func GetEdgeToCloudCoreIP(ctx context.Context, nodeName string) (string, error) 
 	return cloudCoreIP, nil
 }
 
-func requestForward(targetCloudCoreIP string, w http.ResponseWriter, forwardReq *http.Request) error {
-	httpClient := &http.Client{}
+func (rh *RestHandler) requestForward(targetCloudCoreIP string, w http.ResponseWriter, forwardReq *http.Request) error {
+	httpClient := rh.forwardClient
+	if httpClient == nil {
+		httpClient = &http.Client{Timeout: rh.restTimeout + forwardTimeoutMargin}
+	}
 	resp, err := httpClient.Do(forwardReq)
 	if err != nil {
 		return fmt.Errorf("failed to forward request: %v", err)

@@ -44,6 +44,9 @@ func ValidateCloudCoreConfiguration(c *v1alpha1.CloudCoreConfig) field.ErrorList
 	allErrs = append(allErrs, ValidateModuleSyncController(*c.Modules.SyncController)...)
 	allErrs = append(allErrs, ValidateModuleDynamicController(*c.Modules.DynamicController)...)
 	allErrs = append(allErrs, ValidateModuleCloudStream(*c.Modules.CloudStream)...)
+	if c.Modules.Router != nil {
+		allErrs = append(allErrs, ValidateModuleRouter(*c.Modules.Router)...)
+	}
 	return allErrs
 }
 
@@ -198,6 +201,40 @@ func ValidateModuleCloudStream(d v1alpha1.CloudStream) field.ErrorList {
 	}
 	if !utilvalidation.FileIsExist(d.TLSStreamCAFile) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("TLSStreamCAFile"), d.TLSStreamCAFile, "TLSStreamCAFile not exist"))
+	}
+
+	return allErrs
+}
+
+// ValidateModuleRouter validates `r` and returns an errorList if it is invalid
+func ValidateModuleRouter(r v1alpha1.Router) field.ErrorList {
+	if !r.Enable {
+		return field.ErrorList{}
+	}
+
+	allErrs := field.ErrorList{}
+
+	if r.TLS != nil && r.TLS.Enable {
+		tlsPath := field.NewPath("router", "tls")
+		switch {
+		case r.TLS.CertFile == "" && r.TLS.PrivateKeyFile == "":
+			// the CloudCore certificate is used
+		case r.TLS.CertFile == "" || r.TLS.PrivateKeyFile == "":
+			allErrs = append(allErrs, field.Invalid(tlsPath, r.TLS,
+				"certFile and privateKeyFile must be set together"))
+		default:
+			if !utilvalidation.FileIsExist(r.TLS.CertFile) {
+				allErrs = append(allErrs, field.Invalid(tlsPath.Child("certFile"), r.TLS.CertFile, "certFile not exist"))
+			}
+			if !utilvalidation.FileIsExist(r.TLS.PrivateKeyFile) {
+				allErrs = append(allErrs, field.Invalid(tlsPath.Child("privateKeyFile"), r.TLS.PrivateKeyFile, "privateKeyFile not exist"))
+			}
+		}
+	}
+
+	if r.RestTargetTLS != nil && r.RestTargetTLS.CAFile != "" && !utilvalidation.FileIsExist(r.RestTargetTLS.CAFile) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("router", "restTargetTLS", "caFile"),
+			r.RestTargetTLS.CAFile, "caFile not exist"))
 	}
 
 	return allErrs
