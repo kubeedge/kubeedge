@@ -91,21 +91,25 @@ func (executor *backupExecutor) prerun(opts BaseOptions) error {
 
 func (executor *backupExecutor) backup(opts BaseOptions) error {
 	klog.Info("backup process start ...")
-	backupFiles := []string{
-		executor.cfg.DataBase.DataSource,
-		opts.Config,
-		filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName),
-	}
+	backupFiles := backupFilesPathMap(executor.cfg.DataBase.DataSource, opts.Config)
 	backupPath := filepath.Join(common.KubeEdgeBackupPath, executor.currentVersion)
 	if err := os.MkdirAll(backupPath, os.ModePerm); err != nil {
 		return fmt.Errorf("failed to create backup path %s, err: %v", backupPath, err)
 	}
-	for _, file := range backupFiles {
-		dest := filepath.Join(backupPath, filepath.Base(file))
+	for backupFile, file := range backupFiles {
+		dest := filepath.Join(backupPath, backupFile)
 		if err := files.FileCopy(file, dest); err != nil {
 			return fmt.Errorf("failed to backup file %s, err: %v", file, err)
 		}
 	}
 	klog.Info("backup process successful")
 	return nil
+}
+
+func backupFilesPathMap(dataSource, config string) map[string]string {
+	return map[string]string{
+		"edgecore.db":                dataSource,
+		"edgecore.yaml":              config,
+		constants.KubeEdgeBinaryName: filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName),
+	}
 }

@@ -142,19 +142,19 @@ func TestBackupExecutorPrerun(t *testing.T) {
 }
 
 func TestBackupExecutorBackup(t *testing.T) {
-	var copied bool
+	var fileChecked int
 	executor := &backupExecutor{
 		baseUpgradeExecutor: baseUpgradeExecutor{
 			cfg: &cfgv1alpha2.EdgeCoreConfig{
 				DataBase: &cfgv1alpha2.DataBase{
-					DataSource: cfgv1alpha2.DataBaseDataSource,
+					DataSource: "/data/kubeedge/edge.db",
 				},
 			},
 			currentVersion: fakeCurrentVersion,
 		},
 	}
 	opts := BaseOptions{
-		Config: constants.EdgecoreConfigPath,
+		Config: "/data/kubeedge/edge.yaml",
 	}
 
 	patches := gomonkey.NewPatches()
@@ -164,14 +164,25 @@ func TestBackupExecutorBackup(t *testing.T) {
 		return nil
 	})
 	patches.ApplyFunc(files.FileCopy, func(src, dst string) error {
-		copied = true
-		srcFileName := filepath.Base(src)
-		want := filepath.Join(common.KubeEdgeBackupPath, executor.currentVersion, srcFileName)
-		assert.Equal(t, want, dst)
+		backupPath := filepath.Join(common.KubeEdgeBackupPath, executor.currentVersion)
+		assert.Equal(t, backupPath, filepath.Dir(dst))
+
+		switch filepath.Base(dst) {
+		case "edgecore.db":
+			assert.Equal(t, executor.cfg.DataBase.DataSource, src)
+			fileChecked++
+		case "edgecore.yaml":
+			assert.Equal(t, opts.Config, src)
+			fileChecked++
+		case "edgecore":
+			want := filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName)
+			assert.Equal(t, want, src)
+			fileChecked++
+		}
 		return nil
 	})
 
 	err := executor.backup(opts)
 	assert.NoError(t, err)
-	assert.True(t, copied)
+	assert.Equal(t, 3, fileChecked)
 }

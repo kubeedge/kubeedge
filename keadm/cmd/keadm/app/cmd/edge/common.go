@@ -20,6 +20,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"maps"
+	"os"
+	"path/filepath"
+	"slices"
 
 	"k8s.io/klog/v2"
 
@@ -27,9 +32,13 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 	edgecoreutil "github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/edgecore"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util/idempotency"
+	"github.com/kubeedge/kubeedge/pkg/util/files"
 )
 
-const unknownEdgeCoreVersion = "unknown"
+const (
+	unknownEdgeCoreVersion = "unknown"
+	stagedFileSuffix       = ".keadm-tmp"
+)
 
 var OccupiedError = errors.New("the mutually exclusive command is being executed")
 
@@ -98,4 +107,84 @@ func (executor *baseUpgradeExecutor) runPostRunHook(postrunHook string) {
 			fmt.Printf("Execute post-run script: %s failed: %v\n", postrunHook, err)
 		}
 	}
+}
+
+// replaceFiles writes each source next to its destination before calling stop,
+// so a failed write leaves edgecore running.
+func replaceFiles(srcToDest map[string]string, stop func() error) error {
+	type stagedFile struct{ src, tmp, dest string }
+	var staged []stagedFile
+	defer func() {
+		for _, f := range staged {
+			os.Remove(f.tmp)
+		}
+	}()
+	for _, src := range slices.Sorted(maps.Keys(srcToDest)) {
+		dest := srcToDest[src]
+		if target, err := filepath.EvalSymlinks(dest); err == nil {
+			dest = target
+		} else if info, lerr := os.Lstat(dest); lerr == nil && info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("failed to resolve symlink %s, err: %v", dest, err)
+		}
+		f := stagedFile{src: src, tmp: dest + stagedFileSuffix, dest: dest}
+		staged = append(staged, f)
+		if err := stageFile(f.src, f.tmp, f.dest); err != nil {
+			return fmt.Errorf("failed to copy %s to %s, err: %v", f.src, f.tmp, err)
+		}
+	}
+	if err := stop(); err != nil {
+		return fmt.Errorf("failed to stop edgecore, err: %v", err)
+	}
+	for _, f := range staged {
+		err := os.Rename(f.tmp, f.dest)
+		if err == nil {
+			continue
+		}
+		// Renaming over a bind-mounted file fails, so copy in place as before.
+		klog.Warningf("failed to rename %s to %s, copy %s instead, err: %v", f.tmp, f.dest, f.src, err)
+		os.Remove(f.tmp)
+		if err := files.FileCopy(f.src, f.dest); err != nil {
+			return fmt.Errorf("failed to copy %s to %s, err: %v", f.src, f.dest, err)
+		}
+	}
+	return nil
+}
+
+func stageFile(src, tmp, dest string) error {
+	srcInfo, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+	if !srcInfo.Mode().IsRegular() {
+		return fmt.Errorf("source file %s is not a regular file", src)
+	}
+	source, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer source.Close()
+	mode := srcInfo.Mode()
+	destInfo, destErr := os.Stat(dest)
+	if destErr == nil {
+		mode = destInfo.Mode()
+	}
+	os.Remove(tmp)
+	tmpFile, err := os.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
+	if err != nil {
+		return err
+	}
+	defer tmpFile.Close()
+	if _, err := io.Copy(tmpFile, source); err != nil {
+		return err
+	}
+	if destErr == nil {
+		// OpenFile applies the umask, so set the mode of dest again.
+		if err := tmpFile.Chmod(mode); err != nil {
+			return err
+		}
+	}
+	if err := tmpFile.Sync(); err != nil {
+		return err
+	}
+	return tmpFile.Close()
 }

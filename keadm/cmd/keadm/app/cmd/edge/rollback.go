@@ -108,21 +108,17 @@ func (executor *rollbackExecutor) prerun(opts *RollbackOptions) error {
 
 func (executor *rollbackExecutor) rollback(opts RollbackOptions) error {
 	klog.Info("rollback process start ...")
-	// Stop origin edgecore.
-	if err := util.KillKubeEdgeBinary(constants.KubeEdgeBinaryName); err != nil {
-		return fmt.Errorf("failed to stop edgecore, err: %v", err)
-	}
-	rollbackFilesPathMap := map[string]string{
-		"edgecore.db":                executor.cfg.DataBase.DataSource,
-		"edgecore.yaml":              opts.Config,
-		constants.KubeEdgeBinaryName: filepath.Join(constants.KubeEdgeUsrBinPath, constants.KubeEdgeBinaryName),
-	}
-	// Rollback backup files.
 	backupPath := filepath.Join(common.KubeEdgeBackupPath, opts.HistoricalVersion)
-	for backupFile, dest := range rollbackFilesPathMap {
-		if err := files.FileCopy(filepath.Join(backupPath, backupFile), dest); err != nil {
-			return fmt.Errorf("failed to rollback file %s, err: %v", dest, err)
-		}
+	rollbackFilesPathMap := make(map[string]string)
+	for backupFile, dest := range backupFilesPathMap(executor.cfg.DataBase.DataSource, opts.Config) {
+		rollbackFilesPathMap[filepath.Join(backupPath, backupFile)] = dest
+	}
+	// Stop origin edgecore and rollback backup files.
+	err := replaceFiles(rollbackFilesPathMap, func() error {
+		return util.KillKubeEdgeBinary(constants.KubeEdgeBinaryName)
+	})
+	if err != nil {
+		return err
 	}
 	// Start new edgecore.
 	if err := runEdgeCore(); err != nil {
