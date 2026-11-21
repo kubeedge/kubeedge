@@ -11,10 +11,20 @@ import (
 	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
 )
 
+// RuleEndpoint admission flow and maintenance notes:
+//
+// admission.go registers this webhook for Create, Update, and Delete. The
+// AdmissionReview object is available for Create and Update, so both must
+// decode and validate review.Request.Object. Delete is allowed without
+// decoding a full object. Keep this operation list synchronized with
+// registerWebhooks; registering Update while omitting it here makes every
+// endpoint update fail as unsupported. Endpoint-specific validation should be
+// added to validateRuleEndpoint and covered for both Create and Update.
+
 func admitRuleEndpoint(review admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 	reviewResponse := admissionv1.AdmissionResponse{}
 	switch review.Request.Operation {
-	case admissionv1.Create:
+	case admissionv1.Create, admissionv1.Update:
 		raw := review.Request.Object.Raw
 		ruleEndpoint := rulesv1.RuleEndpoint{}
 		deserializer := codecs.UniversalDeserializer()
