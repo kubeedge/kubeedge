@@ -110,33 +110,24 @@ func TestIsKubeEdgeProcessRunningOthers(t *testing.T) {
 func TestHasSystemdOthers(t *testing.T) {
 	tests := []struct {
 		name        string
-		cmdSuccess  bool
 		fileInitErr error
 		isDirectory bool
 		expected    bool
 	}{
 		{
-			name:       "Command succeeds",
-			cmdSuccess: true,
-			expected:   true,
-		},
-		{
-			name:        "Command fails but systemd path exists and is directory",
-			cmdSuccess:  false,
+			name:        "systemd path exists and is directory",
 			fileInitErr: nil,
 			isDirectory: true,
 			expected:    true,
 		},
 		{
-			name:        "Command fails and systemd path exists but is not directory",
-			cmdSuccess:  false,
+			name:        "systemd path exists but is not directory",
 			fileInitErr: nil,
 			isDirectory: false,
 			expected:    false,
 		},
 		{
-			name:        "Command fails and systemd path doesn't exist",
-			cmdSuccess:  false,
+			name:        "systemd path doesn't exist",
 			fileInitErr: fmt.Errorf("file not found"),
 			expected:    false,
 		},
@@ -146,19 +137,6 @@ func TestHasSystemdOthers(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			patches := gomonkey.NewPatches()
 			defer patches.Reset()
-
-			mockCmd := &execs.Command{}
-			patches.ApplyFunc(execs.NewCommand, func(command string) *execs.Command {
-				assert.Equal(t, "file /sbin/init", command)
-				return mockCmd
-			})
-
-			patches.ApplyMethod(mockCmd, "Exec", func(*execs.Command) error {
-				if tt.cmdSuccess {
-					return nil
-				}
-				return fmt.Errorf("command failed")
-			})
 
 			patches.ApplyFunc(os.Lstat, func(name string) (os.FileInfo, error) {
 				assert.Equal(t, common.SystemdBootPath, name)
