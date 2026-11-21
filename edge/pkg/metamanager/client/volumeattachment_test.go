@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	api "k8s.io/api/storage/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -122,4 +123,19 @@ func TestHandleVolumeAttachmentFromMetaManager(t *testing.T) {
 	assert.Empty(va.Spec.Attacher)
 	assert.Empty(va.Spec.NodeName)
 	assert.Nil(va.Spec.Source.PersistentVolumeName)
+}
+
+func TestHandleVolumeAttachment_NotFound(t *testing.T) {
+	notFound, err := json.Marshal(apierrors.NewNotFound(api.Resource("volumeattachment"), "test-va"))
+	assert.NoError(t, err)
+
+	result, err := handleVolumeAttachmentFromMetaManager(notFound)
+	assert.Nil(t, result)
+	assert.True(t, apierrors.IsNotFound(err))
+
+	list, err := json.Marshal([]string{string(notFound)})
+	assert.NoError(t, err)
+	result, err = handleVolumeAttachmentFromMetaDB(list)
+	assert.Nil(t, result)
+	assert.True(t, apierrors.IsNotFound(err))
 }

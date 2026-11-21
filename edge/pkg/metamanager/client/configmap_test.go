@@ -23,9 +23,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	api "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 )
 
 func TestConfigMapsCreate(t *testing.T) {
@@ -256,6 +258,44 @@ func TestHandleConfigMapFromMetaManager_EmptyContent(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Empty(t, result.Name)
+}
+
+func TestConfigMapsGet_NotFound(t *testing.T) {
+	notFound, err := json.Marshal(apierrors.NewNotFound(api.Resource("configmap"), "test-cm"))
+	assert.NoError(t, err)
+	found, err := json.Marshal(&api.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "test-cm"}})
+	assert.NoError(t, err)
+
+	reply := found
+	mockMeta := &MockMetaService{
+		QueryMetaFunc: func(string, string) (*[]string, error) {
+			return &[]string{string(notFound)}, nil
+		},
+	}
+	mockSend := &mockSendInterface{
+		sendSyncFunc: func(*model.Message) (*model.Message, error) {
+			return &model.Message{Content: reply}, nil
+		},
+	}
+	configMaps := NewConfigMapsWithMetaService("default", mockSend, mockMeta)
+	defer connect.SetConnected(connect.IsConnected())
+
+	connect.SetConnected(false)
+	result, err := configMaps.Get("test-cm")
+	assert.Nil(t, result)
+	assert.True(t, apierrors.IsNotFound(err))
+
+	connect.SetConnected(true)
+	reply = notFound
+	result, err = configMaps.Get("test-cm")
+	assert.Nil(t, result)
+	assert.True(t, apierrors.IsNotFound(err))
+
+	reply = found
+	result, err = configMaps.Get("test-cm")
+	if assert.NoError(t, err) {
+		assert.Equal(t, "test-cm", result.Name)
+	}
 }
 
 func TestConfigMapsInterface(t *testing.T) {

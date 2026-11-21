@@ -23,6 +23,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	api "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -309,4 +310,19 @@ func TestHandlePersistentVolumeFromMetaManager(t *testing.T) {
 	assert.Error(err)
 	assert.Nil(result)
 	assert.Contains(err.Error(), "unmarshal message to persistentvolume failed")
+}
+
+func TestHandlePersistentVolume_NotFound(t *testing.T) {
+	notFound, err := json.Marshal(apierrors.NewNotFound(api.Resource("persistentvolume"), "test-pv"))
+	assert.NoError(t, err)
+
+	result, err := handlePersistentVolumeFromMetaManager(notFound)
+	assert.Nil(t, result)
+	assert.True(t, apierrors.IsNotFound(err))
+
+	list, err := json.Marshal([]string{string(notFound)})
+	assert.NoError(t, err)
+	result, err = handlePersistentVolumeFromMetaDB(list)
+	assert.Nil(t, result)
+	assert.True(t, apierrors.IsNotFound(err))
 }
