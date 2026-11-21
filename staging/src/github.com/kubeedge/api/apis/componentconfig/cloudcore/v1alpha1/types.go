@@ -69,13 +69,13 @@ type KubeAPIConfig struct {
 	// default "application/vnd.kubernetes.protobuf"
 	ContentType string `json:"contentType,omitempty"`
 	// QPS to while talking with kubernetes apiserver
-	// default 100
+	// default 5 * NodeLimit (2500 with the default NodeLimit of 500)
 	QPS int32 `json:"qps,omitempty"`
 	// Burst to use while talking with kubernetes apiserver
-	// default 200
+	// default 10 * NodeLimit (5000 with the default NodeLimit of 500)
 	Burst int32 `json:"burst,omitempty"`
 	// KubeConfig indicates the path to kubeConfig file with authorization and master location information.
-	// default "/root/.kube/config"
+	// default ""
 	// +Required
 	KubeConfig string `json:"kubeConfig"`
 }
@@ -114,7 +114,7 @@ type CloudHub struct {
 	// default 30
 	KeepaliveInterval int32 `json:"keepaliveInterval,omitempty"`
 	// NodeLimit is a maximum number of edge node that can connect to the single CloudCore
-	// default 1000
+	// default 500 in the full configuration (1000 in the minimal configuration)
 	NodeLimit int32 `json:"nodeLimit,omitempty"`
 	// TLSCAFile indicates ca file path
 	// default "/etc/kubeedge/ca/rootCA.crt"
@@ -213,7 +213,7 @@ type CloudHubAuthorization struct {
 	// default false
 	Enable bool `json:"enable"`
 	// Debug only logs errors but always allow messages
-	// default false
+	// default true
 	Debug bool `json:"debug"`
 	// Modes a list of authorization modes will be used
 	// default node
@@ -293,10 +293,10 @@ type EdgeControllerBuffer struct {
 	// default 1024
 	CreateNode int32 `json:"createNode,omitempty"`
 	// PatchNode indicates the buffer of patch node
-	// default 1024
+	// default 1024 + NodeLimit/2 (1274 with the default NodeLimit of 500)
 	PatchNode int32 `json:"patchNode,omitempty"`
 	// QueryNode indicates the buffer of query node
-	// default 1024
+	// default 1024 + NodeLimit (1524 with the default NodeLimit of 500)
 	QueryNode int32 `json:"queryNode,omitempty"`
 	// UpdateNode indicates the buffer of update node
 	// default 1024
@@ -308,7 +308,7 @@ type EdgeControllerBuffer struct {
 	// default 1024
 	DeletePod int32 `json:"deletePod,omitempty"`
 	// CreateLease indicates the buffer of create lease message from edge
-	// default 1024
+	// default 1024 + NodeLimit (1524 with the default NodeLimit of 500)
 	CreateLease int32 `json:"createLease,omitempty"`
 	// QueryLease indicates the buffer of query lease message from edge
 	// default 1024
@@ -336,10 +336,10 @@ type EdgeControllerLoad struct {
 	// default 1
 	UpdateNodeStatusWorkers int32 `json:"updateNodeStatusWorkers,omitempty"`
 	// QueryConfigMapWorkers indicates the load of query config map workers
-	// default 4
+	// default 100
 	QueryConfigMapWorkers int32 `json:"queryConfigMapWorkers,omitempty"`
 	// QuerySecretWorkers indicates the load of query secret workers
-	// default 4
+	// default 100
 	QuerySecretWorkers int32 `json:"querySecretWorkers,omitempty"`
 	// QueryPersistentVolumeWorkers indicates the load of query persistent volume workers
 	// default 4
@@ -351,34 +351,34 @@ type EdgeControllerLoad struct {
 	// default 4
 	QueryVolumeAttachmentWorkers int32 `json:"queryVolumeAttachmentWorkers,omitempty"`
 	// CreateNodeWorkers indicates the load of create node workers
-	// default 4
+	// default 100
 	CreateNodeWorkers int32 `json:"createNodeWorkers,omitempty"`
 	// PatchNodeWorkers indicates the load of patch node workers
-	// default 4
+	// default 100 + NodeLimit/50 (110 with the default NodeLimit of 500)
 	PatchNodeWorkers int32 `json:"patchNodeWorkers,omitempty"`
 	// QueryNodeWorkers indicates the load of query node workers
-	// default 4
+	// default NodeLimit (500 in the full default configuration)
 	QueryNodeWorkers int32 `json:"queryNodeWorkers,omitempty"`
 	// UpdateNodeWorkers indicates the load of update node workers
 	// default 4
 	UpdateNodeWorkers int32 `json:"updateNodeWorkers,omitempty"`
 	// PatchPodWorkers indicates the load of patch pod workers
-	// default 4
+	// default 100
 	PatchPodWorkers int32 `json:"patchPodWorkers,omitempty"`
 	// DeletePodWorkers indicates the load of delete pod workers
-	// default 4
+	// default 100
 	DeletePodWorkers int32 `json:"deletePodWorkers,omitempty"`
 	// CreateLeaseWorkers indicates the load of create lease workers
-	// default 4
+	// default NodeLimit (500 in the full default configuration)
 	CreateLeaseWorkers int32 `json:"createLeaseWorkers,omitempty"`
 	// QueryLeaseWorkers indicates the load of query lease workers
-	// default 4
+	// default 100
 	QueryLeaseWorkers int32 `json:"queryLeaseWorkers,omitempty"`
 	// UpdateRuleStatusWorkers indicates the load of update rule status
 	// default 4
 	UpdateRuleStatusWorkers int32 `json:"UpdateRuleStatusWorkers,omitempty"`
 	// ServiceAccountTokenWorkers indicates the load of service account token
-	// default 4
+	// default 100
 	ServiceAccountTokenWorkers int32 `json:"ServiceAccountTokenWorkers,omitempty"`
 	// CreatePodWorks indicates the load of create pod
 	// default 4
@@ -415,7 +415,7 @@ type DeviceControllerBuffer struct {
 	// default 1
 	DeviceModelEvent int32 `json:"deviceModelEvent,omitempty"`
 	// DeviceStatusEvent indicates the buffer of device status event
-	// default 1
+	// default 0
 	DeviceStatusEvent int32 `json:"deviceStatusEvent,omitempty"`
 }
 
@@ -496,14 +496,14 @@ type SyncController struct {
 type DynamicController struct {
 	// Enable indicates whether dynamicController is enabled,
 	// if set to false (for debugging etc.), skip checking other dynamicController configs.
-	// default true
+	// default false
 	Enable bool `json:"enable"`
 }
 
 // CloudStream indicates the stream controller
 type CloudStream struct {
 	// Enable indicates whether cloudstream is enabled, if set to false (for debugging etc.), skip checking other configs.
-	// default true
+	// default false
 	Enable bool `json:"enable"`
 
 	// TLSTunnelCAFile indicates ca file path
@@ -534,7 +534,7 @@ type CloudStream struct {
 }
 
 type Router struct {
-	// default true
+	// default false
 	Enable      bool   `json:"enable"`
 	Address     string `json:"address,omitempty"`
 	Port        uint32 `json:"port,omitempty"`
