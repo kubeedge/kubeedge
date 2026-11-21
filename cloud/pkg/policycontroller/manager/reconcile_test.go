@@ -990,7 +990,8 @@ func TestFilterResource(t *testing.T) {
 		t.Errorf("Failed to add rbacv1 scheme: %v", err)
 	}
 	for _, tc := range tests {
-		fakeClient := fake.NewClientBuilder().WithScheme(accessScheme).WithObjects(tc.input...).WithLists(nodeList).Build()
+		fakeClient := fake.NewClientBuilder().WithScheme(accessScheme).WithObjects(tc.input...).WithLists(nodeList).
+			WithIndex(&rbacv1.RoleBinding{}, roleRefIndexKey, roleRefIndexFunc).Build()
 		ctr := &Controller{
 			Client: fakeClient,
 			Reader: fakeClient,
@@ -1856,15 +1857,175 @@ func TestVisitRulesForSkipsDanglingRoleRef(t *testing.T) {
 	}
 	fakeClient := fake.NewClientBuilder().WithScheme(accessScheme).
 		WithObjects(&clusterRole, &danglingCRB, &goodCRB, &role, &danglingRB, &goodRB).Build()
-	ctr := &Controller{Reader: fakeClient}
+	ctr := &Controller{Client: fakeClient, Reader: fakeClient}
 
 	acc := &policyv1alpha1.ServiceAccountAccess{}
-	ctr.VisitRulesFor(context.Background(), testUser, "ns1", acc)
+	if err := ctr.VisitRulesFor(context.Background(), testUser, acc); err != nil {
+		t.Fatalf("VisitRulesFor() error = %v", err)
+	}
 
 	if len(acc.Spec.AccessClusterRoleBinding) != 1 || acc.Spec.AccessClusterRoleBinding[0].ClusterRoleBinding.Name != goodCRB.Name {
 		t.Errorf("expected only the resolvable clusterrolebinding %q to be visited, got %+v", goodCRB.Name, acc.Spec.AccessClusterRoleBinding)
 	}
 	if len(acc.Spec.AccessRoleBinding) != 1 || acc.Spec.AccessRoleBinding[0].RoleBinding.Name != goodRB.Name {
 		t.Errorf("expected only the resolvable rolebinding %q to be visited, got %+v", goodRB.Name, acc.Spec.AccessRoleBinding)
+	}
+}
+
+func TestVisitRulesForCrossNamespaceRoleBinding(t *testing.T) {
+	saUser := &user.DefaultInfo{Name: "system:serviceaccount:ns1:sa1"}
+
+	role := rbacv1.Role{
+		ObjectMeta: metav1.ObjectMeta{Name: "r2", Namespace: "ns2"},
+		Rules:      []rbacv1.PolicyRule{{Verbs: []string{"get"}, APIGroups: []string{""}, Resources: []string{"secrets"}}},
+	}
+	// binds the service account from another namespace
+	crossRB := rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{Name: "rb-cross", Namespace: "ns2"},
+		Subjects:   []rbacv1.Subject{{Kind: rbacv1.ServiceAccountKind, Namespace: "ns1", Name: "sa1"}},
+		RoleRef:    rbacv1.RoleRef{APIGroup: rbacv1.GroupName, Kind: "Role", Name: role.Name},
+	}
+	// a subject without an explicit namespace defaults to the RoleBinding's own
+	// namespace, so it must not match the service account in ns1
+	otherSA := rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{Name: "rb-other-sa", Namespace: "ns2"},
+		Subjects:   []rbacv1.Subject{{Kind: rbacv1.ServiceAccountKind, Name: "sa1"}},
+		RoleRef:    rbacv1.RoleRef{APIGroup: rbacv1.GroupName, Kind: "Role", Name: role.Name},
+	}
+
+	accessScheme := runtime.NewScheme()
+	if err := rbacv1.AddToScheme(accessScheme); err != nil {
+		t.Fatalf("Failed to add rbacv1 scheme: %v", err)
+	}
+	fakeClient := fake.NewClientBuilder().WithScheme(accessScheme).
+		WithObjects(&role, &crossRB, &otherSA).Build()
+	ctr := &Controller{Client: fakeClient, Reader: fakeClient}
+
+	acc := &policyv1alpha1.ServiceAccountAccess{}
+	if err := ctr.VisitRulesFor(context.Background(), saUser, acc); err != nil {
+		t.Fatalf("VisitRulesFor() error = %v", err)
+	}
+
+	if len(acc.Spec.AccessRoleBinding) != 1 || acc.Spec.AccessRoleBinding[0].RoleBinding.Name != crossRB.Name {
+		t.Errorf("expected only the cross-namespace rolebinding %q to be visited, got %+v", crossRB.Name, acc.Spec.AccessRoleBinding)
+		return
+	}
+	if !equality.Semantic.DeepEqual(acc.Spec.AccessRoleBinding[0].Rules, role.Rules) {
+		t.Errorf("expected rules %+v, got %+v", role.Rules, acc.Spec.AccessRoleBinding[0].Rules)
+	}
+}
+
+func TestMapRolesFuncCrossNamespaceRole(t *testing.T) {
+	var roleNs rbacv1.Role
+	err := json.Unmarshal([]byte(roleNsStr1), &roleNs)
+	if err != nil {
+		t.Errorf("Failed to unmarshal roleNs: %v", err)
+	}
+	// binds the service account sa1 in my-namespace from the my-namespace2 rolebinding
+	rbCrossNs := rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{Name: "rb-cross-ns", Namespace: "my-namespace2"},
+		Subjects:   []rbacv1.Subject{{Kind: rbacv1.ServiceAccountKind, Namespace: "my-namespace", Name: "sa1"}},
+		RoleRef:    rbacv1.RoleRef{APIGroup: rbacv1.GroupName, Kind: "Role", Name: roleNs.Name},
+	}
+	var sa1 v1.ServiceAccount
+	err = json.Unmarshal([]byte(saStr1), &sa1)
+	if err != nil {
+		t.Errorf("Failed to unmarshal sa1: %v", err)
+	}
+
+	accessScheme := runtime.NewScheme()
+	if err := policyv1alpha1.AddToScheme(accessScheme); err != nil {
+		t.Errorf("Failed to add access scheme: %v", err)
+	}
+	if err := v1.AddToScheme(accessScheme); err != nil {
+		t.Errorf("Failed to add v1 scheme: %v", err)
+	}
+	if err := rbacv1.AddToScheme(accessScheme); err != nil {
+		t.Errorf("Failed to add rbacv1 scheme: %v", err)
+	}
+	fakeClient := fake.NewClientBuilder().WithScheme(accessScheme).WithObjects(
+		&policyv1alpha1.ServiceAccountAccess{
+			ObjectMeta: metav1.ObjectMeta{Name: "sa1", Namespace: "my-namespace"},
+			Spec:       policyv1alpha1.AccessSpec{ServiceAccount: sa1},
+		}, &roleNs, &rbCrossNs).
+		WithIndex(&rbacv1.RoleBinding{}, roleRefIndexKey, roleRefIndexFunc).Build()
+	ctr := &Controller{
+		Client: fakeClient,
+		Reader: fakeClient,
+	}
+
+	if !ctr.filterResource(context.Background(), &roleNs) {
+		t.Errorf("expected the cross-namespace role event to match the service account")
+	}
+	got := ctr.mapRolesFunc(context.Background(), &roleNs)
+	want := []controllerruntime.Request{
+		{NamespacedName: types.NamespacedName{Name: "sa1", Namespace: "my-namespace"}},
+	}
+	if !equality.Semantic.DeepEqual(got, want) {
+		t.Errorf("mapRolesFunc() = %v, want %v", got, want)
+	}
+}
+
+func TestVisitRulesForReturnsErrorOnUnresolvableRoleRef(t *testing.T) {
+	testUser := &user.DefaultInfo{Name: "test-user"}
+	subjects := []rbacv1.Subject{{Kind: rbacv1.UserKind, Name: testUser.Name}}
+
+	// an unsupported roleRef kind cannot be resolved and is not a NotFound,
+	// so it must propagate the error instead of silently dropping the binding
+	badKindCRB := rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{Name: "crb-bad-kind"},
+		Subjects:   subjects,
+		RoleRef:    rbacv1.RoleRef{APIGroup: rbacv1.GroupName, Kind: "Invalid", Name: "whatever"},
+	}
+
+	accessScheme := runtime.NewScheme()
+	if err := rbacv1.AddToScheme(accessScheme); err != nil {
+		t.Fatalf("Failed to add rbacv1 scheme: %v", err)
+	}
+	fakeClient := fake.NewClientBuilder().WithScheme(accessScheme).
+		WithObjects(&badKindCRB).Build()
+	ctr := &Controller{Client: fakeClient, Reader: fakeClient}
+
+	acc := &policyv1alpha1.ServiceAccountAccess{}
+	if err := ctr.VisitRulesFor(context.Background(), testUser, acc); err == nil {
+		t.Errorf("expected an error for the unresolvable roleRef kind, got nil")
+	}
+}
+
+func TestVisitRulesForCacheLagFallback(t *testing.T) {
+	testUser := &user.DefaultInfo{Name: "test-user"}
+	subjects := []rbacv1.Subject{{Kind: rbacv1.UserKind, Name: testUser.Name}}
+
+	role := rbacv1.Role{
+		ObjectMeta: metav1.ObjectMeta{Name: "r1", Namespace: "ns1"},
+		Rules:      []rbacv1.PolicyRule{{Verbs: []string{"get"}, APIGroups: []string{""}, Resources: []string{"secrets"}}},
+	}
+	rb := rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{Name: "rb1", Namespace: "ns1"},
+		Subjects:   subjects,
+		RoleRef:    rbacv1.RoleRef{APIGroup: rbacv1.GroupName, Kind: "Role", Name: role.Name},
+	}
+
+	accessScheme := runtime.NewScheme()
+	if err := rbacv1.AddToScheme(accessScheme); err != nil {
+		t.Fatalf("Failed to add rbacv1 scheme: %v", err)
+	}
+	// simulates informer lag: the cache client has not synced the role yet while
+	// the binding event already arrived
+	cacheClient := fake.NewClientBuilder().WithScheme(accessScheme).WithObjects(&rb).Build()
+	// the API reader still returns the live role
+	apiClient := fake.NewClientBuilder().WithScheme(accessScheme).WithObjects(&rb, &role).Build()
+	ctr := &Controller{Client: cacheClient, Reader: apiClient}
+
+	acc := &policyv1alpha1.ServiceAccountAccess{}
+	if err := ctr.VisitRulesFor(context.Background(), testUser, acc); err != nil {
+		t.Fatalf("VisitRulesFor() error = %v", err)
+	}
+	if len(acc.Spec.AccessRoleBinding) != 1 {
+		t.Errorf("expected the role to be resolved through the API reader, got %+v", acc.Spec.AccessRoleBinding)
+		return
+	}
+	if !equality.Semantic.DeepEqual(acc.Spec.AccessRoleBinding[0].Rules, role.Rules) {
+		t.Errorf("expected rules %+v, got %+v", role.Rules, acc.Spec.AccessRoleBinding[0].Rules)
 	}
 }
