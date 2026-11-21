@@ -258,6 +258,10 @@ func (ns *NodeSession) GetTerminateErr() int32 {
 	return atomic.LoadInt32(&ns.terminateErr)
 }
 
+func (ns *NodeSession) GetConnection() conn.Connection {
+	return ns.connection
+}
+
 func (ns *NodeSession) syncNoAckMessage() (bool, error) {
 	key, quit := ns.nodeMessagePool.NoAckMessageQueue.Get()
 	if quit {
