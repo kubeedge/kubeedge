@@ -225,7 +225,7 @@ func classifyMsg(message *dttype.DTMessage) bool {
 			}
 		} else {
 			identity = splitString[idLoc]
-			loc := strings.Index(topic, identity)
+			loc := len(strings.Join(splitString[:idLoc], "/")) + 1
 			var nextLoc int
 			if strings.Contains(topic, dtcommon.DeviceETPrefix) {
 				identity = identity + "/" + splitString[idLoc+1]
