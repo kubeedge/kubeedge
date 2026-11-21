@@ -208,6 +208,13 @@ func TestUnsafeResourceToKind(t *testing.T) {
 			args: args{r: "Other"},
 			want: "Other",
 		},
+		{
+			// The Kubernetes kind of coordination.k8s.io "leases" is "Lease",
+			// not "Leases". Without the special case it would be parsed as "Leas".
+			name: "TestUnsafeResourceToKind(): Case 8: leases",
+			args: args{r: "leases"},
+			want: "Lease",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -215,6 +222,17 @@ func TestUnsafeResourceToKind(t *testing.T) {
 				t.Errorf("UnsafeResourceToKind() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+// TestLeasesResourceKindRoundTrip makes sure the "leases" resource and its
+// "Lease" kind convert to each other consistently in both directions.
+func TestLeasesResourceKindRoundTrip(t *testing.T) {
+	if got := UnsafeResourceToKind("leases"); got != "Lease" {
+		t.Errorf("UnsafeResourceToKind(\"leases\") = %q, want %q", got, "Lease")
+	}
+	if got := UnsafeKindToResource("Lease"); got != "leases" {
+		t.Errorf("UnsafeKindToResource(\"Lease\") = %q, want %q", got, "leases")
 	}
 }
 
