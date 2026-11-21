@@ -31,7 +31,7 @@ func TestNewCloudInit(t *testing.T) {
 	cmd := NewCloudInit()
 
 	assert.Equal(cmd.Use, "init")
-	assert.Equal(cmd.Short, "Bootstraps cloud component. Checks and install (if required) the pre-requisites.")
+	assert.Equal(cmd.Short, "Bootstraps cloud component. Checks and installs (if required) the pre-requisites.")
 	assert.Equal(cmd.Long, cloudInitLongDescription)
 	assert.Equal(cmd.Example, fmt.Sprintf(cloudInitExample, types.DefaultKubeEdgeVersion))
 
