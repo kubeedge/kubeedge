@@ -4,6 +4,7 @@ import (
 	"context"
 
 	v1 "k8s.io/api/core/v1"
+	nodev1 "k8s.io/api/node/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/watch"
@@ -44,6 +45,8 @@ type DownstreamController struct {
 	rulesManager *manager.RuleManager
 
 	ruleEndpointsManager *manager.RuleEndpointManager
+
+	runtimeClassManager *manager.RuntimeClassManager
 
 	lc *manager.LocationCache
 
@@ -338,6 +341,51 @@ func (dc *DownstreamController) syncRuleEndpoint() {
 	}
 }
 
+func (dc *DownstreamController) syncRuntimeClass() {
+	for {
+		select {
+		case <-beehiveContext.Done():
+			klog.Warning("Stop edgecontroller downstream syncRuntimeClass loop")
+			return
+		case e := <-dc.runtimeClassManager.Events():
+			runtimeClass, ok := e.Object.(*nodev1.RuntimeClass)
+			if !ok {
+				klog.Warningf("object type: %T unsupported", e.Object)
+				continue
+			}
+			// RuntimeClass is cluster-scoped: broadcast to all edge nodes.
+			for _, nodeName := range dc.lc.GetAllNodes() {
+				resource, err := messagelayer.BuildResource(nodeName, models.NullNamespace, model.ResourceTypeRuntimeClass, runtimeClass.Name)
+				if err != nil {
+					klog.Warningf("build message resource failed with error: %s", err)
+					continue
+				}
+				var operation string
+				switch e.Type {
+				case watch.Added:
+					operation = model.InsertOperation
+				case watch.Modified:
+					operation = model.UpdateOperation
+				case watch.Deleted:
+					operation = model.DeleteOperation
+				default:
+					klog.Warningf("runtimeclass event type: %s unsupported", e.Type)
+					continue
+				}
+				msg := model.NewMessage("").
+					SetResourceVersion(runtimeClass.ResourceVersion).
+					BuildRouter(modules.EdgeControllerModuleName, constants.GroupResource, resource, operation).
+					FillBody(runtimeClass)
+				if err := dc.messageLayer.Send(*msg); err != nil {
+					klog.Warningf("send message failed with error: %s, operation: %s, resource: %s", err, msg.GetOperation(), msg.GetResource())
+				} else {
+					klog.V(4).Infof("send message successfully, operation: %s, resource: %s", msg.GetOperation(), msg.GetResource())
+				}
+			}
+		}
+	}
+}
+
 // Start DownstreamController
 func (dc *DownstreamController) Start() error {
 	klog.Info("start downstream controller")
@@ -358,6 +406,9 @@ func (dc *DownstreamController) Start() error {
 
 	// ruleendpoint
 	go dc.syncRuleEndpoint()
+
+	// runtimeclass
+	go dc.syncRuntimeClass()
 
 	return nil
 }
@@ -433,6 +484,13 @@ func NewDownstreamController(config *v1alpha1.EdgeController, k8sInformerFactory
 		return nil, err
 	}
 
+	runtimeClassInformer := k8sInformerFactory.Node().V1().RuntimeClasses()
+	runtimeClassManager, err := manager.NewRuntimeClassManager(config, runtimeClassInformer.Informer())
+	if err != nil {
+		klog.Warningf("Create runtimeClassManager failed with error: %s", err)
+		return nil, err
+	}
+
 	dc := &DownstreamController{
 		kubeClient:           client.GetKubeClient(),
 		podManager:           podManager,
@@ -444,6 +502,7 @@ func NewDownstreamController(config *v1alpha1.EdgeController, k8sInformerFactory
 		podLister:            podInformer.Lister(),
 		rulesManager:         rulesManager,
 		ruleEndpointsManager: ruleEndpointsManager,
+		runtimeClassManager:  runtimeClassManager,
 	}
 	if err := dc.initLocating(); err != nil {
 		return nil, err
