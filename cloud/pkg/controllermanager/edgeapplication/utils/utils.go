@@ -61,7 +61,19 @@ func GetAllOverriders(edgeApp *appsv1alpha1.EdgeApplication) []overridemanager.O
 	infos := make([]overridemanager.OverriderInfo, 0)
 
 	// Handle overriders from TargetNodeGroups
+	targetNodeGroups := make(map[string]struct{})
 	for index := range edgeApp.Spec.WorkloadScope.TargetNodeGroups {
+		// A node group that is targeted more than once would get the same workloads applied
+		// with different overriders, so only its first entry is used. The CRD rejects such
+		// duplicates, but EdgeApplications created with an older CRD can still contain them.
+		nodeGroupName := edgeApp.Spec.WorkloadScope.TargetNodeGroups[index].Name
+		if _, ok := targetNodeGroups[nodeGroupName]; ok {
+			klog.Warningf("node group %s is targeted more than once in EdgeApplication %s/%s, only the first one is used",
+				nodeGroupName, edgeApp.Namespace, edgeApp.Name)
+			continue
+		}
+		targetNodeGroups[nodeGroupName] = struct{}{}
+
 		copied := edgeApp.Spec.WorkloadScope.TargetNodeGroups[index].Overriders.DeepCopy()
 		infos = append(infos, overridemanager.OverriderInfo{
 			TargetNodeGroup: edgeApp.Spec.WorkloadScope.TargetNodeGroups[index].Name,
