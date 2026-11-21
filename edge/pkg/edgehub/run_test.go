@@ -17,6 +17,7 @@ limitations under the License.
 package edgehub
 
 import (
+	gocontext "context"
 	"errors"
 	"sync/atomic"
 	"testing"
@@ -67,13 +68,20 @@ func newRunHarness(t *testing.T) *runHarness {
 		<-h.release
 		return model.Message{}, errors.New("released")
 	}
-	// routeToCloud blocks in beehiveContext.Receive, which cannot be
-	// interrupted and would otherwise outlive the test and take a message
-	// meant for a later one. Park it on release like the mock transport.
-	patches := gomonkey.ApplyFunc(beehiveContext.Receive, func(string) (model.Message, error) {
-		<-h.release
-		return model.Message{}, errors.New("released")
-	})
+	// routeToCloud parks in beehiveContext.ReceiveWithContext waiting for a
+	// message that never comes in these tests; left alone it would take a
+	// message meant for a later one. Park it on release like the mock
+	// transport, while still honouring cancellation so it cannot outlive the
+	// connection under test.
+	patches := gomonkey.ApplyFunc(beehiveContext.ReceiveWithContext,
+		func(ctx gocontext.Context, _ string) (model.Message, error) {
+			select {
+			case <-h.release:
+				return model.Message{}, errors.New("released")
+			case <-ctx.Done():
+				return model.Message{}, ctx.Err()
+			}
+		})
 	t.Cleanup(patches.Reset)
 	// Runs before the controller's Finish (cleanups are LIFO), so the routing
 	// goroutines return and exit before the mock is verified.
