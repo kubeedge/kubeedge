@@ -64,9 +64,23 @@ func EdgeCoreClientCert(request *restful.Request, response *restful.Response) {
 		}
 	}
 
-	usagesStr := r.Header.Get(types.HeaderExtKeyUsages)
 	reader := http.MaxBytesReader(response, r.Body, constants.MaxRespBodyLength)
-	certBlock, err := signEdgeCert(reader, usagesStr)
+	csrDER, err := io.ReadAll(reader)
+	if err != nil {
+		message := fmt.Sprintf("failed to read the csr for edgenode %s, err: %v", nodeName, err)
+		klog.Error(message)
+		resps.ErrorMessage(response, http.StatusBadRequest, message)
+		return
+	}
+	if err := verifyCSRSubject(csrDER, nodeName); err != nil {
+		message := fmt.Sprintf("failed to verify the csr for edgenode %s, err: %v", nodeName, err)
+		klog.Error(message)
+		resps.ErrorMessage(response, http.StatusForbidden, message)
+		return
+	}
+
+	usagesStr := r.Header.Get(types.HeaderExtKeyUsages)
+	certBlock, err := signEdgeCert(csrDER, usagesStr)
 	if err != nil {
 		message := fmt.Sprintf("failed to sign certs for edgenode %s, err: %v", nodeName, err)
 		klog.Error(message)
@@ -110,6 +124,23 @@ func verifyCertSubject(cert *x509.Certificate, nodeName string) error {
 	return fmt.Errorf("request node name is not match with the certificate")
 }
 
+// verifyCSRSubject verifies that the CSR only asks for the identity of the node the request
+// was authenticated for, so that a node certificate or the bootstrap token can not be used to
+// obtain a certificate for another node or for additional groups.
+func verifyCSRSubject(csrDER []byte, nodeName string) error {
+	csr, err := x509.ParseCertificateRequest(csrDER)
+	if err != nil {
+		return fmt.Errorf("failed to parse csr: %v", err)
+	}
+	if len(csr.Subject.Organization) != 1 || csr.Subject.Organization[0] != "system:nodes" {
+		return fmt.Errorf("csr organization %v is not [system:nodes]", csr.Subject.Organization)
+	}
+	if commonName := fmt.Sprintf("system:node:%s", nodeName); csr.Subject.CommonName != commonName {
+		return fmt.Errorf("csr common name %q is not %q", csr.Subject.CommonName, commonName)
+	}
+	return nil
+}
+
 // verifyAuthorization verifies the token from EdgeCore CSR
 func verifyAuthorization(authorization string) (int, error) {
 	klog.V(4).Info("authorization token is: ", authorization)
@@ -131,7 +162,7 @@ func verifyAuthorization(authorization string) (int, error) {
 }
 
 // signEdgeCert signs the CSR from EdgeCore
-func signEdgeCert(r io.ReadCloser, usagesStr string) (*pem.Block, error) {
+func signEdgeCert(csrDER []byte, usagesStr string) (*pem.Block, error) {
 	klog.V(4).Infof("receive sign crt request, ExtKeyUsages: %s", usagesStr)
 	var usages []x509.ExtKeyUsage
 	if usagesStr == "" {
@@ -142,14 +173,10 @@ func signEdgeCert(r io.ReadCloser, usagesStr string) (*pem.Block, error) {
 			return nil, fmt.Errorf("unmarshal http header ExtKeyUsages fail, err: %v", err)
 		}
 	}
-	payload, err := io.ReadAll(r)
-	if err != nil {
-		return nil, fmt.Errorf("fail to read file when signing the cert, err: %v", err)
-	}
 	edgeCertSigningDuration := hubconfig.Config.CloudHub.EdgeCertSigningDuration * time.Hour * 24
 	h := certs.GetHandler(certs.HandlerTypeX509)
 	certBlock, err := h.SignCerts(certs.SignCertsOptionsWithCSR(
-		payload,
+		csrDER,
 		hubconfig.Config.Ca,
 		hubconfig.Config.CaKey,
 		usages,
