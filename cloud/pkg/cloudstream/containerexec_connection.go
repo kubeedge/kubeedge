@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"time"
 
 	"github.com/emicklei/go-restful"
 	"k8s.io/klog/v2"
@@ -63,6 +64,8 @@ func (c *ContainerExecConnection) SetEdgePeerDone() {
 		return
 	case c.EdgePeerDone() <- struct{}{}:
 		klog.V(6).Infof("success send channel deleting connection with messageID %v", c.MessageID)
+		// Wake up Serve if it is blocked reading from an idle client.
+		_ = c.Conn.SetReadDeadline(time.Now())
 	}
 }
 
@@ -129,11 +132,17 @@ func (c *ContainerExecConnection) Serve() error {
 			return nil
 		case <-c.EdgePeerDone():
 			klog.V(6).Infof("%s find edge peer done, so stop this connection", c.String())
-			return fmt.Errorf("%s find edge peer done, so stop this connection", c.String())
+			return nil
 		default:
 		}
 		n, err := c.Conn.Read(data[:])
 		if err != nil {
+			select {
+			case <-c.EdgePeerDone():
+				klog.V(6).Infof("%s find edge peer done, so stop this connection", c.String())
+				return nil
+			default:
+			}
 			if !errors.Is(err, io.EOF) {
 				klog.Errorf("%s failed to read from client: %v", c.String(), err)
 			} else {

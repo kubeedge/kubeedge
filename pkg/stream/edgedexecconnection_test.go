@@ -23,6 +23,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"testing"
 	"time"
 
@@ -233,6 +234,43 @@ func (m *MockRoundTripper) Dial(req *http.Request) (net.Conn, error) {
 		return nil, m.DialErr
 	}
 	return m.DialConn, nil
+}
+
+func TestServe_EdgedUnreachable(t *testing.T) {
+	// Port 65536 is invalid, so every request to edged fails.
+	edgedURL := url.URL{Scheme: "http", Host: "127.0.0.1:65536", Path: "/test"}
+
+	testCases := []struct {
+		name string
+		conn EdgedConnection
+	}{
+		{name: "logs", conn: &EdgedLogsConnection{MessID: 1, URL: edgedURL, Header: http.Header{}}},
+		{name: "metrics", conn: &EdgedMetricsConnection{MessID: 1, URL: edgedURL, Header: http.Header{}}},
+		{name: "exec", conn: &EdgedExecConnection{MessID: 1, URL: edgedURL, Header: http.Header{}, Method: http.MethodPost}},
+		{name: "attach", conn: &EdgedAttachConnection{MessID: 1, URL: edgedURL, Header: http.Header{}, Method: http.MethodPost}},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tunnel := &MockTunneler{}
+			assert.Error(t, tc.conn.Serve(tunnel))
+			assert.Equal(t, []*Message{NewMessage(1, MessageTypeRemoveConnect, nil)}, tunnel.Messages)
+
+			failing := &failingTunneler{}
+			assert.Error(t, tc.conn.Serve(failing))
+			remove := NewMessage(1, MessageTypeRemoveConnect, nil)
+			assert.Equal(t, []*Message{remove, remove, remove}, failing.attempts)
+		})
+	}
+}
+
+type failingTunneler struct {
+	MockTunneler
+	attempts []*Message
+}
+
+func (m *failingTunneler) WriteMessage(msg *Message) error {
+	m.attempts = append(m.attempts, msg)
+	return errors.New("tunnel closed")
 }
 
 func TestExecConnection_CreateConnectMessage(t *testing.T) {

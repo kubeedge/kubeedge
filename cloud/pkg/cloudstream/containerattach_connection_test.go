@@ -149,6 +149,7 @@ func TestSetEdgePeerDone(t *testing.T) {
 
 	attachConn := &ContainerAttachConnection{
 		MessageID:    1,
+		Conn:         &MockConn{},
 		edgePeerStop: make(chan struct{}),
 		closeChan:    make(chan bool),
 	}

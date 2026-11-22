@@ -83,6 +83,7 @@ func TestSetEdgePeerDone_Exec(t *testing.T) {
 
 	execConn := &ContainerExecConnection{
 		MessageID:    1,
+		Conn:         &MockConn{},
 		edgePeerStop: make(chan struct{}),
 		closeChan:    make(chan bool),
 	}
@@ -176,10 +177,9 @@ func TestSendConnection_Exec(t *testing.T) {
 
 func TestServe_Exec(t *testing.T) {
 	testCases := []struct {
-		name          string
-		setup         func(t *testing.T) (*ContainerExecConnection, context.CancelFunc)
-		expectedError bool
-		errorContains string
+		name        string
+		setup       func(t *testing.T) (*ContainerExecConnection, context.CancelFunc)
+		lastMessage stream.MessageType
 	}{
 		{
 			name: "Context done",
@@ -217,7 +217,7 @@ func TestServe_Exec(t *testing.T) {
 
 				return execConn, cancel
 			},
-			expectedError: false,
+			lastMessage: stream.MessageTypeRemoveConnect,
 		},
 		{
 			name: "Edge peer done",
@@ -255,8 +255,7 @@ func TestServe_Exec(t *testing.T) {
 
 				return execConn, cancel
 			},
-			expectedError: true,
-			errorContains: "find edge peer done",
+			lastMessage: stream.MessageTypeExecConnect,
 		},
 	}
 
@@ -267,7 +266,7 @@ func TestServe_Exec(t *testing.T) {
 			execConn, cancel := tc.setup(t)
 			defer cancel()
 
-			done := make(chan error)
+			done := make(chan error, 1)
 
 			go func() {
 				err := execConn.Serve()
@@ -278,19 +277,14 @@ func TestServe_Exec(t *testing.T) {
 			select {
 			case err = <-done:
 			case <-time.After(500 * time.Millisecond):
-				cancel()
-				err = <-done
+				t.Fatal("Serve did not return")
 			}
 
-			if tc.expectedError {
-				assert.Error(err)
-				if tc.errorContains != "" {
-					assert.Contains(err.Error(), tc.errorContains)
-				}
-			} else {
-				if err != nil {
-					t.Logf("Expected no error but got: %v. This is acceptable in this test case.", err)
-				}
+			assert.NoError(err)
+			assert.Equal(len("test data"), execConn.Conn.(*MockConn).readBuffer.Len())
+			lastMessage := execConn.session.tunnel.(*MockTunneler).lastMessage
+			if assert.NotNil(lastMessage) {
+				assert.Equal(tc.lastMessage, lastMessage.MessageType)
 			}
 		})
 	}
@@ -421,11 +415,101 @@ func TestServe_ClientClosed(t *testing.T) {
 	}
 }
 
+type idleClientConn struct {
+	net.Conn
+	reading chan struct{}
+}
+
+func (m *idleClientConn) Read(b []byte) (int, error) {
+	select {
+	case m.reading <- struct{}{}:
+	default:
+	}
+	return m.Conn.Read(b)
+}
+
+func TestServe_EdgePeerDoneWhileClientIdle(t *testing.T) {
+	r := &restful.Request{Request: &http.Request{URL: &url.URL{}}}
+	testCases := []struct {
+		name    string
+		newConn func(net.Conn, *Session) APIServerConnection
+	}{
+		{
+			name: "exec",
+			newConn: func(conn net.Conn, session *Session) APIServerConnection {
+				return &ContainerExecConnection{
+					ctx:          context.Background(),
+					r:            r,
+					Conn:         conn,
+					session:      session,
+					edgePeerStop: make(chan struct{}, 2),
+					closeChan:    make(chan bool),
+				}
+			},
+		},
+		{
+			name: "attach",
+			newConn: func(conn net.Conn, session *Session) APIServerConnection {
+				return &ContainerAttachConnection{
+					ctx:          context.Background(),
+					r:            r,
+					Conn:         conn,
+					session:      session,
+					edgePeerStop: make(chan struct{}, 2),
+					closeChan:    make(chan bool),
+				}
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			client, server := net.Pipe()
+			defer client.Close()
+			conn := &idleClientConn{Conn: server, reading: make(chan struct{}, 1)}
+			tun := &countingTunneler{sent: map[stream.MessageType]int{}}
+			apiConn := tc.newConn(conn, &Session{tunnel: tun})
+			done := make(chan error, 1)
+			go func() {
+				done <- apiConn.Serve()
+			}()
+
+			select {
+			case <-conn.reading:
+			case err := <-done:
+				t.Fatalf("Serve returned before reading from the client: %v", err)
+			case <-time.After(time.Second):
+				t.Fatal("Serve did not start reading from the client")
+			}
+			apiConn.SetEdgePeerDone()
+			select {
+			case err := <-done:
+				assert.NoError(t, err)
+				assert.Equal(t, 0, tun.sent[stream.MessageTypeRemoveConnect])
+			case <-time.After(time.Second):
+				t.Fatal("Serve is still waiting for the idle client after the edge peer is done")
+			}
+		})
+
+		t.Run(tc.name+" done before read", func(t *testing.T) {
+			conn := &idleClientConn{Conn: &MockConn{}, reading: make(chan struct{}, 1)}
+			tun := &countingTunneler{sent: map[stream.MessageType]int{}}
+			apiConn := tc.newConn(conn, &Session{tunnel: tun})
+			apiConn.SetEdgePeerDone()
+
+			assert.NoError(t, apiConn.Serve())
+			assert.Len(t, conn.reading, 0)
+			assert.Equal(t, 0, tun.sent[stream.MessageTypeRemoveConnect])
+		})
+	}
+}
+
 func TestSetEdgePeerDone_Closed(t *testing.T) {
 	assert := assert.New(t)
 
 	execConn := &ContainerExecConnection{
 		MessageID:    1,
+		Conn:         &MockConn{},
 		edgePeerStop: make(chan struct{}),
 		closeChan:    make(chan bool),
 	}
