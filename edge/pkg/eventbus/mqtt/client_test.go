@@ -19,14 +19,18 @@ package mqtt
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
@@ -145,7 +149,7 @@ func TestInitPubClient(t *testing.T) {
 	})
 	defer patchLoopConnect.Reset()
 
-	client.InitPubClient()
+	assert.NoError(t, client.InitPubClient())
 
 	assert.NotEmpty(t, client.PubClientID)
 	assert.Contains(t, client.PubClientID, "hub-client-pub-")
@@ -181,7 +185,7 @@ func TestInitPubClientWithExistingID(t *testing.T) {
 	})
 	defer patchLoopConnect.Reset()
 
-	client.InitPubClient()
+	assert.NoError(t, client.InitPubClient())
 
 	assert.Equal(t, "existing-pub-id", client.PubClientID)
 	assert.True(t, connectCalled)
@@ -242,7 +246,7 @@ func TestInitSubClient(t *testing.T) {
 		return mockEventBusService
 	}
 
-	client.InitSubClient()
+	assert.NoError(t, client.InitSubClient())
 
 	assert.NotEmpty(t, client.SubClientID)
 	assert.Contains(t, client.SubClientID, "hub-client-sub-")
@@ -382,6 +386,68 @@ func TestOnSubConnectionLost(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	assert.True(t, initCalled, "InitSubClient should be called")
+}
+
+// logBuffer is a goroutine-safe buffer to capture klog output.
+type logBuffer struct {
+	mu  sync.Mutex
+	buf strings.Builder
+}
+
+func (b *logBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Write(p)
+}
+
+func (b *logBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.String()
+}
+
+// TestConnectionLostLogsInitError checks that the reconnect callbacks log the
+// error returned by the init functions, for example when the TLS files cannot
+// be loaded any more, instead of panicking.
+func TestConnectionLostLogsInitError(t *testing.T) {
+	origMQTTHub := MQTTHub
+	defer func() { MQTTHub = origMQTTHub }()
+	MQTTHub = &Client{}
+
+	logs := &logBuffer{}
+	klog.LogToStderr(false)
+	klog.SetOutput(logs)
+	defer func() {
+		klog.SetOutput(os.Stderr)
+		klog.LogToStderr(true)
+	}()
+
+	hubType := reflect.TypeOf(MQTTHub)
+	patchPub := gomonkey.ApplyMethod(hubType, "InitPubClient",
+		func(_ *Client) error { return errors.New("pub init failed") })
+	defer patchPub.Reset()
+	patchSub := gomonkey.ApplyMethod(hubType, "InitSubClient",
+		func(_ *Client) error { return errors.New("sub init failed") })
+	defer patchSub.Reset()
+
+	tests := []struct {
+		name string
+		lost func(MQTT.Client, error)
+		want string
+	}{
+		{"pub", onPubConnectionLost, "reconnect hub-client pub failed: pub init failed"},
+		{"sub", onSubConnectionLost, "reconnect hub-client sub failed: sub init failed"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.lost(nil, errors.New("connection lost"))
+
+			assert.Eventually(t, func() bool {
+				klog.Flush()
+				return strings.Contains(logs.String(), tt.want)
+			}, time.Second, 10*time.Millisecond)
+		})
+	}
 }
 
 func TestOnSubConnect(t *testing.T) {
