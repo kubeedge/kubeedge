@@ -26,6 +26,7 @@ import (
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/klog/v2"
@@ -33,6 +34,7 @@ import (
 	edgecoreconfig "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
+	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/pkg/image"
 )
 
@@ -117,4 +119,76 @@ func TestImagePrePullJobPullImages(t *testing.T) {
 	assert.Equal(t, metav1.ConditionTrue, imagePrePullResp.imageStatus[0].Status)
 	assert.Equal(t, metav1.ConditionFalse, imagePrePullResp.imageStatus[1].Status)
 	assert.Equal(t, "test error", imagePrePullResp.imageStatus[1].Reason)
+}
+
+func TestImagePrePullJobPullImagesWithSecret(t *testing.T) {
+	ctx := context.TODO()
+	h := imagePrePullJobActionHandler{
+		logger: klog.Background(),
+	}
+	newSpec := func(secret string) *operationsv1alpha2.ImagePrePullJobSpec {
+		return &operationsv1alpha2.ImagePrePullJobSpec{
+			ImagePrePullTemplate: operationsv1alpha2.ImagePrePullTemplate{
+				Images:      []string{"registry.example.com/team/app:v1", "nginx:latest"},
+				ImageSecret: secret,
+			},
+		}
+	}
+
+	imagert := &image.RuntimeImpl{}
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+
+	patches.ApplyFunc(options.GetEdgeCoreConfig, func() *edgecoreconfig.EdgeCoreConfig {
+		return edgecoreconfig.NewDefaultEdgeCoreConfig()
+	})
+	patches.ApplyFunc(image.NewImageRuntime, func(_endpoint string, _timeout time.Duration,
+	) (*image.RuntimeImpl, error) {
+		return imagert, nil
+	})
+	pulled := map[string]*runtimeapi.AuthConfig{}
+	patches.ApplyMethodFunc(reflect.TypeOf(imagert), "PullImage",
+		func(_ctx context.Context,
+			image string,
+			authConfig *runtimeapi.AuthConfig,
+			_sandboxConfig *runtimeapi.PodSandboxConfig,
+		) error {
+			pulled[image] = authConfig
+			return nil
+		})
+	var getErr error
+	patches.ApplyMethodFunc(reflect.TypeOf(metaclient.New().Secrets("default")), "Get",
+		func(name string) (*corev1.Secret, error) {
+			if getErr != nil {
+				return nil, getErr
+			}
+			return &corev1.Secret{
+				Type: corev1.SecretTypeDockerConfigJson,
+				Data: map[string][]byte{corev1.DockerConfigJsonKey: []byte(
+					`{"auths":{"registry.example.com":{"username":"user","password":"pass"}}}`)},
+			}, nil
+		})
+
+	t.Run("pull secret format is not correct", func(t *testing.T) {
+		_, err := h.tryPullImage(ctx, newSpec("no-namespace"))
+		require.EqualError(t, err, "pull secret format is not correct")
+	})
+
+	t.Run("get secret failed", func(t *testing.T) {
+		getErr = errors.New("test error")
+		defer func() { getErr = nil }()
+		_, err := h.tryPullImage(ctx, newSpec("default/regcred"))
+		require.ErrorContains(t, err, "failed to get secret default/regcred")
+	})
+
+	t.Run("credentials are used only for the matching registry", func(t *testing.T) {
+		imageStatus, err := h.tryPullImage(ctx, newSpec("default/regcred"))
+		require.NoError(t, err)
+		require.Len(t, imageStatus, 2)
+		auth := pulled["registry.example.com/team/app:v1"]
+		require.NotNil(t, auth)
+		assert.Equal(t, "user", auth.Username)
+		assert.Equal(t, "pass", auth.Password)
+		assert.Nil(t, pulled["nginx:latest"])
+	})
 }
