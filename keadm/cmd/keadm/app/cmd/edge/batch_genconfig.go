@@ -18,6 +18,7 @@ package edge
 import (
 	"os"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
 )
@@ -28,10 +29,18 @@ func NewBatchProcessGenConfig() *cobra.Command {
 		Short: "Generate a YAML config file for batch process",
 		Long:  `This command generates a template YAML configuration file for batch process.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			fileName := "config.yaml"
+			// Do not overwrite an existing config file: users edit the generated
+			// template before running `keadm batch`.
+			if _, err := os.Stat(fileName); err == nil {
+				return errors.Errorf("config file %s already exists, please remove or rename it before generating a new one", fileName)
+			} else if !os.IsNotExist(err) {
+				return errors.Wrapf(err, "failed to check whether the config file %s exists", fileName)
+			}
+
 			data := []byte(getConfigTemplate())
 
 			// Write to file
-			fileName := "config.yaml"
 			if err := os.WriteFile(fileName, data, 0644); err != nil {
 				klog.Errorf("Error writing config file: %v", err)
 				return err
