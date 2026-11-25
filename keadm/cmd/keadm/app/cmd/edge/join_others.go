@@ -58,7 +58,8 @@ func AddJoinOtherFlags(cmd *cobra.Command, joinOptions *common.JoinOptions) {
 		"CGroupDriver that uses to manipulate cgroups on the host (cgroupfs or systemd), the default value is cgroupfs")
 
 	cmd.Flags().StringVar(&joinOptions.CertPath, common.FlagNameCertPath, joinOptions.CertPath,
-		fmt.Sprintf("The certPath used by edgecore, the default value is %s", constants.DefaultCertPath))
+		fmt.Sprintf("The directory for edgecore's certificate (server.crt) and private key (server.key), the default value is %s. "+
+			"The CA file stays at %s; use --set modules.edgeHub.tlsCaFile=<path> to change it", constants.DefaultCertPath, constants.DefaultCAFile))
 
 	cmd.Flags().StringVarP(&joinOptions.CloudCoreIPPort, common.FlagNameCloudCoreIPPort, "e", joinOptions.CloudCoreIPPort,
 		"IP:Port address of KubeEdge CloudCore")
@@ -169,6 +170,9 @@ func createEdgeConfigFiles(opt *common.JoinOptions) error {
 		return fmt.Errorf("unsupported hub of protocol: %s", opt.HubProtocol)
 	}
 	edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(host, strconv.Itoa(constants.DefaultTunnelPort))
+	if err := setCertFiles(edgeCoreConfig, opt.CertPath); err != nil {
+		return err
+	}
 
 	if len(opt.Labels) > 0 {
 		edgeCoreConfig.Modules.Edged.NodeLabels = setEdgedNodeLabels(opt)
