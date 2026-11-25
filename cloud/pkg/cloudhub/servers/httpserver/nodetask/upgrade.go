@@ -43,10 +43,6 @@ const (
 func UpgradeEdge(request *restful.Request, response *restful.Response) {
 	resp := commontypes.NodeUpgradeJobResponse{}
 
-	taskID := resp.UpgradeID
-	taskType := util.TaskUpgrade
-	nodeID := resp.NodeName
-
 	lr := &io.LimitedReader{
 		R: request.Request.Body,
 		N: millionByte + 1,
@@ -73,6 +69,16 @@ func UpgradeEdge(request *restful.Request, response *restful.Response) {
 		}
 		return
 	}
+
+	msg := buildUpgradeMessage(resp)
+	beehiveContext.Send(modules.TaskManagerModuleName, msg)
+
+	if _, err = response.Write([]byte("ok")); err != nil {
+		klog.Errorf("failed to send the task resp to edge , err: %v", err)
+	}
+}
+
+func buildUpgradeMessage(resp commontypes.NodeUpgradeJobResponse) beehiveModel.Message {
 	newResp := commontypes.NodeTaskResponse{
 		NodeName: resp.NodeName,
 		Event:    "Upgrade",
@@ -80,21 +86,17 @@ func UpgradeEdge(request *restful.Request, response *restful.Response) {
 		Reason:   resp.Reason,
 	}
 
-	if resp.Status == UpgradeFailedRollbackSuccess {
+	switch resp.Status {
+	case UpgradeFailedRollbackSuccess:
+		newResp.Event = "Rollback"
+		newResp.Action = api.ActionSuccess
+	case UpgradeFailedRollbackFailed:
 		newResp.Event = "Rollback"
 		newResp.Action = api.ActionFailure
 	}
 
-	if resp.Status == UpgradeFailedRollbackFailed {
-		newResp.Event = "Rollback"
-		newResp.Action = api.ActionSuccess
-	}
-
 	msg := beehiveModel.NewMessage("").SetRoute(modules.CloudHubModuleName, modules.CloudHubModuleGroup).
-		SetResourceOperation(fmt.Sprintf("task/%s/node/%s", taskID, nodeID), taskType).FillBody(newResp)
-	beehiveContext.Send(modules.TaskManagerModuleName, *msg)
-
-	if _, err = response.Write([]byte("ok")); err != nil {
-		klog.Errorf("failed to send the task resp to edge , err: %v", err)
-	}
+		SetResourceOperation(fmt.Sprintf("task/%s/node/%s", resp.UpgradeID, resp.NodeName), util.TaskUpgrade).
+		FillBody(newResp)
+	return *msg
 }
