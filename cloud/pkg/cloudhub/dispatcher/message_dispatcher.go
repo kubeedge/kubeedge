@@ -17,16 +17,13 @@ limitations under the License.
 package dispatcher
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
-	"github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
 	reliableclient "github.com/kubeedge/api/client/clientset/versioned"
 	synclisters "github.com/kubeedge/api/client/listers/reliablesyncs/v1alpha1"
 	beehivecontext "github.com/kubeedge/beehive/pkg/core/context"
@@ -42,7 +39,6 @@ import (
 	commonconst "github.com/kubeedge/kubeedge/common/constants"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 	"github.com/kubeedge/kubeedge/pkg/metaserver"
-	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 	taskmsg "github.com/kubeedge/kubeedge/pkg/nodetask/message"
 )
 
@@ -287,7 +283,6 @@ func (md *messageDispatcher) enqueueAckMessage(nodeID string, msg *beehivemodel.
 }
 
 func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *beehivemodel.Message) bool {
-	resourceName, _ := messagelayer.GetResourceName(*msg)
 	resourceUID, err := common.GetMessageUID(*msg)
 	if err != nil {
 		klog.Errorf("fail to get message UID for message: %s", msg.Header.ID)
@@ -304,42 +299,9 @@ func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *be
 		}
 
 	case err != nil && apierrors.IsNotFound(err):
-		// If clusterObjectSync is not exist, this indicates that the message is coming
-		// for the first time, We create clusterObjectSync for the resource directly.
-		clusterObjectSync := &v1alpha1.ClusterObjectSync{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: clusterObjectSyncName,
-			},
-			Spec: v1alpha1.ObjectSyncSpec{
-				ObjectAPIVersion: util.GetMessageAPIVersion(msg),
-				ObjectKind:       util.GetMessageResourceType(msg),
-				ObjectName:       resourceName,
-			},
-		}
-
-		clusterObjectSync, err := md.reliableClient.
-			ReliablesyncsV1alpha1().
-			ClusterObjectSyncs().
-			Create(context.Background(), clusterObjectSync, metav1.CreateOptions{})
-		if err != nil {
-			klog.ErrorS(err, "Failed to create clusterObjectSync",
-				"clusterObjectSyncName", clusterObjectSyncName,
-				"resourceName", resourceName)
-			return false
-		}
-
-		clusterObjectSync.Status.ObjectResourceVersion = "0"
-		_, err = md.reliableClient.
-			ReliablesyncsV1alpha1().
-			ClusterObjectSyncs().
-			UpdateStatus(context.Background(), clusterObjectSync, metav1.UpdateOptions{})
-		if err != nil {
-			klog.ErrorS(err, "Failed to update clusterObjectSync",
-				"clusterObjectSyncName", clusterObjectSyncName,
-				"resourceName", resourceName)
-			return false
-		}
-
+		// If clusterObjectSync does not exist in cache, it indicates that the message is coming
+		// for the first time. Enqueue it directly without blocking on synchronous K8s API calls.
+		// ClusterObjectSync will be created lazily upon receiving edge ACK in saveSuccessPoint().
 		return true
 
 	case err != nil:
@@ -351,7 +313,6 @@ func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *be
 
 func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehivemodel.Message) bool {
 	resourceNamespace, _ := messagelayer.GetNamespace(*msg)
-	resourceName, _ := messagelayer.GetResourceName(*msg)
 	resourceUID, err := common.GetMessageUID(*msg)
 	if err != nil {
 		klog.Errorf("fail to get message UID for message: %s", msg.Header.ID)
@@ -368,45 +329,9 @@ func (md *messageDispatcher) enqueueNamespacedResource(nodeID string, msg *beehi
 		}
 
 	case err != nil && apierrors.IsNotFound(err):
-		// If objectSync is not exist, this indicates that the message is coming
-		// for the first time, We create objectSync for the resource directly.
-		objectSync := &v1alpha1.ObjectSync{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      objectSyncName,
-				Namespace: resourceNamespace,
-			},
-			Spec: v1alpha1.ObjectSyncSpec{
-				ObjectAPIVersion: util.GetMessageAPIVersion(msg),
-				ObjectKind:       util.GetMessageResourceType(msg),
-				ObjectName:       resourceName,
-			},
-		}
-
-		objectSyncStatus, err := md.reliableClient.
-			ReliablesyncsV1alpha1().
-			ObjectSyncs(resourceNamespace).
-			Create(context.Background(), objectSync, metav1.CreateOptions{})
-		if err != nil {
-			klog.ErrorS(err, "Failed to create objectSync",
-				"objectSyncName", objectSyncName,
-				"resourceNamespace", resourceNamespace,
-				"resourceName", resourceName)
-			return false
-		}
-
-		objectSyncStatus.Status.ObjectResourceVersion = "0"
-		_, err = md.reliableClient.
-			ReliablesyncsV1alpha1().
-			ObjectSyncs(resourceNamespace).
-			UpdateStatus(context.Background(), objectSyncStatus, metav1.UpdateOptions{})
-		if err != nil {
-			klog.ErrorS(err, "Failed to update objectSync",
-				"objectSyncName", objectSyncName,
-				"resourceNamespace", resourceNamespace,
-				"resourceName", resourceName)
-			return false
-		}
-
+		// If objectSync does not exist in cache, it indicates that the message is coming
+		// for the first time. Enqueue it directly without blocking on synchronous K8s API calls.
+		// ObjectSync will be created lazily upon receiving edge ACK in saveSuccessPoint().
 		return true
 
 	case err != nil:
