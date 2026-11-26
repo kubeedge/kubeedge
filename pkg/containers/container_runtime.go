@@ -14,6 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package containers provides container runtime utilities for KubeEdge,
+// including interfaces and implementations for managing container lifecycles
+// via CRI-compatible runtimes.
 package containers
 
 import (
@@ -36,12 +39,14 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/image"
 )
 
+// ContainerRuntime defines the interface for interacting with a CRI-compatible container runtime.
 type ContainerRuntime interface {
 	CopyResources(ctx context.Context, image string, files map[string]string) error
 
 	image.Runtime
 }
 
+// ContainerRuntimeImpl is the concrete implementation of ContainerRuntime.
 type ContainerRuntimeImpl struct {
 	cgroupDriver string
 	ctrsvc       internalapi.RuntimeService
@@ -49,6 +54,7 @@ type ContainerRuntimeImpl struct {
 	*image.RuntimeImpl
 }
 
+// NewContainerRuntime creates a new ContainerRuntimeImpl connected to the given endpoint.
 func NewContainerRuntime(endpoint, cgroupDriver string) (ContainerRuntime, error) {
 	const timeout = 10 * time.Second
 	imgrt, err := image.NewImageRuntime(endpoint, timeout)
@@ -98,8 +104,12 @@ func (runtime *ContainerRuntimeImpl) CopyResources(
 		return err
 	}
 	defer func() {
+		if err := runtime.ctrsvc.StopPodSandbox(ctx, sandbox); err != nil {
+			klog.V(3).ErrorS(err, "Stop pod sandbox failed", "sandboxID", sandbox)
+		}
+
 		if err := runtime.ctrsvc.RemovePodSandbox(ctx, sandbox); err != nil {
-			klog.V(3).ErrorS(err, "Remove pod sandbox failed", "containerID", sandbox)
+			klog.V(3).ErrorS(err, "Remove pod sandbox failed", "sandboxID", sandbox)
 		}
 	}()
 
@@ -137,6 +147,10 @@ func (runtime *ContainerRuntimeImpl) CopyResources(
 		return fmt.Errorf("create container failed: %v", err)
 	}
 	defer func() {
+		if stopErr := runtime.ctrsvc.StopContainer(ctx, containerID, 0); stopErr != nil {
+			klog.V(3).ErrorS(stopErr, "Stop container failed", "containerID", containerID)
+		}
+
 		if err := runtime.ctrsvc.RemoveContainer(ctx, containerID); err != nil {
 			klog.V(3).ErrorS(err, "Remove container failed", "containerID", containerID)
 		}
@@ -159,13 +173,32 @@ func (runtime *ContainerRuntimeImpl) CopyResources(
 func copyResourcesCmd(files map[string]string) string {
 	var copyCmd string
 	first := true
+
+	escape := func(arg string) string {
+		var buf []byte
+		buf = append(buf, 0x27)
+		for i := 0; i < len(arg); i++ {
+			if arg[i] == 0x27 {
+				buf = append(buf, 0x27, 0x5c, 0x27, 0x27)
+			} else {
+				buf = append(buf, arg[i])
+			}
+		}
+		buf = append(buf, 0x27)
+		return string(buf)
+	}
+
 	for containerPath, hostPath := range files {
+		src := escape(containerPath)
+		dst := escape(filepath.Join("/tmp", hostPath))
 		if first {
-			copyCmd = copyCmd + fmt.Sprintf("cp %s %s", containerPath, filepath.Join("/tmp", hostPath))
+			copyCmd = copyCmd + "cp " + src + " " + dst
 			first = false
 		} else {
-			copyCmd = copyCmd + fmt.Sprintf(" && cp %s %s", containerPath, filepath.Join("/tmp", hostPath))
+			copyCmd = copyCmd + " && cp " + src + " " + dst
 		}
 	}
+	
+	// Return the sanitized copy command
 	return copyCmd
 }
