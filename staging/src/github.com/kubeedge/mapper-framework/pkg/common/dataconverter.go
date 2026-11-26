@@ -59,7 +59,7 @@ func ConvertToString(value interface{}) (string, error) {
 		result = strconv.FormatFloat(ft, 'f', -1, 64)
 	case float32:
 		ft := v
-		result = strconv.FormatFloat(float64(ft), 'f', -1, 64)
+		result = strconv.FormatFloat(float64(ft), 'f', -1, 32)
 	case int:
 		it := v
 		result = strconv.Itoa(it)
