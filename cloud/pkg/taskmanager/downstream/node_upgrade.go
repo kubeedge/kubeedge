@@ -92,8 +92,10 @@ func (h *NodeUpgradeJobHandler) InterruptExecutor(obj any) {
 		return
 	}
 	if exec != nil {
+		// Execute() removes the executor from the registry itself once all
+		// in-flight tasks have drained, so a same-named job created before
+		// that point can never collide with a still-draining executor.
 		exec.Interrupt()
-		executor.RemoveExecutor(operationsv1alpha2.ResourceNodeUpgradeJob, job.Name)
 	}
 }
 

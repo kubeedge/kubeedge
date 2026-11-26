@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
@@ -140,4 +141,82 @@ func TestExecute(t *testing.T) {
 	assert.Contains(t, obj.Status.NodeStatus[3].Reason, "the node node4 is not connected to the current cloudcore instance")
 	assert.Equal(t, operationsv1alpha2.NodeTaskPhaseFailure, obj.Status.NodeStatus[4].Phase)
 	assert.Contains(t, obj.Status.NodeStatus[4].Reason, "failed to send message to edge")
+}
+
+// TestExecuteInterruptedWaitsForInFlightTasks guards against #7282: an
+// executor interrupted mid-loop must stay registered until its in-flight
+// tasks drain, so a job resubmitted with the same name reuses it instead of
+// colliding with a fresh executor and eventually panicking with
+// "sync: negative WaitGroup counter" when the stale task's late response
+// calls FinishTask on the wrong instance.
+func TestExecuteInterruptedWaitsForInFlightTasks(t *testing.T) {
+	obj := &operationsv1alpha2.ImagePrePullJob{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "interrupt-test-job",
+		},
+		Spec: operationsv1alpha2.ImagePrePullJobSpec{
+			ImagePrePullTemplate: operationsv1alpha2.ImagePrePullTemplate{
+				Concurrency: 2,
+			},
+		},
+		Status: operationsv1alpha2.ImagePrePullJobStatus{
+			NodeStatus: []operationsv1alpha2.ImagePrePullNodeTaskStatus{
+				{NodeName: "node1", Phase: operationsv1alpha2.NodeTaskPhasePending},
+				{NodeName: "node2", Phase: operationsv1alpha2.NodeTaskPhasePending},
+			},
+		},
+	}
+	job, err := wrap.WithEventObj(obj)
+	assert.NoError(t, err)
+
+	updateFun := func(_ctx context.Context, _job wrap.NodeJob, _task wrap.NodeJobTask) {}
+	ctx := context.TODO()
+	exec, _, err := NewNodeTaskExecutor(ctx, job, updateFun)
+	assert.NoError(t, err)
+
+	dispatched := make(chan struct{})
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+	patches.ApplyMethodFunc(&messagelayer.ContextMessageLayer{}, "Send",
+		func(_message model.Message) error {
+			// Simulate the job being deleted right after the first task is
+			// dispatched. node1's task is left in-flight: no FinishTask
+			// call happens here, mimicking a response that hasn't arrived yet.
+			exec.Interrupt()
+			close(dispatched)
+			return nil
+		})
+
+	done := make(chan struct{})
+	go func() {
+		exec.Execute(ctx, []string{"node1", "node2"})
+		close(done)
+	}()
+
+	<-dispatched
+
+	// The executor must still be registered: it has an in-flight task and
+	// hasn't drained yet.
+	got, err := GetExecutor(job.ResourceType(), job.Name())
+	assert.NoError(t, err)
+	assert.Same(t, exec, got)
+
+	// A job resubmitted with the same name must reuse this executor rather
+	// than being handed a fresh, colliding one under the same key.
+	reExec, loaded, err := NewNodeTaskExecutor(ctx, job, updateFun)
+	assert.NoError(t, err)
+	assert.True(t, loaded)
+	assert.Same(t, exec, reExec)
+
+	// The delayed response for node1 finally arrives.
+	exec.FinishTask()
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("Execute did not return after the in-flight task finished")
+	}
+
+	_, err = GetExecutor(job.ResourceType(), job.Name())
+	assert.Equal(t, ErrExecutorNotExists, err)
 }
