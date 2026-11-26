@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
 	"github.com/kubeedge/kubeedge/common/constants"
@@ -36,6 +37,13 @@ func TestK8SInstToolInstallTools(t *testing.T) {
 	defer globPatches.Reset()
 
 	globPatches.ApplyFuncReturn(GetOSInterface, &commfake.MockOSTypeInstaller{})
+	globPatches.ApplyFunc(BuildConfig, func(kubeConfig, master string) (*rest.Config, error) {
+		return &rest.Config{}, nil
+	})
+	globPatches.ApplyFunc(kubernetes.NewForConfig, func(c *rest.Config) (*kubernetes.Clientset, error) {
+		return nil, nil
+	})
+	globPatches.ApplyFuncReturn(CheckKubernetesPermissions, nil)
 	globPatches.ApplyFuncReturn(installCRDs, nil)
 	globPatches.ApplyFuncReturn(createKubeEdgeNs, nil)
 
