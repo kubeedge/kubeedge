@@ -92,8 +92,8 @@ func GetExecutor(resourceType, jobName string) (*NodeTaskExecutor, error) {
 
 // RemoveExecutor removes the executor from the nodeTaskExecutors,
 // found by resource type and job name.
-func RemoveExecutor(resourceType, jobName string) {
-	nodeTaskExecutors.Delete(executorsKey(resourceType, jobName))
+func RemoveExecutor(resourceType, jobName string, executor *NodeTaskExecutor) {
+	nodeTaskExecutors.CompareAndDelete(executorsKey(resourceType, jobName), executor)
 }
 
 type NodeTaskExecutor struct {
@@ -121,7 +121,7 @@ type UpdateNodeTaskStatus func(ctx context.Context, job wrap.NodeJob, task wrap.
 // will execute tasks.
 func (executor *NodeTaskExecutor) Execute(ctx context.Context, connectedNodes []string) {
 	// All node tasks of the node job have been executed, delete the executor.
-	defer RemoveExecutor(executor.job.ResourceType(), executor.job.Name())
+	defer RemoveExecutor(executor.job.ResourceType(), executor.job.Name(), executor)
 
 	tasks := executor.job.Tasks()
 	for i := range tasks {
