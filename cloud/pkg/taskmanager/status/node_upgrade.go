@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
@@ -68,6 +69,11 @@ func tryUpdateNodeUpgradeJobStatus(ctx context.Context, cli crdcliset.Interface,
 		}
 		nodeStatus.HistoricVersion = fromVer
 		nodeStatus.CurrentVersion = toVer
+	}
+	if opts.JobCondition != nil {
+		condition := *opts.JobCondition
+		condition.ObservedGeneration = job.Generation
+		meta.SetStatusCondition(&job.Status.Conditions, condition)
 	}
 
 	_, err = cli.OperationsV1alpha2().NodeUpgradeJobs().UpdateStatus(ctx, job, metav1.UpdateOptions{})

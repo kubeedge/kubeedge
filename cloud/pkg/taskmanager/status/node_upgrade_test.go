@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
@@ -82,6 +83,12 @@ func TestTryUpdateNodeUpgradeJobStatus(t *testing.T) {
 				Time:   "2025-01-01T00:00:00Z",
 			},
 			ExtendInfo: "v1.20.0,v1.21.0",
+			JobCondition: &metav1.Condition{
+				Type:    operationsv1alpha2.NodeUpgradeJobConditionWaitingConfirmation,
+				Status:  metav1.ConditionFalse,
+				Reason:  "ActionProgressed",
+				Message: "Node upgrade job is no longer waiting for edge-side confirmation.",
+			},
 		})
 		require.NoError(t, err)
 		job, err := cli.OperationsV1alpha2().NodeUpgradeJobs().
@@ -96,5 +103,9 @@ func TestTryUpdateNodeUpgradeJobStatus(t *testing.T) {
 		actionStatus := job.Status.NodeStatus[0].ActionFlow[0]
 		require.Equal(t, operationsv1alpha2.NodeUpgradeJobActionUpgrade, actionStatus.Action)
 		require.Equal(t, metav1.ConditionTrue, actionStatus.Status)
+		cond := meta.FindStatusCondition(job.Status.Conditions,
+			operationsv1alpha2.NodeUpgradeJobConditionWaitingConfirmation)
+		require.NotNil(t, cond)
+		require.Equal(t, metav1.ConditionFalse, cond.Status)
 	})
 }
