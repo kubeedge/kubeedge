@@ -12,7 +12,7 @@ func BuildResourceForRouter(namespace, resourceType, resourceID string) (string,
 		namespace = "default"
 	}
 	if resourceID == "" || resourceType == "" {
-		return "", fmt.Errorf("required parameter are not set (resourceID or resource type)")
+		return "", fmt.Errorf("required parameters are not set (resourceID or resource type)")
 	}
 	return fmt.Sprintf("node/nodeid/%s%s%s%s%s", namespace, constants.ResourceSep, resourceType, constants.ResourceSep, resourceID), nil
 }
