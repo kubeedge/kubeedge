@@ -22,7 +22,7 @@ func admitRule(review admissionv1.AdmissionReview) *admissionv1.AdmissionRespons
 	reviewResponse := admissionv1.AdmissionResponse{}
 
 	switch review.Request.Operation {
-	case admissionv1.Create:
+	case admissionv1.Create, admissionv1.Update:
 		raw := review.Request.Object.Raw
 		rule := rulesv1.Rule{}
 		deserializer := codecs.UniversalDeserializer()
@@ -55,7 +55,7 @@ func validateRule(rule *rulesv1.Rule) error {
 	} else if sourceEndpoint == nil {
 		return fmt.Errorf("source ruleEndpoint %s has not been created", sourceKey)
 	}
-	if err = validateSourceRuleEndpoint(sourceEndpoint, rule.Spec.SourceResource); err != nil {
+	if err = validateSourceRuleEndpoint(sourceEndpoint, rule); err != nil {
 		return err
 	}
 	targetKey := fmt.Sprintf("%s/%s", rule.Namespace, rule.Spec.Target)
@@ -81,7 +81,13 @@ func validateRule(rule *rulesv1.Rule) error {
 	}
 	return nil
 }
-func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResource map[string]string) error {
+
+// validateSourceRuleEndpoint checks that rule may consume ruleEndpoint as its source, and that no
+// other rule already consumes the same source properties. rule itself is skipped while scanning the
+// existing rules: on an update the stored copy of rule is returned by the list and would otherwise
+// always conflict with the incoming one.
+func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, rule *rulesv1.Rule) error {
+	sourceResource := rule.Spec.SourceResource
 	switch ruleEndpoint.Spec.RuleEndpointType {
 	case rulesv1.RuleEndpointTypeRest:
 		_, exist := sourceResource["path"]
@@ -93,6 +99,9 @@ func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResour
 			return err
 		}
 		for _, r := range rules {
+			if r.Namespace == rule.Namespace && r.Name == rule.Name {
+				continue
+			}
 			if sourceResource["path"] == r.Spec.SourceResource["path"] {
 				return fmt.Errorf("source properties exist in Rule %s/%s. Path: %s", r.Namespace, r.Name, sourceResource["path"])
 			}
@@ -111,6 +120,9 @@ func validateSourceRuleEndpoint(ruleEndpoint *rulesv1.RuleEndpoint, sourceResour
 			return err
 		}
 		for _, r := range rules {
+			if r.Namespace == rule.Namespace && r.Name == rule.Name {
+				continue
+			}
 			if sourceResource["topic"] == r.Spec.SourceResource["topic"] && sourceResource["node_name"] == r.Spec.SourceResource["node_name"] {
 				return fmt.Errorf("source properties exist in Rule %s/%s. Node_name: %s, topic: %s", r.Namespace, r.Name, sourceResource["node_name"], sourceResource["topic"])
 			}
