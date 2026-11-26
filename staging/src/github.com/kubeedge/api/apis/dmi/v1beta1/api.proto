@@ -274,6 +274,7 @@ message DBMethod{
     DBMethodRedis redis = 2;
     DBMethodTDEngine tdengine = 3;
     DBMethodMySQL mysql = 4;
+    DBMethodKwdb kwdb = 5;
 }
 
 message DBMethodInfluxdb2{
@@ -338,6 +339,18 @@ message MySQLClientConfig{
     string database = 2;
     //user name
     string userName = 3;
+}
+
+message DBMethodKwdb{
+    // data config when push data to Kaiwudb
+    KWDBClientConfig kwdbClientConfig = 1;
+}
+
+message KWDBClientConfig{
+    // Kaiwudb address,like 127.0.0.1:26257
+    string addr = 1;
+    // Kaiwudb database name
+    string dbname = 2;
 }
 
 message DBMethodOTEL{
