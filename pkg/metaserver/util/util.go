@@ -40,9 +40,24 @@ func SetMetaType(obj runtime.Object) error {
 	return nil
 }
 
+// schemeResourceToKind indexes the resource name of every type registered in the
+// client-go scheme back to its kind. Multi-word kinds like ConfigMap, DaemonSet or
+// RuntimeClass keep an inner capital that the suffix rules below cannot recover, so
+// the resource of a registered type is resolved through this index instead.
+var schemeResourceToKind = func() map[string]string {
+	knownTypes := scheme.Scheme.AllKnownTypes()
+	m := make(map[string]string, len(knownTypes))
+	for gvk := range knownTypes {
+		m[UnsafeKindToResource(gvk.Kind)] = gvk.Kind
+	}
+	return m
+}()
+
 // Sometimes, we need guess kind according to resource:
 // 1. In most cases, is like pods to Pod,
 // 2. In some unusual cases, requires special treatment like endpoints to Endpoints
+// 3. For a resource registered in the scheme, the kind it was registered with wins,
+// so that configmaps becomes ConfigMap rather than Configmap
 func UnsafeResourceToKind(r string) string {
 	if len(r) == 0 {
 		return r
@@ -61,6 +76,9 @@ func UnsafeResourceToKind(r string) string {
 	}
 	if v, isUnusual := unusualResourceToKind[r]; isUnusual {
 		return v
+	}
+	if k, isRegistered := schemeResourceToKind[r]; isRegistered {
+		return k
 	}
 	caser := cases.Title(language.Und)
 	k := caser.String(r)
