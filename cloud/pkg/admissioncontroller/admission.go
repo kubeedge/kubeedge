@@ -1,12 +1,14 @@
 package admissioncontroller
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	admissionv1 "k8s.io/api/admission/v1"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
@@ -15,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -41,6 +44,11 @@ const (
 	MutatingNodeUpgradeWebhookName = "mutatingnodeupgradejob.kubeedge.io"
 
 	AutonomyLabel = "app-offline.kubeedge.io=autonomy"
+
+	// caBundleRefreshPeriod is how often the CA certificate is re-read from disk to
+	// check whether the CA bundle published in the webhook configurations is still
+	// the one the webhook is served with.
+	caBundleRefreshPeriod = time.Minute
 )
 
 var scheme = runtime.NewScheme()
@@ -64,7 +72,7 @@ func addToScheme(scheme *runtime.Scheme) {
 
 // AdmissionController implements the admission webhook for validation of configuration.
 type AdmissionController struct {
-	Client    *kubernetes.Clientset
+	Client    kubernetes.Interface
 	CrdClient *versioned.Clientset
 }
 
@@ -99,6 +107,9 @@ func Run(opt *options.AdmissionOptions) error {
 	if err = controller.registerWebhooks(opt, caBundle); err != nil {
 		return fmt.Errorf("failed to register the webhook with error: %v", err)
 	}
+	// The CA certificate is mounted from a secret that can be rotated while the
+	// process runs, so the published CA bundle has to keep following it.
+	go controller.watchCABundle(opt, caBundle)
 
 	http.HandleFunc("/devices", serveDevice)
 	http.HandleFunc("/devicemodels", serveDeviceModel)
@@ -128,14 +139,14 @@ func Run(opt *options.AdmissionOptions) error {
 // defined tls config, else use that defined in kubeconfig
 func configTLS(opt *options.AdmissionOptions, restConfig *restclient.Config) (*tls.Config, error) {
 	if len(opt.CertFile) != 0 && len(opt.KeyFile) != 0 {
-		sCert, err := tls.LoadX509KeyPair(opt.CertFile, opt.KeyFile)
+		reloader, err := newCertReloader(opt.CertFile, opt.KeyFile)
 		if err != nil {
 			return nil, err
 		}
 
 		return &tls.Config{
-			Certificates: []tls.Certificate{sCert},
-			MinVersion:   tls.VersionTLS12,
+			GetCertificate: reloader.GetCertificate,
+			MinVersion:     tls.VersionTLS12,
 		}, nil
 	}
 
@@ -391,6 +402,37 @@ func (ac *AdmissionController) registerWebhooks(opt *options.AdmissionOptions, c
 
 	return registerMutatingWebhook(ac.Client.AdmissionregistrationV1().MutatingWebhookConfigurations(),
 		[]admissionregistrationv1.MutatingWebhookConfiguration{offlineMigrationWebhook, mutatingWebhook})
+}
+
+// watchCABundle keeps the CA bundle published in the webhook configurations in sync
+// with the CA certificate on disk, starting from the bundle already published by the
+// caller. It never returns.
+func (ac *AdmissionController) watchCABundle(opt *options.AdmissionOptions, published []byte) {
+	wait.Forever(func() {
+		published = ac.refreshCABundle(opt, published)
+	}, caBundleRefreshPeriod)
+}
+
+// refreshCABundle registers the webhooks again when the CA certificate on disk is no
+// longer the one published in the webhook configurations, and returns the CA bundle
+// they hold afterwards. The API server verifies the webhook against the published CA
+// bundle, so a rotated CA has to be published for it to keep reaching the webhook
+// once the previous CA is gone.
+func (ac *AdmissionController) refreshCABundle(opt *options.AdmissionOptions, published []byte) []byte {
+	caBundle, err := os.ReadFile(opt.CaCertFile)
+	if err != nil {
+		klog.Errorf("unable to read cacert file: %v", err)
+		return published
+	}
+	if bytes.Equal(caBundle, published) {
+		return published
+	}
+	if err := ac.registerWebhooks(opt, caBundle); err != nil {
+		klog.Errorf("failed to publish the rotated CA bundle with error: %v", err)
+		return published
+	}
+	klog.Info("Published the rotated CA bundle to the webhook configurations")
+	return caBundle
 }
 
 func (ac *AdmissionController) getRuleEndpoint(namespace, name string) (*v1.RuleEndpoint, error) {
