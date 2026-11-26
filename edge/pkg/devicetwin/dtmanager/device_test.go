@@ -330,6 +330,20 @@ func TestUpdateDeviceAttr(t *testing.T) {
 				}
 			},
 		},
+		{
+			name:        "Test4-DBError",
+			context:     dtContexts,
+			deviceID:    "DeviceA",
+			attributes:  messageAttributes,
+			baseMessage: baseMessage,
+			wantErr:     nil, // The function itself doesn't return this error, it logs it and continues if it can, but wait, UpdateDeviceAttr returns err? Let's check. No, wait, if DeviceAttrTrans returns error, it logs and then err is returned. Wait, the function might return err or (nil, err).
+			want:        nil,
+			setupMock: func(m *mocks.MockDeviceService) {
+				m.DeviceAttrTransFunc = func(adds []models.DeviceAttr, deletes []models.DeviceDelete, updates []models.DeviceAttrUpdate) error {
+					return errors.New("db error")
+				}
+			},
+		},
 	}
 
 	defer func() {

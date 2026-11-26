@@ -269,6 +269,28 @@ func TestDeviceTwinToMsgTwin(t *testing.T) {
 			deviceTwins: deviceTwin,
 			want:        msgTwins,
 		},
+		{
+			name: "DeviceTwinToMsgTwinTest with invalid JSON",
+			deviceTwins: []models.DeviceTwin{
+				{
+					Name:            "SensorTag",
+					ExpectedMeta:    `{invalid json}`,
+					ActualMeta:      `{invalid json}`,
+					ExpectedVersion: `{invalid json}`,
+					ActualVersion:   `{invalid json}`,
+				},
+			},
+			want: map[string]*MsgTwin{
+				"SensorTag": {
+					Expected:        nil,
+					Actual:          nil,
+					Optional:        func() *bool { b := false; return &b }(),
+					Metadata:        &TypeMetadata{Type: ""},
+					ExpectedVersion: &TwinVersion{CloudVersion: 0, EdgeVersion: 0},
+					ActualVersion:   &TwinVersion{CloudVersion: 0, EdgeVersion: 0},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
