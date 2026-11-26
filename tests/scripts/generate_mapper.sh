@@ -84,7 +84,8 @@ if [[ "${CONTAINER_RUNTIME}" = "cri-o" ]]; then
   fi
   echo "successfully import modbus mapper image to CRI-O"
 elif [[ "${CONTAINER_RUNTIME}" = "isulad" ]]; then
-  sudo isula load -i modbus-mapper.tar && echo "successfully import modbus mapper image to Isulad"
+  sudo isula load -i modbus-mapper.tar && sudo isula tag modbus-e2e-mapper:v1.0.0 docker.io/library/modbus-e2e-mapper:v1.0.0 || true
+  echo "successfully import modbus mapper image to Isulad"
 elif [[ "${CONTAINER_RUNTIME}" = "containerd" ]]; then
   sudo ctr -n k8s.io images import modbus-mapper.tar && echo "successfully import modbus mapper image to Containerd"
 elif [[ "${CONTAINER_RUNTIME}" = "docker" ]]; then
