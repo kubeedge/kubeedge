@@ -127,8 +127,8 @@ func TestLogs(t *testing.T) {
 				queryParams:   "",
 				isGetLogsFail: true,
 			},
-			expectedStatus: http.StatusInternalServerError,
-			expectedBody:   "Failed to get logs from edged\n",
+			expectedStatus: http.StatusOK,
+			expectedBody:   `{"errMessages":["failed to get logs for container"]}`,
 		},
 		{
 			name: "Logs with unexpected status code",

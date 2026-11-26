@@ -500,6 +500,24 @@ func TestREST_Logs(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "test requested container not found",
+			cases: testCase{
+				logsInfo: common.LogsInfo{
+					Namespace:     "default",
+					PodName:       "pod-name",
+					ContainerName: "missing-container",
+				},
+				isEdgedEnabled:         true,
+				isRemoteRuntimeService: true,
+				expectedLogsResponse: &types.LogsResponse{
+					ErrMessages: []string{"not found container missing-container in pod:\"/default/pod-name\""},
+					LogMessages: []string{},
+				},
+				expectedHTTPResponseNil: true,
+			},
+			wantErr: true,
+		},
+		{
 			name: "test restful request failed",
 			cases: testCase{
 				logsInfo: common.LogsInfo{
