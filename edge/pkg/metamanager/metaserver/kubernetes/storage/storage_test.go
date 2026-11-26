@@ -19,6 +19,9 @@ import (
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	remote "k8s.io/cri-client/pkg"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/watch"
+
 	"github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	beehiveContext "github.com/kubeedge/beehive/pkg/core/context"
 	"github.com/kubeedge/beehive/pkg/core/model"
@@ -550,6 +553,31 @@ func TestREST_Logs(t *testing.T) {
 		})
 	}
 }
+
+func TestTypedWatcher_TranslateUnstructured(t *testing.T) {
+	// build a watch channel with an unstructured object event
+	pod := &unstructured.Unstructured{Object: map[string]interface{}{"apiVersion": "v1", "kind": "Pod", "metadata": map[string]interface{}{"name": "w1"}}}
+	ch := make(chan watch.Event, 1)
+	ch <- watch.Event{Type: watch.Added, Object: pod}
+	close(ch)
+
+	w := &fakeWatcher{ch}
+	tw := newTypedWatcher(w, "")
+
+	ev, ok := <-tw.ResultChan()
+	if !ok {
+		t.Fatalf("expected event from typed watcher")
+	}
+	if ev.Type != watch.Added {
+		t.Fatalf("expected Added event, got %v", ev.Type)
+	}
+	// event object should be converted to typed Pod or runtime.Unknown fallback
+}
+
+type fakeWatcher struct{ ch chan watch.Event }
+
+func (f *fakeWatcher) Stop()                          {}
+func (f *fakeWatcher) ResultChan() <-chan watch.Event { return f.ch }
 
 type fakeRuntimeService struct {
 	VersionF                  func(ctx context.Context, apiVersion string) (*runtimeapi.VersionResponse, error)
