@@ -247,7 +247,7 @@ func (c *CloudCoreHelmTool) Upgrade(opts *types.CloudUpgradeOptions) error {
 	}
 
 	// Build a new renderer instance
-	renderer := NewGenericRenderer(kecharts.BuiltinOrDir(""),
+	renderer := NewGenericRenderer(kecharts.BuiltinOrDir(opts.ExternalHelmRoot),
 		subDir, componentName, constants.SystemNamespace, vals, false)
 	// Load the charts to this renderer
 	if err := renderer.LoadChart(); err != nil {

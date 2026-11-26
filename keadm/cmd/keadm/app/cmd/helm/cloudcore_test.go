@@ -18,6 +18,9 @@ package helm
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -26,7 +29,14 @@ import (
 	"github.com/blang/semver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/kube"
+	helmfake "helm.sh/helm/v3/pkg/kube/fake"
+	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
@@ -1367,6 +1377,77 @@ func TestInstallBasicScenarios(t *testing.T) {
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to verify k8s component")
 	})
+}
+
+type upgradeTestOSInstaller struct {
+	types.OSTypeInstaller
+}
+
+func (upgradeTestOSInstaller) IsK8SComponentInstalled(string, string) error {
+	return nil
+}
+
+type upgradeTestKubeClient struct {
+	helmfake.PrintingKubeClient
+	manifest string
+}
+
+func (c *upgradeTestKubeClient) Build(reader io.Reader, _ bool) (kube.ResourceList, error) {
+	data, err := io.ReadAll(reader)
+	c.manifest = string(data)
+	return nil, err
+}
+
+func TestUpgradeChartSource(t *testing.T) {
+	externalRoot := t.TempDir()
+	chartDir := filepath.Join(externalRoot, "charts", "cloudcore")
+	templateDir := filepath.Join(chartDir, "templates")
+	require.NoError(t, os.MkdirAll(templateDir, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(chartDir, "Chart.yaml"), []byte(
+		"apiVersion: v2\nname: cloudcore\nversion: 1.0.0\n"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(templateDir, "configmap.yaml"), []byte(
+		"apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: external-chart-marker\n"), 0644))
+
+	kubeClient := &upgradeTestKubeClient{}
+	cfg := &action.Configuration{
+		Capabilities: chartutil.DefaultCapabilities,
+		KubeClient:   kubeClient,
+		Releases:     storage.Init(driver.NewMemory()),
+		Log:          t.Logf,
+	}
+	require.NoError(t, cfg.Releases.Create(&release.Release{
+		Name:      "cloudcore",
+		Namespace: constants.SystemNamespace,
+		Version:   1,
+		Info:      &release.Info{Status: release.StatusDeployed},
+	}))
+
+	patches := gomonkey.NewPatches()
+	t.Cleanup(patches.Reset)
+	patches.ApplyFunc(getCloudcoreHistoryConfig, func(string, string) (string, error) { return "test-config", nil })
+	patches.ApplyFunc(NewHelper, func(string, string) (*Helper, error) { return &Helper{cfg: cfg}, nil })
+
+	tool := &CloudCoreHelmTool{Common: util.Common{OSTypeInstaller: upgradeTestOSInstaller{}}}
+	for _, tc := range []struct {
+		name         string
+		externalRoot string
+		wantManifest string
+	}{
+		{name: "external", externalRoot: externalRoot, wantManifest: "name: external-chart-marker"},
+		{name: "embedded", wantManifest: "# Source: cloudcore/templates/deployment_cloudcore.yaml"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			kubeClient.manifest = ""
+			require.NoError(t, tool.Upgrade(&types.CloudUpgradeOptions{
+				CloudInitUpdateBase: types.CloudInitUpdateBase{
+					KubeEdgeVersion:  testVersion,
+					ExternalHelmRoot: tc.externalRoot,
+					DryRun:           true,
+				},
+			}))
+			require.Contains(t, kubeClient.manifest, tc.wantManifest)
+		})
+	}
 }
 
 func TestUpgradeBasicScenarios(t *testing.T) {
