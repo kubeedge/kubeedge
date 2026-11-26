@@ -115,8 +115,8 @@ func (r *Rest) Forward(target provider.Target, data interface{}) (interface{}, e
 	res["header"] = request.Header
 	res["method"] = request.Method
 	stop := make(chan struct{})
-	respch := make(chan interface{})
-	errch := make(chan error)
+	respch := make(chan interface{}, 1)
+	errch := make(chan error, 1)
 	go func() {
 		resp, err := target.GoToTarget(res, stop)
 		if err != nil {
@@ -176,7 +176,7 @@ func (r *Rest) Forward(target provider.Target, data interface{}) (interface{}, e
 			return nil, errors.New("failed to get timer channel")
 		}
 		stop <- struct{}{}
-		httpResponse.StatusCode = http.StatusRequestTimeout
+		httpResponse.StatusCode = http.StatusGatewayTimeout
 		httpResponse.Body = io.NopCloser(strings.NewReader("wait to get response time out"))
 		klog.Warningf("operation timeout, msg id: %s, write result: get response timeout", messageID)
 	case _, ok := <-request.Context().Done():
