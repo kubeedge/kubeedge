@@ -30,7 +30,7 @@ cd $GOPATH/src/github.com/kubeedge/kubeedge/build/edge
 
 ```bash
 cd $GOPATH/src/github.com/kubeedge/kubeedge
-make edgeimage
+make image WHAT=edgecore
 ```
 
 We create k8s resources from the manifests in name order. Before
