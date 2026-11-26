@@ -18,6 +18,7 @@ package common
 
 import (
 	"fmt"
+	"sync"
 
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
@@ -36,6 +37,9 @@ type NodeMessagePool struct {
 	// AckMessageQueue store message key that will send to edge node
 	// and require acknowledgement from edge node.
 	AckMessageQueue workqueue.RateLimitingInterface
+	// AckMessageLock makes reading AckMessageStore and then changing it one step,
+	// so the dispatcher and the node session do not undo each other's change.
+	AckMessageLock sync.Mutex
 	// NoAckMessageStore store message that will send to edge node
 	// and do not require acknowledgement from edge node.
 	NoAckMessageStore cache.Store

@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -142,4 +143,55 @@ func NoAckMessageKeyFunc(obj interface{}) (string, error) {
 	}
 
 	return msg.Header.ID, nil
+}
+
+// AddsBackAfterDelete reports whether msg, from policycontroller, puts back on the node an
+// object whose delete is pending. The sync loop also resends the object while a delete waits
+// for an offline node, and that resend must not replace the delete.
+func AddsBackAfterDelete(msg, pendingDelete *beehivemodel.Message) bool {
+	return msg.GetSource() == modules.PolicyControllerModuleName && addsBack(msg, pendingDelete)
+}
+
+// KeepAfterDeleteAck reports whether stored, which replaced ackedDelete in the store, is sent
+// after it. A DELETE or a Response may also have replaced it, and addsBack drops those by
+// operation. An add-back is kept from any source: a sync loop resend may have replaced it.
+func KeepAfterDeleteAck(stored, ackedDelete *beehivemodel.Message) bool {
+	return addsBack(stored, ackedDelete)
+}
+
+// addsBack: policycontroller sent the delete, and msg inserts or updates the object, not
+// terminating, at the delete's resourceVersion or newer.
+func addsBack(msg, pendingDelete *beehivemodel.Message) bool {
+	if pendingDelete.GetSource() != modules.PolicyControllerModuleName {
+		return false
+	}
+	switch msg.GetOperation() {
+	case beehivemodel.DeleteOperation, beehivemodel.ResponseOperation:
+		return false
+	}
+	if deletionTimestamp, err := GetMessageDeletionTimestamp(msg); err != nil || deletionTimestamp != nil {
+		return false
+	}
+	newRV, err := strconv.ParseUint(msg.GetResourceVersion(), 10, 64)
+	if err != nil {
+		return false
+	}
+	// policycontroller always sets the resourceVersion. A delete without one comes from the
+	// sync loop for an object gone from K8s, and the source check above already rejects it.
+	deleteRV, err := strconv.ParseUint(pendingDelete.GetResourceVersion(), 10, 64)
+	if err != nil {
+		return false
+	}
+	// An equal resourceVersion is a later decision: policycontroller reconciles one object at a time.
+	return newRV >= deleteRV
+}
+
+// DroppedBehindDeleteLogf is the log for msg dropped behind a delete: a warning when it came
+// from policycontroller, which may have meant to add the object back; else verbosity 4,
+// because the sync loop resends every 5 seconds while a delete waits for an offline node.
+func DroppedBehindDeleteLogf(msg *beehivemodel.Message) func(format string, args ...interface{}) {
+	if msg.GetSource() == modules.PolicyControllerModuleName {
+		return klog.Warningf
+	}
+	return klog.V(4).Infof
 }

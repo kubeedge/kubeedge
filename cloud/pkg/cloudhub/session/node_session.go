@@ -566,7 +566,32 @@ func (ns *NodeSession) deleteSuccessPoint(resourceNamespace, objectSyncName stri
 		}
 	}
 
-	if err := ns.nodeMessagePool.AckMessageStore.Delete(msg); err != nil {
-		klog.Errorf("failed to delete message %v, err: %v", msg, err)
+	ns.removeAckedDelete(msg)
+}
+
+// removeAckedDelete removes the acknowledged delete msg from the store. A message that replaced
+// it is kept only if it adds the object back (common.KeepAfterDeleteAck); anything else is
+// dropped, see TestNodeSessionAckDropsReplacingMessage.
+func (ns *NodeSession) removeAckedDelete(msg *beehivemodel.Message) {
+	pool := ns.nodeMessagePool
+	pool.AckMessageLock.Lock()
+	defer pool.AckMessageLock.Unlock()
+
+	item, exist, err := pool.AckMessageStore.Get(msg)
+	if err != nil || !exist {
+		return
+	}
+	stored := item.(*beehivemodel.Message)
+	if stored.GetID() != msg.GetID() {
+		if common.KeepAfterDeleteAck(stored, msg) {
+			klog.Infof("keep message %s %s %s (resourceVersion %s) for node %s after acknowledged delete %s",
+				stored.GetID(), stored.GetOperation(), stored.GetResource(), stored.GetResourceVersion(), ns.nodeID, msg.GetID())
+			return
+		}
+		common.DroppedBehindDeleteLogf(stored)("drop message %s %s %s from %s (resourceVersion %q) for node %s: it replaced delete %s, which is acknowledged",
+			stored.GetID(), stored.GetOperation(), stored.GetResource(), stored.GetSource(), stored.GetResourceVersion(), ns.nodeID, msg.GetID())
+	}
+	if err := pool.AckMessageStore.Delete(stored); err != nil {
+		klog.Errorf("failed to delete message %v, err: %v", stored, err)
 	}
 }
