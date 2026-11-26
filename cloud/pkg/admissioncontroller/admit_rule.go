@@ -10,6 +10,19 @@ import (
 	rulesv1 "github.com/kubeedge/api/apis/rules/v1"
 )
 
+// Rule admission flow and maintenance notes:
+//
+// The API server sends an AdmissionReview after the webhook configuration in
+// admission.go matches a Rule. The shared serve function decodes the review,
+// invokes admitRule, and copies the request UID to the response. Create and
+// Update must therefore validate review.Request.Object, where Update contains
+// the proposed object. Delete has no complete object and is intentionally
+// allowed here. Keep this switch synchronized with registerWebhooks: if an
+// operation is registered but omitted here, every request for that operation
+// is rejected as unsupported. Referenced endpoint and uniqueness checks below
+// are only effective while this webhook is reachable and enforced by the
+// configured failure policy.
+
 var (
 	sourceToTarget = [][2]rulesv1.RuleEndpointTypeDef{
 		{rulesv1.RuleEndpointTypeRest, rulesv1.RuleEndpointTypeEventBus},
@@ -22,7 +35,7 @@ func admitRule(review admissionv1.AdmissionReview) *admissionv1.AdmissionRespons
 	reviewResponse := admissionv1.AdmissionResponse{}
 
 	switch review.Request.Operation {
-	case admissionv1.Create:
+	case admissionv1.Create, admissionv1.Update:
 		raw := review.Request.Object.Raw
 		rule := rulesv1.Rule{}
 		deserializer := codecs.UniversalDeserializer()
