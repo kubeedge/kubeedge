@@ -17,6 +17,8 @@ limitations under the License.
 package wrap
 
 import (
+	"time"
+
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
 	"github.com/kubeedge/kubeedge/pkg/nodetask/actionflow"
 )
@@ -77,6 +79,10 @@ func (job ImagePrePullJob) ResourceType() string {
 
 func (job ImagePrePullJob) Concurrency() int {
 	return int(job.Obj.Spec.ImagePrePullTemplate.Concurrency)
+}
+
+func (job ImagePrePullJob) Timeout() time.Duration {
+	return jobTimeout(job.Obj.Spec.ImagePrePullTemplate.TimeoutSeconds)
 }
 
 func (job ImagePrePullJob) Spec() any {
