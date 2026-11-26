@@ -231,6 +231,9 @@ func createDevice(device *v1beta1.Device) types.Device {
 
 // isExistModel check if the target node already has the model.
 func isExistModel(deviceMap *sync.Map, device *v1beta1.Device) bool {
+	if device == nil || device.Spec.DeviceModelRef == nil {
+		return false
+	}
 	var res bool
 	targetNode := device.Spec.NodeName
 	modelName := device.Spec.DeviceModelRef.Name
@@ -245,6 +248,9 @@ func isExistModel(deviceMap *sync.Map, device *v1beta1.Device) bool {
 			return true
 		}
 		if deviceItem.Spec.NodeName == "" {
+			return true
+		}
+		if deviceItem.Spec.DeviceModelRef == nil {
 			return true
 		}
 		if deviceItem.Spec.NodeName == targetNode && deviceItem.Namespace == device.Namespace &&

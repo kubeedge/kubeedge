@@ -41,8 +41,15 @@ func admitDevice(review admissionv1.AdmissionReview) *admissionv1.AdmissionRespo
 }
 
 func validateDevice(device *devicesv1beta1.Device, response *admissionv1.AdmissionResponse) string {
-	//device properties name must be unique.
 	var msg string
+
+	if device.Spec.DeviceModelRef == nil {
+		msg = "deviceModelRef is required"
+		response.Allowed = false
+		return msg
+	}
+
+	//device properties name must be unique.
 	size := len(device.Spec.Properties)
 	for i := range device.Spec.Properties {
 		for j := i + 1; j < size; j++ {
