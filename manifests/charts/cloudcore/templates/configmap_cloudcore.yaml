@@ -9,25 +9,53 @@ data:
   cloudcore.yaml: |
     apiVersion: cloudcore.config.kubeedge.io/v1alpha2
     kind: CloudCore
+    commonConfig:
+      tunnelPort: 10350
+      monitorServer:
+        bindAddress: 127.0.0.1:9091
+        enableProfiling: false
     featureGates:
       requireAuthorization: {{ .Values.cloudCore.featureGates.requireAuthorization }}
     kubeAPIConfig:
+      burst: 200
+      contentType: application/vnd.kubernetes.protobuf
       kubeConfig: ""
       master: ""
+      qps: 100
     modules:
       cloudHub:
         advertiseAddress:
         {{- range .Values.cloudCore.modules.cloudHub.advertiseAddress }}
         - {{  .  }}
         {{- end}}
+        authorization:
+          debug: true
+          enable: false
+          modes:
+          - node:
+              enable: true
         dnsNames:
         {{- range .Values.cloudCore.modules.cloudHub.dnsNames }}
         - {{  .  }}
         {{- end}}
+        edgeCertSigningDuration: 365
+        enable: true
+        https:
+          address: 0.0.0.0
+          enable: {{ .Values.cloudCore.modules.cloudHub.https.enable }}
+          port: {{ .Values.cloudCore.modules.cloudHub.https.port }}
+        keepaliveInterval: 30
         nodeLimit: {{ .Values.cloudCore.modules.cloudHub.nodeLimit }}
+        quic:
+          address: 0.0.0.0
+          enable: {{ .Values.cloudCore.modules.cloudHub.quic.enable }}
+          maxIncomingStreams: {{ .Values.cloudCore.modules.cloudHub.quic.maxIncomingStreams }}
+          port: {{ .Values.cloudCore.modules.cloudHub.quic.port }}
         tlsCAFile: /etc/kubeedge/ca/rootCA.crt
+        tlsCAKeyFile: /etc/kubeedge/ca/rootCA.key
         tlsCertFile: /etc/kubeedge/certs/edge.crt
         tlsPrivateKeyFile: /etc/kubeedge/certs/edge.key
+        tokenRefreshDuration: 12
         unixsocket:
           address: unix:///var/lib/kubeedge/kubeedge.sock
           enable: true
@@ -35,25 +63,33 @@ data:
           address: 0.0.0.0
           enable: {{ .Values.cloudCore.modules.cloudHub.websocket.enable }}
           port: {{ .Values.cloudCore.modules.cloudHub.websocket.port }}
-        quic:
-          address: 0.0.0.0
-          enable: {{ .Values.cloudCore.modules.cloudHub.quic.enable }}
-          maxIncomingStreams: {{ .Values.cloudCore.modules.cloudHub.quic.maxIncomingStreams }}
-          port: {{ .Values.cloudCore.modules.cloudHub.quic.port }}
-        https:
-          address: 0.0.0.0
-          enable: {{ .Values.cloudCore.modules.cloudHub.https.enable }}
-          port: 10002
+        writeTimeout: 30
       cloudStream:
         enable: {{ .Values.cloudCore.modules.cloudStream.enable }}
         streamPort: 10003
+        tlsStreamCAFile: /etc/kubeedge/ca/streamCA.crt
+        tlsStreamCertFile: /etc/kubeedge/certs/stream.crt
+        tlsStreamPrivateKeyFile: /etc/kubeedge/certs/stream.key
+        tlsTunnelCAFile: /etc/kubeedge/ca/rootCA.crt
+        tlsTunnelCertFile: /etc/kubeedge/certs/server.crt
+        tlsTunnelPrivateKeyFile: /etc/kubeedge/certs/server.key
         tunnelPort: 10004
+      deviceController:
+        enable: {{ .Values.cloudCore.modules.deviceController.enable }}
       dynamicController:
         enable: {{ .Values.cloudCore.modules.dynamicController.enable }}
-      router:
-        enable: {{ .Values.cloudCore.modules.router.enable }}
+      edgeController:
+        enable: {{ .Values.cloudCore.modules.edgeController.enable }}
+        nodeUpdateFrequency: {{ .Values.cloudCore.modules.edgeController.nodeUpdateFrequency }}
       iptablesManager:
         enable: {{ .Values.iptablesManager.enable }}
         mode: {{ .Values.iptablesManager.mode }}
+      router:
+        address: 0.0.0.0
+        enable: {{ .Values.cloudCore.modules.router.enable }}
+        port: 9443
+        restTimeout: 60
+      syncController:
+        enable: {{ .Values.cloudCore.modules.syncController.enable }}
       taskManager:
         enable: {{ .Values.cloudCore.modules.taskManager.enable }}
