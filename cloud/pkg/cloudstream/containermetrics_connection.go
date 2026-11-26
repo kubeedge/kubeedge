@@ -22,7 +22,7 @@ import (
 	"io"
 	"net"
 	"strconv"
-
+	"time"
 	"github.com/emicklei/go-restful"
 	"k8s.io/klog/v2"
 
@@ -97,32 +97,42 @@ func (ms *ContainerMetricsConnection) SendConnection() (stream.EdgedConnection, 
 func (ms *ContainerMetricsConnection) Serve() error {
 	defer func() {
 		close(ms.closeChan)
-		klog.Infof("%s end successful", ms.String())
+		klog.Infof("%s ended successfully", ms.String())
 	}()
 
-	// first send connect message
+	// First send connect message
 	if _, err := ms.SendConnection(); err != nil {
-		klog.Errorf("%s send %s info error %v", ms.String(), stream.MessageTypeMetricConnect, err)
-		return err
+		klog.Errorf("%s send %s info error: %v", ms.String(), stream.MessageTypeMetricConnect, err)
+		return fmt.Errorf("failed to send connection: %w", err)
 	}
 
 	for {
 		select {
 		case <-ms.ctx.Done():
-			// if apiserver request end, send close message to edge
+			// If apiserver request ends, send close message to edge
 			msg := stream.NewMessage(ms.MessageID, stream.MessageTypeRemoveConnect, nil)
+			sendSuccess := false
 			for retry := 0; retry < 3; retry++ {
 				if err := ms.WriteToTunnel(msg); err != nil {
-					klog.Warningf("%v send %s message to edge error %v", ms, msg.MessageType, err)
+					klog.Warningf("%s send %s message to edge failed (attempt %d): %v", ms.String(), msg.MessageType, retry+1, err)
+					// Add small delay between retries
+					if retry < 2 {
+						time.Sleep(100 * time.Millisecond)
+					}
 				} else {
+					sendSuccess = true
 					break
 				}
 			}
-			klog.Infof("%s send close message to edge successfully", ms.String())
+			if sendSuccess {
+				klog.Infof("%s successfully sent close message to edge", ms.String())
+			} else {
+				klog.Errorf("%s failed to send close message to edge after 3 attempts", ms.String())
+			}
 			return nil
 		case <-ms.EdgePeerDone():
-			klog.V(6).Infof("%s find edge peer done, so stop this connection", ms.String())
-			return fmt.Errorf("%s find edge peer done, so stop this connection", ms.String())
+			klog.V(6).Infof("%s detected edge peer done, stopping connection", ms.String())
+			return fmt.Errorf("connection stopped due to edge peer termination")
 		}
 	}
 }
