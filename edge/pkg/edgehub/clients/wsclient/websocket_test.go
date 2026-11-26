@@ -26,11 +26,13 @@ import (
 	"github.com/google/uuid"
 	"k8s.io/klog/v2"
 
+	"github.com/golang/mock/gomock"
 	"github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/util"
 	"github.com/kubeedge/kubeedge/edge/pkg/edgehub/config"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/api"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn"
+	mockcon "github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn/testing"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/mux"
 	"github.com/kubeedge/kubeedge/pkg/viaduct/pkg/server"
 )
@@ -163,6 +165,16 @@ func TestInit(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUnInit(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockConn := mockcon.NewMockConnection(ctrl)
+
+	mockConn.EXPECT().Close().Return(nil)
+
+	wsc := &WebSocketClient{connection: mockConn}
+	wsc.UnInit()
 }
 
 // TestSend checks send function by sending message to server
