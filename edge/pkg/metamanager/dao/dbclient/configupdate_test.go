@@ -18,8 +18,6 @@ package dbclient
 
 import (
 	"errors"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
@@ -27,24 +25,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	edgecorev1alpha2 "github.com/kubeedge/api/apis/componentconfig/edgecore/v1alpha2"
 	operationv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
-	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/models"
 )
-
-// TestMain initializes the database once for the package, because dao.Init
-// only opens the database on the first call.
-func TestMain(m *testing.M) {
-	dir, err := os.MkdirTemp("", "dbclient-test")
-	if err != nil {
-		panic(err)
-	}
-	dao.Init(filepath.Join(dir, "edgecore.db"), &edgecorev1alpha2.MetaManager{Enable: true})
-	code := m.Run()
-	_ = os.RemoveAll(dir)
-	os.Exit(code)
-}
 
 func TestConfigUpdate(t *testing.T) {
 	configUpdateDao := NewConfigUpdate()
