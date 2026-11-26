@@ -32,7 +32,7 @@ import (
 // NewEdgeUnholdUpgrade returns KubeEdge unhold-upgrade command.
 func NewEdgeUnholdUpgrade() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "unhold-upgrade <resource-type> [<name>] [--namespace namespace]",
+		Use:   "unhold <resource-type> [<name>] [--namespace namespace]",
 		Short: "Unhold an upgrade for a pod or node-wide",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

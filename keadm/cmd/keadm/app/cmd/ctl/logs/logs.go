@@ -24,10 +24,9 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/klog/v2"
-	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 
 	"github.com/kubeedge/kubeedge/common/types"
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
@@ -56,6 +55,8 @@ type PodLogsOptions struct {
 	LimitBytes string
 	// InsecureSkipTLSVerifyBackend is true if the server's certificate will not be checked for validity.
 	InsecureSkipTLSVerifyBackend bool
+
+	genericiooptions.IOStreams
 }
 
 func NewEdgePodLogs() *cobra.Command {
@@ -68,8 +69,7 @@ func NewEdgePodLogs() *cobra.Command {
 			if len(args) == 0 {
 				return fmt.Errorf("no pod specified for logs")
 			}
-			cmdutil.CheckErr(logsOpts.getPodLogs(args))
-			return nil
+			return logsOpts.getPodLogs(args)
 		},
 	}
 	AddLogsPodFlags(cmd, logsOpts)
@@ -77,9 +77,10 @@ func NewEdgePodLogs() *cobra.Command {
 }
 
 func NewLogsPodOpts() *PodLogsOptions {
-	podLogsOptions := &PodLogsOptions{}
-	podLogsOptions.Namespace = "default"
-	return podLogsOptions
+	return &PodLogsOptions{
+		Namespace: "default",
+		IOStreams: genericiooptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr},
+	}
 }
 
 func AddLogsPodFlags(cmd *cobra.Command, podLogsOptions *PodLogsOptions) {
@@ -107,13 +108,16 @@ func (o *PodLogsOptions) getPodLogs(args []string) error {
 	if err != nil {
 		return err
 	}
+	if logsResponse == nil {
+		return nil
+	}
 
 	for _, logMsg := range logsResponse.LogMessages {
-		klog.Info(logMsg)
+		fmt.Fprint(o.Out, logMsg)
 	}
 
 	for _, errMsg := range logsResponse.ErrMessages {
-		klog.Info(errMsg)
+		fmt.Fprintln(o.ErrOut, errMsg)
 	}
 
 	return nil
@@ -131,15 +135,16 @@ func logsPod(ctx context.Context, clientSet kubernetes.Interface, pod string, o 
 
 	if o.Follow {
 		// Stream logs
-		logStream, err := req.Stream(context.TODO())
+		logStream, err := req.Stream(ctx)
 		if err != nil {
 			return nil, err
 		}
 		defer logStream.Close()
 
-		if _, err := io.Copy(os.Stdout, logStream); err != nil {
+		if _, err := io.Copy(o.Out, logStream); err != nil {
 			return nil, err
 		}
+		return nil, nil
 	}
 	result := req.Do(ctx)
 
