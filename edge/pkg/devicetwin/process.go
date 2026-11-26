@@ -333,6 +333,7 @@ func (dt *DeviceTwin) runDeviceTwin() {
 					now := time.Now().Unix()
 					if now-health.(int64) > 60*2 {
 						klog.Infof("%s health %v is old, and begin restart", dtmName, health)
+						dt.DTContexts.ModulesHealth.Store(dtmName, now)
 						go dt.DTModules[dtmName].Start()
 					}
 				}
