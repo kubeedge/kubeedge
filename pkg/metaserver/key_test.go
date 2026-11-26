@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -59,7 +60,7 @@ func TestKeyFuncObj(t *testing.T) {
 			obj.SetName(test.attr[4])
 
 			key, err := KeyFuncObj(&obj)
-			assert.NoError(err)
+			require.NoError(t, err)
 			assert.Equal(test.stdResult, key)
 		})
 	}
@@ -157,14 +158,14 @@ func TestKeyFuncReq(t *testing.T) {
 	for k, v := range Cases {
 		t.Run("parseKey", func(t *testing.T) {
 			req, err := http.NewRequest(v.method, v.url, nil)
-			assert.NoError(err)
+			require.NoError(t, err)
 
 			apiRequestInfo, err := resolver.NewRequestInfo(req)
-			assert.NoError(err)
+			require.NoError(t, err)
 
 			ctx := request.WithRequestInfo(context.TODO(), apiRequestInfo)
 			key, err := KeyFuncReq(ctx, "")
-			assert.NoError(err)
+			require.NoError(t, err)
 			assert.Equal(stdResult[k], key)
 		})
 	}
