@@ -28,6 +28,14 @@ func (sctl *SyncController) reconcileObjectSync(sync *v1alpha1.ObjectSync) {
 
 	gv, err := schema.ParseGroupVersion(sync.Spec.ObjectAPIVersion)
 	if err != nil {
+		klog.ErrorS(err, "Failed to parse ObjectSync API version",
+			"objectSync", klog.KObj(sync),
+			"apiVersion", sync.Spec.ObjectAPIVersion,
+			"kind", sync.Spec.ObjectKind)
+		return
+	}
+	if sync.Spec.ObjectKind == "" {
+		klog.ErrorS(nil, "ObjectSync kind is empty", "objectSync", klog.KObj(sync))
 		return
 	}
 	resource := util.UnsafeKindToResource(sync.Spec.ObjectKind)
@@ -37,6 +45,15 @@ func (sctl *SyncController) reconcileObjectSync(sync *v1alpha1.ObjectSync) {
 
 	lister, err := sctl.informerManager.GetLister(gvr)
 	if err != nil {
+		klog.ErrorS(err, "Failed to get ObjectSync resource lister",
+			"objectSync", klog.KObj(sync),
+			"resource", gvr.String())
+		return
+	}
+	if lister == nil {
+		klog.ErrorS(nil, "ObjectSync resource lister is nil",
+			"objectSync", klog.KObj(sync),
+			"resource", gvr.String())
 		return
 	}
 
@@ -52,6 +69,9 @@ func (sctl *SyncController) reconcileObjectSync(sync *v1alpha1.ObjectSync) {
 
 	object, err = meta.Accessor(ret)
 	if err != nil {
+		klog.ErrorS(err, "Failed to access ObjectSync resource metadata",
+			"objectSync", klog.KObj(sync),
+			"resource", gvr.String())
 		return
 	}
 
