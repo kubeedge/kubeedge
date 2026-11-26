@@ -9,6 +9,12 @@ __pycache__
 .gradle
 .vscode
 
+*.crt
+*.csr
+*.key
+_output/local
+
+
 cloud/cloudcore.log
 cloud/cloudcore
 cloud/admission
@@ -21,3 +27,14 @@ build/edge/tmp
 
 coverage.out
 go.work.sum
+kubeedge.key
+*.log
+
+rootCA.key
+kubeedge.crt
+kubeedge.csr
+rootCA.crt
+rootCA.srl
+verify_output.txt
+edge/test/integration/config.json
+
