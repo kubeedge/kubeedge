@@ -28,6 +28,20 @@ spec:
         - name: controller-manager
           image: {{ .Values.controllerManager.image.repository }}:{{ .Values.controllerManager.image.tag }}
           imagePullPolicy: {{ .Values.controllerManager.image.pullPolicy }}
+          ports:
+            - name: healthz
+              containerPort: 9001
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: healthz
+              scheme: HTTP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+              scheme: HTTP
           {{- with .Values.controllerManager.resources }}
           resources: {{ toYaml . | nindent 12 }}
           {{- end }}
