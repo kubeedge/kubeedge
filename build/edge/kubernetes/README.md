@@ -56,3 +56,20 @@ you need to replace the following places with your new edge node name.
 ```bash
 for resource in $(ls *.yaml); do kubectl create -f $resource; done
 ```
+
+## Local testing with kind
+
+For local testing on [kind](https://kind.sigs.k8s.io/), use the provided `kind-setup.sh` script.
+It substitutes the edge node name and CloudCore IP automatically, applies all manifests, and waits for the node to register.
+
+```bash
+# Set your CloudCore IP and desired edge node name, then run:
+CLOUDCORE_IP=<cloudcore-ip> EDGE_NODE_NAME=edgenode1 bash kind-setup.sh
+```
+
+The script will:
+1. Apply all manifests with the correct node name and CloudCore URL substituted
+2. Wait for the deployment to roll out (`kubectl rollout status`)
+3. Confirm the edge node registers with the API server
+
+> **Note:** Ensure the CloudCore websocket port (default `10000`) is reachable from inside the kind cluster before running the script.
