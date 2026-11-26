@@ -25,11 +25,37 @@ import (
 
 	policyv1alpha1 "github.com/kubeedge/api/apis/policy/v1alpha1"
 	"github.com/kubeedge/beehive/pkg/core/model"
+	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/nodes"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
 	commonconstants "github.com/kubeedge/kubeedge/common/constants"
 )
+
+// cloudhubGetSessionManager indirects cloudhub.GetSessionManager through a
+// var so tests can substitute a populated session.Manager without needing a
+// running CloudHub. A plain gomonkey patch on cloudhub.GetSessionManager is
+// unreliable here: the real function is small enough that the compiler may
+// inline it at the call site, silently defeating a runtime patch.
+var cloudhubGetSessionManager = cloudhub.GetSessionManager
+
+// getManagedEdgeNodes returns the edge nodes whose CloudHub session is held
+// by this CloudCore instance. It is a package-level var so tests can override
+// it without needing a running CloudHub session manager.
+//
+// The policy controller runs on every CloudCore replica (there is no leader
+// election — see the policycontroller package doc comment on
+// healthProbeBindAddress for why). Each replica only holds live CloudHub
+// sessions for the edge nodes routed to it, so send2Edge uses this to avoid
+// queuing messages for nodes it can never actually deliver to.
+var getManagedEdgeNodes = func() ([]string, error) {
+	sm, err := cloudhubGetSessionManager()
+	if err != nil {
+		return nil, err
+	}
+	return nodes.GetManagedEdgeNodes(&sm.NodeSessions), nil
+}
 
 type Controller struct {
 	client.Client
@@ -345,7 +371,35 @@ func subtractSlice(source, subTarget []string) []string {
 	return subtract
 }
 
+// filterManagedNodes narrows targets down to the edge nodes actually
+// connected to this CloudCore instance. Since the policy controller runs on
+// every replica without leader election, every replica computes the same
+// full target list; only the replica that holds a node's CloudHub session
+// can actually deliver a message to it, so sending to nodes owned by other
+// replicas would just queue messages that are never drained. If the managed
+// node set cannot be determined (e.g. CloudHub not yet initialized), targets
+// are returned unfiltered so delivery is still attempted.
+func filterManagedNodes(targets []string) []string {
+	managed, err := getManagedEdgeNodes()
+	if err != nil {
+		klog.V(4).Infof("failed to get managed edge nodes, sending to all targets: %v", err)
+		return targets
+	}
+	managedSet := make(map[string]bool, len(managed))
+	for _, n := range managed {
+		managedSet[n] = true
+	}
+	filtered := make([]string, 0, len(targets))
+	for _, t := range targets {
+		if managedSet[t] {
+			filtered = append(filtered, t)
+		}
+	}
+	return filtered
+}
+
 func (c *Controller) send2Edge(acc *policyv1alpha1.ServiceAccountAccess, targets []string, opr string) {
+	targets = filterManagedNodes(targets)
 	klog.V(4).Infof("send2Edge for serviceaccount %s/%s: %v (%s)",
 		acc.Namespace, acc.Spec.ServiceAccount.Name, targets, opr)
 	sendObj := acc.DeepCopy()
