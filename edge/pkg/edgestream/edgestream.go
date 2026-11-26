@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -92,13 +93,13 @@ func (e *edgestream) Start() {
 		klog.Exitf("Failed to find cert key pair")
 	}
 
-	cert, err := tls.LoadX509KeyPair(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
+	reloader, err := newCertReloader(config.Config.TLSTunnelCertFile, config.Config.TLSTunnelPrivateKeyFile)
 	if err != nil {
 		klog.Exitf("Failed to load x509 key pair: %v", err)
 	}
 	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
-		Certificates:       []tls.Certificate{cert},
+		InsecureSkipVerify:   true,
+		GetClientCertificate: reloader.GetClientCertificate,
 	}
 
 	ticker := time.NewTicker(time.Second * 2)
@@ -115,6 +116,41 @@ func (e *edgestream) Start() {
 			}
 		}
 	}
+}
+
+// certReloader reads the tunnel client certificate from disk on every TLS
+// handshake, so a certificate rotated by EdgeHub is used on the next reconnect
+// instead of the one loaded at startup, which CloudStream rejects once expired.
+type certReloader struct {
+	certFile string
+	keyFile  string
+
+	mu   sync.Mutex
+	cert *tls.Certificate
+}
+
+func newCertReloader(certFile, keyFile string) (*certReloader, error) {
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return nil, err
+	}
+	return &certReloader{certFile: certFile, keyFile: keyFile, cert: &cert}, nil
+}
+
+// GetClientCertificate implements tls.Config.GetClientCertificate. If the key
+// pair cannot be loaded, e.g. while rotation has written the new certificate
+// but not yet the new key, the last successfully loaded pair is returned.
+func (r *certReloader) GetClientCertificate(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
+	cert, err := tls.LoadX509KeyPair(r.certFile, r.keyFile)
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if err != nil {
+		klog.Warningf("Failed to reload x509 key pair, using the previously loaded one: %v", err)
+		return r.cert, nil
+	}
+	r.cert = &cert
+	return r.cert, nil
 }
 
 func (e *edgestream) TLSClientConnect(url url.URL, tlsConfig *tls.Config) error {
