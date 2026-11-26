@@ -16,6 +16,7 @@ import (
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/spf13/cobra"
+	klog "k8s.io/klog/v2"
 	utilruntime "k8s.io/kubernetes/cmd/kubeadm/app/util/runtime"
 
 	"github.com/kubeedge/api/apis/common/constants"
@@ -146,7 +147,7 @@ func (co *CheckObject) ExecuteCheck(use string, ob *common.CheckOptions) {
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		klog.Errorf("%v", err)
 		util.PrintFail(use, common.StrCheck)
 	} else {
 		util.PrintSucceed(use, common.StrCheck)
@@ -202,8 +203,8 @@ func CheckCPU() error {
 		return err
 	}
 
-	fmt.Printf("CPU total: %v core, Allowed > %v core\n", cpuNum, common.AllowedValueCPU)
-	fmt.Printf("CPU usage rate: %.2f, Allowed rate < %v\n", percent[0]/100, common.AllowedCurrentValueCPURate)
+	klog.Infof("CPU total: %v core, Allowed > %v core", cpuNum, common.AllowedValueCPU)
+	klog.Infof("CPU usage rate: %.2f, Allowed rate < %v", percent[0]/100, common.AllowedCurrentValueCPURate)
 
 	if cpuNum < common.AllowedValueCPU || percent[0]/100 > common.AllowedCurrentValueCPURate {
 		return errors.New("cpu check failed")
@@ -217,9 +218,9 @@ func CheckMemory() error {
 		return err
 	}
 
-	fmt.Printf("Memory total: %.2f MB, Allowed > %v MB\n", float32(memoryInfo.Total)/common.MB, common.AllowedValueMemory/common.MB)
-	fmt.Printf("Memory Free total: %.2f MB, Allowed > %v MB\n", float32(memoryInfo.Free)/common.MB, common.AllowedCurrentValueMem/common.MB)
-	fmt.Printf("Memory usage rate: %.2f, Allowed rate < %v\n", memoryInfo.UsedPercent/100,
+	klog.Infof("Memory total: %.2f MB, Allowed > %v MB", float32(memoryInfo.Total)/common.MB, common.AllowedValueMemory/common.MB)
+	klog.Infof("Memory Free total: %.2f MB, Allowed > %v MB", float32(memoryInfo.Free)/common.MB, common.AllowedCurrentValueMem/common.MB)
+	klog.Infof("Memory usage rate: %.2f, Allowed rate < %v", memoryInfo.UsedPercent/100,
 		common.AllowedCurrentValueMemRate)
 
 	if memoryInfo.Total < common.AllowedValueMemory ||
@@ -242,9 +243,9 @@ func CheckDisk() error {
 		return err
 	}
 
-	fmt.Printf("Disk total: %.2f MB, Allowed > %v MB\n", float32(diskInfo.Total)/common.MB, common.AllowedValueDisk/common.MB)
-	fmt.Printf("Disk Free total: %.2f MB, Allowed > %vMB\n", float32(diskInfo.Free)/common.MB, common.AllowedCurrentValueDisk/common.MB)
-	fmt.Printf("Disk usage rate: %.2f, Allowed rate < %v\n", diskInfo.UsedPercent/100, common.AllowedCurrentValueDiskRate)
+	klog.Infof("Disk total: %.2f MB, Allowed > %v MB", float32(diskInfo.Total)/common.MB, common.AllowedValueDisk/common.MB)
+	klog.Infof("Disk Free total: %.2f MB, Allowed > %vMB", float32(diskInfo.Free)/common.MB, common.AllowedCurrentValueDisk/common.MB)
+	klog.Infof("Disk usage rate: %.2f, Allowed rate < %v", diskInfo.UsedPercent/100, common.AllowedCurrentValueDiskRate)
 
 	if diskInfo.Total < common.AllowedValueDisk ||
 		diskInfo.Free < common.AllowedCurrentValueDisk ||
@@ -261,9 +262,9 @@ func CheckDNS(domain string) error {
 		return fmt.Errorf("dns resolution failed, domain: %s err: %s", domain, err)
 	}
 	if len(r) > 0 {
-		fmt.Printf("dns resolution success, domain: %s ip: %s\n", domain, r[0])
+		klog.Infof("dns resolution success, domain: %s ip: %s", domain, r[0])
 	} else {
-		fmt.Printf("dns resolution success, domain: %s ip: null\n", domain)
+		klog.Infof("dns resolution success, domain: %s ip: null", domain)
 	}
 	return err
 }
@@ -314,7 +315,7 @@ func CheckNetWork(IP string, timeout int, cloudhubServer string, edgecoreServer 
 		if result != "0%" {
 			return fmt.Errorf("ping %s timeout", IP)
 		}
-		fmt.Printf("ping %s success\n", IP)
+		klog.Infof("ping %s success", IP)
 	}
 
 	if cloudhubServer != "" {
@@ -322,7 +323,7 @@ func CheckNetWork(IP string, timeout int, cloudhubServer string, edgecoreServer 
 		if err != nil {
 			return fmt.Errorf("check cloudhubServer %s failed, %v", cloudhubServer, err)
 		}
-		fmt.Printf("check cloudhubServer %s success\n", cloudhubServer)
+		klog.Infof("check cloudhubServer %s success", cloudhubServer)
 	}
 
 	if edgecoreServer != "" {
@@ -330,7 +331,7 @@ func CheckNetWork(IP string, timeout int, cloudhubServer string, edgecoreServer 
 		if err != nil {
 			return fmt.Errorf("check edgecoreServer %s failed, %v", edgecoreServer, err)
 		}
-		fmt.Printf("check edgecoreServer %s success\n", edgecoreServer)
+		klog.Infof("check edgecoreServer %s success", edgecoreServer)
 	}
 
 	return nil
@@ -368,7 +369,7 @@ func checkRuntimeEndpoint(endpoint string, containerRuntime runtimeStatusChecker
 	if err := containerRuntime.IsRunning(); err != nil {
 		return err
 	}
-	fmt.Printf("check runtime endpoint %s success\n", endpoint)
+	klog.Infof("check runtime endpoint %s success", endpoint)
 	return nil
 }
 
@@ -414,7 +415,7 @@ func CheckPid() error {
 	v, err := strconv.ParseFloat(r, 32)
 	rate := (1 - v/vMax)
 	if rate > common.AllowedValuePIDRate {
-		fmt.Printf("Maximum PIDs: %s; Running processes: %s\n", rMax, r)
+		klog.Infof("Maximum PIDs: %s; Running processes: %s", rMax, r)
 		return nil
 	}
 	return fmt.Errorf("Maximum PIDs: %s; Running processes: %s", rMax, r)
