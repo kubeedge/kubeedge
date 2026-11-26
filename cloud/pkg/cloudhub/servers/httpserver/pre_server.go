@@ -173,6 +173,7 @@ func GenerateAndRefreshToken(ctx context.Context) error {
 	}
 	t := time.NewTicker(time.Hour * hubconfig.Config.CloudHub.TokenRefreshDuration)
 	go func() {
+		defer t.Stop()
 		for {
 			select {
 			case <-t.C:
@@ -182,7 +183,7 @@ func GenerateAndRefreshToken(ctx context.Context) error {
 				}
 				klog.Info("token refreshed successfully")
 			case <-ctx.Done():
-				break
+				return
 			}
 		}
 	}()
