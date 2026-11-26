@@ -120,6 +120,11 @@ func onSubConnect(client MQTT.Client) {
 func OnSubMessageReceived(_ MQTT.Client, msg MQTT.Message) {
 	klog.Infof("OnSubMessageReceived receive msg from topic: %s", msg.Topic())
 
+	if err := ValidateMQTTTopicName(msg.Topic()); err != nil {
+		klog.Warningf("Invalid MQTT topic name received from external broker, rejected: %v", err)
+		return
+	}
+
 	NewMessageMux().Dispatch(msg.Topic(), msg.Payload())
 }
 

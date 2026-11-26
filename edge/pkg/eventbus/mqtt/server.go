@@ -95,6 +95,12 @@ func (m *Server) Run() error {
 // onSubscribe will be called if the topic is matched in topic tree.
 func (m *Server) onSubscribe(msg *packet.Message) {
 	klog.Infof("OnSubscribe receive msg from topic: %s", msg.Topic)
+
+	if err := ValidateMQTTTopicName(msg.Topic); err != nil {
+		klog.Warningf("Invalid MQTT topic name received from internal broker, rejected: %v", err)
+		return
+	}
+
 	NewMessageMux().Dispatch(msg.Topic, msg.Payload)
 }
 
