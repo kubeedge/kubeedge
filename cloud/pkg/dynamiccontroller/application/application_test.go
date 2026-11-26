@@ -115,9 +115,10 @@ func TestApplicationString(t *testing.T) {
 
 func TestApplicationToListener(t *testing.T) {
 	tests := []struct {
-		name    string
-		app     *metaserver.Application
-		wantErr bool
+		name         string
+		app          *metaserver.Application
+		wantErr      bool
+		errorMessage string
 	}{
 		{
 			name: "invalid option",
@@ -130,6 +131,30 @@ func TestApplicationToListener(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "invalid label selector",
+			app: &metaserver.Application{
+				ID:       "test-id",
+				Nodename: "test-node",
+				Key:      "apps/v1/deployments/default/nginx",
+				Verb:     metaserver.Watch,
+				Option:   []byte(`{"labelSelector":"app in ("}`),
+			},
+			wantErr:      true,
+			errorMessage: "invalid label selector",
+		},
+		{
+			name: "invalid field selector",
+			app: &metaserver.Application{
+				ID:       "test-id",
+				Nodename: "test-node",
+				Key:      "apps/v1/deployments/default/nginx",
+				Verb:     metaserver.Watch,
+				Option:   []byte(`{"fieldSelector":"metadata.name in ("}`),
+			},
+			wantErr:      true,
+			errorMessage: "invalid field selector",
+		},
 	}
 
 	for _, tt := range tests {
@@ -137,6 +162,11 @@ func TestApplicationToListener(t *testing.T) {
 			_, err := applicationToListener(tt.app)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("applicationToListener() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.errorMessage != "" {
+				if assert.Error(t, err) {
+					assert.Contains(t, err.Error(), tt.errorMessage)
+				}
 			}
 		})
 	}
@@ -477,6 +507,72 @@ func TestProcess(t *testing.T) {
 	})
 }
 
+func TestProcessRejectsInvalidWatchSelector(t *testing.T) {
+	originalEnableAuthorization := config.Config.EnableAuthorization
+	config.Config.EnableAuthorization = false
+	defer func() {
+		config.Config.EnableAuthorization = originalEnableAuthorization
+	}()
+
+	testCases := []struct {
+		name         string
+		option       string
+		errorMessage string
+	}{
+		{
+			name:         "invalid label selector",
+			option:       `{"labelSelector":"app in ("}`,
+			errorMessage: "invalid label selector",
+		},
+		{
+			name:         "invalid field selector",
+			option:       `{"fieldSelector":"metadata.name in ("}`,
+			errorMessage: "invalid field selector",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			messageLayer := &mockMessageLayer{}
+			handlerCenter := &mockHandlerCenter{listenersForNode: make(map[string]map[string]*SelectorListener)}
+			center := &Center{
+				messageLayer:  messageLayer,
+				HandlerCenter: handlerCenter,
+			}
+			app := &metaserver.Application{
+				ID:       "watch-id",
+				Nodename: "node1",
+				Key:      "apps/v1/deployments/default",
+				Verb:     metaserver.Watch,
+				Option:   []byte(tc.option),
+			}
+			appBytes, err := json.Marshal(app)
+			if !assert.NoError(t, err) {
+				t.FailNow()
+			}
+
+			msg := model.NewMessage("parent-id").
+				BuildRouter(modules.DynamicControllerModuleName, message.ResourceGroupName, "node1/default/pods", "test-op").
+				FillBody(appBytes)
+			center.Process(*msg)
+
+			if assert.Len(t, messageLayer.responses, 1) {
+				responseBody, err := messageLayer.responses[0].GetContentData()
+				if !assert.NoError(t, err) {
+					t.FailNow()
+				}
+				var response metaserver.Application
+				if !assert.NoError(t, json.Unmarshal(responseBody, &response)) {
+					t.FailNow()
+				}
+				assert.Equal(t, metaserver.Rejected, response.Status)
+				assert.Contains(t, response.Reason, tc.errorMessage)
+			}
+			assert.Empty(t, handlerCenter.GetListenersForNode("node1"))
+		})
+	}
+}
+
 func TestProcessApplication(t *testing.T) {
 	scheme := runtime.NewScheme()
 
@@ -640,7 +736,9 @@ func TestNewApplicationCenter(t *testing.T) {
 	assert.NotNil(t, center)
 }
 
-type mockMessageLayer struct{}
+type mockMessageLayer struct {
+	responses []model.Message
+}
 
 func (m *mockMessageLayer) Send(_ model.Message) error {
 	return nil
@@ -650,7 +748,8 @@ func (m *mockMessageLayer) Receive() (model.Message, error) {
 	return model.Message{}, nil
 }
 
-func (m *mockMessageLayer) Response(_ model.Message) error {
+func (m *mockMessageLayer) Response(msg model.Message) error {
+	m.responses = append(m.responses, msg)
 	return nil
 }
 

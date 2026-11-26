@@ -29,8 +29,8 @@ var testGVR = schema.GroupVersionResource{
 	Resource: "pods",
 }
 
-var selector1 = NewSelector("key1=value1", "")
-var selector2 = NewSelector("key2=value2", "")
+var selector1 = mustNewSelector("key1=value1", "")
+var selector2 = mustNewSelector("key2=value2", "")
 
 func TestNewListenerManager(t *testing.T) {
 	assert := assert.New(t)
