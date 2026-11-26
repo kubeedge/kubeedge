@@ -38,6 +38,13 @@ func Init(dataSource string, modules ...interface{}) {
 		if err != nil {
 			log.Fatalf("Failed to connect to DB: %v", err)
 		}
+
+		sqlDB, err := dbInstance.DB()
+		if err != nil {
+			log.Fatalf("Failed to get sql.DB: %v", err)
+		}
+		sqlDB.SetMaxIdleConns(5)
+		sqlDB.SetMaxOpenConns(100)
 	})
 
 	// Migrate tables for enabled modules
