@@ -56,7 +56,7 @@ type SystemdExtSystem struct {
 	initsystem.SystemdInitSystem
 }
 
-const (
+var (
 	systemdDir = "/etc/systemd/system"
 )
 
