@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 	v1 "k8s.io/api/core/v1"
@@ -128,8 +129,9 @@ func (tm *stubCloudHub) Start() {
 	mux.HandleFunc("/{group_id}/events", tm.serveEvent) // for edge-hub
 	mux.HandleFunc("/pod", tm.podHandler)               // for pod test
 	s := http.Server{
-		Addr:    "127.0.0.1:20000",
-		Handler: mux,
+		Addr:              "127.0.0.1:20000",
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 	klog.Info("Start cloud hub service")
 	err := s.ListenAndServe()

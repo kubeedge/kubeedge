@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"k8s.io/klog/v2"
@@ -40,9 +41,10 @@ func NewWSServer(opts Options, exOpts interface{}) *WSServer {
 	}
 
 	server := http.Server{
-		Addr:      opts.Addr,
-		TLSConfig: opts.TLS,
-		ErrorLog:  glog.New(&LoggerFilter{}, "", glog.LstdFlags),
+		Addr:              opts.Addr,
+		TLSConfig:         opts.TLS,
+		ErrorLog:          glog.New(&LoggerFilter{}, "", glog.LstdFlags),
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	wsServer := &WSServer{
