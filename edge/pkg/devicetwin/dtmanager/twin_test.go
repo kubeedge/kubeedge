@@ -1384,6 +1384,74 @@ func TestDealTwinAdd(t *testing.T) {
 	}
 }
 
+// TestDealTwinAddNilTwinValue is function to test dealTwinAdd when the expected
+// or the actual object of a twin carries no value
+func TestDealTwinAddNilTwinValue(t *testing.T) {
+	optionTrue := true
+	tests := []struct {
+		name     string
+		msgTwin  *dttype.MsgTwin
+		dealType int
+	}{
+		{
+			name: "TestDealTwinAddNilTwinValue(): Case 1: expected without value, updated from mqtt",
+			msgTwin: &dttype.MsgTwin{
+				Expected: &dttype.TwinValue{},
+				Optional: &optionTrue,
+				Metadata: &dttype.TypeMetadata{Type: typeString},
+			},
+			dealType: RestDealType,
+		},
+		{
+			name: "TestDealTwinAddNilTwinValue(): Case 2: actual without value, updated from mqtt",
+			msgTwin: &dttype.MsgTwin{
+				Actual:   &dttype.TwinValue{},
+				Optional: &optionTrue,
+				Metadata: &dttype.TypeMetadata{Type: typeString},
+			},
+			dealType: RestDealType,
+		},
+		{
+			name: "TestDealTwinAddNilTwinValue(): Case 3: expected and actual without value, synced from cloud",
+			msgTwin: &dttype.MsgTwin{
+				Expected:        &dttype.TwinValue{},
+				Actual:          &dttype.TwinValue{},
+				Optional:        &optionTrue,
+				Metadata:        &dttype.TypeMetadata{Type: typeString},
+				ExpectedVersion: &dttype.TwinVersion{},
+				ActualVersion:   &dttype.TwinVersion{},
+			},
+			dealType: SyncDealType,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			returnResult := &dttype.DealTwinResult{
+				Document:   make(map[string]*dttype.TwinDoc),
+				SyncResult: make(map[string]*dttype.MsgTwin),
+				Result:     make(map[string]*dttype.MsgTwin),
+			}
+			twins := make(map[string]*dttype.MsgTwin)
+			if err := dealTwinAdd(returnResult, deviceA, key1, twins, test.msgTwin, test.dealType); err != nil {
+				t.Errorf("DTManager.TestDealTwinAddNilTwinValue() case failed: got = %+v, Want = %+v", err, nil)
+			}
+			twin, exist := twins[key1]
+			if !exist {
+				t.Fatalf("DTManager.TestDealTwinAddNilTwinValue() case failed: twin %v was not added", key1)
+			}
+			if twin.Expected != nil {
+				t.Errorf("DTManager.TestDealTwinAddNilTwinValue() case failed: got expected = %+v, Want = %+v", twin.Expected, nil)
+			}
+			if twin.Actual != nil {
+				t.Errorf("DTManager.TestDealTwinAddNilTwinValue() case failed: got actual = %+v, Want = %+v", twin.Actual, nil)
+			}
+			if len(returnResult.Add) != 1 {
+				t.Errorf("DTManager.TestDealTwinAddNilTwinValue() case failed: got add = %v, Want = %v", len(returnResult.Add), 1)
+			}
+		})
+	}
+}
+
 // TestDealMsgTwin is function to test DealMsgTwin
 func TestDealMsgTwin(t *testing.T) {
 	value := valueType
