@@ -24,6 +24,8 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/cmd/csidriver/app/options"
 )
 
+// CSIDriver implements the CSI driver server components, handling both
+// identity and controller GRPC endpoints.
 type CSIDriver struct {
 	options.CSIDriverOptions
 
@@ -31,6 +33,8 @@ type CSIDriver struct {
 	cs  *controllerServer
 }
 
+// NewCSIDriver creates a new CSIDriver with the given options. It validates
+// that all required endpoint and identification fields are provided.
 func NewCSIDriver(opts *options.CSIDriverOptions) (*CSIDriver, error) {
 	if opts.Endpoint == "" {
 		return nil, fmt.Errorf("no driver endpoint provided")
@@ -52,6 +56,8 @@ func NewCSIDriver(opts *options.CSIDriverOptions) (*CSIDriver, error) {
 	}, nil
 }
 
+// Run starts the GRPC servers for the CSI driver (identity and controller)
+// and blocks until they finish.
 func (cd *CSIDriver) Run() {
 	klog.Infof("driver information: %v", cd)
 
