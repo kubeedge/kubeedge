@@ -161,6 +161,9 @@ func TestEnqueueAckMessage(t *testing.T) {
 	respMsg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "5"), "response")
 	invalidMsg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, ""), "update")
 
+	// Create a message with an invalid resource version that will fail in CompareResourceVersion
+	invalidVersionMsg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "abc"), "update")
+
 	tests := []tf.TestCase{
 		{
 			Name:                 "invalid message arrives",
@@ -286,6 +289,32 @@ func TestEnqueueAckMessage(t *testing.T) {
 				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestDiffPodUID, "0"), "Pod"),
 			},
 			ExpectedStoreMessage: normalMsg3,
+		},
+		{
+			Name: "message with invalid resource version fails comparison with store",
+			InitialObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod"),
+			},
+			ReactorErrors:        tf.NoErrors,
+			InitialMessages:      []*beehivemodel.Message{normalMsg1},
+			CurrentArriveMessage: invalidVersionMsg,
+			ExpectedObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod"),
+			},
+			ExpectedStoreMessage: normalMsg1,
+		},
+		{
+			Name: "message with invalid resource version fails comparison with objectsync",
+			InitialObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod"),
+			},
+			ReactorErrors:        tf.NoErrors,
+			InitialMessages:      []*beehivemodel.Message{},
+			CurrentArriveMessage: invalidVersionMsg,
+			ExpectedObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "1"), "Pod"),
+			},
+			ExpectedStoreMessage: nil,
 		},
 	}
 
