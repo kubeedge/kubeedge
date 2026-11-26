@@ -95,19 +95,7 @@ func TestReplaceEnv(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := replaceEnv(tt.curEnv, tt.replaceValues)
-
-			assert.Equal(t, len(tt.expected), len(result), "Expected same number of env vars")
-
-			resultMap := make(map[string]string)
-			for _, env := range result {
-				resultMap[env.Name] = env.Value
-			}
-
-			for _, expected := range tt.expected {
-				val, exists := resultMap[expected.Name]
-				assert.True(t, exists, "Expected env var %s not found", expected.Name)
-				assert.Equal(t, expected.Value, val, "Value mismatch for env var %s", expected.Name)
-			}
+			assert.Equal(t, tt.expected, result, "Expected env vars and their order to match")
 		})
 	}
 }
