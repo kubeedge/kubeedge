@@ -198,6 +198,10 @@ func TestFilterEndpointSlice(t *testing.T) {
 				Addresses: []string{"192.168.1.2"},
 				NodeName:  &n2,
 			},
+			{
+				Addresses: []string{"192.168.1.3"},
+				NodeName:  nil,
+			},
 		},
 	}
 
