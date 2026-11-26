@@ -235,9 +235,9 @@ jobs:
         run: |
           containerd config default | sudo tee /etc/containerd/config.toml && sudo systemctl restart containerd.service
 
-      # for QUIC protocol, we will use docker as edgecore container runtime
-      # for WebSocket protocol, we will use containerd as edgecore container runtime
-      # just for covering both docker and CRI runtime e2e cases
+      # This job always uses containerd as the edgecore container runtime.
+      # The docker, cri-o and isulad runtimes are covered by the
+      # "container runtime e2e test" job below.
       - run: |
           export PROTOCOL=${{ matrix.cases.protocol }}
           export KIND_IMAGE=kindest/node:${{ matrix.cases.version }}
