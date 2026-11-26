@@ -43,6 +43,10 @@ var (
 	CrdConfig  *rest.Config
 )
 
+// InitKubeEdgeClient initializes the shared Kubernetes clients (kube, CRD, and
+// dynamic) used throughout the cloud components. It is safe to call multiple
+// times; subsequent calls are no-ops. The function panics if the kube config
+// cannot be built from the provided KubeAPIConfig.
 func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig, enableImpersonation bool) {
 	initOnce.Do(func() {
 		kubeConfig, err := clientcmd.BuildConfigFromFlags(config.Master, config.KubeConfig)
@@ -66,18 +70,24 @@ func InitKubeEdgeClient(config *cloudcoreConfig.KubeAPIConfig, enableImpersonati
 	})
 }
 
+// GetKubeClient returns the shared Kubernetes client for built-in API resources.
 func GetKubeClient() kubernetes.Interface {
 	return kubeClient
 }
 
+// GetCRDClient returns the shared client for KubeEdge custom resource definitions.
 func GetCRDClient() crdClientset.Interface {
 	return crdClient
 }
 
+// GetDynamicClient returns the shared dynamic client used for third-party CRD resources.
 func GetDynamicClient() dynamic.Interface {
 	return dynamicClient
 }
 
+// GetK8sCA reads and returns the Kubernetes CA certificate bytes from the
+// path specified in KubeConfig. Returns nil and logs an error if the file
+// cannot be read.
 func GetK8sCA() []byte {
 	ca, err := os.ReadFile(KubeConfig.CAFile)
 	if err != nil {
@@ -87,10 +97,15 @@ func GetK8sCA() []byte {
 	return ca
 }
 
+// RestMapperFunc is a function type that returns a REST mapper for mapping
+// GroupVersionKinds to API resources.
 type RestMapperFunc func() (meta.RESTMapper, error)
 
 var DefaultGetRestMapper RestMapperFunc = GetRestMapper
 
+// GetRestMapper returns a dynamic REST mapper built from the current
+// KubeConfig. The mapper is used to resolve GroupVersionResource mappings
+// at runtime without requiring the API groups to be known at compile time.
 func GetRestMapper() (meta.RESTMapper, error) {
 	client, err := rest.HTTPClientFor(KubeConfig)
 	if err != nil {
