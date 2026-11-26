@@ -105,6 +105,58 @@ func TestCopyResources(t *testing.T) {
 				m.EXPECT().RemovePodSandbox(gomock.Any(), "sb-fail").Return(nil)
 			},
 		},
+		{
+			name:    "Failure: CreateContainer fails",
+			image:   "kubeedge/pause:3.1",
+			wantErr: true,
+			setupMock: func(t *testing.T, m *mock.MockRuntimeService) {
+				m.EXPECT().RunPodSandbox(gomock.Any(), gomock.Any(), gomock.Any()).Return("sb-cc-fail", nil)
+				m.EXPECT().CreateContainer(gomock.Any(), "sb-cc-fail", gomock.Any(), gomock.Any()).Return("", fmt.Errorf("create container error"))
+				m.EXPECT().RemovePodSandbox(gomock.Any(), "sb-cc-fail").Return(nil)
+			},
+		},
+		{
+			name:    "Success: RemovePodSandbox cleanup error does not override successful result",
+			image:   "kubeedge/pause:3.1",
+			files:   map[string]string{"/src": "/dest"},
+			wantErr: false,
+			setupMock: func(t *testing.T, m *mock.MockRuntimeService) {
+				m.EXPECT().RunPodSandbox(gomock.Any(), gomock.Any(), gomock.Any()).Return("sb-defer-err", nil)
+				m.EXPECT().CreateContainer(gomock.Any(), "sb-defer-err", gomock.Any(), gomock.Any()).Return("cnt-defer-err", nil)
+				m.EXPECT().StartContainer(gomock.Any(), "cnt-defer-err").Return(nil)
+				m.EXPECT().ExecSync(gomock.Any(), "cnt-defer-err", gomock.Any(), gomock.Any()).Return(nil, nil, nil)
+				m.EXPECT().RemoveContainer(gomock.Any(), "cnt-defer-err").Return(nil)
+				m.EXPECT().RemovePodSandbox(gomock.Any(), "sb-defer-err").Return(fmt.Errorf("sandbox removal failed"))
+			},
+		},
+		{
+			name:    "Success: RemoveContainer cleanup error does not override successful result",
+			image:   "kubeedge/pause:3.1",
+			files:   map[string]string{"/src": "/dest"},
+			wantErr: false,
+			setupMock: func(t *testing.T, m *mock.MockRuntimeService) {
+				m.EXPECT().RunPodSandbox(gomock.Any(), gomock.Any(), gomock.Any()).Return("sb-rc-err", nil)
+				m.EXPECT().CreateContainer(gomock.Any(), "sb-rc-err", gomock.Any(), gomock.Any()).Return("cnt-rc-err", nil)
+				m.EXPECT().StartContainer(gomock.Any(), "cnt-rc-err").Return(nil)
+				m.EXPECT().ExecSync(gomock.Any(), "cnt-rc-err", gomock.Any(), gomock.Any()).Return(nil, nil, nil)
+				m.EXPECT().RemoveContainer(gomock.Any(), "cnt-rc-err").Return(fmt.Errorf("container removal failed"))
+				m.EXPECT().RemovePodSandbox(gomock.Any(), "sb-rc-err").Return(nil)
+			},
+		},
+		{
+			name:    "Failure: ExecSync fails",
+			image:   "kubeedge/pause:3.1",
+			files:   map[string]string{"/src": "/dest"},
+			wantErr: true,
+			setupMock: func(t *testing.T, m *mock.MockRuntimeService) {
+				m.EXPECT().RunPodSandbox(gomock.Any(), gomock.Any(), gomock.Any()).Return("sb-exec-fail", nil)
+				m.EXPECT().CreateContainer(gomock.Any(), "sb-exec-fail", gomock.Any(), gomock.Any()).Return("cnt-exec-fail", nil)
+				m.EXPECT().StartContainer(gomock.Any(), "cnt-exec-fail").Return(nil)
+				m.EXPECT().ExecSync(gomock.Any(), "cnt-exec-fail", gomock.Any(), gomock.Any()).Return(nil, []byte("stderr output"), fmt.Errorf("exec failed"))
+				m.EXPECT().RemoveContainer(gomock.Any(), "cnt-exec-fail").Return(nil)
+				m.EXPECT().RemovePodSandbox(gomock.Any(), "sb-exec-fail").Return(nil)
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -162,5 +214,12 @@ func Test_copyResourcesCmd(t *testing.T) {
 				t.Errorf("copyResourcesCmd() = %v, check failed", got)
 			}
 		})
+	}
+}
+
+func TestNewContainerRuntime_BadEndpoint(t *testing.T) {
+	_, err := NewContainerRuntime("invalid://endpoint", "cgroupfs")
+	if err == nil {
+		t.Error("expected error for bad endpoint, got nil")
 	}
 }
