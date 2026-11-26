@@ -40,7 +40,7 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/util"
 )
 
-var edgeEditDeviceShortDescription = `Edit a device in edge node`
+var edgeEditDeviceShortDescription = `Edit a device on an edge node`
 
 type DeviceEditOptions struct {
 	Namespace string

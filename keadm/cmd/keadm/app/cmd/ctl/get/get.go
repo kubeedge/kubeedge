@@ -19,7 +19,7 @@ package get
 import "github.com/spf13/cobra"
 
 var (
-	edgeGetShortDescription = `Get resources in edge node`
+	edgeGetShortDescription = `Get resources on an edge node`
 )
 
 // NewEdgeGet returns KubeEdge edge resources get command.
