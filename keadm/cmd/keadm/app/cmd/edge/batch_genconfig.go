@@ -21,19 +21,38 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"k8s.io/klog/v2"
+
+	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/common"
+)
+
+const (
+	genConfigFileName     = "config.yaml"
+	genConfigBackupSuffix = ".bak"
 )
 
 func NewBatchProcessGenConfig() *cobra.Command {
+	var force bool
 	cmd := &cobra.Command{
 		Use:   "gen-config",
 		Short: "Generate a YAML config file for batch process",
 		Long:  `This command generates a template YAML configuration file for batch process.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fileName := "config.yaml"
-			// Do not overwrite an existing config file: users edit the generated
-			// template before running `keadm batch`.
-			if _, err := os.Stat(fileName); err == nil {
-				return errors.Errorf("config file %s already exists, please remove or rename it before generating a new one", fileName)
+			fileName := genConfigFileName
+			// Users edit the generated template before running `keadm batch`, so
+			// an existing config file is not overwritten unless asked for.
+			if info, err := os.Stat(fileName); err == nil {
+				if !force {
+					return errors.Errorf("config file %s already exists, use --%s to overwrite it (the existing file is kept as %s%s)",
+						fileName, common.FlagNameForce, fileName, genConfigBackupSuffix)
+				}
+				if !info.Mode().IsRegular() {
+					return errors.Errorf("config file %s exists and is not a regular file", fileName)
+				}
+				backupName := fileName + genConfigBackupSuffix
+				if err := os.Rename(fileName, backupName); err != nil {
+					return errors.Wrapf(err, "failed to rename the existing config file %s to %s", fileName, backupName)
+				}
+				klog.Infof("Existing config file renamed to: %s", backupName)
 			} else if !os.IsNotExist(err) {
 				return errors.Wrapf(err, "failed to check whether the config file %s exists", fileName)
 			}
@@ -50,6 +69,8 @@ func NewBatchProcessGenConfig() *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().BoolVar(&force, common.FlagNameForce, false,
+		"Overwrite an existing config file, keeping it with a .bak suffix")
 	return cmd
 }
 

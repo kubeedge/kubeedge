@@ -29,12 +29,12 @@ import (
 
 // runBatchGenConfig executes the real `keadm batch gen-config` command with
 // dir as the working directory, the way the CLI resolves it.
-func runBatchGenConfig(t *testing.T, dir string) error {
+func runBatchGenConfig(t *testing.T, dir string, extraArgs ...string) error {
 	t.Helper()
 	t.Chdir(dir)
 
 	cmd := NewEdgeBatchProcess()
-	cmd.SetArgs([]string{"gen-config"})
+	cmd.SetArgs(append([]string{"gen-config"}, extraArgs...))
 	cmd.SetOut(io.Discard)
 	cmd.SetErr(io.Discard)
 	return cmd.Execute()
@@ -52,6 +52,18 @@ func TestBatchProcessGenConfig(t *testing.T) {
 		assert.Equal(t, getConfigTemplate(), string(got))
 	})
 
+	t.Run("generates the template in an empty directory with --force", func(t *testing.T) {
+		dir := t.TempDir()
+
+		err := runBatchGenConfig(t, dir, "--force")
+
+		require.NoError(t, err)
+		got, err := os.ReadFile(filepath.Join(dir, "config.yaml"))
+		require.NoError(t, err)
+		assert.Equal(t, getConfigTemplate(), string(got))
+		assert.NoFileExists(t, filepath.Join(dir, "config.yaml.bak"))
+	})
+
 	// Regression test for https://github.com/kubeedge/kubeedge/issues/7483
 	t.Run("keeps an edited config.yaml and reports an error", func(t *testing.T) {
 		dir := t.TempDir()
@@ -62,9 +74,11 @@ func TestBatchProcessGenConfig(t *testing.T) {
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "already exists")
+		assert.Contains(t, err.Error(), "--force")
 		got, err := os.ReadFile(filepath.Join(dir, "config.yaml"))
 		require.NoError(t, err)
 		assert.Equal(t, existing, string(got))
+		assert.NoFileExists(t, filepath.Join(dir, "config.yaml.bak"))
 	})
 
 	t.Run("keeps an unrelated config.yaml", func(t *testing.T) {
@@ -80,14 +94,46 @@ func TestBatchProcessGenConfig(t *testing.T) {
 		assert.Equal(t, existing, string(got))
 	})
 
-	t.Run("refuses and preserves when config.yaml is a directory", func(t *testing.T) {
+	t.Run("overwrites an edited config.yaml with --force and keeps a .bak copy", func(t *testing.T) {
 		dir := t.TempDir()
-		require.NoError(t, os.Mkdir(filepath.Join(dir, "config.yaml"), 0755))
+		existing := strings.Replace(getConfigTemplate(), "nodeName: edge-node", "nodeName: my-edge", 1)
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "config.yaml"), []byte(existing), 0644))
 
-		err := runBatchGenConfig(t, dir)
+		err := runBatchGenConfig(t, dir, "--force")
 
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "already exists")
-		require.DirExists(t, filepath.Join(dir, "config.yaml"))
+		require.NoError(t, err)
+		got, err := os.ReadFile(filepath.Join(dir, "config.yaml"))
+		require.NoError(t, err)
+		assert.Equal(t, getConfigTemplate(), string(got))
+		backup, err := os.ReadFile(filepath.Join(dir, "config.yaml.bak"))
+		require.NoError(t, err)
+		assert.Equal(t, existing, string(backup))
+	})
+
+	t.Run("--force replaces an older .bak copy", func(t *testing.T) {
+		dir := t.TempDir()
+		existing := "name: current\n"
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "config.yaml"), []byte(existing), 0644))
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "config.yaml.bak"), []byte("name: older\n"), 0644))
+
+		err := runBatchGenConfig(t, dir, "--force")
+
+		require.NoError(t, err)
+		backup, err := os.ReadFile(filepath.Join(dir, "config.yaml.bak"))
+		require.NoError(t, err)
+		assert.Equal(t, existing, string(backup))
+	})
+
+	t.Run("refuses and preserves when config.yaml is a directory", func(t *testing.T) {
+		for _, args := range [][]string{{}, {"--force"}} {
+			dir := t.TempDir()
+			require.NoError(t, os.Mkdir(filepath.Join(dir, "config.yaml"), 0755))
+
+			err := runBatchGenConfig(t, dir, args...)
+
+			require.Error(t, err, "args: %v", args)
+			require.DirExists(t, filepath.Join(dir, "config.yaml"))
+			assert.NoFileExists(t, filepath.Join(dir, "config.yaml.bak"))
+		}
 	})
 }
