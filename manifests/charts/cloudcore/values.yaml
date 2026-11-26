@@ -5,6 +5,7 @@ appVersion: "1.23.0"
 
 cloudCore:
   replicaCount: 1
+  extraArgs: []
   hostNetWork: true
   image:
     repository: "kubeedge/cloudcore"
