@@ -137,6 +137,9 @@ func (runtime *ContainerRuntimeImpl) CopyResources(
 		return fmt.Errorf("create container failed: %v", err)
 	}
 	defer func() {
+		if stopErr := runtime.ctrsvc.StopContainer(ctx, containerID, 0); stopErr != nil {
+			klog.V(3).ErrorS(stopErr, "Stop container failed", "containerID", containerID)
+		}
 		if err := runtime.ctrsvc.RemoveContainer(ctx, containerID); err != nil {
 			klog.V(3).ErrorS(err, "Remove container failed", "containerID", containerID)
 		}
