@@ -77,9 +77,9 @@ func (o *PodGetOptions) getPods(args []string) error {
 	nodeName := config.Modules.Edged.HostnameOverride
 
 	ctx := context.Background()
-	var podList *v1.PodList
+	var podListFilter *v1.PodList
 	if len(args) > 0 {
-		podList = &v1.PodList{
+		podListFilter = &v1.PodList{
 			Items: make([]v1.Pod, 0, len(args)),
 		}
 		var podRequest *client.PodRequest
@@ -95,9 +95,9 @@ func (o *PodGetOptions) getPods(args []string) error {
 			}
 
 			if pod.Spec.NodeName == nodeName {
-				podList.Items = append(podList.Items, *pod)
+				podListFilter.Items = append(podListFilter.Items, *pod)
 			} else {
-				fmt.Printf("can't to query pod: \"%s\" for node: \"%s\"\n", pod.Name, pod.Spec.NodeName)
+				fmt.Printf("can't query pod: \"%s\" for node: \"%s\"\n", pod.Name, pod.Spec.NodeName)
 			}
 		}
 	} else {
@@ -106,18 +106,27 @@ func (o *PodGetOptions) getPods(args []string) error {
 			AllNamespaces: o.AllNamespaces,
 			LabelSelector: o.LabelSelector,
 		}
-		podList, err = podRequest.GetPods(ctx)
+		podList, err := podRequest.GetPods(ctx)
 		if err != nil {
 			return err
 		}
+
+		podListFilter = &v1.PodList{
+			Items: make([]v1.Pod, 0, len(podList.Items)),
+		}
+		for _, pod := range podList.Items {
+			if pod.Spec.NodeName == nodeName {
+				podListFilter.Items = append(podListFilter.Items, pod)
+			}
+		}
 	}
 
-	if len(podList.Items) == 0 {
+	if len(podListFilter.Items) == 0 {
 		if len(args) > 0 {
 			return nil
 		}
 		if o.AllNamespaces {
-			fmt.Println("No resources found in all namespace.")
+			fmt.Println("No resources found in all namespaces.")
 		} else {
 			fmt.Printf("No resources found in %s namespace.\n", o.Namespace)
 		}
@@ -125,29 +134,27 @@ func (o *PodGetOptions) getPods(args []string) error {
 	}
 
 	if *o.PrintFlags.OutputFormat == "" || *o.PrintFlags.OutputFormat == "wide" {
-		podListFilter := &api.PodList{
-			Items: make([]api.Pod, 0, len(podList.Items)),
+		corePodList := &api.PodList{
+			Items: make([]api.Pod, 0, len(podListFilter.Items)),
 		}
-		for _, pod := range podList.Items {
-			if pod.Spec.NodeName == nodeName {
-				var apiPod api.Pod
-				if err := k8s_v1_api.Convert_v1_Pod_To_core_Pod(&pod, &apiPod, nil); err != nil {
-					fmt.Printf("pod revert to apiPod with err:%v\n", err)
-					continue
-				}
-				podListFilter.Items = append(podListFilter.Items, apiPod)
+		for i := range podListFilter.Items {
+			var apiPod api.Pod
+			if err := k8s_v1_api.Convert_v1_Pod_To_core_Pod(&podListFilter.Items[i], &apiPod, nil); err != nil {
+				fmt.Printf("pod revert to apiPod with err:%v\n", err)
+				continue
 			}
+			corePodList.Items = append(corePodList.Items, apiPod)
 		}
-		table, err := ConvertDataToTable(podListFilter)
+		table, err := ConvertDataToTable(corePodList)
 		if err != nil {
 			return err
 		}
 		return o.PrintToTable(table, o.AllNamespaces, os.Stdout)
 	}
 
-	runtimeObjects := make([]runtime.Object, 0, len(podList.Items))
-	for _, pod := range podList.Items {
-		runtimeObjects = append(runtimeObjects, &pod)
+	runtimeObjects := make([]runtime.Object, 0, len(podListFilter.Items))
+	for i := range podListFilter.Items {
+		runtimeObjects = append(runtimeObjects, &podListFilter.Items[i])
 	}
 	return o.PrintToJSONYaml(runtimeObjects)
 }
