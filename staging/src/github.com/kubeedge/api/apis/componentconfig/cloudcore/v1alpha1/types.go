@@ -205,6 +205,18 @@ type CloudHubHTTPS struct {
 	// Port indicates the open port for HTTPS server
 	// default 10002
 	Port uint32 `json:"port,omitempty"`
+	// RateLimit indicates the rate limit config for the HTTPS server
+	RateLimit *HTTPSRateLimit `json:"rateLimit,omitempty"`
+}
+
+// HTTPSRateLimit indicates the rate limit config
+type HTTPSRateLimit struct {
+	// QPS indicates the maximum QPS to the HTTPS server
+	// default 100
+	QPS int32 `json:"qps,omitempty"`
+	// Burst indicates the maximum burst for the HTTPS server
+	// default 200
+	Burst int32 `json:"burst,omitempty"`
 }
 
 // CloudHubAuthorization CloudHub authz configurations
