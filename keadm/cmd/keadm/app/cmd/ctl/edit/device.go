@@ -157,10 +157,10 @@ func (o *DeviceEditOptions) edit(dl *v1beta1.Device) error {
 		return fmt.Errorf("no changes made")
 	}
 
-	jsonEdited := cmdutil.StripComments(edited)
+	yamlEdited := cmdutil.StripComments(edited)
 
 	var editedDevice v1beta1.Device
-	err = json.Unmarshal(jsonEdited, &editedDevice)
+	err = yaml.Unmarshal(yamlEdited, &editedDevice)
 	if err != nil {
 		return preservedFile(err, file)
 	}
