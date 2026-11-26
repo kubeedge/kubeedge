@@ -424,6 +424,8 @@ func (m *metaManager) processVolume(message model.Message) {
 	klog.Infof("process volume get: req[%+v], back[%+v], err[%+v]", message, back, err)
 	if err != nil {
 		klog.Errorf("process volume send to edged failed: %v", err)
+		feedbackError(fmt.Errorf("process volume send to edged failed: %v", err), message)
+		return
 	}
 
 	resp := message.NewRespByMessage(&message, back.GetContent())
