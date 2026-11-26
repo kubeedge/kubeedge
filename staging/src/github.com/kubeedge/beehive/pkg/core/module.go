@@ -80,7 +80,7 @@ func Register(m Module, opts ...string) {
 		remote:      false,
 	}
 
-	if len(opts) > 0 {
+	if len(opts) > 0 && opts[0] == common.MsgCtxTypeUS {
 		info.contextType = opts[0]
 		info.remote = true
 	}
