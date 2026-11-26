@@ -12,6 +12,8 @@ import (
 var Config Configure
 var once sync.Once
 
+// Configure holds the configuration for cloudhub, including the TLS
+// certificates and keys required for secure communication.
 type Configure struct {
 	v1alpha1.CloudHub
 	KubeAPIConfig *v1alpha1.KubeAPIConfig
@@ -21,6 +23,9 @@ type Configure struct {
 	Key           []byte
 }
 
+// InitConfigure initializes the global Config variable based on the provided
+// CloudHub configuration. It ensures that the required certificates and keys
+// are loaded and is safe to call multiple times (only executes once).
 func InitConfigure(hub *v1alpha1.CloudHub) {
 	once.Do(func() {
 		if len(hub.AdvertiseAddress) == 0 {

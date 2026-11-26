@@ -74,6 +74,8 @@ func newCloudHub(enable bool) *cloudHub {
 	return ch
 }
 
+// Register initializes the cloudhub configuration and registers the cloudhub
+// module to the core framework.
 func Register(hub *v1alpha1.CloudHub) {
 	hubconfig.InitConfigure(hub)
 	core.Register(newCloudHub(hub.Enable))
@@ -164,6 +166,8 @@ func getAuthConfig() authorization.Config {
 	}
 }
 
+// GetSessionManager returns the global session manager for cloudhub. It
+// returns an error if cloudhub has not been initialized.
 func GetSessionManager() (*session.Manager, error) {
 	if sessionMgr != nil {
 		return sessionMgr, nil
