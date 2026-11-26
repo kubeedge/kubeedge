@@ -26,41 +26,38 @@ import (
 )
 
 func TestFileCopy(t *testing.T) {
+	dir := t.TempDir()
+
 	t.Run("source file not exists", func(t *testing.T) {
-		err := FileCopy("a.txt", "b.txt")
-		assert.ErrorContains(t, err, "failed to get source file a.txt sta")
+		err := FileCopy(filepath.Join(dir, "nonexistent.txt"), filepath.Join(dir, "b.txt"))
+		assert.ErrorContains(t, err, "failed to get source file")
 	})
 
 	t.Run("source file is a directory", func(t *testing.T) {
-		const src = "a"
-		var err error
-		err = os.Mkdir(src, os.ModePerm)
+		src := filepath.Join(dir, "dir_a")
+		err := os.Mkdir(src, os.ModePerm)
 		assert.NoError(t, err)
 
-		defer func() {
-			err := os.Remove(src)
-			assert.NoError(t, err)
-		}()
-
-		err = FileCopy(src, "b.txt")
-		assert.ErrorContains(t, err, "source file a is not a regular file")
+		err = FileCopy(src, filepath.Join(dir, "b.txt"))
+		assert.ErrorContains(t, err, "is not a regular file")
 	})
 
 	t.Run("copy file successfully", func(t *testing.T) {
-		const src, dest = "a.txt", "b.txt"
-		var err error
-		_, err = os.Create(src)
+		src := filepath.Join(dir, "a.txt")
+		dest := filepath.Join(dir, "b.txt")
+
+		f, err := os.Create(src)
+		assert.NoError(t, err)
+		_, err = f.WriteString("hello world")
+		assert.NoError(t, err)
+		assert.NoError(t, f.Close())
+
+		err = FileCopy(src, dest)
 		assert.NoError(t, err)
 
-		defer func() {
-			err = os.Remove(src)
-			assert.NoError(t, err)
-			err = os.Remove(dest)
-			assert.NoError(t, err)
-		}()
-
-		err = FileCopy(src, "b.txt")
+		content, err := os.ReadFile(dest)
 		assert.NoError(t, err)
+		assert.Equal(t, "hello world", string(content))
 	})
 }
 
@@ -69,6 +66,7 @@ func TestFileExists(t *testing.T) {
 
 	ef, err := os.CreateTemp(dir, "FileExist")
 	if err == nil {
+		ef.Close()
 		if !FileExists(ef.Name()) {
 			t.Fatalf("file %v should exist", ef.Name())
 		}
