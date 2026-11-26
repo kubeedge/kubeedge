@@ -15,6 +15,14 @@ type patchMapValue struct {
 	Value []interface{} `json:"value,omitempty"`
 }
 
+// Offline migration adds a node-unreachable toleration to autonomy Pods. The
+// JSON Patch operation must match the state of the original Pod: RFC 6902
+// "replace" requires the target member to already exist, while "add" creates
+// a missing member. Kubernetes omits spec.tolerations when the Pod has no
+// tolerations, so using replace unconditionally makes an otherwise valid Pod
+// mutation fail. Keep this distinction covered by tests whenever the Pod
+// mutation or its serialization changes.
+
 func mutateOfflineMigration(review admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 	reviewResponse := admissionv1.AdmissionResponse{
 		Allowed: true,
@@ -54,9 +62,13 @@ func generatePatch(tolerations []corev1.Toleration) []patchMapValue {
 		Key:      corev1.TaintNodeUnreachable,
 		Operator: corev1.TolerationOpExists,
 	})
+	operation := "replace"
+	if len(tolerations) == 0 {
+		operation = "add"
+	}
 	patch := []patchMapValue{
 		{
-			Op:    "replace",
+			Op:    operation,
 			Path:  "/spec/tolerations",
 			Value: currentTolerations,
 		},
