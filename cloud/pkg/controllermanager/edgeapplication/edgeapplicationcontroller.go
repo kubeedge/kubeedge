@@ -169,27 +169,51 @@ func (c *Controller) syncEdgeApplication(ctx context.Context, edgeApp *appsv1alp
 		errs = append(errs, err)
 	}
 
-	// 3. apply all templates
-	// It will create/update the resource in the template and notify the status manager
-	// to monitor its status.
+	// 3. Apply all templates and retain the API versions that could be applied.
+	currentInfos := make([]utils.ResourceInfo, 0, len(modifiedTmplInfos))
+	appliedVersions := make(map[resourceKey]string)
+	var failedIndexes []int
 	for _, tmplInfo := range modifiedTmplInfos {
 		tmpl := tmplInfo.Template
+		info := utils.GetResourceInfoOfTemplateInfo(tmplInfo)
+		currentInfos = append(currentInfos, info)
 		if err := c.applyTemplate(ctx, tmpl); err != nil {
+			failedIndexes = append(failedIndexes, len(currentInfos)-1)
 			klog.Errorf("failed to apply overridden template of EdgeApplication %s/%s, %v, template: %v", edgeApp.Namespace, edgeApp.Name, err, tmpl)
 			errs = append(errs, err)
 			continue
 		}
+		appliedVersions[keyForResource(info)] = info.Version
+		if err := c.StatusManager.WatchStatus(info); err != nil {
+			klog.Errorf("failed to watch status of %s/%s for EdgeApplication %s/%s, %v", info.Namespace, info.Name, edgeApp.Namespace, edgeApp.Name, err)
+			errs = append(errs, err)
+		}
 		klog.V(4).Infof("successfully applied overridden template of EdgeApplication %s/%s, template: %v", edgeApp.Namespace, edgeApp.Name, tmpl)
 	}
 
-	// 4. delete resources that have been removed from the manifests
-	if err := c.deleteRedundantResources(ctx, edgeApp, modifiedTmplInfos); err != nil {
+	// 4. Delete resources that have been removed from the manifests.
+	previousInfos, err := c.getLastContainedResourceInfos(edgeApp)
+	if err != nil {
+		errs = append(errs, err)
+	} else if err := c.deleteRedundantResources(ctx, previousInfos, currentInfos); err != nil {
 		klog.Errorf("failed to delete redundant resource for EdgeApplication %s/%s, %v", edgeApp.Namespace, edgeApp.Name, err)
 		errs = append(errs, err)
 	}
 
-	// 5. update the LastContainedResourcesAnnotation
-	if err := c.addOrUpdateLastContainedResourcesAnnotation(ctx, edgeApp, modifiedTmplInfos); err != nil {
+	// 5. Keep a known version for cleanup if the desired version could not be applied.
+	previousVersions := make(map[resourceKey]string, len(previousInfos))
+	for _, info := range previousInfos {
+		previousVersions[keyForResource(info)] = info.Version
+	}
+	for _, i := range failedIndexes {
+		key := keyForResource(currentInfos[i])
+		if version, ok := appliedVersions[key]; ok {
+			currentInfos[i].Version = version
+		} else if version, ok := previousVersions[key]; ok {
+			currentInfos[i].Version = version
+		}
+	}
+	if err := c.addOrUpdateLastContainedResourcesAnnotation(ctx, edgeApp, currentInfos); err != nil {
 		klog.Errorf("failed to update annotation of EdgeApplication %s/%s, %v", edgeApp.Namespace, edgeApp.Name, err)
 		errs = append(errs, err)
 	}
@@ -197,74 +221,61 @@ func (c *Controller) syncEdgeApplication(ctx context.Context, edgeApp *appsv1alp
 	return controllerruntime.Result{}, errors.NewAggregate(errs)
 }
 
-func (c *Controller) deleteRedundantResources(ctx context.Context, edgeApp *appsv1alpha1.EdgeApplication, currentTmplInfos []*utils.TemplateInfo) error {
-	lastContainedResourcesInfos, err := c.getLastContainedResourceInfos(edgeApp)
-	if err != nil {
-		klog.Errorf("failed to get infos of last contained resources in EdgeApplication %s/%s, %v",
-			edgeApp.Namespace, edgeApp.Name, err)
-		return err
-	}
-	currentContainedResourceInfos := make([]utils.ResourceInfo, len(currentTmplInfos))
-	for i := range currentTmplInfos {
-		currentContainedResourceInfos[i] = utils.GetResourceInfoOfTemplateInfo(currentTmplInfos[i])
-	}
-	deleted := getDeletedResources(lastContainedResourcesInfos, currentContainedResourceInfos)
+func (c *Controller) deleteRedundantResources(ctx context.Context, previousInfos, currentInfos []utils.ResourceInfo) error {
+	deleted := getDeletedResources(previousInfos, currentInfos)
 	for _, info := range deleted {
 		if err := c.removeResource(ctx, info); err != nil {
 			klog.Errorf("failed to remove resource %s/%s of gvk %s, %v",
 				info.Namespace, info.Name, schema.GroupVersionKind{Group: info.Group, Version: info.Version, Kind: info.Kind}, err)
 			return err
 		}
-		klog.V(4).Infof("successfully remove resource %s/%s of gvk %s, %v",
-			info.Namespace, info.Name, schema.GroupVersionKind{Group: info.Group, Version: info.Version, Kind: info.Kind}, err)
+		klog.V(4).Infof("successfully removed resource %s/%s of gvk %s",
+			info.Namespace, info.Name, schema.GroupVersionKind{Group: info.Group, Version: info.Version, Kind: info.Kind})
 	}
 	return nil
 }
 
 func (c *Controller) updateStatus(ctx context.Context, edgeApp *appsv1alpha1.EdgeApplication, tmplInfos []*utils.TemplateInfo) error {
-	newStatus := []appsv1alpha1.ManifestStatus{}
-	tmplMap := map[int][]*utils.TemplateInfo{}
-	for _, tmplInfo := range tmplInfos {
-		ordinal := tmplInfo.Ordinal
-		if _, ok := tmplMap[ordinal]; !ok {
-			tmplMap[ordinal] = []*utils.TemplateInfo{tmplInfo}
-		} else {
-			tmplMap[ordinal] = append(tmplMap[ordinal], tmplInfo)
-		}
-	}
-
-	// remove redundant status entries, these status do not have any corresponding
-	// template in this edgeapplication
-	statusExists := map[string]struct{}{}
+	exactStatus := make(map[utils.ResourceInfo]appsv1alpha1.ManifestStatus)
+	resourceStatus := make(map[utils.ResourceInfo]appsv1alpha1.ManifestStatus)
 	for _, status := range edgeApp.Status.WorkloadStatus {
 		id := status.Identifier
-		for _, tmplInfo := range tmplMap[id.Ordinal] {
-			resourceInfo := utils.GetResourceInfoOfTemplateInfo(tmplInfo)
-			if utils.IsIdentifierSameAsResourceInfo(id, resourceInfo) {
-				// this status still need to retain
-				statusExists[resourceInfo.String()] = struct{}{}
-				newStatus = append(newStatus, status)
-			}
+		info := utils.ResourceInfo{
+			Ordinal: id.Ordinal, Group: id.Group, Version: id.Version,
+			Kind: id.Kind, Namespace: id.Namespace, Name: id.Name,
+		}
+		if _, found := exactStatus[info]; !found {
+			exactStatus[info] = status
+		}
+		info.Ordinal = 0
+		if _, found := resourceStatus[info]; !found {
+			resourceStatus[info] = status
 		}
 	}
 
-	// add missed status entry to ensure each passed-in template have its corresponding status
+	newStatus := []appsv1alpha1.ManifestStatus{}
 	for _, tmplInfo := range tmplInfos {
-		resourceInfo := utils.GetResourceInfoOfTemplateInfo(tmplInfo)
-		if _, ok := statusExists[resourceInfo.String()]; !ok {
-			// this tmpl does not have relate status entry, add a new entry for it
-			newStatus = append(newStatus, appsv1alpha1.ManifestStatus{
+		info := utils.GetResourceInfoOfTemplateInfo(tmplInfo)
+		status, found := exactStatus[info]
+		if !found {
+			identity := info
+			identity.Ordinal = 0
+			status, found = resourceStatus[identity]
+		}
+		if !found {
+			status = appsv1alpha1.ManifestStatus{
 				Condition: appsv1alpha1.EdgeAppProcessing,
 				Identifier: appsv1alpha1.ResourceIdentifier{
-					Ordinal:   resourceInfo.Ordinal,
-					Group:     resourceInfo.Group,
-					Version:   resourceInfo.Kind,
-					Kind:      resourceInfo.Kind,
-					Namespace: resourceInfo.Namespace,
-					Name:      resourceInfo.Name,
+					Group:     info.Group,
+					Version:   info.Version,
+					Kind:      info.Kind,
+					Namespace: info.Namespace,
+					Name:      info.Name,
 				},
-			})
+			}
 		}
+		status.Identifier.Ordinal = info.Ordinal
+		newStatus = append(newStatus, status)
 	}
 
 	// ensure each template have its corresponding status
@@ -410,14 +421,7 @@ func (c *Controller) applyTemplate(ctx context.Context, tmpl *unstructured.Unstr
 			return err
 		}
 	}
-	// notify the StatusManager to watch its status.
-	return c.StatusManager.WatchStatus(utils.ResourceInfo{
-		Group:     gvk.Group,
-		Version:   gvk.Version,
-		Kind:      gvk.Kind,
-		Namespace: ns,
-		Name:      name,
-	})
+	return nil
 }
 
 func (c *Controller) removeResource(ctx context.Context, info utils.ResourceInfo) error {
@@ -456,17 +460,12 @@ func (c *Controller) getLastContainedResourceInfos(edgeApp *appsv1alpha1.EdgeApp
 
 // addOrUpdateLastContainedResourcesAnnotation will add the ContainedResourcesAnnotation to the EdgeApplication,
 // if the annotation has already existed, it will be updated it according to resources in manifests.
-func (c *Controller) addOrUpdateLastContainedResourcesAnnotation(ctx context.Context, edgeApp *appsv1alpha1.EdgeApplication, tmplInfos []*utils.TemplateInfo) error {
+func (c *Controller) addOrUpdateLastContainedResourcesAnnotation(ctx context.Context, edgeApp *appsv1alpha1.EdgeApplication, resourceInfos []utils.ResourceInfo) error {
 	newEdgeApp := edgeApp.DeepCopy()
 	if newEdgeApp.Annotations == nil {
 		newEdgeApp.Annotations = make(map[string]string)
 	}
 
-	resourceInfos := make([]*utils.ResourceInfo, len(tmplInfos))
-	for i := range tmplInfos {
-		info := utils.GetResourceInfoOfTemplateInfo(tmplInfos[i])
-		resourceInfos[i] = &info
-	}
 	sort.Slice(resourceInfos, func(i, j int) bool { return resourceInfos[i].String() < resourceInfos[j].String() })
 	infosJSON, err := json.Marshal(resourceInfos)
 	if err != nil {
@@ -613,16 +612,25 @@ func needOverride(obj runtime.Object) bool {
 	return ok
 }
 
-// getDeletedResources will return a slice of all deleted resourceInfo, which
-// are in oldInfos but not in newInfos.
+type resourceKey struct {
+	group, kind, namespace, name string
+}
+
+// Manifest positions and API versions can change while identifying the same object.
+func keyForResource(info utils.ResourceInfo) resourceKey {
+	return resourceKey{group: info.Group, kind: info.Kind, namespace: info.Namespace, name: info.Name}
+}
+
+// getDeletedResources returns the resources in oldInfos that are absent from newInfos.
 func getDeletedResources(oldInfos, newInfos []utils.ResourceInfo) []utils.ResourceInfo {
-	deleted := []utils.ResourceInfo{}
-	newInfoStrs := make(map[string]struct{})
+	current := make(map[resourceKey]struct{}, len(newInfos))
 	for _, info := range newInfos {
-		newInfoStrs[info.String()] = struct{}{}
+		current[keyForResource(info)] = struct{}{}
 	}
+
+	deleted := []utils.ResourceInfo{}
 	for _, info := range oldInfos {
-		if _, ok := newInfoStrs[info.String()]; !ok {
+		if _, ok := current[keyForResource(info)]; !ok {
 			deleted = append(deleted, info)
 		}
 	}
