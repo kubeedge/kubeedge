@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: predictive-maintenance-mapper
+  namespace: default
+  labels:
+    app: predictive-maintenance
+    component: mapper
+    scenario: embodied-intelligence
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: predictive-maintenance
+      component: mapper
+  template:
+    metadata:
+      labels:
+        app: predictive-maintenance
+        component: mapper
+    spec:
+      # Schedule this pod on the edge node (NOT the cloud)
+      nodeName: edge-node-01    # <-- replace with your actual edge node name
+      hostNetwork: true
+      containers:
+        - name: mapper
+          image: kubeedge/predictive-maintenance-mapper:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: CONFIG_PATH
+              value: /etc/mapper/config.json
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/mapper
+            - name: dmi-socket
+              mountPath: /var/lib/kubeedge
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+      volumes:
+        - name: config-volume
+          configMap:
+            name: predictive-maintenance-config
+        - name: dmi-socket
+          hostPath:
+            path: /var/lib/kubeedge
+            type: DirectoryOrCreate
+      tolerations:
+        - key: node-role.kubernetes.io/edge
+          operator: Exists
+          effect: NoSchedule
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: predictive-maintenance-config
+  namespace: default
+data:
+  config.json: |
+    {
+      "dmi": {
+        "socketPath": "/var/lib/kubeedge/dmi.sock",
+        "mapperName": "predictive-maintenance-mapper",
+        "protocol": "virtual-sensor",
+        "deviceNamespace": "default",
+        "deviceName": "factory-sensor-01"
+      },
+      "sensor": {
+        "baseVibration": 0.5,
+        "baseTemperature": 45.0,
+        "noiseLevel": 0.05,
+        "anomalyProbability": 0.05,
+        "anomalyMultiplier": 3.5
+      },
+      "reportIntervalSec": 5
+    }

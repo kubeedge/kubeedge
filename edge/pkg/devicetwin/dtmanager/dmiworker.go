@@ -192,7 +192,7 @@ func (dw *DMIWorker) dealMetaDeviceOperation(_ *dtcontext.DTContext, _ string, m
 		}
 
 	default:
-		klog.Warningf("unsupported resource type %s", resources[3])
+		klog.Warningf("unsupported resource type %s", resources[1])
 	}
 
 	return nil
