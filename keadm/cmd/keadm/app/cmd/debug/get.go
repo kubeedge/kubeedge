@@ -296,8 +296,6 @@ func (g *GetOptions) queryDataFromDatabase(resType string, resNames []string) ([
 
 func (g *GetOptions) getPodsFromDatabase(resNS string, resNames []string) ([]models.Meta, error) {
 	var results []models.Meta
-	podJSON := make(map[string]interface{})
-	podStatusJSON := make(map[string]interface{})
 
 	podRecords, err := ms.QueryAllMeta("type", model.ResourceTypePod)
 	if err != nil {
@@ -322,6 +320,8 @@ func (g *GetOptions) getPodsFromDatabase(resNS string, resNames []string) ([]mod
 			results = append(results, v)
 			continue
 		}
+		podJSON := make(map[string]interface{})
+		podStatusJSON := make(map[string]interface{})
 		if err := json.Unmarshal([]byte(v.Value), &podJSON); err != nil {
 			return nil, err
 		}
@@ -342,8 +342,6 @@ func (g *GetOptions) getPodsFromDatabase(resNS string, resNames []string) ([]mod
 
 func (g *GetOptions) getNodeFromDatabase(resNS string, resNames []string) ([]models.Meta, error) {
 	var results []models.Meta
-	nodeJSON := make(map[string]interface{})
-	nodeStatusJSON := make(map[string]interface{})
 
 	nodeRecords, err := ms.QueryAllMeta("type", model.ResourceTypeNode)
 	if err != nil {
@@ -368,6 +366,8 @@ func (g *GetOptions) getNodeFromDatabase(resNS string, resNames []string) ([]mod
 			results = append(results, v)
 			continue
 		}
+		nodeJSON := make(map[string]interface{})
+		nodeStatusJSON := make(map[string]interface{})
 		if err := json.Unmarshal([]byte(v.Value), &nodeJSON); err != nil {
 			return nil, err
 		}
