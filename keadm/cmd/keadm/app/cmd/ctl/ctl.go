@@ -29,14 +29,65 @@ import (
 	"github.com/kubeedge/kubeedge/keadm/cmd/keadm/app/cmd/ctl/unhold"
 )
 
-var ctlShortDescription = `Commands operating on the data plane at edge`
+var ctlShortDescription = `Commands operating on data plane at edge`
+
+var ctlLongDescription = `
+The ctl command provides utilities for managing edge nodes and workloads
+directly from cloud side, enabling operations on resources running at
+the edge without requiring direct SSH access to edge nodes.
+
+Available Commands:
+  get       - Get resources on edge nodes (pods, devices)
+  restart   - Restart edge components (edgecore)
+  logs      - Get logs from pods running on edge nodes
+  exec      - Execute commands in pods on edge nodes
+  describe  - Show detailed information about edge resources
+  edit      - Edit resources on edge nodes
+  confirm   - Confirm edge node operations
+  unhold    - Release held upgrade operations
+
+Common Usage Examples:
+
+  # List all pods on a specific edge node
+  keadm ctl get pods --node edge-node-1
+
+  # Get detailed information about a pod on edge node
+  keadm ctl describe pod my-pod --node edge-node-1
+
+  # View real-time logs from a pod
+  keadm ctl logs my-pod --node edge-node-1 -f
+
+  # Execute a command inside a pod on edge node
+  keadm ctl exec my-pod --node edge-node-1 -- /bin/sh
+
+  # Restart edgecore service on an edge node
+  keadm ctl restart edgecore --node edge-node-1
+
+Note: These commands communicate through the cloud-edge channel and
+require that EdgeHub is connected and functioning properly.
+
+For detailed help on any command, use:
+  keadm ctl [command] --help
+`
+
+var ctlExample = `
+  # Get pods on edge node
+  keadm ctl get pods --node edge-node-1
+
+  # Stream logs from a pod
+  keadm ctl logs nginx-pod --node edge-node-1 -f
+
+  # Execute interactive shell in pod
+  keadm exec -it nginx-pod --node edge-node-1 -- /bin/bash
+`
 
 // NewCtl returns KubeEdge edge pod command.
 func NewCtl() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "ctl",
-		Short: ctlShortDescription,
-		Long:  ctlShortDescription,
+		Use:     "ctl",
+		Short:   ctlShortDescription,
+		Long:    ctlLongDescription,
+		Example: ctlExample,
 	}
 
 	cmd.AddCommand(get.NewEdgeGet())
