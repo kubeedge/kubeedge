@@ -20,6 +20,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -294,12 +296,12 @@ func TestOnPubConnectionLost(t *testing.T) {
 	origMQTTHub := MQTTHub
 	defer func() { MQTTHub = origMQTTHub }()
 
-	initCalled := false
+	var initCalled atomic.Bool
 	MQTTHub = &Client{}
 
 	patch := gomonkey.ApplyMethod(reflect.TypeOf(MQTTHub), "InitPubClient",
 		func(_ *Client) {
-			initCalled = true
+			initCalled.Store(true)
 		})
 	defer patch.Reset()
 
@@ -307,19 +309,19 @@ func TestOnPubConnectionLost(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond)
 
-	assert.True(t, initCalled, "InitPubClient should be called")
+	assert.True(t, initCalled.Load(), "InitPubClient should be called")
 }
 
 func TestOnSubConnectionLost(t *testing.T) {
 	origMQTTHub := MQTTHub
 	defer func() { MQTTHub = origMQTTHub }()
 
-	initCalled := false
+	var initCalled atomic.Bool
 	MQTTHub = &Client{}
 
 	patch := gomonkey.ApplyMethod(reflect.TypeOf(MQTTHub), "InitSubClient",
 		func(_ *Client) {
-			initCalled = true
+			initCalled.Store(true)
 		})
 	defer patch.Reset()
 
@@ -327,7 +329,7 @@ func TestOnSubConnectionLost(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond)
 
-	assert.True(t, initCalled, "InitSubClient should be called")
+	assert.True(t, initCalled.Load(), "InitSubClient should be called")
 }
 
 func TestOnSubConnect(t *testing.T) {
@@ -485,4 +487,118 @@ func TestAccessInfoStruct(t *testing.T) {
 	assert.Equal(t, "test-type", info.Type)
 	assert.Equal(t, "test/topic", info.Topic)
 	assert.Equal(t, []byte("test-content"), info.Content)
+}
+
+// TestClientReassignRace runs the reconnect path (which reassigns pubCli/subCli)
+// concurrently with the accessors that the eventbus loop uses to read them. It
+// must be run under -race: before the fix, reading PubCli/SubCli while the
+// connection-lost callback reassigned them was a data race.
+func TestClientReassignRace(t *testing.T) {
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+	patches.ApplyFunc(MQTT.NewClient, func(_ *MQTT.ClientOptions) MQTT.Client {
+		return NewTestMQTTClient()
+	})
+	patches.ApplyFunc(util.HubClientInit, func(_, _, _, _ string) *MQTT.ClientOptions {
+		return &MQTT.ClientOptions{}
+	})
+	patches.ApplyFunc(util.LoopConnect, func(_ string, _ MQTT.Client) {})
+
+	mq := &Client{
+		MQTTUrl:     "tcp://localhost:1883",
+		PubClientID: "pub-id",
+		SubClientID: "sub-id",
+	}
+	mq.InitPubClient()
+	mq.InitSubClient()
+
+	stop := make(chan struct{})
+	var readers, writers sync.WaitGroup
+
+	for i := 0; i < 4; i++ {
+		readers.Add(1)
+		go func() {
+			defer readers.Done()
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+					// exercise the lock-guarded reads of pubCli/subCli
+					// concurrently with the writers reassigning them.
+					_ = mq.isActivePubClient(nil)
+					_ = mq.isActiveSubClient(nil)
+				}
+			}
+		}()
+	}
+	for i := 0; i < 2; i++ {
+		writers.Add(1)
+		go func() {
+			defer writers.Done()
+			for j := 0; j < 50; j++ {
+				mq.InitPubClient()
+				mq.InitSubClient()
+			}
+		}()
+	}
+
+	writers.Wait()
+	close(stop)
+	readers.Wait()
+}
+
+// TestOnConnectionLostSupersededClient verifies that a connection-lost event from
+// a client that has already been replaced does not trigger another reconnect,
+// while an event from the current active client does.
+func TestOnConnectionLostSupersededClient(t *testing.T) {
+	origMQTTHub := MQTTHub
+	defer func() { MQTTHub = origMQTTHub }()
+
+	active := NewTestMQTTClient()
+	superseded := NewTestMQTTClient()
+	MQTTHub = &Client{pubCli: active, subCli: active}
+
+	var pubReconnects, subReconnects int32
+	patches := gomonkey.NewPatches()
+	defer patches.Reset()
+	patches.ApplyMethod(reflect.TypeOf(MQTTHub), "InitPubClient", func(_ *Client) {
+		atomic.AddInt32(&pubReconnects, 1)
+	})
+	patches.ApplyMethod(reflect.TypeOf(MQTTHub), "InitSubClient", func(_ *Client) {
+		atomic.AddInt32(&subReconnects, 1)
+	})
+
+	// a superseded client is ignored: no reconnect goroutine is started, so the
+	// counters stay at zero.
+	onPubConnectionLost(superseded, errors.New("connection lost"))
+	onSubConnectionLost(superseded, errors.New("connection lost"))
+	assert.Equal(t, int32(0), atomic.LoadInt32(&pubReconnects))
+	assert.Equal(t, int32(0), atomic.LoadInt32(&subReconnects))
+
+	// the active client triggers exactly one reconnect for each direction.
+	onPubConnectionLost(active, errors.New("connection lost"))
+	onSubConnectionLost(active, errors.New("connection lost"))
+	assert.Eventually(t, func() bool {
+		return atomic.LoadInt32(&pubReconnects) == 1 && atomic.LoadInt32(&subReconnects) == 1
+	}, time.Second, 10*time.Millisecond)
+}
+
+// TestClientOperations verifies the lock-guarded Publish/Subscribe/Unsubscribe
+// wrappers delegate to the current pub/sub client.
+func TestClientOperations(t *testing.T) {
+	pub := NewTestMQTTClient()
+	sub := NewTestMQTTClient()
+	mq := &Client{pubCli: pub, subCli: sub}
+
+	pubToken := mq.Publish("topic/pub", 1, false, []byte("payload"))
+	assert.NotNil(t, pubToken)
+	assert.Equal(t, []byte("payload"), pub.publishTopics["topic/pub"])
+
+	subToken := mq.Subscribe("topic/sub", 1, nil)
+	assert.NotNil(t, subToken)
+	assert.True(t, sub.subscribeTopics["topic/sub"])
+
+	unsubToken := mq.Unsubscribe("topic/sub")
+	assert.NotNil(t, unsubToken)
 }
