@@ -48,6 +48,8 @@ func RegisterRunner(name string, runner *ActionRunner) {
 }
 
 // GetRunner returns the implementation of the job action runner.
+//
+//go:noinline
 func GetRunner(name string) *ActionRunner {
 	return runners[name]
 }
