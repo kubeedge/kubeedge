@@ -57,6 +57,44 @@ func (m MockFileInfo) ModTime() time.Time { return m.modTime }
 func (m MockFileInfo) IsDir() bool        { return m.isDir }
 func (m MockFileInfo) Sys() interface{}   { return m.sys }
 
+func TestCheckRootPrivilegesOthers(t *testing.T) {
+	tests := []struct {
+		name      string
+		euid      int
+		expectErr bool
+	}{
+		{
+			name:      "Running as root",
+			euid:      0,
+			expectErr: false,
+		},
+		{
+			name:      "Running as non-root",
+			euid:      1000,
+			expectErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			patches := gomonkey.NewPatches()
+			defer patches.Reset()
+
+			patches.ApplyFunc(os.Geteuid, func() int {
+				return tt.euid
+			})
+
+			err := CheckRootPrivileges()
+
+			if tt.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestIsKubeEdgeProcessRunningOthers(t *testing.T) {
 	tests := []struct {
 		name      string

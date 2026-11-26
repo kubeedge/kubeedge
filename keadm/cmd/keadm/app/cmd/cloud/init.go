@@ -52,6 +52,12 @@ func NewCloudInit() *cobra.Command {
 		Short:   "Bootstraps cloud component. Checks and install (if required) the pre-requisites.",
 		Long:    cloudInitLongDescription,
 		Example: fmt.Sprintf(cloudInitExample, types.DefaultKubeEdgeVersion),
+		PreRunE: func(_ *cobra.Command, _ []string) error {
+			if opts.DryRun {
+				return nil
+			}
+			return util.CheckRootPrivileges()
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			tool := helm.NewCloudCoreHelmTool(opts.KubeConfig, opts.KubeEdgeVersion)
 			return tool.Install(opts)
