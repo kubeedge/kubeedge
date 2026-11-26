@@ -255,6 +255,12 @@ func TestParseKey(t *testing.T) {
 			},
 		},
 		{
+			// Regression: missing leading slash causes slices[0] != ""
+			// Should safely return zero values and log an error.
+			key:       "core/v1/pods/default/foo",
+			stdResult: result{},
+		},
+		{
 			// Fail test
 			key:       "/",
 			stdResult: result{},
