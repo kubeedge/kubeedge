@@ -83,6 +83,10 @@ func newCmdConfigImagesList() *cobra.Command {
 		Use:   "list",
 		Short: "Print a list of images keadm will use.",
 		RunE: func(_ *cobra.Command, _ []string) error {
+			if err := validateImagePart(cfg.Part); err != nil {
+				return err
+			}
+
 			ver, err := util.GetCurrentVersion(cfg.KubeEdgeVersion)
 			if err != nil {
 				return err
@@ -111,6 +115,10 @@ func newCmdConfigImagesPull() *cobra.Command {
 		Use:   "pull",
 		Short: "Pull images used by keadm",
 		RunE: func(_ *cobra.Command, _ []string) error {
+			if err := validateImagePart(cfg.Part); err != nil {
+				return err
+			}
+
 			ctx := context.Background()
 			ver, err := util.GetCurrentVersion(cfg.KubeEdgeVersion)
 			if err != nil {
@@ -144,6 +152,15 @@ func AddImagesCommonConfigFlags(cmd *cobra.Command, cfg *Configuration) {
 
 	cmd.Flags().StringVar(&cfg.RemoteRuntimeEndpoint, cmdcommon.FlagNameRemoteRuntimeEndpoint, cfg.RemoteRuntimeEndpoint,
 		"The endpoint of remote runtime service in edge node")
+}
+
+func validateImagePart(part string) error {
+	switch strings.ToLower(part) {
+	case "", "cloud", "edge":
+		return nil
+	default:
+		return fmt.Errorf("invalid --part: %s, must be cloud or edge", part)
+	}
 }
 
 // GetKubeEdgeImages returns a list of container images that related part expects to use
