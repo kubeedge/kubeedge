@@ -16,13 +16,22 @@ limitations under the License.
 package certs
 
 const (
+	// Untyped string constants preserve source compatibility for downstream users
+	// who pass these to functions accepting string or named string types.
 	CAHandlerTypeX509 = "x509"
 
 	HandlerTypeX509 = "x509"
 )
 
+// CAHandlerType is the type for CA certificate handler identifiers.
 type CAHandlerType string
-type HanndlerType string
+
+// HandlerType is the corrected type for certificate handler identifiers.
+type HandlerType string
+
+// Deprecated: HanndlerType is a typo alias for HandlerType kept for backward compatibility.
+// Use HandlerType instead.
+type HanndlerType = HandlerType
 
 func GetCAHandler(t CAHandlerType) CAHandler {
 	switch t {
@@ -32,7 +41,7 @@ func GetCAHandler(t CAHandlerType) CAHandler {
 	return nil
 }
 
-func GetHandler(t HanndlerType) Handler {
+func GetHandler(t HandlerType) Handler {
 	switch t {
 	case HandlerTypeX509:
 		return &x509CertsHandler{}
