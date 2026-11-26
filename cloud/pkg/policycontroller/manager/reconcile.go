@@ -28,6 +28,7 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
 	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/cloud/pkg/edgecontroller/constants"
+	pcconstants "github.com/kubeedge/kubeedge/cloud/pkg/policycontroller/constants"
 	commonconstants "github.com/kubeedge/kubeedge/common/constants"
 )
 
@@ -349,6 +350,23 @@ func (c *Controller) send2Edge(acc *policyv1alpha1.ServiceAccountAccess, targets
 	klog.V(4).Infof("send2Edge for serviceaccount %s/%s: %v (%s)",
 		acc.Namespace, acc.Spec.ServiceAccount.Name, targets, opr)
 	sendObj := acc.DeepCopy()
+	// A typed client strips apiVersion/kind from the object it decodes, but
+	// cloudHub reads the GVK off the message body to fill in ObjectSync's
+	// spec.objectAPIVersion/objectKind (util.GetMessageAPIVersion and
+	// util.GetMessageResourceType). Leaving it unset creates ObjectSyncs that no
+	// GVR can be built from, so syncController can neither resync this object nor
+	// build a delete event to collect it from the edge node.
+	// util.SetMetaType() is not usable here: it resolves kinds through
+	// client-go's scheme, which does not know CRDs.
+	//
+	// The edge needs it too: metaManager passes every message through
+	// imitator.Inject(), which decodes the body into an unstructured object to
+	// store it in meta_v2 and drive watches, and that decode fails without a
+	// Kind. The authn path is unaffected, since it reads the v1 meta table and
+	// unmarshals into a typed object, which is why a node that received one of
+	// these without a GVK still serves it.
+	sendObj.SetGroupVersionKind(policyv1alpha1.SchemeGroupVersion.
+		WithKind(pcconstants.KindTypeServiceAccountAccess))
 	for _, node := range targets {
 		resource, err := messagelayer.BuildResource(node, sendObj.Namespace, model.ResourceTypeSaAccess, sendObj.Name)
 		if err != nil {
