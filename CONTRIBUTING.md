@@ -95,8 +95,8 @@ After that, run these local verifications before submitting pull request to pred
 fail of continuous integration.
 
 * Run and pass `make verify`
-* Run and pass `make edge_test` or `make cloud_test`
-* Run and pass `make edge_integration_test`
+* Run and pass `make test WHAT=edge` or `make test WHAT=cloud`
+* Run and pass `make integrationtest`
 
 In addition to the above process, a bot will begin applying structured labels to your PR.
 

@@ -17,7 +17,7 @@
 
 ```bash
 cd $GOPATH/src/github.com/kubeedge/kubeedge
-make edgeimage
+make image WHAT=edgecore
 ```
 
 我们按照编排文件的文件名顺序创建各个 k8s 资源。在创建之前，应该检查每个编排文件内容，以确保符合特定的集群环境。

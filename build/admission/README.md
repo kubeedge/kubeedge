@@ -12,7 +12,7 @@ image not exist. We can make one, and push to your registry.
 
 ```bash
 cd $GOPATH/src/github.com/kubeedge/kubeedge
-make admissionimage
+make image WHAT=admission
 ```
 
 Then, we need to generate the tls certs. It then will create a secret
