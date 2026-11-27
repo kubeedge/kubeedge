@@ -106,7 +106,7 @@ func NewOtherEdgeReset() *cobra.Command {
 			step.Printf("clean up dirs created by KubeEdge")
 
 			if err := util.CleanDirectories(isEdgeNode); err != nil {
-				klog.Warningf("failed to clean up directories, err: %v", err)
+				return fmt.Errorf("failed to clean up directories: %w", err)
 			}
 			return nil
 		},
