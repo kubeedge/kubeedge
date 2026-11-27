@@ -91,6 +91,15 @@ func (eh *EdgeHub) routeToCloud(stop <-chan struct{}) {
 			time.Sleep(time.Second)
 			continue
 		}
+		if isRouteToCloudWakeup(message) {
+			continue
+		}
+		select {
+		case <-stop:
+			go beehiveContext.Send(modules.EdgeHubModuleName, message)
+			return
+		default:
+		}
 
 		err = eh.tryThrottle(message.GetID())
 		if err != nil {
@@ -106,6 +115,15 @@ func (eh *EdgeHub) routeToCloud(stop <-chan struct{}) {
 			return
 		}
 	}
+}
+
+func wakeRouteToCloud() {
+	msg := messagepkg.BuildMsg(modules.HubGroup, "", modules.EdgeHubModuleName, "", messagepkg.OperationStop, nil)
+	go beehiveContext.Send(modules.EdgeHubModuleName, *msg)
+}
+
+func isRouteToCloudWakeup(message model.Message) bool {
+	return message.GetSource() == modules.EdgeHubModuleName && message.GetOperation() == messagepkg.OperationStop
 }
 
 func (eh *EdgeHub) keepalive(stop <-chan struct{}) {
