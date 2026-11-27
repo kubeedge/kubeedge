@@ -48,6 +48,7 @@ const TimeOutSecond = 300
 type Executor struct {
 	task           util.TaskMessage
 	statusChan     chan *v1alpha1.TaskStatus
+	nodesMu        sync.RWMutex
 	nodes          []v1alpha1.TaskStatus
 	controller     controller.Controller
 	maxFailedNodes float64
@@ -237,7 +238,9 @@ func initExecutor(message util.TaskMessage) (*Executor, error) {
 		},
 	}
 	go e.start()
+	executorMachine.Lock()
 	executorMachine.executors[fmt.Sprintf("%s::%s", message.Type, message.Name)] = e
+	executorMachine.Unlock()
 	return e, nil
 }
 
@@ -266,7 +269,9 @@ func (e *Executor) start() {
 				break
 			}
 
+			e.nodesMu.Lock()
 			e.nodes[endNode] = *status
+			e.nodesMu.Unlock()
 			err = e.dealFailedNode(*status)
 			if err != nil {
 				klog.Warning(err.Error())
@@ -274,7 +279,7 @@ func (e *Executor) start() {
 			}
 
 			if index >= len(e.nodes) {
-				if len(e.workers.jobs) != 0 {
+				if e.workers.jobCount() != 0 {
 					break
 				}
 				var state api.State
@@ -308,9 +313,9 @@ func (e *Executor) dealFailedNode(node v1alpha1.TaskStatus) error {
 	if float64(len(e.failedNodes)) < e.maxFailedNodes {
 		return nil
 	}
-	e.workers.shuttingDown = true
-	if len(e.workers.jobs) > 0 {
-		klog.Warningf("wait for all workers(%d/%d) for task %s to finish running ", len(e.workers.jobs), e.workers.number, e.task.Name)
+	runningJobs := e.workers.shutdown()
+	if runningJobs > 0 {
+		klog.Warningf("wait for all workers(%d/%d) for task %s to finish running ", runningJobs, e.workers.number, e.task.Name)
 		return nil
 	}
 
@@ -371,10 +376,11 @@ type workers struct {
 }
 
 func (w *workers) addJob(node v1alpha1.TaskStatus, index int, e *Executor) error {
+	w.Lock()
 	if w.shuttingDown {
+		w.Unlock()
 		return fmt.Errorf("workers is stopped")
 	}
-	w.Lock()
 	if len(w.jobs) >= w.number {
 		w.Unlock()
 		return fmt.Errorf("workers are all running, %v/%v", len(w.jobs), w.number)
@@ -387,21 +393,28 @@ func (w *workers) addJob(node v1alpha1.TaskStatus, index int, e *Executor) error
 	return nil
 }
 
+func (e *Executor) getNodeState(index int) (api.State, string) {
+	e.nodesMu.RLock()
+	defer e.nodesMu.RUnlock()
+	return e.nodes[index].State, e.nodes[index].NodeName
+}
+
 func (e *Executor) handelTimeOutJob(index int) {
-	lastState := e.nodes[index].State
-	timeoutSecond := *e.task.TimeOutSeconds
-	if timeoutSecond == 0 {
-		timeoutSecond = TimeOutSecond
+	lastState, nodeName := e.getNodeState(index)
+	timeoutSecond := uint32(TimeOutSecond)
+	if e.task.TimeOutSeconds != nil && *e.task.TimeOutSeconds != 0 {
+		timeoutSecond = *e.task.TimeOutSeconds
 	}
 	err := wait.Poll(1*time.Second, time.Duration(timeoutSecond)*time.Second, func() (bool, error) {
-		if lastState != e.nodes[index].State || fsm.TaskFinish(e.nodes[index].State) {
+		state, _ := e.getNodeState(index)
+		if lastState != state || fsm.TaskFinish(state) {
 			return true, nil
 		}
-		klog.V(4).Infof("node %s stage is not completed", e.nodes[index].NodeName)
+		klog.V(4).Infof("node %s stage is not completed", nodeName)
 		return false, nil
 	})
 	if err != nil {
-		_, err = e.controller.ReportNodeStatus(e.task.Name, e.nodes[index].NodeName, fsm.Event{
+		_, err = e.controller.ReportNodeStatus(e.task.Name, nodeName, fsm.Event{
 			Type:   api.EventTimeOut,
 			Action: api.ActionFailure,
 			Msg:    fmt.Sprintf("node task %s execution timeout, %s", lastState, err.Error()),
@@ -413,14 +426,27 @@ func (e *Executor) handelTimeOutJob(index int) {
 }
 
 func (w *workers) endJob(job string) (int, error) {
+	w.Lock()
+	defer w.Unlock()
 	index, ok := w.jobs[job]
 	if !ok {
 		return index, fmt.Errorf("end job %s error, job not exist", job)
 	}
-	w.Lock()
 	delete(w.jobs, job)
-	w.Unlock()
 	return index, nil
+}
+
+func (w *workers) jobCount() int {
+	w.Lock()
+	defer w.Unlock()
+	return len(w.jobs)
+}
+
+func (w *workers) shutdown() int {
+	w.Lock()
+	defer w.Unlock()
+	w.shuttingDown = true
+	return len(w.jobs)
 }
 
 func buildTaskResource(task, taskID, nodeID string) string {
