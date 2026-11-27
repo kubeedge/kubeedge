@@ -72,7 +72,7 @@ func TestEdgecoreEventBus(t *testing.T) {
 
 		cfg = edge.LoadConfig()
 		ctx = edge.NewTestContext(cfg)
-		Expect(utils.CreateEdgeCoreConfigFile(cfg.NodeID)).Should(BeNil())
+		Expect(utils.CreateEdgeCoreConfigFile(cfg.NodeID, false)).Should(BeNil())
 		Expect(utils.StartEdgeCore()).Should(BeNil())
 	})
 	AfterSuite(func() {
