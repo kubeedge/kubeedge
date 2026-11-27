@@ -30,7 +30,7 @@ type ConnectionOptions struct {
 	// auto route into entries
 	AutoRoute bool
 	// OnReadTransportErr
-	OnReadTransportErr func(nodeID, projectID string)
+	OnReadTransportErr func(nodeID, projectID string, connection Connection)
 	// ReadDeadlineInterval is applied by handleMessage to the underlying
 	// connection on every iteration so a stalled half-open TCP socket
 	// surfaces as a read error within this interval. Zero means no read

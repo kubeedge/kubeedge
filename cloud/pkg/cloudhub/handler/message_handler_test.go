@@ -300,7 +300,7 @@ func TestHandleConnectionSuccessLifecycle(t *testing.T) {
 	// Let UpdateAnnotation retry loop finish so the non-nil error branch is exercised.
 	time.Sleep(2500 * time.Millisecond)
 
-	mh.OnReadTransportErr(nodeID, projectID)
+	mh.OnReadTransportErr(nodeID, projectID, connection)
 
 	assert.Eventually(t, func() bool {
 		_, ok := manager.GetSession(nodeID)
@@ -354,7 +354,7 @@ func TestOnReadTransportErr(t *testing.T) {
 	a := &fakeAuthorizer{}
 	mh := newMessageHandlerForTest(manager, d, a)
 
-	mh.OnReadTransportErr("missing-node", "project-x")
+	mh.OnReadTransportErr("missing-node", "project-x", nil)
 
 	nodeID := "node-existing"
 	projectID := "project-existing"
@@ -362,6 +362,9 @@ func TestOnReadTransportErr(t *testing.T) {
 	nodeSession := session.NewNodeSession(nodeID, projectID, connection, time.Second, common.InitNodeMessagePool(nodeID), nil)
 	manager.AddSession(nodeSession)
 
-	mh.OnReadTransportErr(nodeID, projectID)
+	mh.OnReadTransportErr(nodeID, projectID, newFakeConnection(nodeID, projectID))
+	assert.Equal(t, 0, connection.closeCount)
+
+	mh.OnReadTransportErr(nodeID, projectID, connection)
 	assert.Equal(t, 1, connection.closeCount)
 }

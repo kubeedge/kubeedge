@@ -26,7 +26,7 @@ type Options struct {
 	Addr               string
 	TLS                *tls.Config
 	ConnNotify         ConnNotify
-	OnReadTransportErr func(nodeID, projectID string)
+	OnReadTransportErr func(nodeID, projectID string, connection conn.Connection)
 	ConnMgr            *cmgr.ConnectionManager
 	ConnNumMax         int
 	AutoRoute          bool
@@ -45,7 +45,7 @@ type Server struct {
 	// ConnNotify will be called when a new connection coming
 	ConnNotify ConnNotify
 	// OnReadTransportErr is invoked when the connection read message err
-	OnReadTransportErr func(nodeID, projectID string)
+	OnReadTransportErr func(nodeID, projectID string, connection conn.Connection)
 	// the local connection store
 	ConnMgr *cmgr.ConnectionManager
 	//auto route

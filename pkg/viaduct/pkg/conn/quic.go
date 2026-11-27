@@ -42,7 +42,7 @@ type QuicConnection struct {
 	syncKeeper         *keeper.SyncKeeper
 	messageFifo        *fifo.MessageFifo
 	autoRoute          bool
-	OnReadTransportErr func(nodeID, projectID string)
+	OnReadTransportErr func(nodeID, projectID string, connection Connection)
 	locker             sync.Mutex
 }
 
@@ -114,7 +114,7 @@ func (conn *QuicConnection) serveSession() {
 
 			if conn.OnReadTransportErr != nil {
 				conn.OnReadTransportErr(conn.state.Headers.Get("node_id"),
-					conn.state.Headers.Get("project_id"))
+					conn.state.Headers.Get("project_id"), conn)
 			}
 
 			return
