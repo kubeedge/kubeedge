@@ -428,3 +428,50 @@ func TestKeepaliveStopsOnConnectionTeardown(t *testing.T) {
 	default:
 	}
 }
+
+// TestRouteToCloudStopsWhileBlockedOnReceive verifies that closing the
+// connection's stop channel ends the routeToCloud goroutine while it is parked
+// waiting for a message from the beehive channel.
+//
+// This is the case a plain beehiveContext.Receive cannot handle: the stop check
+// at the top of the loop is only reached between messages, so on a quiet node
+// the goroutine stays blocked inside the receive well past the teardown of its
+// connection, and the reconnect starts another one — one goroutine leaked per
+// reconnect cycle, each pinning the dead connection's client.
+func TestRouteToCloudStopsWhileBlockedOnReceive(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockAdapter := edgehub.NewMockAdapter(mockCtrl)
+	hub := &EdgeHub{
+		chClient:      mockAdapter,
+		reconnectChan: make(chan struct{}, 1),
+	}
+
+	stop := make(chan struct{})
+	exited := make(chan struct{})
+	go func() {
+		hub.routeToCloud(stop)
+		close(exited)
+	}()
+
+	// No message is ever sent to the module, so routeToCloud is parked inside
+	// the receive by the time stop is closed.
+	time.Sleep(200 * time.Millisecond)
+	select {
+	case <-exited:
+		t.Fatal("routeToCloud exited before the connection was torn down")
+	default:
+	}
+
+	close(stop)
+	select {
+	case <-exited:
+	case <-time.After(5 * time.Second):
+		t.Fatal("routeToCloud did not exit after stop was closed; it is still blocked in the receive")
+	}
+	select {
+	case <-hub.reconnectChan:
+		t.Fatal("stopping routeToCloud must not request a reconnect")
+	default:
+	}
+}
