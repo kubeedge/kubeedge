@@ -20,7 +20,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	discovery "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,10 +36,12 @@ import (
 type MockMessageLayer struct {
 	sendCalled          int
 	buildResourceCalled int
+	sent                []model.Message
 }
 
-func (m *MockMessageLayer) Send(_ model.Message) error {
+func (m *MockMessageLayer) Send(msg model.Message) error {
 	m.sendCalled++
+	m.sent = append(m.sent, msg)
 	return nil
 }
 
@@ -238,4 +243,27 @@ func TestSendAllObjects(t *testing.T) {
 	listener.sendAllObjects(objects, handler)
 
 	mockML.AssertNumberOfCalls(t, "Send", 2)
+}
+
+// TestSendAllObjectsWithoutKind covers an object read from a typed informer
+// before objToEvent set its kind: the message must still carry the kind, and
+// the cached object must not change.
+func TestSendAllObjectsWithoutKind(t *testing.T) {
+	listener := &SelectorListener{
+		id:       "test-id",
+		nodeName: "test-node",
+		gvr:      discovery.SchemeGroupVersion.WithResource("endpointslices"),
+		selector: NewSelector("", ""),
+	}
+	mockML := &MockMessageLayer{}
+	cached := &discovery.EndpointSlice{ObjectMeta: metav1.ObjectMeta{Name: "svc-abc", Namespace: "default"}}
+
+	listener.sendAllObjects([]runtime.Object{cached}, &CommonResourceEventHandler{messageLayer: mockML})
+
+	require.Len(t, mockML.sent, 1)
+	content, ok := mockML.sent[0].GetContent().(*unstructured.Unstructured)
+	require.True(t, ok)
+	assert.Equal(t, "EndpointSlice", content.GetKind())
+	assert.Equal(t, "discovery.k8s.io/v1", content.GetAPIVersion())
+	assert.True(t, cached.GetObjectKind().GroupVersionKind().Empty())
 }

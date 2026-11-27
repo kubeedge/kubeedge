@@ -58,6 +58,7 @@ cloudCore:
       enable: true
     dynamicController:
       enable: false
+      defaultServiceTopology: ""
     router:
       enable: false
     taskManager:

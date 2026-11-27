@@ -498,6 +498,12 @@ type DynamicController struct {
 	// if set to false (for debugging etc.), skip checking other dynamicController configs.
 	// default true
 	Enable bool `json:"enable"`
+	// DefaultServiceTopology is the topology given to a Service that carries no
+	// apps.kubeedge.io/service-topology annotation. Empty sends its endpoints to
+	// every edge node unfiltered; "range-nodegroup" scopes them to the receiving
+	// node's NodeGroup, and only applies to Services with a selector.
+	// default ""
+	DefaultServiceTopology string `json:"defaultServiceTopology,omitempty"`
 }
 
 // CloudStream indicates the stream controller
