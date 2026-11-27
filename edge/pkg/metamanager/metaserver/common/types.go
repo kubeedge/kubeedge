@@ -14,7 +14,9 @@ type LogsInfo struct {
 	InsecureSkipTLSVerifyBackend string `query:"insecureSkipTLSVerifyBackend"`
 	LimitBytes                   string `query:"limitBytes"`
 	Pretty                       string `query:"pretty"`
+	Previous                     string `query:"previous"`
 	SinceSeconds                 string `query:"sinceSeconds"`
+	SinceTime                    string `query:"sinceTime"`
 	Timestamps                   string `query:"timestamps"`
 }
 
