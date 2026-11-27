@@ -98,10 +98,10 @@ func (s *Server) UpdateDevice(_ context.Context, request *dmiapi.UpdateDeviceReq
 
 func (s *Server) CreateDeviceModel(_ context.Context, request *dmiapi.CreateDeviceModelRequest) (*dmiapi.CreateDeviceModelResponse, error) {
 	deviceModel := request.GetModel()
-	klog.Infof("start create deviceModel: %v", deviceModel.Name)
 	if deviceModel == nil {
 		return nil, errors.New("deviceModel is nil")
 	}
+	klog.Infof("start create deviceModel: %v", deviceModel.Name)
 
 	model := parse.GetDeviceModelFromGrpc(deviceModel)
 
@@ -149,7 +149,7 @@ func (s *Server) GetDevice(_ context.Context, request *dmiapi.GetDeviceRequest) 
 			Status: &dmiapi.DeviceStatus{},
 		},
 	}
-	deviceValue := reflect.ValueOf(device)
+	deviceValue := reflect.Indirect(reflect.ValueOf(device))
 	twinsValue := deviceValue.FieldByName("Instance").FieldByName("Twins")
 	if !twinsValue.IsValid() {
 		return nil, fmt.Errorf("twins field not found")
