@@ -1,0 +1,5 @@
+chart-dirs:
+  - manifests/charts
+check-version-increment: false
+# Chart ownership is tracked in the repository's OWNERS and MAINTAINERS files.
+validate-maintainers: false
