@@ -113,7 +113,7 @@ func UnstructuredAttr(obj runtime.Object) (labels.Set, fields.Set, error) {
 			setMap["metadata.name"] = metadata.GetName()
 		}
 		if metadata.GetNamespace() != "" {
-			setMap["metadata.namespaces"] = metadata.GetNamespace()
+			setMap["metadata.namespace"] = metadata.GetNamespace()
 		}
 		unstrObj, ok := obj.(*unstructured.Unstructured)
 		if ok {
