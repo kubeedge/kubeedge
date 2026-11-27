@@ -241,9 +241,12 @@ func (c *Controller) updateStatus(ctx context.Context, edgeApp *appsv1alpha1.Edg
 		for _, tmplInfo := range tmplMap[id.Ordinal] {
 			resourceInfo := utils.GetResourceInfoOfTemplateInfo(tmplInfo)
 			if utils.IsIdentifierSameAsResourceInfo(id, resourceInfo) {
-				// this status still need to retain
-				statusExists[resourceInfo.String()] = struct{}{}
-				newStatus = append(newStatus, status)
+				// this status still need to retain, but only once for each resource. Keep the
+				// first entry, which is the one that the status manager updates.
+				if _, ok := statusExists[resourceInfo.String()]; !ok {
+					statusExists[resourceInfo.String()] = struct{}{}
+					newStatus = append(newStatus, status)
+				}
 			}
 		}
 	}
