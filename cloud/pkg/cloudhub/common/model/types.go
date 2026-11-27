@@ -77,17 +77,16 @@ func NewResource(resType, resID string, info *HubInfo) string {
 	return fmt.Sprintf("%s%s/%s", prefix, resType, resID)
 }
 
-// IsNodeStopped indicates if the node is stopped or running
+// IsNodeStopped reports whether msg tells the receiving node that its own Node was deleted.
+// A node that watches Nodes also receives deletes of other Nodes; those are not its own.
 func IsNodeStopped(msg *model.Message) bool {
 	resourceType, _ := messagelayer.GetResourceType(*msg)
-	if resourceType != model.ResourceTypeNode {
+	if resourceType != model.ResourceTypeNode || msg.Router.Operation != model.DeleteOperation {
 		return false
 	}
-
-	if msg.Router.Operation == model.DeleteOperation {
-		return true
-	}
-	return false
+	nodeID, _ := messagelayer.GetNodeID(*msg)
+	name, _ := messagelayer.GetResourceName(*msg)
+	return nodeID != "" && name == nodeID
 }
 
 // IsFromEdge judges if the event is sent from edge

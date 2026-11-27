@@ -78,7 +78,7 @@ func (sctl *SyncController) gcOrphanedObjectSync(sync *v1alpha1.ObjectSync) {
 	object.SetNamespace(sync.Namespace)
 	object.SetName(sync.Spec.ObjectName)
 	object.SetUID(types.UID(getObjectUID(sync.Name)))
-	if msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, object); msg != nil {
+	if msg := buildSyncMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.DeleteOperation, object); msg != nil {
 		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
 	} else {
 		if err := sctl.crdclient.ReliablesyncsV1alpha1().ObjectSyncs(sync.Namespace).Delete(context.Background(), sync.Name, *metav1.NewDeleteOptions(0)); err != nil {
@@ -97,12 +97,15 @@ func sendEvents(nodeName string, sync *v1alpha1.ObjectSync, resourceType string,
 	if CompareResourceVersion(objectResourceVersion, sync.Status.ObjectResourceVersion) > 0 {
 		// trigger the update event
 		klog.V(4).Infof("The resourceVersion: %s of %s in K8s is greater than in edgenode: %s, send the update event", objectResourceVersion, resourceType, sync.Status.ObjectResourceVersion)
-		msg := buildEdgeControllerMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)
+		msg := buildSyncMessage(nodeName, sync.Namespace, resourceType, sync.Spec.ObjectName, model.UpdateOperation, obj)
 		beehiveContext.Send(commonconst.DefaultContextSendModuleName, *msg)
 	}
 }
 
-func buildEdgeControllerMessage(nodeName, namespace, resourceType, resourceName, operationType string, obj interface{}) *model.Message {
+// buildSyncMessage builds a resend of the sync loop. Only the edge's ACK updates or removes the
+// record, and cloudhub sends edgecontroller Node deletes, Leases and CSRs without ACK, so the
+// message goes as dynamiccontroller, which the edge handles the same way.
+func buildSyncMessage(nodeName, namespace, resourceType, resourceName, operationType string, obj interface{}) *model.Message {
 	resource, err := messagelayer.BuildResource(nodeName, namespace, resourceType, resourceName)
 	if err != nil {
 		klog.Warningf("build message resource failed with error: %s", err)
@@ -112,7 +115,7 @@ func buildEdgeControllerMessage(nodeName, namespace, resourceType, resourceName,
 	resourceVersion := GetObjectResourceVersion(obj)
 
 	msg := model.NewMessage("").
-		BuildRouter(modules.EdgeControllerModuleName, edgectrconst.GroupResource, resource, operationType).
+		BuildRouter(modules.DynamicControllerModuleName, edgectrconst.GroupResource, resource, operationType).
 		FillBody(obj).
 		SetResourceVersion(resourceVersion)
 
