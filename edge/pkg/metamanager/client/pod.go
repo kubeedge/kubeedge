@@ -164,6 +164,12 @@ func handlePodResp(resource string, content []byte) (*corev1.Pod, error) {
 	}
 
 	if reflect.DeepEqual(podResp.Err, apierrors.StatusError{}) {
+		// A reply without an error must carry the pod. An empty pod means the
+		// request failed with an error that was lost on the way (older
+		// cloudcore), so do not store it.
+		if podResp.Object == nil || podResp.Object.Name == "" {
+			return nil, fmt.Errorf("invalid pod response for %s: no error and no pod returned", resource)
+		}
 		if err = updatePodDB(resource, podResp.Object); err != nil {
 			return nil, fmt.Errorf("update pod meta failed, err: %v", err)
 		}
