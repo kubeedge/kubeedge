@@ -101,6 +101,9 @@ func handleCertificateSigningRequestFromMetaDB(content []byte) (*v1.CertificateS
 		return nil, fmt.Errorf("csr length from meta db is %d", len(list))
 	}
 
+	if err := statusErrorFrom([]byte(list[0])); err != nil {
+		return nil, err
+	}
 	var csr v1.CertificateSigningRequest
 	err = json.Unmarshal([]byte(list[0]), &csr)
 	if err != nil {
@@ -111,6 +114,9 @@ func handleCertificateSigningRequestFromMetaDB(content []byte) (*v1.CertificateS
 }
 
 func handleCertificateSigningRequestFromMetaManager(content []byte) (*v1.CertificateSigningRequest, error) {
+	if err := statusErrorFrom(content); err != nil {
+		return nil, err
+	}
 	var csr v1.CertificateSigningRequest
 	err := json.Unmarshal(content, &csr)
 	if err != nil {

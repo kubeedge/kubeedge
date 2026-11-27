@@ -2,11 +2,14 @@ package client
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	api "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kubeedge/beehive/pkg/core/model"
+	connect "github.com/kubeedge/kubeedge/edge/pkg/common/cloudconnection"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	"github.com/kubeedge/kubeedge/edge/pkg/common/modules"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
@@ -74,7 +77,12 @@ func (c *secrets) Get(name string) (*api.Secret, error) {
 	if err != nil || len(*metas) == 0 {
 		return remoteGet()
 	}
-	return handleSecretFromMetaDB(metas)
+	secret, err := handleSecretFromMetaDB(metas)
+	var cachedErr *apierrors.StatusError
+	if errors.As(err, &cachedErr) && connect.IsConnected() {
+		return remoteGet()
+	}
+	return secret, err
 }
 
 func handleSecretFromMetaDB(lists *[]string) (*api.Secret, error) {
@@ -82,6 +90,9 @@ func handleSecretFromMetaDB(lists *[]string) (*api.Secret, error) {
 		return nil, fmt.Errorf("secret length from meta db is %d", len(*lists))
 	}
 
+	if err := statusErrorFrom([]byte((*lists)[0])); err != nil {
+		return nil, err
+	}
 	var secret api.Secret
 	err := json.Unmarshal([]byte((*lists)[0]), &secret)
 	if err != nil {
@@ -91,6 +102,9 @@ func handleSecretFromMetaDB(lists *[]string) (*api.Secret, error) {
 }
 
 func handleSecretFromMetaManager(content []byte) (*api.Secret, error) {
+	if err := statusErrorFrom(content); err != nil {
+		return nil, err
+	}
 	var secret api.Secret
 	err := json.Unmarshal(content, &secret)
 	if err != nil {
