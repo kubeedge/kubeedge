@@ -80,19 +80,32 @@ func TestReportUpgradeStatus(t *testing.T) {
 	})
 
 	t.Run("no upgrade record found", func(t *testing.T) {
+		var (
+			removeReporterInfoCalled bool
+			reportStatusCalled       bool
+		)
 		patches := gomonkey.NewPatches()
 		defer patches.Reset()
 
 		patches.ApplyFunc(upgradeedge.ParseJSONReporterInfo, func() (upgradeedge.JSONReporterInfo, error) {
-			return upgradeedge.JSONReporterInfo{}, nil
+			return upgradeedge.JSONReporterInfo{EventType: upgradeedge.EventTypeUpgrade, Success: true}, nil
 		})
 		patches.ApplyMethodFunc(reflect.TypeOf((*dbclient.Upgrade)(nil)), "Get",
 			func() (string, string, *operationsv1alpha2.NodeUpgradeJobSpec, error) {
 				return "", "", nil, nil
 			})
+		patches.ApplyFunc(upgradeedge.RemoveJSONReporterInfo, func() error {
+			removeReporterInfoCalled = true
+			return errors.New("remove failed")
+		})
+		patches.ApplyFunc(message.ReportNodeTaskStatus, func(_res taskmsg.Resource, _msgbody taskmsg.UpstreamMessage) {
+			reportStatusCalled = true
+		})
 
 		err := ReportUpgradeStatus(ctx)
-		require.ErrorContains(t, err, "no upgrade record found or invalid info from meta data")
+		require.NoError(t, err)
+		assert.False(t, reportStatusCalled)
+		assert.True(t, removeReporterInfoCalled)
 	})
 
 	t.Run("unsupportd event type", func(t *testing.T) {

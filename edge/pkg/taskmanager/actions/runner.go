@@ -145,6 +145,7 @@ func (r *ActionRunner) RunAction(ctx context.Context, jobname, nodename, action 
 			return
 		}
 	}
+	var paused bool
 	for {
 		logger.V(1).Info("run action", "action", act.Name)
 		actionFn, err := r.mustGetAction(act.Name)
@@ -166,6 +167,7 @@ func (r *ActionRunner) RunAction(ctx context.Context, jobname, nodename, action 
 		}
 		if resp.NeedInterrupt() {
 			logger.V(1).Info("action needs to be interrupted", "action", act.Name)
+			paused = act.NextSuccessful != nil
 			break
 		}
 		next := act.NextSuccessful
@@ -175,9 +177,9 @@ func (r *ActionRunner) RunAction(ctx context.Context, jobname, nodename, action 
 		}
 		act = next
 	}
-	if act.NextSuccessful == nil && r.PostRun != nil {
+	if !paused && r.PostRun != nil {
 		if err := r.PostRun(ctx, jobname, nodename, action, ser); err != nil {
-			logger.Error(err, "failed to run pre-run hook, report to cloud")
+			logger.Error(err, "failed to run post-run hook")
 		}
 	}
 }
