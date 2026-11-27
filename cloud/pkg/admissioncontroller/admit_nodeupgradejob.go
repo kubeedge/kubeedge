@@ -31,6 +31,12 @@ import (
 	"github.com/kubeedge/kubeedge/pkg/util/validation"
 )
 
+var validUpdateStrategyTypes = map[v1alpha1.UpdateStrategyType]bool{
+	v1alpha1.AtOnceUpdateStrategyType:  true,
+	v1alpha1.RollingUpdateStrategyType: true,
+	v1alpha1.CanaryUpdateStrategyType:  true,
+}
+
 func serveNodeUpgradeJob(w http.ResponseWriter, r *http.Request) {
 	serve(w, r, admitNodeUpgradeJob)
 }
@@ -61,9 +67,27 @@ func admitNodeUpgradeJob(review admissionv1.AdmissionReview) *admissionv1.Admiss
 			return admissionResponse(fmt.Errorf("validation failed with error: %v", err))
 		}
 
-		// For update, we don't allow update spec fields once an Upgrade is created.
-		if !reflect.DeepEqual(oldUpgrade.Spec, newUpgrade.Spec) {
-			err := errors.New("spec fields are not allowed to update once it's created")
+		// Version and AllowDowngrade are the only spec fields that are allowed to change
+		// once an Upgrade is created, so a stalled job can be retried with a different
+		// EdgeCore version. Version may only change while the job has not yet started
+		// dispatching any per-node action (Status.State is still empty); once nodes are
+		// being checked/backed-up/upgraded/rolled-back, changing the version could leave
+		// some nodes upgraded to the old version and others to the new one.
+		if oldUpgrade.Spec.Version != newUpgrade.Spec.Version {
+			if oldUpgrade.Status.State != "" {
+				return admissionResponse(fmt.Errorf(
+					"version cannot be changed once the upgrade has started executing (current state: %s)",
+					oldUpgrade.Status.State))
+			}
+			if err := validateVersionChange(&oldUpgrade, &newUpgrade); err != nil {
+				return admissionResponse(err)
+			}
+		}
+		comparableSpec := newUpgrade.Spec
+		comparableSpec.Version = oldUpgrade.Spec.Version
+		comparableSpec.AllowDowngrade = oldUpgrade.Spec.AllowDowngrade
+		if !reflect.DeepEqual(oldUpgrade.Spec, comparableSpec) {
+			err := errors.New("spec fields other than version and allowDowngrade are not allowed to update once it's created")
 			return admissionResponse(err)
 		}
 
@@ -93,7 +117,29 @@ func validateNodeUpgradeJob(upgrade *v1alpha1.NodeUpgradeJob) error {
 	if len(upgrade.Spec.NodeNames) != 0 && upgrade.Spec.LabelSelector != nil {
 		return fmt.Errorf("both NodeNames and LabelSelector are specified")
 	}
+	if upgrade.Spec.Strategy != nil {
+		if upgrade.Spec.Strategy.Type != "" && !validUpdateStrategyTypes[upgrade.Spec.Strategy.Type] {
+			return fmt.Errorf("invalid strategy type %s, must be one of AtOnce, Rolling, Canary", upgrade.Spec.Strategy.Type)
+		}
+		if upgrade.Spec.Strategy.MaxUnavailable != nil && *upgrade.Spec.Strategy.MaxUnavailable < 1 {
+			return fmt.Errorf("invalid strategy maxUnavailable %d, must be at least 1", *upgrade.Spec.Strategy.MaxUnavailable)
+		}
+	}
 
+	return nil
+}
+
+// validateVersionChange rejects a version update that downgrades EdgeCore unless
+// the job explicitly opts in via allowDowngrade.
+func validateVersionChange(oldUpgrade, newUpgrade *v1alpha1.NodeUpgradeJob) error {
+	isDowngrade, err := validation.IsVersionDowngrade(oldUpgrade.Spec.Version, newUpgrade.Spec.Version)
+	if err != nil {
+		return err
+	}
+	if isDowngrade && !newUpgrade.Spec.AllowDowngrade {
+		return fmt.Errorf("version change from %s to %s is a downgrade, set allowDowngrade=true to permit it",
+			oldUpgrade.Spec.Version, newUpgrade.Spec.Version)
+	}
 	return nil
 }
 
@@ -158,6 +204,34 @@ func generateNodeUpgradeJobPatch(spec v1alpha1.NodeUpgradeJobSpec) []patchValue 
 			Path:  "/spec/timeoutSeconds",
 			Value: &defaultTimeoutSeconds,
 		})
+	}
+	// mutate .spec.strategy to default value {type: Rolling, maxUnavailable: 1} if not specified
+	if spec.Strategy == nil {
+		var defaultMaxUnavailable int32 = 1
+		patch = append(patch, patchValue{
+			Op:   "add",
+			Path: "/spec/strategy",
+			Value: &v1alpha1.UpdateStrategy{
+				Type:           v1alpha1.RollingUpdateStrategyType,
+				MaxUnavailable: &defaultMaxUnavailable,
+			},
+		})
+	} else {
+		if spec.Strategy.Type == "" {
+			patch = append(patch, patchValue{
+				Op:    "add",
+				Path:  "/spec/strategy/type",
+				Value: v1alpha1.RollingUpdateStrategyType,
+			})
+		}
+		if spec.Strategy.MaxUnavailable == nil {
+			var defaultMaxUnavailable int32 = 1
+			patch = append(patch, patchValue{
+				Op:    "add",
+				Path:  "/spec/strategy/maxUnavailable",
+				Value: &defaultMaxUnavailable,
+			})
+		}
 	}
 
 	return patch
