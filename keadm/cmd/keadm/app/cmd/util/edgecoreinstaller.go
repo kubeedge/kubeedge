@@ -140,19 +140,28 @@ func (ku *KubeEdgeInstTool) createEdgeConfigFiles() error {
 	edgeCoreConfig.Modules.EdgeStream.TunnelServer = net.JoinHostPort(cloudCoreIP, strconv.Itoa(constants.DefaultTunnelPort))
 
 	if len(ku.Labels) >= 1 {
-		labelsMap := make(map[string]string)
-		for _, label := range ku.Labels {
-			key := strings.Split(label, "=")[0]
-			value := strings.Split(label, "=")[1]
-			labelsMap[key] = value
-		}
-		edgeCoreConfig.Modules.Edged.NodeLabels = labelsMap
+		edgeCoreConfig.Modules.Edged.NodeLabels = parseNodeLabels(ku.Labels)
 	}
 
 	if errs := validation.ValidateEdgeCoreConfiguration(edgeCoreConfig); len(errs) > 0 {
 		return errors.New(util.SpliceErrors(errs.ToAggregate().Errors()))
 	}
 	return edgeCoreConfig.WriteTo(KubeEdgeEdgeCoreNewYaml)
+}
+
+// parseNodeLabels converts labels given as key=value, or key for an empty
+// value, into a map. The value may contain "=". Labels without a key are
+// skipped.
+func parseNodeLabels(labels []string) map[string]string {
+	labelsMap := make(map[string]string)
+	for _, label := range labels {
+		key, value, _ := strings.Cut(label, "=")
+		if key == "" {
+			continue
+		}
+		labelsMap[key] = value
+	}
+	return labelsMap
 }
 
 // TearDown method will remove the edge node from api-server and stop edgecore process
