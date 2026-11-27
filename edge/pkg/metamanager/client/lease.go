@@ -66,6 +66,9 @@ func (c *leases) Create(lease *coordinationv1.Lease) (*coordinationv1.Lease, err
 	if err != nil {
 		return nil, fmt.Errorf("create lease failed, err: %v", err)
 	}
+	if err := errorFromResponse(resp); err != nil {
+		return nil, err
+	}
 
 	content, err := resp.GetContentData()
 	if err != nil {
@@ -81,6 +84,9 @@ func (c *leases) Update(lease *coordinationv1.Lease) (*coordinationv1.Lease, err
 	if err != nil {
 		return nil, fmt.Errorf("update lease failed, err: %v", err)
 	}
+	if err := errorFromResponse(resp); err != nil {
+		return nil, err
+	}
 
 	content, err := resp.GetContentData()
 	if err != nil {
@@ -95,6 +101,9 @@ func (c *leases) Get(name string) (*coordinationv1.Lease, error) {
 	resp, err := c.send.SendSync(leaseMsg)
 	if err != nil {
 		return nil, fmt.Errorf("query lease failed, err: %v", err)
+	}
+	if err := errorFromResponse(resp); err != nil {
+		return nil, err
 	}
 
 	content, err := resp.GetContentData()
