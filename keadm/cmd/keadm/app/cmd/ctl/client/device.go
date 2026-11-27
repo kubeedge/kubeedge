@@ -91,5 +91,9 @@ func (deviceRequest *DeviceRequest) UpdateDevice(ctx context.Context, device *v1
 		VersionedParams(&metaV1.UpdateOptions{}, scheme.ParameterCodec).
 		Body(device).
 		Do(ctx)
+	// Do does not return the request error; it is kept in the result.
+	if err := res.Error(); err != nil {
+		return nil, fmt.Errorf("failed to update device %s/%s: %w", deviceRequest.Namespace, device.Name, err)
+	}
 	return &res, nil
 }
