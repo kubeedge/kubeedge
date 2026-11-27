@@ -96,6 +96,17 @@ func (ms *EdgedMetricsConnection) write2CloudStream(tunnel SafeWriteTunneler, re
 }
 
 func (ms *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
+	defer func() {
+		for retry := 0; retry < 3; retry++ {
+			msg := NewMessage(ms.MessID, MessageTypeRemoveConnect, nil)
+			if err := tunnel.WriteMessage(msg); err != nil {
+				klog.Errorf("%v send %s message error %v", ms, msg.MessageType, err)
+			} else {
+				break
+			}
+		}
+	}()
+
 	//connect edged
 	client := http.Client{}
 	req, err := http.NewRequest(http.MethodGet, ms.URL.String(), nil)
@@ -118,18 +129,6 @@ func (ms *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
 	defer resp.Body.Close()
 
 	go ms.receiveFromCloudStream(ms.Stop)
-
-	defer func() {
-		for retry := 0; retry < 3; retry++ {
-			msg := NewMessage(ms.MessID, MessageTypeRemoveConnect, nil)
-			if err := tunnel.WriteMessage(msg); err != nil {
-				klog.Errorf("%v send %s message error %v", ms, msg.MessageType, err)
-			} else {
-				break
-			}
-		}
-	}()
-
 	go ms.write2CloudStream(tunnel, resp, ms.Stop)
 
 	<-ms.Stop

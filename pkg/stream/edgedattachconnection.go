@@ -113,6 +113,17 @@ func (ah *EdgedAttachConnection) write2CloudStream(tunnel SafeWriteTunneler, con
 }
 
 func (ah *EdgedAttachConnection) Serve(tunnel SafeWriteTunneler) error {
+	defer func() {
+		for retry := 0; retry < 3; retry++ {
+			msg := NewMessage(ah.MessID, MessageTypeRemoveConnect, nil)
+			if err := tunnel.WriteMessage(msg); err != nil {
+				klog.Errorf("%v send %s message error %v", ah, msg.MessageType, err)
+			} else {
+				break
+			}
+		}
+	}()
+
 	tripper, err := spdy.NewRoundTripper(nil)
 	if err != nil {
 		return fmt.Errorf("failed to creates a new tripper, err: %v", err)
@@ -130,18 +141,6 @@ func (ah *EdgedAttachConnection) Serve(tunnel SafeWriteTunneler) error {
 	defer con.Close()
 
 	go ah.receiveFromCloudStream(con, ah.Stop)
-
-	defer func() {
-		for retry := 0; retry < 3; retry++ {
-			msg := NewMessage(ah.MessID, MessageTypeRemoveConnect, nil)
-			if err := tunnel.WriteMessage(msg); err != nil {
-				klog.Errorf("%v send %s message error %v", ah, msg.MessageType, err)
-			} else {
-				break
-			}
-		}
-	}()
-
 	go ah.write2CloudStream(tunnel, con, ah.Stop)
 
 	<-ah.Stop

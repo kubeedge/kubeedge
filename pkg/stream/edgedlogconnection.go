@@ -106,6 +106,17 @@ func (l *EdgedLogsConnection) write2CloudStream(tunnel SafeWriteTunneler, reader
 }
 
 func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
+	defer func() {
+		for retry := 0; retry < 3; retry++ {
+			msg := NewMessage(l.MessID, MessageTypeRemoveConnect, nil)
+			if err := tunnel.WriteMessage(msg); err != nil {
+				klog.Errorf("%v send %s message error %v", l, msg.MessageType, err)
+			} else {
+				break
+			}
+		}
+	}()
+
 	//connect edged
 	client := http.Client{}
 	req, err := http.NewRequest(http.MethodGet, l.URL.String(), nil)
@@ -123,18 +134,6 @@ func (l *EdgedLogsConnection) Serve(tunnel SafeWriteTunneler) error {
 	reader := bufio.NewReader(resp.Body)
 
 	go l.receiveFromCloudStream(l.Stop)
-
-	defer func() {
-		for retry := 0; retry < 3; retry++ {
-			msg := NewMessage(l.MessID, MessageTypeRemoveConnect, nil)
-			if err := tunnel.WriteMessage(msg); err != nil {
-				klog.Errorf("%v send %s message error %v", l, msg.MessageType, err)
-			} else {
-				break
-			}
-		}
-	}()
-
 	go l.write2CloudStream(tunnel, *reader, l.Stop)
 
 	<-l.Stop
