@@ -259,11 +259,11 @@ func processMessage(msg *beehiveModel.Message) {
 			return
 		}
 		defer resp.Body.Close()
-		resBody, err := io.ReadAll(io.LimitReader(resp.Body, maxBodySize))
+		resBody, err := io.ReadAll(io.LimitReader(resp.Body, maxBodySize+1))
+		if err == nil && len(resBody) > maxBodySize {
+			err = fmt.Errorf("response body too large")
+		}
 		if err != nil {
-			if err.Error() == "http: request body too large" {
-				err = fmt.Errorf("response body too large")
-			}
 			m := "error to receive response, err: " + err.Error()
 			code := http.StatusInternalServerError
 			klog.Errorf(m, err)
