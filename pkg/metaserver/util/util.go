@@ -57,7 +57,7 @@ func UnsafeResourceToKind(r string) string {
 		"nodestatus":                   "NodeStatus",
 		"customresourcedefinitions":    "CustomResourceDefinition",
 		"customresourcedefinitionlist": "CustomResourceDefinitionList",
-		"leases":                       "Leases",
+		"leases":                       "Lease",
 	}
 	if v, isUnusual := unusualResourceToKind[r]; isUnusual {
 		return v
