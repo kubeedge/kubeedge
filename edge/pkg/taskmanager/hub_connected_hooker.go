@@ -19,7 +19,6 @@ package taskmanager
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
@@ -55,7 +54,12 @@ func ReportUpgradeStatus(ctx context.Context) error {
 		return fmt.Errorf("failed to get upgrade record, err: %v", err)
 	}
 	if jobname == "" || nodename == "" {
-		return errors.New("no upgrade record found or invalid info from meta data")
+		// Not from a NodeUpgradeJob, or already reported by the action.
+		logger.Info("no upgrade record found, skip report upgrade status")
+		if err := upgradeedge.RemoveJSONReporterInfo(); err != nil {
+			logger.Error(err, "failed to remove json reporter info")
+		}
+		return nil
 	}
 
 	var action string

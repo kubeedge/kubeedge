@@ -28,7 +28,10 @@ import (
 
 type fakeFuncs struct {
 	stepcount    int
+	postRunCount int
 	triggerError bool
+	step1ToFail  bool
+	postRunFail  bool
 	step3ToFail  bool
 }
 
@@ -38,6 +41,9 @@ func (fr *fakeFuncs) step1(
 	_specser SpecSerializer,
 ) ActionResponse {
 	fr.stepcount++
+	if fr.step1ToFail {
+		return &baseActionResponse{err: errors.New("test error")}
+	}
 	return &baseActionResponse{}
 }
 
@@ -97,6 +103,18 @@ func (fr *fakeFuncs) reportActionStatus(_jobname, _nodename, _action string, res
 	}
 }
 
+func (fr *fakeFuncs) postRun(
+	_ctx context.Context,
+	_jobname, _nodename, _action string,
+	_specser SpecSerializer,
+) error {
+	fr.postRunCount++
+	if fr.postRunFail {
+		return errors.New("test error")
+	}
+	return nil
+}
+
 func (fr *fakeFuncs) getSpecSerializer(specData []byte) (SpecSerializer, error) {
 	return NewSpecSerializer(specData, func(_data []byte) (any, error) {
 		return nil, nil
@@ -134,6 +152,7 @@ func newFakeRunner() (*ActionRunner, *fakeFuncs) {
 				},
 			},
 		},
+		PostRun:            funcs.postRun,
 		ReportActionStatus: funcs.reportActionStatus,
 		GetSpecSerializer:  funcs.getSpecSerializer,
 	}
@@ -149,6 +168,7 @@ func TestRunAction(t *testing.T) {
 	r.RunAction(ctx, jobname, nodename, "step1", nil)
 	assert.Equal(t, 2, funcs.stepcount)
 	assert.False(t, funcs.triggerError)
+	assert.Equal(t, 0, funcs.postRunCount)
 
 	// step3 -- [error] --> step3fail
 	funcs.stepcount = 0
@@ -156,10 +176,22 @@ func TestRunAction(t *testing.T) {
 	r.RunAction(ctx, jobname, nodename, "step3", nil)
 	assert.Equal(t, 2, funcs.stepcount)
 	assert.True(t, funcs.triggerError)
+	assert.Equal(t, 1, funcs.postRunCount)
 
 	// step4 -- [error] -- x
 	funcs.stepcount = 0
 	r.RunAction(ctx, jobname, nodename, "step4", nil)
 	assert.Equal(t, 1, funcs.stepcount)
 	assert.True(t, funcs.triggerError)
+	assert.Equal(t, 2, funcs.postRunCount)
+
+	// step1 -- [error] -- x
+	funcs.stepcount = 0
+	funcs.triggerError = false
+	funcs.step1ToFail = true
+	funcs.postRunFail = true
+	r.RunAction(ctx, jobname, nodename, "step1", nil)
+	assert.Equal(t, 1, funcs.stepcount)
+	assert.True(t, funcs.triggerError)
+	assert.Equal(t, 3, funcs.postRunCount)
 }
