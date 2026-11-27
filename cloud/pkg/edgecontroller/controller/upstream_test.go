@@ -1078,6 +1078,42 @@ func TestLeaseOperations(t *testing.T) {
 	time.Sleep(1000 * time.Millisecond)
 }
 
+func TestLeaseWorkersSurviveMalformedResource(t *testing.T) {
+	tests := []struct {
+		name     string
+		query    bool
+		resource string
+	}{
+		{"create without namespace", false, "node/n1//lease/l1"},
+		{"query without namespace", true, "node/n1//lease/l1"},
+		{"query without name", true, "node/n1/ns/lease"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			uc := &UpstreamController{
+				createLeaseChan: make(chan model.Message),
+				queryLeaseChan:  make(chan model.Message),
+			}
+			ch, worker := uc.createLeaseChan, uc.createOrUpdateLease
+			if tt.query {
+				ch, worker = uc.queryLeaseChan, uc.queryLease
+			}
+			go worker()
+
+			msg := model.Message{Router: model.MessageRoute{Resource: tt.resource}, Content: "{}"}
+			// The channel is unbuffered, so the second send only completes if
+			// the worker is still running after handling the first message.
+			for i := 0; i < 2; i++ {
+				select {
+				case ch <- msg:
+				case <-time.After(time.Second):
+					t.Fatalf("worker exited after malformed resource %q", tt.resource)
+				}
+			}
+		})
+	}
+}
+
 func TestCreatePod(t *testing.T) {
 	setupTest(t)
 
