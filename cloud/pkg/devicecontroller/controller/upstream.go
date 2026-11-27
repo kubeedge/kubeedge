@@ -118,10 +118,37 @@ func (uc *UpstreamController) dispatchMessage() {
 		case constants.ResourceDeviceStateUpdated:
 			uc.deviceStatesChan <- msg
 		case constants.ResourceTypeMembershipDetail:
+			uc.ackMembershipDetail(msg)
 		default:
 			klog.Warningf("Message: %s, with resource type: %s not intended for device controller", msg.GetID(), resourceType)
 		}
 	}
+}
+
+// ackMembershipDetail confirms a membership detail request from an edge node.
+// Edge devicetwin keeps the request in its confirm map and resends it every 60s
+// until a message whose parent ID is the request ID arrives, so without this
+// reply every edge node resends the request forever. The devices themselves
+// already reach the edge through membership update messages.
+func (uc *UpstreamController) ackMembershipDetail(msg model.Message) {
+	nodeID, err := messagelayer.GetNodeID(msg)
+	if err != nil {
+		klog.Warningf("Message: %s process failure, get node id failed with error: %s", msg.GetID(), err)
+		return
+	}
+	resource, err := messagelayer.BuildResourceForDevice(nodeID, "membership", "detail")
+	if err != nil {
+		klog.Warningf("Message: %s process failure, build message resource failed with error: %s", msg.GetID(), err)
+		return
+	}
+	resMsg := model.NewMessage(msg.GetID())
+	resMsg.BuildRouter(modules.DeviceControllerModuleName, constants.GroupTwin, resource, model.ResponseOperation)
+	resMsg.Content = commonconst.MessageSuccessfulContent
+	if err := uc.messageLayer.Response(*resMsg); err != nil {
+		klog.Warningf("Message: %s process failure, response failed with error: %s", msg.GetID(), err)
+		return
+	}
+	klog.V(4).Infof("Message: %s membership detail acknowledged", msg.GetID())
 }
 
 func (uc *UpstreamController) updateDeviceStatus() {
