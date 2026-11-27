@@ -255,7 +255,7 @@ func (cu *KubeCloudHelmInstTool) runHelmManifest(r *Renderer, stdout io.Writer) 
 			if err != nil {
 				return fmt.Errorf("cannot open file %s, error: %s", manifest, err.Error())
 			}
-			buf.WriteString(fmt.Sprintf("%b%s", body, YAMLSeparator))
+			buf.WriteString(fmt.Sprintf("%s%s", body, YAMLSeparator))
 		}
 	}
 	buf.WriteString(manifests)
