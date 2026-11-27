@@ -87,6 +87,9 @@ type Manager interface {
 
 	// GetLister return cached lister for the given GVR
 	GetLister(gvr schema.GroupVersionResource) (cache.GenericLister, error)
+
+	// ResourceFor return the GVR of the given GVK, as served by the API server
+	ResourceFor(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error)
 }
 
 type informers struct {
@@ -213,6 +216,14 @@ func (ifs *informers) GetLister(gvr schema.GroupVersionResource) (cache.GenericL
 		return nil, err
 	}
 	return informerPair.Lister, nil
+}
+
+func (ifs *informers) ResourceFor(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
+	mapping, err := ifs.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+	if err != nil {
+		return schema.GroupVersionResource{}, err
+	}
+	return mapping.Resource, nil
 }
 
 func (ifs *informers) GetInformerPair(gvr schema.GroupVersionResource) (*InformerPair, error) {

@@ -117,11 +117,19 @@ func (m MockLister) ByNamespace(namespace string) cache.GenericNamespaceLister {
 }
 
 type MockInformerManager struct {
-	getListerMockFunc func(gvr schema.GroupVersionResource) (cache.GenericLister, error)
+	getListerMockFunc   func(gvr schema.GroupVersionResource) (cache.GenericLister, error)
+	resourceForMockFunc func(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error)
 }
 
 func (m MockInformerManager) GetLister(gvr schema.GroupVersionResource) (cache.GenericLister, error) {
 	return m.getListerMockFunc(gvr)
+}
+
+func (m MockInformerManager) ResourceFor(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
+	if m.resourceForMockFunc != nil {
+		return m.resourceForMockFunc(gvk)
+	}
+	return schema.GroupVersionResource{}, errors.New("no mapping for " + gvk.String())
 }
 
 func (m MockInformerManager) EdgeNode() cache.SharedIndexInformer {
@@ -302,6 +310,55 @@ func TestReconcileClusterObjectSync(t *testing.T) {
 
 			assert.Equal(t, tt.expectSendCalled, sendCalled, "Send message expectation failed")
 			assert.Equal(t, tt.expectGCCalled, gcCalled, "GC called expectation failed")
+		})
+	}
+}
+
+// TestReconcileClusterObjectSyncResolvesResource checks that the lister of the
+// object recorded in a ClusterObjectSync is looked up with the resource served
+// by the API server, which the string rules get wrong for kinds like Gateway.
+func TestReconcileClusterObjectSyncResolvesResource(t *testing.T) {
+	backup := setupTest()
+	defer backup.restore()
+
+	gatewayGVR := schema.GroupVersionResource{Group: "networking.istio.io", Version: "v1alpha3", Resource: "gateways"}
+	tests := []struct {
+		name        string
+		sync        *v1alpha1.ClusterObjectSync
+		resourceFor func(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error)
+		expectedGVR schema.GroupVersionResource
+	}{
+		{
+			name: "resource served by the API server",
+			sync: createTestSync("node1-gateway-12345", "test-gateway", "Gateway", "networking.istio.io/v1alpha3", "500"),
+			resourceFor: func(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
+				return gvk.GroupVersion().WithResource("gateways"), nil
+			},
+			expectedGVR: gatewayGVR,
+		},
+		{
+			name: "fall back to the local mapping when the API server does not know the kind",
+			sync: createTestSync("node1-lease-12345", "test-lease", "Lease", "coordination.k8s.io/v1", "500"),
+			resourceFor: func(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
+				return schema.GroupVersionResource{}, errors.New("no matches for kind")
+			},
+			expectedGVR: schema.GroupVersionResource{Group: "coordination.k8s.io", Version: "v1", Resource: "leases"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var listerGVR schema.GroupVersionResource
+			ctrl := &SyncController{
+				informerManager: MockInformerManager{
+					getListerMockFunc: func(gvr schema.GroupVersionResource) (cache.GenericLister, error) {
+						listerGVR = gvr
+						return nil, errors.New("stop here")
+					},
+					resourceForMockFunc: tt.resourceFor,
+				},
+			}
+			ctrl.reconcileClusterObjectSync(tt.sync)
+			assert.Equal(t, tt.expectedGVR, listerGVR)
 		})
 	}
 }

@@ -11,6 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/endpoints/request"
+
+	"github.com/kubeedge/kubeedge/pkg/metaserver/util"
 )
 
 func TestKeyFuncObj(t *testing.T) {
@@ -292,4 +294,57 @@ func TestParseKey(t *testing.T) {
 			assert.Equal(test.stdResult, parseResult)
 		})
 	}
+}
+
+// TestKeyFuncObjMatchesKeyFuncReq checks that an object is saved under the key
+// it is requested with, which KeyFuncReq builds from the resource of the URL.
+func TestKeyFuncObjMatchesKeyFuncReq(t *testing.T) {
+	resolver := &request.RequestInfoFactory{
+		APIPrefixes:          sets.NewString("api", "apis"),
+		GrouplessAPIPrefixes: sets.NewString("api"),
+	}
+	keyOfRequest := func(url string) string {
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		assert.NoError(t, err)
+		info, err := resolver.NewRequestInfo(req)
+		assert.NoError(t, err)
+		key, err := KeyFuncReq(request.WithRequestInfo(context.TODO(), info), "")
+		assert.NoError(t, err)
+		return key
+	}
+	newObj := func(apiVersion, kind, namespace, name string) *unstructured.Unstructured {
+		obj := &unstructured.Unstructured{}
+		obj.SetAPIVersion(apiVersion)
+		obj.SetKind(kind)
+		obj.SetNamespace(namespace)
+		obj.SetName(name)
+		return obj
+	}
+
+	// Types of the known schemes are mapped without having to learn them.
+	for url, obj := range map[string]*unstructured.Unstructured{
+		"/api/v1/namespaces/default/configmaps/foo":                        newObj("v1", "ConfigMap", "default", "foo"),
+		"/api/v1/namespaces/default/endpoints/foo":                         newObj("v1", "Endpoints", "default", "foo"),
+		"/apis/coordination.k8s.io/v1/namespaces/default/leases/foo":       newObj("coordination.k8s.io/v1", "Lease", "default", "foo"),
+		"/apis/networking.k8s.io/v1/namespaces/default/ingresses/foo":      newObj("networking.k8s.io/v1", "Ingress", "default", "foo"),
+		"/apis/devices.kubeedge.io/v1beta1/namespaces/default/devices/foo": newObj("devices.kubeedge.io/v1beta1", "Device", "default", "foo"),
+	} {
+		key, err := KeyFuncObj(obj)
+		assert.NoError(t, err)
+		assert.Equal(t, keyOfRequest(url), key, url)
+	}
+
+	// The resource of a CRD with an irregular plural is only known once learned.
+	gateway := newObj("networking.istio.io/v1alpha3", "Gateway", "default", "foo")
+	url := "/apis/networking.istio.io/v1alpha3/namespaces/default/gateways/foo"
+	key, err := KeyFuncObj(gateway)
+	assert.NoError(t, err)
+	assert.Equal(t, "/networking.istio.io/v1alpha3/gatewaies/default/foo", key)
+
+	util.DefaultRESTMapper().RegisterMapping(schema.GroupVersionResource{
+		Group: "networking.istio.io", Version: "v1alpha3", Resource: "gateways",
+	}, "Gateway")
+	key, err = KeyFuncObj(gateway)
+	assert.NoError(t, err)
+	assert.Equal(t, keyOfRequest(url), key)
 }

@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -238,4 +239,66 @@ func TestSendAllObjects(t *testing.T) {
 	listener.sendAllObjects(objects, handler)
 
 	mockML.AssertNumberOfCalls(t, "Send", 2)
+}
+
+type recordingMessageLayer struct {
+	MockMessageLayer
+	messages []model.Message
+}
+
+func (m *recordingMessageLayer) Send(msg model.Message) error {
+	m.messages = append(m.messages, msg)
+	return nil
+}
+
+// TestSendObjResourceTypeUsesObjectKind checks that the resource type of the
+// message comes from the kind of the object rather than from a guess on the
+// resource of the listener, which is wrong for kinds like Database (databases)
+// or PodChaos (podchaos).
+func TestSendObjResourceTypeUsesObjectKind(t *testing.T) {
+	tests := []struct {
+		name         string
+		gvr          schema.GroupVersionResource
+		obj          runtime.Object
+		resourceType string
+	}{
+		{
+			name: "CRD with an irregular plural",
+			gvr:  schema.GroupVersionResource{Group: "example.com", Version: "v1", Resource: "databases"},
+			obj: &TestObject{
+				TypeMeta:   metav1.TypeMeta{APIVersion: "example.com/v1", Kind: "Database"},
+				ObjectMeta: metav1.ObjectMeta{Name: "db", Namespace: "default"},
+			},
+			resourceType: "database",
+		},
+		{
+			name: "CRD whose plural is its singular",
+			gvr:  schema.GroupVersionResource{Group: "chaos-mesh.org", Version: "v1alpha1", Resource: "podchaos"},
+			obj: &TestObject{
+				TypeMeta:   metav1.TypeMeta{APIVersion: "chaos-mesh.org/v1alpha1", Kind: "PodChaos"},
+				ObjectMeta: metav1.ObjectMeta{Name: "chaos", Namespace: "default"},
+			},
+			resourceType: "podchaos",
+		},
+		{
+			name: "typed object without TypeMeta falls back to the RESTMapper",
+			gvr:  schema.GroupVersionResource{Group: "coordination.k8s.io", Version: "v1", Resource: "leases"},
+			obj: &TestObject{
+				ObjectMeta: metav1.ObjectMeta{Name: "lease", Namespace: "default"},
+			},
+			resourceType: "lease",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			listener := NewSelectorListener("id", "node", tt.gvr, NewSelector("", ""))
+			ml := &recordingMessageLayer{}
+			listener.sendObj(watch.Event{Type: watch.Added, Object: tt.obj}, ml)
+
+			assert.Len(t, ml.messages, 1)
+			accessor, err := meta.Accessor(tt.obj)
+			assert.NoError(t, err)
+			assert.Equal(t, "node/node/default/"+tt.resourceType+"/"+accessor.GetName(), ml.messages[0].GetResource())
+		})
+	}
 }

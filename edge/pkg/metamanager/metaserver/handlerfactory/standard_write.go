@@ -43,11 +43,11 @@ import (
 
 func (f *Factory) Create(req *request.RequestInfo) http.Handler {
 	s := scope.NewRequestScope()
-	s.Kind = schema.GroupVersionKind{
-		Group:   req.APIGroup,
-		Version: req.APIVersion,
-		Kind:    util.UnsafeResourceToKind(req.Resource),
-	}
+	s.Kind = util.KindFor(schema.GroupVersionResource{
+		Group:    req.APIGroup,
+		Version:  req.APIVersion,
+		Resource: req.Resource,
+	})
 	h := handlers.CreateResource(f.storage, s, fakers.NewAlwaysAdmit())
 	return h
 }
@@ -58,11 +58,11 @@ func (f *Factory) Update(req *request.RequestInfo) http.Handler {
 		return h
 	}
 	s := scope.NewRequestScope()
-	s.Kind = schema.GroupVersionKind{
-		Group:   req.APIGroup,
-		Version: req.APIVersion,
-		Kind:    util.UnsafeResourceToKind(req.Resource),
-	}
+	s.Kind = util.KindFor(schema.GroupVersionResource{
+		Group:    req.APIGroup,
+		Version:  req.APIVersion,
+		Resource: req.Resource,
+	})
 	h := handlers.UpdateResource(f.storage, s, fakers.NewAlwaysAdmit())
 	return h
 }
@@ -80,11 +80,11 @@ func (f *Factory) Delete() http.Handler {
 
 func (f *Factory) Patch(reqInfo *request.RequestInfo) http.Handler {
 	scope := wrapScope{RequestScope: scope.NewRequestScope()}
-	scope.Kind = schema.GroupVersionKind{
-		Group:   reqInfo.APIGroup,
-		Version: reqInfo.APIVersion,
-		Kind:    util.UnsafeResourceToKind(reqInfo.Resource),
-	}
+	scope.Kind = util.KindFor(schema.GroupVersionResource{
+		Group:    reqInfo.APIGroup,
+		Version:  reqInfo.APIVersion,
+		Resource: reqInfo.Resource,
+	})
 
 	h := func(w http.ResponseWriter, req *http.Request) {
 		// Do this first, otherwise name extraction can fail for unrecognized content types
