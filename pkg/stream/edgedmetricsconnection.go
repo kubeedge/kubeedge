@@ -26,6 +26,10 @@ import (
 	"k8s.io/klog/v2"
 )
 
+// MetricsStreamSuccess marks a fully read and forwarded metrics response in a
+// RemoveConnect payload. Empty payloads from older peers remain unknown.
+const MetricsStreamSuccess = "metrics-stream-success-v1"
+
 type EdgedMetricsConnection struct {
 	ReadChan chan *Message `json:"-"`
 	Stop     chan struct{} `json:"-"`
@@ -78,10 +82,7 @@ func (ms *EdgedMetricsConnection) receiveFromCloudStream(stop chan struct{}) {
 	klog.V(6).Infof("%s read channel closed", ms.String())
 }
 
-func (ms *EdgedMetricsConnection) write2CloudStream(tunnel SafeWriteTunneler, resp *http.Response, stop chan struct{}) {
-	defer func() {
-		stop <- struct{}{}
-	}()
+func (ms *EdgedMetricsConnection) write2CloudStream(tunnel SafeWriteTunneler, resp *http.Response) error {
 	scan := bufio.NewScanner(resp.Body)
 	for scan.Scan() {
 		// 10 = \n
@@ -89,10 +90,11 @@ func (ms *EdgedMetricsConnection) write2CloudStream(tunnel SafeWriteTunneler, re
 		err := tunnel.WriteMessage(msg)
 		if err != nil {
 			klog.Errorf("write tunnel message %v error", msg)
-			return
+			return err
 		}
 		klog.V(4).Infof("%v write metrics data %v", ms.String(), string(scan.Bytes()))
 	}
+	return scan.Err()
 }
 
 func (ms *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
@@ -119,9 +121,10 @@ func (ms *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
 
 	go ms.receiveFromCloudStream(ms.Stop)
 
+	var completion []byte
 	defer func() {
 		for retry := 0; retry < 3; retry++ {
-			msg := NewMessage(ms.MessID, MessageTypeRemoveConnect, nil)
+			msg := NewMessage(ms.MessID, MessageTypeRemoveConnect, completion)
 			if err := tunnel.WriteMessage(msg); err != nil {
 				klog.Errorf("%v send %s message error %v", ms, msg.MessageType, err)
 			} else {
@@ -130,11 +133,19 @@ func (ms *EdgedMetricsConnection) Serve(tunnel SafeWriteTunneler) error {
 		}
 	}()
 
-	go ms.write2CloudStream(tunnel, resp, ms.Stop)
+	result := make(chan error, 1)
+	go func() { result <- ms.write2CloudStream(tunnel, resp) }()
 
-	<-ms.Stop
-	klog.Infof("receive stop signal, so stop metrics scan ...")
-	return nil
+	select {
+	case <-ms.Stop:
+		klog.Infof("receive stop signal, so stop metrics scan ...")
+		return nil
+	case err := <-result:
+		if err == nil {
+			completion = []byte(MetricsStreamSuccess)
+		}
+		return err
+	}
 }
 
 var _ EdgedConnection = &EdgedMetricsConnection{}
