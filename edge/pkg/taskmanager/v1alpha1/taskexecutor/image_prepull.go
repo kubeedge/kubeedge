@@ -22,8 +22,6 @@ import (
 	"fmt"
 	"strings"
 
-	v1 "k8s.io/api/core/v1"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/klog/v2"
 
 	api "github.com/kubeedge/api/apis/fsm/v1alpha1"
@@ -35,6 +33,7 @@ import (
 	commonmsg "github.com/kubeedge/kubeedge/edge/pkg/common/message"
 	metaclient "github.com/kubeedge/kubeedge/edge/pkg/metamanager/client"
 	"github.com/kubeedge/kubeedge/pkg/containers"
+	kubeedgeimage "github.com/kubeedge/kubeedge/pkg/image"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 )
 
@@ -130,7 +129,7 @@ func prePullImages(prePullReq commontypes.ImagePrePullJobRequest, ctrcli contain
 ) (string, []v1alpha1.ImageStatus) {
 	ctx := context.Background()
 	errorStr := ""
-	authConfig, err := makeAuthConfig(prePullReq.Secret)
+	auth, err := makePullSecretAuth(prePullReq.Secret)
 	if err != nil {
 		return errorStr, []v1alpha1.ImageStatus{}
 	}
@@ -141,7 +140,7 @@ func prePullImages(prePullReq commontypes.ImagePrePullJobRequest, ctrcli contain
 			Image: image,
 		}
 		for i := 0; i <= int(prePullReq.RetryTimes); i++ {
-			err = ctrcli.PullImage(ctx, image, authConfig, nil)
+			err = ctrcli.PullImage(ctx, image, auth.ForImage(image), nil)
 			if err == nil {
 				break
 			}
@@ -161,7 +160,7 @@ func prePullImages(prePullReq commontypes.ImagePrePullJobRequest, ctrcli contain
 	return errorStr, imageStatus
 }
 
-func makeAuthConfig(pullsecret string) (*runtimeapi.AuthConfig, error) {
+func makePullSecretAuth(pullsecret string) (*kubeedgeimage.PullSecretAuth, error) {
 	if pullsecret == "" {
 		return nil, nil
 	}
@@ -177,11 +176,10 @@ func makeAuthConfig(pullsecret string) (*runtimeapi.AuthConfig, error) {
 		return nil, fmt.Errorf("get secret %s failed, %v", secretSli[1], err)
 	}
 
-	var auth runtimeapi.AuthConfig
-	err = json.Unmarshal(secret.Data[v1.DockerConfigJsonKey], &auth)
+	auth, err := kubeedgeimage.NewPullSecretAuth(secret)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal secret %s to auth file failed, %v", secretSli[1], err)
+		return nil, fmt.Errorf("read the registry credentials of secret %s failed, %v", secretSli[1], err)
 	}
 
-	return &auth, nil
+	return auth, nil
 }

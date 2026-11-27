@@ -26,9 +26,7 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/go-logr/logr"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	klog "k8s.io/klog/v2"
 
 	operationsv1alpha2 "github.com/kubeedge/api/apis/operations/v1alpha2"
@@ -136,7 +134,7 @@ func (imagePrePullJobActionHandler) tryPullImage(
 	if err != nil {
 		return nil, err
 	}
-	var authcfg runtimeapi.AuthConfig
+	var auth *image.PullSecretAuth
 	if imgsec := spec.ImagePrePullTemplate.ImageSecret; imgsec != "" {
 		named := strings.Split(imgsec, constants.ResourceSep)
 		if len(named) != 2 {
@@ -147,16 +145,17 @@ func (imagePrePullJobActionHandler) tryPullImage(
 		if err != nil {
 			return nil, fmt.Errorf("failed to get secret %s/%s, err: %v", named[0], named[1], err)
 		}
-		if err := json.Unmarshal(secret.Data[corev1.DockerConfigJsonKey], &authcfg); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal secret %s/%s to auth config, err: %v",
+		auth, err = image.NewPullSecretAuth(secret)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read the registry credentials of secret %s/%s, err: %v",
 				named[0], named[1], err)
 		}
 	}
 	imageStatus := make([]operationsv1alpha2.ImageStatus, 0, len(spec.ImagePrePullTemplate.Images))
 	var hasError bool
-	for _, image := range spec.ImagePrePullTemplate.Images {
-		st := operationsv1alpha2.ImageStatus{Image: image}
-		if err := imgrt.PullImage(ctx, image, &authcfg, nil); err != nil {
+	for _, img := range spec.ImagePrePullTemplate.Images {
+		st := operationsv1alpha2.ImageStatus{Image: img}
+		if err := imgrt.PullImage(ctx, img, auth.ForImage(img), nil); err != nil {
 			hasError = true
 			st.Status = metav1.ConditionFalse
 			st.Reason = err.Error()
