@@ -169,6 +169,12 @@ func ValidateModuleDynamicController(d v1alpha1.DynamicController) field.ErrorLi
 	}
 
 	allErrs := field.ErrorList{}
+	switch d.DefaultServiceTopology {
+	case "", "range-nodegroup":
+	default:
+		allErrs = append(allErrs, field.NotSupported(field.NewPath("defaultServiceTopology"),
+			d.DefaultServiceTopology, []string{"", "range-nodegroup"}))
+	}
 	return allErrs
 }
 
