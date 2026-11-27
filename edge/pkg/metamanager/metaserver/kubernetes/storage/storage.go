@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	oteltrace "go.opentelemetry.io/otel/trace"
@@ -23,6 +24,7 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
+	internalapi "k8s.io/cri-api/pkg/apis"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	remote "k8s.io/cri-client/pkg"
 	"k8s.io/klog/v2"
@@ -42,6 +44,9 @@ import (
 type REST struct {
 	*genericregistry.Store
 	*agent.Agent
+
+	runtimeServiceLock sync.Mutex
+	runtimeService     internalapi.RuntimeService
 }
 
 type responder struct{}
@@ -80,7 +85,7 @@ func NewREST() (*REST, error) {
 	store.Storage.Storage = sqlite.New()
 	store.Storage.Codec = unstructured.UnstructuredJSONScheme
 
-	return &REST{store, agent.DefaultAgent}, nil
+	return &REST{Store: store, Agent: agent.DefaultAgent}, nil
 }
 
 // decorateList set list's gvk if it's gvk is empty
@@ -334,6 +339,22 @@ func (r *REST) Patch(ctx context.Context, pi metaserver.PatchInfo) (runtime.Obje
 	return retObj, nil
 }
 
+// The CRI client can't be closed, so create it once and reuse it.
+func (r *REST) getRuntimeService() (internalapi.RuntimeService, error) {
+	r.runtimeServiceLock.Lock()
+	defer r.runtimeServiceLock.Unlock()
+	if r.runtimeService == nil {
+		endpoint := config.Config.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint
+		logger := klog.Background()
+		runtimeService, err := remote.NewRemoteRuntimeService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider(), &logger)
+		if err != nil {
+			return nil, err
+		}
+		r.runtimeService = runtimeService
+	}
+	return r.runtimeService, nil
+}
+
 func (r *REST) Restart(ctx context.Context, restartInfo common.RestartInfo) *types.RestartResponse {
 	namespace := restartInfo.Namespace
 	podNames := restartInfo.PodNames
@@ -342,9 +363,7 @@ func (r *REST) Restart(ctx context.Context, restartInfo common.RestartInfo) *typ
 		LogMessages: make([]string, 0),
 	}
 
-	endpoint := config.Config.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint
-	logger := klog.Background()
-	remoteRuntimeService, err := remote.NewRemoteRuntimeService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider(), &logger)
+	remoteRuntimeService, err := r.getRuntimeService()
 	if err != nil {
 		errMessage := fmt.Sprintf("new remote runtimeservice with err: %v", err)
 		klog.Errorf("[metaserver/restart] %v", errMessage)
@@ -416,9 +435,7 @@ func (r *REST) Logs(ctx context.Context, logsInfo common.LogsInfo) (*types.LogsR
 		return logsResponse, nil
 	}
 
-	endpoint := config.Config.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint
-	logger := klog.Background()
-	remoteRuntimeService, err := remote.NewRemoteRuntimeService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider(), &logger)
+	remoteRuntimeService, err := r.getRuntimeService()
 	if err != nil {
 		errMessage := fmt.Sprintf("new remote runtimeservice with err: %v", err)
 		klog.Errorf("[metaserver/logs] %v", errMessage)
@@ -506,9 +523,7 @@ func (r *REST) Exec(ctx context.Context, execInfo common.ExecInfo) (*types.ExecR
 		return execResponse, nil
 	}
 
-	endpoint := config.Config.Edged.TailoredKubeletConfig.ContainerRuntimeEndpoint
-	logger := klog.Background()
-	remoteRuntimeService, err := remote.NewRemoteRuntimeService(endpoint, time.Second*10, oteltrace.NewNoopTracerProvider(), &logger)
+	remoteRuntimeService, err := r.getRuntimeService()
 	if err != nil {
 		errMessage := fmt.Sprintf("new remote runtimeservice with err: %v", err)
 		klog.Errorf("[metaserver/exec] %v", errMessage)
@@ -570,20 +585,16 @@ func (r *REST) Exec(ctx context.Context, execInfo common.ExecInfo) (*types.ExecR
 
 	if !tty {
 		stdout, stderr, err := remoteRuntimeService.ExecSync(ctx, execContainerID, commands, time.Second*10)
+		if len(stdout) > 0 {
+			execResponse.RunOutMessages = append(execResponse.RunOutMessages, string(stdout))
+		}
+		if len(stderr) > 0 {
+			execResponse.RunErrMessages = append(execResponse.RunErrMessages, string(stderr))
+		}
 		if err != nil {
 			errMessage := fmt.Sprintf("failed to exec command %s for container %s for pod \"/%s/%s\" with err:%v", commands, execContainer.Metadata.Name, nameSpace, podName, err)
 			klog.Warningf("[metaserver/exec] %v", errMessage)
 			execResponse.ErrMessages = append(execResponse.ErrMessages, errMessage)
-			return execResponse, nil
-		}
-
-		outString := string(stdout)
-		errString := string(stderr)
-
-		if outString != "" {
-			execResponse.RunOutMessages = append(execResponse.RunOutMessages, outString)
-			execResponse.RunErrMessages = append(execResponse.RunErrMessages, errString)
-			return execResponse, nil
 		}
 	} else {
 		res, err := remoteRuntimeService.Exec(ctx, &runtimeapi.ExecRequest{
