@@ -4,7 +4,7 @@ Mapper-framework is a framework to make writing [mappers](https://github.com/kub
 # How to create your own mappers
 
 ## 1. Design the device model and device instance CRDs
-If you don't know how to use device model, device instance APIs, please get more details in the [page](https://kubeedge.io/docs/developer/device_crd/).
+If you don't know how to use device model, device instance APIs, please get more details in the [page](https://kubeedge.io/docs/concept/device/device_crds).
 
 ## 2. Generate the mapper project
 The command below will generate a framework for the customized mapper. Run the command and input your mapper's name:
