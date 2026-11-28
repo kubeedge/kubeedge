@@ -19,8 +19,10 @@ package exec
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/moby/term"
 	"github.com/spf13/cobra"
@@ -64,7 +66,11 @@ func NewEdgePodExec() *cobra.Command {
 			if len(args) == 0 {
 				return fmt.Errorf("no pod specified for exec")
 			}
-			cmdutil.CheckErr(execOpts.execPod(args))
+			kubeClient, err := metaclient.KubeClient()
+			if err == nil {
+				err = execOpts.execPod(cmd.Context(), kubeClient, args[0], args[1:])
+			}
+			cmdutil.CheckErr(err)
 			return nil
 		},
 	}
@@ -84,17 +90,7 @@ func AddPodExecFlags(cmd *cobra.Command, execOpts *PodExecOptions) {
 	cmd.Flags().BoolVarP(&execOpts.TTY, common.FlagNameTTY, "t", false, "Allocate a TTY")
 }
 
-func (o *PodExecOptions) execPod(args []string) error {
-	kubeClient, err := metaclient.KubeClient()
-	if err != nil {
-		return err
-	}
-
-	ctx := context.Background()
-
-	pod := args[0]
-	commands := args[1:]
-
+func (o *PodExecOptions) execPod(ctx context.Context, kubeClient kubernetes.Interface, pod string, commands []string) error {
 	execResponse, err := podExec(ctx, kubeClient, pod, commands, o)
 	if err != nil {
 		return err
@@ -109,8 +105,8 @@ func (o *PodExecOptions) execPod(args []string) error {
 	for _, runErrMsg := range execResponse.RunErrMessages {
 		klog.Info(runErrMsg)
 	}
-	for _, errMsg := range execResponse.ErrMessages {
-		klog.Info(errMsg)
+	if len(execResponse.ErrMessages) > 0 {
+		return errors.New(strings.Join(execResponse.ErrMessages, "\n"))
 	}
 	return nil
 }
@@ -128,12 +124,12 @@ func podExec(ctx context.Context, clientSet kubernetes.Interface, pod string, co
 		req.Param("command", cmd)
 	}
 
-	config, err := metaclient.GetKubeConfig()
-	if err != nil {
-		return nil, err
-	}
-
 	if o.TTY {
+		config, err := metaclient.GetKubeConfig()
+		if err != nil {
+			return nil, err
+		}
+
 		stdFd := os.Stdin.Fd()
 
 		restoreFunc, err := disableEcho(stdFd)
