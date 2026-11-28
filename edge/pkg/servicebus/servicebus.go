@@ -213,7 +213,10 @@ func processMessage(msg *beehiveModel.Message) {
 			c <- struct{}{}
 		}
 	default:
-		r := strings.Split(resource, ":")
+		// The resource is "<service port>:<target>". The target may contain
+		// colons itself, e.g. "/v1/models/resnet:predict" or "?since=10:30",
+		// so only split at the first one.
+		r := strings.SplitN(resource, ":", 2)
 		if len(r) != 2 {
 			m := "the format of resource " + resource + " is incorrect"
 			klog.Warning(m)
