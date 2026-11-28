@@ -18,9 +18,12 @@ package edgestream
 
 import (
 	"crypto/tls"
+	"crypto/x509"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -96,9 +99,9 @@ func (e *edgestream) Start() {
 	if err != nil {
 		klog.Exitf("Failed to load x509 key pair: %v", err)
 	}
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
-		Certificates:       []tls.Certificate{cert},
+	tlsConfig, err := newTunnelTLSConfig(config.Config.TLSTunnelCAFile, cert)
+	if err != nil {
+		klog.Exitf("Failed to build tunnel tls config: %v", err)
 	}
 
 	ticker := time.NewTicker(time.Second * 2)
@@ -115,6 +118,43 @@ func (e *edgestream) Start() {
 			}
 		}
 	}
+}
+
+// newTunnelTLSConfig returns the client TLS config for the CloudStream tunnel.
+// The server certificate must chain to the tunnel CA and allow server auth.
+// The host name is not checked, because the default tunnel server address
+// (127.0.0.1) is not in the CloudCore certificate SANs.
+func newTunnelTLSConfig(caFile string, cert tls.Certificate) (*tls.Config, error) {
+	caCert, err := os.ReadFile(caFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read tunnel ca file %s: %v", caFile, err)
+	}
+	pool := x509.NewCertPool()
+	if ok := pool.AppendCertsFromPEM(caCert); !ok {
+		return nil, fmt.Errorf("cannot parse the tunnel ca certificates")
+	}
+
+	return &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		// The default verification also checks the host name, so the chain
+		// is verified in VerifyConnection instead.
+		InsecureSkipVerify: true,
+		VerifyConnection: func(cs tls.ConnectionState) error {
+			if len(cs.PeerCertificates) == 0 {
+				return errors.New("tunnel server did not present a certificate")
+			}
+			opts := x509.VerifyOptions{
+				Roots:         pool,
+				Intermediates: x509.NewCertPool(),
+				KeyUsages:     []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+			}
+			for _, c := range cs.PeerCertificates[1:] {
+				opts.Intermediates.AddCert(c)
+			}
+			_, err := cs.PeerCertificates[0].Verify(opts)
+			return err
+		},
+	}, nil
 }
 
 func (e *edgestream) TLSClientConnect(url url.URL, tlsConfig *tls.Config) error {
