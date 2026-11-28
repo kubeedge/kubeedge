@@ -20,13 +20,17 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 
+	devicesv1beta1 "github.com/kubeedge/api/apis/devices/v1beta1"
 	"github.com/kubeedge/beehive/pkg/core/model"
 )
 
@@ -238,4 +242,112 @@ func TestSendAllObjects(t *testing.T) {
 	listener.sendAllObjects(objects, handler)
 
 	mockML.AssertNumberOfCalls(t, "Send", 2)
+}
+
+type capturingMessageLayer struct {
+	MockMessageLayer
+	messages []model.Message
+}
+
+func (m *capturingMessageLayer) Send(msg model.Message) error {
+	m.messages = append(m.messages, msg)
+	return nil
+}
+
+// TestSendAllObjectsSetsTypeMeta checks that objects listed from the informer
+// cache, which have an empty TypeMeta, are sent with an apiVersion/kind: from
+// the client-go or KubeEdge scheme for typed objects, from the listener's GVR
+// otherwise. It also checks that the cached objects are not modified.
+func TestSendAllObjectsSetsTypeMeta(t *testing.T) {
+	tests := []struct {
+		name           string
+		gvr            schema.GroupVersionResource
+		obj            runtime.Object
+		wantAPIVersion string
+		wantKind       string
+	}{
+		{
+			name: "core endpoints",
+			gvr:  schema.GroupVersionResource{Version: "v1", Resource: "endpoints"},
+			obj: &corev1.Endpoints{
+				ObjectMeta: metav1.ObjectMeta{Name: "websvc", Namespace: "e2e"},
+				Subsets:    []corev1.EndpointSubset{{Addresses: []corev1.EndpointAddress{{IP: "192.0.2.10"}}}},
+			},
+			wantAPIVersion: "v1",
+			wantKind:       "Endpoints",
+		},
+		{
+			name:           "core services",
+			gvr:            schema.GroupVersionResource{Version: "v1", Resource: "services"},
+			obj:            &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "websvc", Namespace: "e2e"}},
+			wantAPIVersion: "v1",
+			wantKind:       "Service",
+		},
+		{
+			name:           "core configmaps",
+			gvr:            schema.GroupVersionResource{Version: "v1", Resource: "configmaps"},
+			obj:            &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "cfg", Namespace: "e2e"}},
+			wantAPIVersion: "v1",
+			wantKind:       "ConfigMap",
+		},
+		{
+			name:           "apps daemonsets",
+			gvr:            schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "daemonsets"},
+			obj:            &appsv1.DaemonSet{ObjectMeta: metav1.ObjectMeta{Name: "ds", Namespace: "e2e"}},
+			wantAPIVersion: "apps/v1",
+			wantKind:       "DaemonSet",
+		},
+		{
+			name:           "KubeEdge devicemodels",
+			gvr:            devicesv1beta1.SchemeGroupVersion.WithResource("devicemodels"),
+			obj:            &devicesv1beta1.DeviceModel{ObjectMeta: metav1.ObjectMeta{Name: "model", Namespace: "e2e"}},
+			wantAPIVersion: "devices.kubeedge.io/v1beta1",
+			wantKind:       "DeviceModel",
+		},
+		{
+			name: "unstructured without TypeMeta falls back to the GVR",
+			gvr:  schema.GroupVersionResource{Group: "example.com", Version: "v1", Resource: "widgets"},
+			obj: &unstructured.Unstructured{Object: map[string]interface{}{
+				"metadata": map[string]interface{}{"name": "w", "namespace": "e2e"},
+			}},
+			wantAPIVersion: "example.com/v1",
+			wantKind:       "Widget",
+		},
+		{
+			name: "existing TypeMeta is kept",
+			gvr:  schema.GroupVersionResource{Group: "discovery.k8s.io", Version: "v1", Resource: "endpointslices"},
+			obj: &corev1.Endpoints{
+				TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Endpoints"},
+				ObjectMeta: metav1.ObjectMeta{Name: "websvc", Namespace: "e2e"},
+			},
+			wantAPIVersion: "v1",
+			wantKind:       "Endpoints",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			listener := NewSelectorListener("test-id", "test-node", tt.gvr, NewSelector("", ""))
+			ml := &capturingMessageLayer{}
+			handler := &CommonResourceEventHandler{messageLayer: ml}
+			cached := tt.obj.DeepCopyObject()
+
+			listener.sendAllObjects([]runtime.Object{tt.obj}, handler)
+
+			if !assert.Len(t, ml.messages, 1) {
+				return
+			}
+			msg := ml.messages[0]
+			assert.Equal(t, model.InsertOperation, msg.GetOperation())
+			content, ok := msg.GetContent().(*unstructured.Unstructured)
+			if !assert.True(t, ok, "content is %T, want *unstructured.Unstructured", msg.GetContent()) {
+				return
+			}
+			assert.Equal(t, tt.wantAPIVersion, content.GetAPIVersion())
+			assert.Equal(t, tt.wantKind, content.GetKind())
+			// The object is shared with the informer cache: the GVK must be
+			// set on the sent copy only, not on it (as util.SetMetaType would).
+			assert.Equal(t, cached, tt.obj, "informer cache object was modified")
+		})
+	}
 }
