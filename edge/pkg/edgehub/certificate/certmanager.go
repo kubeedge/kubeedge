@@ -246,6 +246,10 @@ func GetCACert(url string) ([]byte, error) {
 		return nil, err
 	}
 
+	// The body of a failed response is an error page, not the CA certificate.
+	if res.StatusCode != nethttp.StatusOK {
+		return nil, fmt.Errorf("failed to call http, code: %d, message: %s", res.StatusCode, string(caCert))
+	}
 	return caCert, nil
 }
 

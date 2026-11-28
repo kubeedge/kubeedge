@@ -74,16 +74,41 @@ func TestGetCurrent(t *testing.T) {
 func TestGetCACert(t *testing.T) {
 	const fakehost = "http://localhost"
 
-	patches := gomonkey.NewPatches()
-	defer patches.Reset()
+	t.Run("ok", func(t *testing.T) {
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
 
-	patches.ApplyFunc(commhttp.SendRequest,
-		func(_ *http.Request, _ *http.Client) (*http.Response, error) {
-			return &http.Response{Body: httpfake.NewFakeBodyReader([]byte{})}, nil
-		})
+		patches.ApplyFunc(commhttp.SendRequest,
+			func(_ *http.Request, _ *http.Client) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       httpfake.NewFakeBodyReader([]byte("ca data")),
+				}, nil
+			})
 
-	_, err := GetCACert(fakehost + "/ca.crt")
-	require.NoError(t, err)
+		ca, err := GetCACert(fakehost + "/ca.crt")
+		require.NoError(t, err)
+		require.Equal(t, []byte("ca data"), ca)
+	})
+
+	// An error page must not be used as the CA certificate.
+	t.Run("error status", func(t *testing.T) {
+		patches := gomonkey.NewPatches()
+		defer patches.Reset()
+
+		patches.ApplyFunc(commhttp.SendRequest,
+			func(_ *http.Request, _ *http.Client) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusBadRequest,
+					Body:       httpfake.NewFakeBodyReader([]byte("Client sent an HTTP request to an HTTPS server.")),
+				}, nil
+			})
+
+		ca, err := GetCACert(fakehost + "/ca.crt")
+		require.ErrorContains(t, err, "code: 400")
+		require.ErrorContains(t, err, "Client sent an HTTP request to an HTTPS server.")
+		require.Nil(t, ca)
+	})
 }
 
 func TestGetEdgeCert(t *testing.T) {
