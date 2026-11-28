@@ -21,7 +21,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
@@ -87,7 +90,7 @@ func AddLogsPodFlags(cmd *cobra.Command, podLogsOptions *PodLogsOptions) {
 	cmd.Flags().StringVarP(&podLogsOptions.Container, common.FlagNameContainer, "c", "", "Print the logs of this container")
 	cmd.Flags().BoolVarP(&podLogsOptions.Follow, common.FlagNameFollow, "f", false, "Specify if the logs should be streamed")
 	cmd.Flags().BoolVarP(&podLogsOptions.Previous, common.FlagNamePrevious, "p", false, "If true, print the logs for the previous instance of the container in a pod if it exists")
-	cmd.Flags().StringVar(&podLogsOptions.SinceSecond, common.FlagNameSinceSecond, "0", "Only return logs newer than a relative duration like 5s, 2m, or 3h. Defaults to all logs.")
+	cmd.Flags().StringVar(&podLogsOptions.SinceSecond, common.FlagNameSinceSecond, "0", "Only return logs newer than a relative duration like 5s, 2m, or 3h, or a number of seconds. Defaults to all logs.")
 	cmd.Flags().StringVar(&podLogsOptions.SinceTime, common.FlagNameSinceTime, "", "Only return logs after a specific date (RFC3339). Defaults to all logs.")
 	cmd.Flags().BoolVar(&podLogsOptions.Timestamps, common.FlagNameTimestamps, false, "Include timestamps on each line in the log output")
 	cmd.Flags().StringVar(&podLogsOptions.TailLines, common.FlagNameTailLines, "-1", "Lines of recent log file to display. Defaults to -1 with no selector, showing all log lines otherwise 10, if a selector is provided.")
@@ -96,6 +99,10 @@ func AddLogsPodFlags(cmd *cobra.Command, podLogsOptions *PodLogsOptions) {
 }
 
 func (o *PodLogsOptions) getPodLogs(args []string) error {
+	if _, err := parseSinceSeconds(o.SinceSecond); err != nil {
+		return err
+	}
+
 	kubeClient, err := metaclient.KubeClient()
 	if err != nil {
 		return err
@@ -177,8 +184,8 @@ func addQueryParams(req *rest.Request, o *PodLogsOptions) *rest.Request {
 	if o.Previous {
 		req.Param("previous", fmt.Sprintf("%v", o.Previous))
 	}
-	if o.SinceSecond != "0" {
-		req.Param("sinceSeconds", fmt.Sprintf("%v", o.SinceSecond))
+	if seconds, err := parseSinceSeconds(o.SinceSecond); err == nil && seconds > 0 {
+		req.Param("sinceSeconds", strconv.FormatInt(seconds, 10))
 	}
 	if o.SinceTime != "" {
 		req.Param("sinceTime", fmt.Sprintf("%v", o.SinceTime))
@@ -197,4 +204,28 @@ func addQueryParams(req *rest.Request, o *PodLogsOptions) *rest.Request {
 	}
 
 	return req
+}
+
+// parseSinceSeconds converts the --since-second value to whole seconds for the
+// sinceSeconds query parameter, which only accepts an integer. It accepts a
+// duration such as 5s, 2m or 3h, and a plain number of seconds. It returns 0
+// when the value is empty or "0", meaning no limit.
+func parseSinceSeconds(since string) (int64, error) {
+	if since == "" || since == "0" {
+		return 0, nil
+	}
+	if seconds, err := strconv.ParseInt(since, 10, 64); err == nil {
+		if seconds < 0 {
+			return 0, fmt.Errorf("invalid --%s value %q: must not be negative", common.FlagNameSinceSecond, since)
+		}
+		return seconds, nil
+	}
+	d, err := time.ParseDuration(since)
+	if err != nil {
+		return 0, fmt.Errorf("invalid --%s value %q: use a duration such as 5s, 2m or 3h, or a number of seconds", common.FlagNameSinceSecond, since)
+	}
+	if d <= 0 {
+		return 0, fmt.Errorf("invalid --%s value %q: must be greater than zero", common.FlagNameSinceSecond, since)
+	}
+	return int64(math.Ceil(d.Seconds())), nil
 }
