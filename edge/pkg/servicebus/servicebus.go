@@ -210,7 +210,14 @@ func processMessage(msg *beehiveModel.Message) {
 		}
 
 		if dbc.IsTableEmpty() {
-			c <- struct{}{}
+			// c is unbuffered and has a single receiver (the shutdown goroutine in
+			// server()). If no server is waiting, a blocking send would leak this
+			// goroutine forever, so skip the signal instead.
+			select {
+			case c <- struct{}{}:
+			default:
+				klog.V(4).Info("servicebus server not waiting for stop signal, skipping")
+			}
 		}
 	default:
 		r := strings.Split(resource, ":")
