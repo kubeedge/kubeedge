@@ -21,9 +21,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
-	"os/exec"
 	"path/filepath"
+	"time"
 
 	"k8s.io/klog/v2"
 
@@ -34,6 +33,7 @@ import (
 	"github.com/kubeedge/kubeedge/edge/cmd/edgecore/app/options"
 	"github.com/kubeedge/kubeedge/edge/pkg/metamanager/dao/dbclient"
 	"github.com/kubeedge/kubeedge/pkg/containers"
+	"github.com/kubeedge/kubeedge/pkg/util/execs"
 	"github.com/kubeedge/kubeedge/pkg/util/fsm"
 	"github.com/kubeedge/kubeedge/pkg/version"
 )
@@ -193,23 +193,11 @@ func upgrade(taskReq types.NodeTaskRequest) (event fsm.Event) {
 func keadmUpgrade(upgradeReq commontypes.NodeUpgradeJobRequest, opts *options.EdgeCoreOptions) error {
 	klog.Infof("Begin to run upgrade command")
 
-	logFile, err := os.OpenFile("/tmp/keadm.log", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
-	if err != nil {
-		return fmt.Errorf("failed to open keadm log file: %w", err)
-	}
-	defer logFile.Close()
-
 	args := buildKeadmUpgradeArgs(upgradeReq, opts)
 
-	cmd := exec.Command("nohup", append([]string{"keadm"}, args...)...)
-	cmd.Stdout = logFile
-	cmd.Stderr = logFile
-
-	if err := cmd.Start(); err != nil {
+	unitName := fmt.Sprintf("keadm-upgrade-%d", time.Now().Unix())
+	if err := execs.StartDetached(unitName, "/tmp/keadm.log", "keadm", args...); err != nil {
 		return fmt.Errorf("failed to start keadm upgrade command: %w", err)
-	}
-	if err := cmd.Process.Release(); err != nil {
-		return fmt.Errorf("failed to release keadm upgrade process: %w", err)
 	}
 
 	klog.Infof("Started keadm upgrade from Version %s to %s ...", version.Get().String(), upgradeReq.Version)
