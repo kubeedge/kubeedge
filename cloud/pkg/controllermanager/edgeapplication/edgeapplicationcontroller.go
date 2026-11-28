@@ -131,6 +131,11 @@ func (c *Controller) syncEdgeApplication(ctx context.Context, edgeApp *appsv1alp
 	}
 	for _, tmplInfo := range tmplInfos {
 		tmpl := tmplInfo.Template
+		if err := c.checkTemplateNamespace(tmpl, edgeApp); err != nil {
+			klog.Errorf("skip template of EdgeApplication %s/%s, %v", edgeApp.Namespace, edgeApp.Name, err)
+			errs = append(errs, err)
+			continue
+		}
 		setOwnerReference(tmpl, edgeApp)
 		if tmpl.GroupVersionKind() == constants.ServiceGVK {
 			addRangeNodeGroupAnnotation(tmpl)
@@ -210,7 +215,7 @@ func (c *Controller) deleteRedundantResources(ctx context.Context, edgeApp *apps
 	}
 	deleted := getDeletedResources(lastContainedResourcesInfos, currentContainedResourceInfos)
 	for _, info := range deleted {
-		if err := c.removeResource(ctx, info); err != nil {
+		if err := c.removeResource(ctx, edgeApp, info); err != nil {
 			klog.Errorf("failed to remove resource %s/%s of gvk %s, %v",
 				info.Namespace, info.Name, schema.GroupVersionKind{Group: info.Group, Version: info.Version, Kind: info.Kind}, err)
 			return err
@@ -305,6 +310,22 @@ func (c *Controller) updateStatus(ctx context.Context, edgeApp *appsv1alpha1.Edg
 	newEdgeApp := edgeApp.DeepCopy()
 	newEdgeApp.Status.WorkloadStatus = newStatus
 	return c.Client.Status().Patch(ctx, newEdgeApp, client.MergeFrom(edgeApp))
+}
+
+// checkTemplateNamespace returns an error if the template is not a namespaced object
+// in the namespace of the EdgeApplication. Templates are applied with the permissions
+// of the controller, so they must not reach objects outside that namespace.
+func (c *Controller) checkTemplateNamespace(tmpl *unstructured.Unstructured, edgeApp *appsv1alpha1.EdgeApplication) error {
+	namespaced, err := c.Client.IsObjectNamespaced(tmpl)
+	if err != nil {
+		return fmt.Errorf("failed to get the scope of obj %s/%s of gvk %s, %v",
+			tmpl.GetNamespace(), tmpl.GetName(), tmpl.GroupVersionKind(), err)
+	}
+	if !namespaced || tmpl.GetNamespace() != edgeApp.Namespace {
+		return fmt.Errorf("obj %s/%s of gvk %s is not in the namespace of EdgeApplication %s/%s",
+			tmpl.GetNamespace(), tmpl.GetName(), tmpl.GroupVersionKind(), edgeApp.Namespace, edgeApp.Name)
+	}
+	return nil
 }
 
 func (c *Controller) ifObjExists(ctx context.Context, obj *unstructured.Unstructured) (bool, *unstructured.Unstructured, error) {
@@ -420,7 +441,7 @@ func (c *Controller) applyTemplate(ctx context.Context, tmpl *unstructured.Unstr
 	})
 }
 
-func (c *Controller) removeResource(ctx context.Context, info utils.ResourceInfo) error {
+func (c *Controller) removeResource(ctx context.Context, edgeApp *appsv1alpha1.EdgeApplication, info utils.ResourceInfo) error {
 	unstructuredObj := &unstructured.Unstructured{}
 	gvk := schema.GroupVersionKind{
 		Group:   info.Group,
@@ -430,6 +451,14 @@ func (c *Controller) removeResource(ctx context.Context, info utils.ResourceInfo
 	unstructuredObj.SetGroupVersionKind(gvk)
 	if err := c.Client.Get(ctx, types.NamespacedName{Namespace: info.Namespace, Name: info.Name}, unstructuredObj); err != nil && apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to get obj %s/%s of gvk %s, %v", info.Namespace, info.Name, gvk, err)
+	}
+
+	// The resources to remove come from an annotation of the EdgeApplication,
+	// only remove objects that are controlled by this EdgeApplication.
+	if !metav1.IsControlledBy(unstructuredObj, edgeApp) {
+		klog.Warningf("obj %s/%s of gvk %s is not controlled by EdgeApplication %s/%s, skip removing it",
+			info.Namespace, info.Name, gvk, edgeApp.Namespace, edgeApp.Name)
+		return nil
 	}
 
 	if err := c.Client.Delete(ctx, unstructuredObj); err != nil && apierrors.IsNotFound(err) {
