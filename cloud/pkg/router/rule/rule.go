@@ -19,6 +19,11 @@ var (
 	ruleEndpoints sync.Map
 )
 
+type registeredRule struct {
+	rule   *routerv1.Rule
+	source provider.Source
+}
+
 func init() {
 	registerListener()
 }
@@ -131,7 +136,7 @@ func addRule(rule *routerv1.Rule) error {
 		return nil
 	}
 
-	rules.Store(ruleKey, rule)
+	rules.Store(ruleKey, &registeredRule{rule: rule, source: source})
 	klog.Infof("add rule success: %+v", rule)
 	return nil
 }
@@ -144,16 +149,15 @@ func delRule(namespace, name string) {
 		klog.Warningf("rule %s does not exist", ruleKey)
 		return
 	}
-	rule := v.(*routerv1.Rule)
-
-	source, err := getSourceOfRule(rule)
-	// if source not exist, skip UnregisterListener
-	if err == nil {
-		klog.V(4).Infof("delRule: source of rule:%s exist, do UnregisterListener", rule.Spec.Source)
-		source.UnregisterListener()
-	} else {
-		klog.Warningf("delRule: source of rule:%s not exist, unnecessary do UnregisterListener:%v", rule.Spec.Source, err)
+	registered, ok := v.(*registeredRule)
+	if !ok {
+		klog.Errorf("rule %s has invalid type %T in cache", ruleKey, v)
+		rules.Delete(ruleKey)
+		return
 	}
+
+	registered.source.UnregisterListener()
+	klog.V(4).Infof("delRule: unregistered listener of source:%s", registered.rule.Spec.Source)
 
 	rules.Delete(ruleKey)
 	klog.V(4).Infof("delete rule success: %s", ruleKey)
