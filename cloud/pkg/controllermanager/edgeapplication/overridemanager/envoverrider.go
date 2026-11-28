@@ -18,6 +18,7 @@ package overridemanager
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -84,7 +85,10 @@ func buildEnvPatchesWithPath(specContainersPath string, rawObj *unstructured.Uns
 			var patch overrideOption
 			// if env is nil, to add new [env]
 			if container.(map[string]interface{})["env"] == nil {
-				patch, _ = acquireAddEnvOverrideOption(envPath, envOverrider)
+				patch, err = acquireAddEnvOverrideOption(envPath, envOverrider)
+				if err != nil {
+					return nil, fmt.Errorf("failed to acquire add env override option: %w", err)
+				}
 			} else {
 				env, ok := container.(map[string]interface{})["env"].([]interface{})
 				if !ok {
@@ -97,7 +101,10 @@ func buildEnvPatchesWithPath(specContainersPath string, rawObj *unstructured.Uns
 					}
 					envValue = append(envValue, *envVar)
 				}
-				patch, _ = acquireReplaceEnvOverrideOption(envPath, envValue, envOverrider)
+				patch, err = acquireReplaceEnvOverrideOption(envPath, envValue, envOverrider)
+				if err != nil {
+					return nil, fmt.Errorf("failed to acquire replace env override option: %w", err)
+				}
 			}
 
 			klog.V(4).Infof("[buildEnvPatchesWithPath] containers patch info (%+v)", patch)
@@ -156,24 +163,17 @@ func overrideEnv(curEnv []corev1.EnvVar, envOverrider *v1alpha1.EnvOverrider) ([
 }
 
 func replaceEnv(curEnv []corev1.EnvVar, replaceValues []corev1.EnvVar) []corev1.EnvVar {
-	newEnv := make([]corev1.EnvVar, 0, len(curEnv))
-	currentMap := make(map[string]corev1.EnvVar)
-
-	// Populate current map with existing environment variables
-	for _, envVar := range curEnv {
-		currentMap[envVar.Name] = envVar
+	newEnv := make([]corev1.EnvVar, len(curEnv))
+	copy(newEnv, curEnv)
+	for _, rplVal := range replaceValues {
+		if idx := slices.IndexFunc(newEnv, func(it corev1.EnvVar) bool {
+			return rplVal.Name == it.Name
+		}); idx > -1 {
+			newEnv[idx] = rplVal
+		} else {
+			newEnv = append(newEnv, rplVal)
+		}
 	}
-
-	// Replace or add new environment variables
-	for _, replaceVar := range replaceValues {
-		currentMap[replaceVar.Name] = replaceVar
-	}
-
-	// Convert map back to slice
-	for _, envVar := range currentMap {
-		newEnv = append(newEnv, envVar)
-	}
-
 	return newEnv
 }
 
@@ -254,7 +254,10 @@ func processResourceFieldRef(value map[string]interface{}) (*corev1.ResourceFiel
 	if err != nil {
 		return nil, err
 	}
-	c, rcOK, err := unstructured.NestedString(value, "resourceFieldRef", "containerName")
+	if !rrOK {
+		return nil, nil
+	}
+	c, _, err := unstructured.NestedString(value, "resourceFieldRef", "containerName")
 	if err != nil {
 		return nil, err
 	}
@@ -262,15 +265,16 @@ func processResourceFieldRef(value map[string]interface{}) (*corev1.ResourceFiel
 	if err != nil {
 		return nil, err
 	}
-
-	if rrOK && rcOK && rdOK {
-		return &corev1.ResourceFieldSelector{
-			ContainerName: c,
-			Resource:      r,
-			Divisor:       resource.MustParse(divisor),
-		}, nil
+	sel := &corev1.ResourceFieldSelector{
+		Resource:      r,
+		ContainerName: c,
 	}
-	return nil, nil
+	if rdOK {
+		sel.Divisor = resource.MustParse(divisor)
+	} else {
+		sel.Divisor = resource.MustParse("1")
+	}
+	return sel, nil
 }
 
 func processConfigMapKeyRef(value map[string]interface{}) (*corev1.ConfigMapKeySelector, error) {
