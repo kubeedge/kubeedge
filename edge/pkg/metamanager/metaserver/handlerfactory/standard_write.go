@@ -54,7 +54,7 @@ func (f *Factory) Create(req *request.RequestInfo) http.Handler {
 
 func (f *Factory) Update(req *request.RequestInfo) http.Handler {
 	if req.Resource == "devices" {
-		h := updateEdgeDevice()
+		h := updateEdgeDevice(req)
 		return h
 	}
 	s := scope.NewRequestScope()
