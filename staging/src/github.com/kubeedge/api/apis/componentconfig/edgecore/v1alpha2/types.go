@@ -311,7 +311,7 @@ type TailoredKubeletConfiguration struct {
 	SingleProcessOOMKill *bool `json:"singleProcessOOMKill,omitempty"`
 	// cpuManagerPolicy is the name of the policy to use.
 	// Requires the CPUManager feature gate to be enabled.
-	// Default: "None"
+	// Default: "none"
 	// +optional
 	CPUManagerPolicy string `json:"cpuManagerPolicy,omitempty"`
 	// cpuManagerPolicyOptions is a set of key=value which 	allows to set extra options
@@ -327,7 +327,7 @@ type TailoredKubeletConfiguration struct {
 	CPUManagerReconcilePeriod metav1.Duration `json:"cpuManagerReconcilePeriod,omitempty"`
 	// memoryManagerPolicy is the name of the policy to use by memory manager.
 	// Requires the MemoryManager feature gate to be enabled.
-	// Default: "none"
+	// Default: "None"
 	// +optional
 	MemoryManagerPolicy string `json:"memoryManagerPolicy,omitempty"`
 	// topologyManagerPolicy is the name of the topology manager policy to use.
@@ -455,6 +455,7 @@ type TailoredKubeletConfiguration struct {
 	//   nodefs.available:  "10%"
 	//   nodefs.inodesFree: "5%"
 	//   imagefs.available: "15%"
+	//   imagefs.inodesFree: "5%"
 	// +optional
 	EvictionHard map[string]string `json:"evictionHard,omitempty"`
 	// evictionSoft is a map of signal names to quantities that defines soft eviction thresholds.
@@ -755,7 +756,7 @@ type TailoredKubeletConfiguration struct {
 	// Decreasing this factor will set lower high limit for container cgroups and put heavier reclaim pressure
 	// while increasing will put less reclaim pressure.
 	// See http://kep.k8s.io/2570 for more details.
-	// Default: 0.8
+	// Default: 0.9
 	// +featureGate=MemoryQoS
 	// +optional
 	MemoryThrottlingFactor *float64 `json:"memoryThrottlingFactor,omitempty"`
@@ -1072,7 +1073,7 @@ type DeviceTwin struct {
 	// default true
 	Enable bool `json:"enable"`
 	// DMISockPath sets the path to dmi.sock
-	// default "/etc/kubeedge/dmi.sock"
+	// default "/etc/kubeedge/"
 	DMISockPath string `json:"dmiSockPath,omitempty"`
 }
 
@@ -1087,7 +1088,7 @@ type DBTest struct {
 // EdgeStream indicates the stream controller
 type EdgeStream struct {
 	// Enable indicates whether edgestream is enabled, if set to false (for debugging etc.), skip checking other configs.
-	// default true
+	// default false
 	Enable bool `json:"enable"`
 
 	// TLSTunnelCAFile indicates ca file path
