@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"k8s.io/klog/v2"
@@ -16,6 +17,7 @@ const (
 	defaultConnectTimeout            = 30 * time.Second
 	defaultKeepAliveTimeout          = 30 * time.Second
 	defaultResponseReadTimeout       = 300 * time.Second
+	defaultIdleConnTimeout           = 90 * time.Second
 	defaultMaxIdleConnectionsPerHost = 3
 )
 
@@ -23,22 +25,58 @@ var (
 	connectTimeout            = defaultConnectTimeout
 	keepaliveTimeout          = defaultKeepAliveTimeout
 	responseReadTimeout       = defaultResponseReadTimeout
+	idleConnTimeout           = defaultIdleConnTimeout
 	maxIdleConnectionsPerHost = defaultMaxIdleConnectionsPerHost
 )
 
 // NewHTTPClient create new client
 func NewHTTPClient() *http.Client {
+	klog.Infof("tlsConfig InsecureSkipVerify true")
+	return NewHTTPClientWithTLSConfig(&tls.Config{InsecureSkipVerify: true})
+}
+
+// NewHTTPClientWithTLSConfig creates a client that uses tlsConfig for https requests.
+// The client keeps a connection pool, so callers should create it once and reuse it.
+func NewHTTPClientWithTLSConfig(tlsConfig *tls.Config) *http.Client {
 	transport := &http.Transport{
 		DialContext: (&net.Dialer{
 			Timeout:   connectTimeout,
 			KeepAlive: keepaliveTimeout,
 		}).DialContext,
 		MaxIdleConnsPerHost:   maxIdleConnectionsPerHost,
+		IdleConnTimeout:       idleConnTimeout,
 		ResponseHeaderTimeout: responseReadTimeout,
-		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig:       tlsConfig,
 	}
-	klog.Infof("tlsConfig InsecureSkipVerify true")
 	return &http.Client{Transport: transport}
+}
+
+// NewRestTargetTLSConfig creates the TLS config used to call https REST targets.
+// If insecureSkipVerify is false, target certificates are verified against the
+// system roots plus the certificates in caFile, if caFile is set.
+func NewRestTargetTLSConfig(caFile string, insecureSkipVerify bool) (*tls.Config, error) {
+	if insecureSkipVerify {
+		return &tls.Config{InsecureSkipVerify: true}, nil
+	}
+
+	pool, err := x509.SystemCertPool()
+	if err != nil {
+		klog.Warningf("failed to load system cert pool, only the certificates in caFile are trusted: %v", err)
+		pool = x509.NewCertPool()
+	}
+	if caFile != "" {
+		caPEM, err := os.ReadFile(caFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read caFile %s: %v", caFile, err)
+		}
+		if ok := pool.AppendCertsFromPEM(caPEM); !ok {
+			return nil, fmt.Errorf("no certificates found in caFile %s", caFile)
+		}
+	}
+	return &tls.Config{
+		RootCAs:    pool,
+		MinVersion: tls.VersionTLS12,
+	}, nil
 }
 
 // NewHTTPSClient create https client

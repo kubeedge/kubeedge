@@ -34,6 +34,8 @@ helm upgrade --install cloudcore ./cloudcore --namespace kubeedge --create-names
 - `cloudCore.modules.cloudStream.enable`, default `true`.
 - `cloudCore.modules.dynamicController.enable`,  default `false`.
 - `cloudCore.modules.router.enable`,  default `false`.
+- `cloudCore.modules.router.tls.enable`,  default `false`, which serves the router REST listener over HTTPS with the CloudCore certificate.
+- `cloudCore.modules.router.restTargetTLS.insecureSkipVerify`,  default `true`. Set it to `false` to verify the certificates of https REST targets.
 - `cloudCore.service.type`,  default `NodePort`.
 - `cloudCore.service.cloudhubNodePort`,  default `30000`, which defines the exposed node port for cloudhub service.
 - `cloudCore.service.cloudhubQuicNodePort`,  default `30001`, which defines the exposed node port for cloudhub quic protocol.

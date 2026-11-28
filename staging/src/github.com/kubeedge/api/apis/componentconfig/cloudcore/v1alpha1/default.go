@@ -142,6 +142,12 @@ func NewDefaultCloudCoreConfig() *CloudCoreConfig {
 				Address:     "0.0.0.0",
 				Port:        9443,
 				RestTimeout: 60,
+				TLS: &RouterTLS{
+					Enable: false,
+				},
+				RestTargetTLS: &RouterRestTargetTLS{
+					InsecureSkipVerify: true,
+				},
 			},
 			IptablesManager: &IptablesManager{
 				Enable: true,
