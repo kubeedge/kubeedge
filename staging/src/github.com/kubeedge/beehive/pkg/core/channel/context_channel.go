@@ -116,8 +116,8 @@ func (ctx *Context) SendSync(module string, message model.Message, timeout time.
 		return model.Message{}, fmt.Errorf("bad request module name(%s)", module)
 	}
 
-	// new anonymous channel for response
-	anonChan := make(chan model.Message)
+	// new anonymous channel for response, buffered so an early response is not dropped
+	anonChan := make(chan model.Message, 1)
 	anonName := getAnonChannelName(message.GetID())
 	ctx.anonChsLock.Lock()
 	ctx.anonChannels[anonName] = anonChan
@@ -155,8 +155,7 @@ func (ctx *Context) SendResp(message model.Message) {
 		select {
 		case channel <- message:
 		default:
-			klog.Warningf("no goroutine is ready for receive the message from "+
-				"unbuffered response channel, discard this resp message for %s", message.GetParentID())
+			klog.Warningf("response channel is full, discard this resp message for %s", message.GetParentID())
 		}
 		return
 	}
