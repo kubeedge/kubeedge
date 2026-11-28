@@ -61,6 +61,12 @@ func TestRuleContains(t *testing.T) {
 			rule2Path: "/b",
 			want:      false,
 		},
+		{
+			name:      "longer rule doesn't contain a shorter one",
+			rulePath:  "/a/b",
+			rule2Path: "/a",
+			want:      false,
+		},
 	}
 
 	for _, c := range cases {
