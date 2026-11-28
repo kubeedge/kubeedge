@@ -37,6 +37,15 @@ type Controller struct {
 	MessageLayer messagelayer.MessageLayer
 }
 
+// roleRefIndexKey indexes RoleBindings by their roleRef name so that role and
+// clusterrole events can look up the bindings pointing at them directly.
+const roleRefIndexKey = "spec.roleRef"
+
+func roleRefIndexFunc(o client.Object) []string {
+	rb := o.(*rbacv1.RoleBinding)
+	return []string{rb.RoleRef.Name}
+}
+
 func (c *Controller) Reconcile(ctx context.Context, request controllerruntime.Request) (controllerruntime.Result, error) {
 	acc := &policyv1alpha1.ServiceAccountAccess{}
 	if err := c.Reader.Get(ctx, request.NamespacedName, acc); err != nil {
@@ -54,7 +63,8 @@ func (c *Controller) Reconcile(ctx context.Context, request controllerruntime.Re
 
 func (c *Controller) filterResource(ctx context.Context, object client.Object) bool {
 	var p = &PolicyMatcher{}
-	matchTarget(ctx, c.Reader, object, p.isMatchServiceAccount)
+	// read from the informer-backed client since the RBAC objects are watched
+	matchTarget(ctx, c.Client, object, p.isMatchServiceAccount)
 	klog.V(4).Infof("filter resource %s/%s, %v", object.GetNamespace(), object.GetName(), p.match)
 	return p.match
 }
@@ -95,11 +105,28 @@ func matchTarget(ctx context.Context, reader client.Reader, object client.Object
 		klog.Errorf("failed to list serviceaccountaccess, %v", err)
 		return
 	}
+	if len(accList.Items) == 0 {
+		return
+	}
 
 	crbl := &rbacv1.ClusterRoleBindingList{}
 	if err := reader.List(ctx, crbl); err != nil {
 		klog.Errorf("failed to list clusterrolebindings, %v", err)
 		return
+	}
+
+	// A RoleBinding can bind service accounts from other namespaces, so scan all
+	// of them instead of only the ones in the service account's namespace. The
+	// result does not depend on the access being visited, so list it only once,
+	// scoped to the bindings pointing at the role through the roleRef index.
+	var roleBindingList *rbacv1.RoleBindingList
+	switch object.(type) {
+	case *rbacv1.ClusterRole, *rbacv1.Role:
+		roleBindingList = &rbacv1.RoleBindingList{}
+		if err := reader.List(ctx, roleBindingList, client.MatchingFields{roleRefIndexKey: object.GetName()}); err != nil {
+			klog.Errorf("failed to list rolebindings, %v", err)
+			return
+		}
 	}
 
 	for _, am := range accList.Items {
@@ -115,7 +142,7 @@ func matchTarget(ctx context.Context, reader client.Reader, object client.Object
 			if applies && !visitor(&am) {
 				return
 			}
-		case *rbacv1.ClusterRole:
+		case *rbacv1.ClusterRole, *rbacv1.Role:
 			for _, crb := range crbl.Items {
 				if !isMatchedRoleRef(crb.RoleRef, "", obj) {
 					continue
@@ -124,26 +151,6 @@ func matchTarget(ctx context.Context, reader client.Reader, object client.Object
 				if applies && !visitor(&am) {
 					return
 				}
-			}
-			var roleBindingList = &rbacv1.RoleBindingList{}
-			if err := reader.List(ctx, roleBindingList, &client.ListOptions{Namespace: am.Spec.ServiceAccount.Namespace}); err != nil {
-				klog.Errorf("failed to list rolebindings, %v", err)
-				return
-			}
-			for _, rb := range roleBindingList.Items {
-				if !isMatchedRoleRef(rb.RoleRef, rb.Namespace, obj) {
-					continue
-				}
-				_, applies := appliesTo(userInfo, rb.Subjects, rb.Namespace)
-				if applies && !visitor(&am) {
-					return
-				}
-			}
-		case *rbacv1.Role:
-			var roleBindingList = &rbacv1.RoleBindingList{}
-			if err := reader.List(ctx, roleBindingList, &client.ListOptions{Namespace: am.Spec.ServiceAccount.Namespace}); err != nil {
-				klog.Errorf("failed to list rolebindings, %v", err)
-				return
 			}
 			for _, rb := range roleBindingList.Items {
 				if !isMatchedRoleRef(rb.RoleRef, rb.Namespace, obj) {
@@ -160,7 +167,8 @@ func matchTarget(ctx context.Context, reader client.Reader, object client.Object
 
 func (c *Controller) mapRolesFunc(_ context.Context, object client.Object) []controllerruntime.Request {
 	var p = PolicyRequestVisitor{}
-	matchTarget(context.Background(), c.Reader, object, p.matchRuntimeRequest)
+	// read from the informer-backed client since the RBAC objects are watched
+	matchTarget(context.Background(), c.Client, object, p.matchRuntimeRequest)
 	klog.V(4).Infof("filter resource %s/%s, %v", object.GetNamespace(), object.GetName(), p.AuthPolicy)
 	return p.AuthPolicy
 }
@@ -251,6 +259,9 @@ func (c *Controller) SetupWithManager(ctx context.Context, mgr controllerruntime
 		return []string{pod.Spec.ServiceAccountName}
 	}); err != nil {
 		return fmt.Errorf("failed to set ServiceAccountName field selector for manager, %v", err)
+	}
+	if err := mgr.GetFieldIndexer().IndexField(ctx, &rbacv1.RoleBinding{}, roleRefIndexKey, roleRefIndexFunc); err != nil {
+		return fmt.Errorf("failed to set roleRef field index for manager, %v", err)
 	}
 	return controllerruntime.NewControllerManagedBy(mgr).
 		For(&policyv1alpha1.ServiceAccountAccess{}).
@@ -385,7 +396,11 @@ func (c *Controller) syncRules(ctx context.Context, acc *policyv1alpha1.ServiceA
 	}
 	userInfo := serviceaccount.UserInfo(newSA.Namespace, newSA.Name, string(newSA.UID))
 	var currentAcc = &policyv1alpha1.ServiceAccountAccess{}
-	c.VisitRulesFor(ctx, userInfo, acc.Namespace, currentAcc)
+	// an error here means the rule set is incomplete, requeue instead of writing
+	// back an empty result which would revoke the edge service account's access
+	if err := c.VisitRulesFor(ctx, userInfo, currentAcc); err != nil {
+		return controllerruntime.Result{Requeue: true}, err
+	}
 	nodes, err := getNodeListOfServiceAccountAccess(ctx, c.Reader, acc)
 	if err != nil {
 		klog.Errorf("failed to get node list of serviceaccountaccess %s/%s, %v", acc.Namespace, acc.Name, err)
@@ -411,7 +426,12 @@ func (c *Controller) syncRules(ctx context.Context, acc *policyv1alpha1.ServiceA
 		}
 		c.send2Edge(acc, deleteNodes, model.DeleteOperation)
 	}
+	// sort by namespace first so bindings from different namespaces with the same
+	// name yield a total order for the slice comparison below
 	sort.Slice(currentAcc.Spec.AccessRoleBinding, func(i, j int) bool {
+		if currentAcc.Spec.AccessRoleBinding[i].RoleBinding.Namespace != currentAcc.Spec.AccessRoleBinding[j].RoleBinding.Namespace {
+			return currentAcc.Spec.AccessRoleBinding[i].RoleBinding.Namespace < currentAcc.Spec.AccessRoleBinding[j].RoleBinding.Namespace
+		}
 		return currentAcc.Spec.AccessRoleBinding[i].RoleBinding.Name < currentAcc.Spec.AccessRoleBinding[j].RoleBinding.Name
 	})
 	sort.Slice(currentAcc.Spec.AccessClusterRoleBinding, func(i, j int) bool {
@@ -551,12 +571,13 @@ func has(set []string, ele string) bool {
 	return false
 }
 
-// GetRoleReferenceRules attempts to resolve the RoleBinding or ClusterRoleBinding.
-func (c *Controller) GetRoleReferenceRules(ctx context.Context, roleRef rbacv1.RoleRef, bindingNamespace string) ([]rbacv1.PolicyRule, error) {
+// GetRoleReferenceRules attempts to resolve the RoleBinding or ClusterRoleBinding
+// through the given reader.
+func (c *Controller) GetRoleReferenceRules(ctx context.Context, reader client.Reader, roleRef rbacv1.RoleRef, bindingNamespace string) ([]rbacv1.PolicyRule, error) {
 	switch roleRef.Kind {
 	case "Role":
 		var role = &rbacv1.Role{}
-		err := c.Reader.Get(ctx, types.NamespacedName{Namespace: bindingNamespace, Name: roleRef.Name}, role)
+		err := reader.Get(ctx, types.NamespacedName{Namespace: bindingNamespace, Name: roleRef.Name}, role)
 		if err != nil {
 			return nil, err
 		}
@@ -564,7 +585,7 @@ func (c *Controller) GetRoleReferenceRules(ctx context.Context, roleRef rbacv1.R
 
 	case "ClusterRole":
 		var clusterRole = &rbacv1.ClusterRole{}
-		err := c.Reader.Get(ctx, types.NamespacedName{Name: roleRef.Name}, clusterRole)
+		err := reader.Get(ctx, types.NamespacedName{Name: roleRef.Name}, clusterRole)
 		if err != nil {
 			return nil, err
 		}
@@ -575,19 +596,30 @@ func (c *Controller) GetRoleReferenceRules(ctx context.Context, roleRef rbacv1.R
 	}
 }
 
-func (c *Controller) VisitRulesFor(ctx context.Context, user user.Info, namespace string, acc *policyv1alpha1.ServiceAccountAccess) {
+func (c *Controller) VisitRulesFor(ctx context.Context, user user.Info, acc *policyv1alpha1.ServiceAccountAccess) error {
+	// list RBAC objects from the informer-backed client since they are watched
 	crbl := &rbacv1.ClusterRoleBindingList{}
-	if err := c.Reader.List(ctx, crbl); err != nil {
+	if err := c.Client.List(ctx, crbl); err != nil {
 		klog.Errorf("failed to list clusterrolebindings, %v", err)
-		return
+		return err
 	}
 	for _, crb := range crbl.Items {
 		_, applies := appliesTo(user, crb.Subjects, "")
 		if !applies {
 			continue
 		}
-		rules, err := c.GetRoleReferenceRules(ctx, crb.RoleRef, "")
+		rules, err := c.GetRoleReferenceRules(ctx, c.Client, crb.RoleRef, "")
+		if apierrors.IsNotFound(err) {
+			// the informer cache may lag behind the binding event, confirm with
+			// the API reader before treating the roleRef as dangling
+			rules, err = c.GetRoleReferenceRules(ctx, c.Reader, crb.RoleRef, "")
+		}
 		if err != nil {
+			// a dangling roleRef (role deleted) is expected and skipped; any other
+			// error leaves the rule set incomplete and must not be written back
+			if !apierrors.IsNotFound(err) {
+				return err
+			}
 			klog.Errorf("failed to get rules for clusterrolebinding %s, %v", crb.Name, err)
 			continue
 		}
@@ -598,27 +630,39 @@ func (c *Controller) VisitRulesFor(ctx context.Context, user user.Info, namespac
 		acc.Spec.AccessClusterRoleBinding = append(acc.Spec.AccessClusterRoleBinding, accessClusterRoleBinding)
 	}
 
-	if len(namespace) > 0 {
-		var roleBindingList = &rbacv1.RoleBindingList{}
-		if err := c.Reader.List(ctx, roleBindingList, &client.ListOptions{Namespace: namespace}); err != nil {
-			klog.Errorf("failed to list rolebindings, %v", err)
-			return
-		}
-		for _, roleBinding := range roleBindingList.Items {
-			_, applies := appliesTo(user, roleBinding.Subjects, namespace)
-			if !applies {
-				continue
-			}
-			rules, err := c.GetRoleReferenceRules(ctx, roleBinding.RoleRef, namespace)
-			if err != nil {
-				klog.Errorf("failed to get rules for rolebinding %s, %v", roleBinding.Name, err)
-				continue
-			}
-			var accessRoleBinding = policyv1alpha1.AccessRoleBinding{
-				RoleBinding: roleBinding,
-				Rules:       rules,
-			}
-			acc.Spec.AccessRoleBinding = append(acc.Spec.AccessRoleBinding, accessRoleBinding)
-		}
+	// A RoleBinding can bind service accounts from other namespaces through its
+	// subjects, so scan all rolebindings instead of only the ones in the service
+	// account's namespace, same as the upstream RBAC authorizer does.
+	var roleBindingList = &rbacv1.RoleBindingList{}
+	if err := c.Client.List(ctx, roleBindingList); err != nil {
+		klog.Errorf("failed to list rolebindings, %v", err)
+		return err
 	}
+	for _, roleBinding := range roleBindingList.Items {
+		_, applies := appliesTo(user, roleBinding.Subjects, roleBinding.Namespace)
+		if !applies {
+			continue
+		}
+		rules, err := c.GetRoleReferenceRules(ctx, c.Client, roleBinding.RoleRef, roleBinding.Namespace)
+		if apierrors.IsNotFound(err) {
+			// the informer cache may lag behind the binding event, confirm with
+			// the API reader before treating the roleRef as dangling
+			rules, err = c.GetRoleReferenceRules(ctx, c.Reader, roleBinding.RoleRef, roleBinding.Namespace)
+		}
+		if err != nil {
+			// a dangling roleRef (role deleted) is expected and skipped; any other
+			// error leaves the rule set incomplete and must not be written back
+			if !apierrors.IsNotFound(err) {
+				return err
+			}
+			klog.Errorf("failed to get rules for rolebinding %s/%s, %v", roleBinding.Namespace, roleBinding.Name, err)
+			continue
+		}
+		var accessRoleBinding = policyv1alpha1.AccessRoleBinding{
+			RoleBinding: roleBinding,
+			Rules:       rules,
+		}
+		acc.Spec.AccessRoleBinding = append(acc.Spec.AccessRoleBinding, accessRoleBinding)
+	}
+	return nil
 }
