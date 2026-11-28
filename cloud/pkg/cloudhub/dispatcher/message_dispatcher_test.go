@@ -22,6 +22,8 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
@@ -33,6 +35,8 @@ import (
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	tf "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/testing"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/session"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/messagelayer"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	mockcon "github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn/testing"
 )
 
@@ -160,6 +164,15 @@ func TestEnqueueAckMessage(t *testing.T) {
 	deleteMsg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "4"), "delete")
 	respMsg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "5"), "response")
 	invalidMsg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, ""), "update")
+	pcDeleteMsg := tf.FromPolicyController(tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "4"), "delete"))
+	addBackMsg := tf.FromPolicyController(tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "6"), "update"))
+	sameRVAddBackMsg := tf.FromPolicyController(tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "4"), "update"))
+	olderPCUpdateMsg := tf.FromPolicyController(tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "update"))
+	// policycontroller always sets the resourceVersion; a delete without one is the sync loop's.
+	syncLoopDeleteWithoutRV := newPodDeleteWithoutRVMessage(tf.TestPodName, tf.TestPodUID)
+	// The sync loop resends as edgecontroller while a delete waits for an offline node.
+	syncLoopMsg := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "6"), "update")
+	syncLoopMsg.Router.Source = modules.EdgeControllerModuleName
 
 	tests := []tf.TestCase{
 		{
@@ -287,6 +300,84 @@ func TestEnqueueAckMessage(t *testing.T) {
 			},
 			ExpectedStoreMessage: normalMsg3,
 		},
+		{
+			Name: "newer update from policycontroller arrives while its delete waits in store",
+			InitialObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ReactorErrors:        tf.NoErrors,
+			InitialMessages:      []*beehivemodel.Message{pcDeleteMsg},
+			CurrentArriveMessage: addBackMsg,
+			ExpectedObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ExpectedStoreMessage: addBackMsg,
+		},
+		{
+			Name: "update from policycontroller with the delete's resourceVersion arrives while the delete waits in store",
+			InitialObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ReactorErrors:        tf.NoErrors,
+			InitialMessages:      []*beehivemodel.Message{pcDeleteMsg},
+			CurrentArriveMessage: sameRVAddBackMsg,
+			ExpectedObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ExpectedStoreMessage: sameRVAddBackMsg,
+		},
+		{
+			Name: "older update from policycontroller arrives while its delete waits in store",
+			InitialObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ReactorErrors:        tf.NoErrors,
+			InitialMessages:      []*beehivemodel.Message{pcDeleteMsg},
+			CurrentArriveMessage: olderPCUpdateMsg,
+			ExpectedObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ExpectedStoreMessage: pcDeleteMsg,
+		},
+		{
+			Name: "sync loop resend arrives while a policycontroller delete waits in store",
+			InitialObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ReactorErrors:        tf.NoErrors,
+			InitialMessages:      []*beehivemodel.Message{pcDeleteMsg},
+			CurrentArriveMessage: syncLoopMsg,
+			ExpectedObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ExpectedStoreMessage: pcDeleteMsg,
+		},
+		{
+			Name: "newer update from another controller arrives while a delete waits in store",
+			InitialObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ReactorErrors:        tf.NoErrors,
+			InitialMessages:      []*beehivemodel.Message{deleteMsg},
+			CurrentArriveMessage: tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "6"), "update"),
+			ExpectedObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ExpectedStoreMessage: deleteMsg,
+		},
+		{
+			Name: "update from policycontroller arrives while a sync loop delete without resourceVersion waits in store",
+			InitialObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ReactorErrors:        tf.NoErrors,
+			InitialMessages:      []*beehivemodel.Message{syncLoopDeleteWithoutRV},
+			CurrentArriveMessage: addBackMsg,
+			ExpectedObjectSyncs: []*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			},
+			ExpectedStoreMessage: syncLoopDeleteWithoutRV,
+		},
 	}
 
 	executeTest := func(t *testing.T, test tf.TestCase) {
@@ -359,6 +450,19 @@ func TestEnqueueAckMessage(t *testing.T) {
 			executeTest(t, test)
 		})
 	}
+}
+
+func newPodDeleteWithoutRVMessage(name, uid string) *beehivemodel.Message {
+	object := &unstructured.Unstructured{}
+	object.SetAPIVersion("v1")
+	object.SetKind("Pod")
+	object.SetNamespace(tf.TestNamespace)
+	object.SetName(name)
+	object.SetUID(types.UID(uid))
+	resource, _ := messagelayer.BuildResource(tf.TestNodeID, tf.TestNamespace, "pod", name)
+	return beehivemodel.NewMessage("").
+		BuildRouter("edgecontroller", "resource", resource, beehivemodel.DeleteOperation).
+		FillBody(object)
 }
 
 func TestGetAddNodeMessagePool(t *testing.T) {

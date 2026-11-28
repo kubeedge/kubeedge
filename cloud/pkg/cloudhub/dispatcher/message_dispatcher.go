@@ -235,55 +235,80 @@ func (md *messageDispatcher) enqueueAckMessage(nodeID string, msg *beehivemodel.
 	}
 
 	nodeMessagePool := md.GetNodeMessagePool(nodeID)
-	nodeQueue := nodeMessagePool.AckMessageQueue
-	nodeStore := nodeMessagePool.AckMessageStore
-
 	messageKey, err := common.AckMessageKeyFunc(msg)
 	if err != nil {
 		klog.Errorf("fail to get key for message: %s, err: %v", msg.String(), err)
 		return
 	}
 
-	shouldEnqueue := false
-	defer func() {
-		if shouldEnqueue {
-			if err := nodeStore.Add(msg); err != nil {
-				klog.Errorf("fail to add message %v nodeStore, err: %v", msg, err)
-				return
-			}
-			nodeQueue.Add(messageKey)
-		}
-	}()
-
-	// If the message operation is delete, force to sync the resource message
-	// If the message operation is response, force to sync the resource message,
-	// since the edgeCore requests it.
-	if isDeleteMessage(msg) || msg.GetOperation() == beehivemodel.ResponseOperation {
-		shouldEnqueue = true
+	if md.enqueueAgainstStore(nodeID, nodeMessagePool, messageKey, msg) {
 		return
 	}
 
-	item, exist, _ := nodeStore.GetByKey(messageKey)
-	if exist {
-		msgInStore := item.(*beehivemodel.Message)
-		if isDeleteMessage(msgInStore) ||
-			synccontroller.CompareResourceVersion(msg.GetResourceVersion(), msgInStore.GetResourceVersion()) <= 0 {
-			// If the message resource version is older than the message in store or the operation
-			// for the message in store is delete, The message will be discarded directly.
-			return
-		}
-		shouldEnqueue = true
-		return
-	}
-
-	// If the message doesn't exist in the store, then compare it with
-	// the version stored in the objectSync or clusterObjectSync.
+	// If the message doesn't exist in the store, then compare it with the version stored in
+	// the objectSync or clusterObjectSync. That may call the apiserver, so it runs without the
+	// lock; only this goroutine adds to the store, so the key stays absent meanwhile.
+	var shouldEnqueue bool
 	resourceNamespace, _ := messagelayer.GetNamespace(*msg)
 	if resourceNamespace == models.NullNamespace {
 		shouldEnqueue = md.enqueueNonNamespacedResource(nodeID, msg)
 	} else {
 		shouldEnqueue = md.enqueueNamespacedResource(nodeID, msg)
 	}
+	if shouldEnqueue {
+		nodeMessagePool.AckMessageLock.Lock()
+		defer nodeMessagePool.AckMessageLock.Unlock()
+		addAckMessage(nodeMessagePool, messageKey, msg)
+	}
+}
+
+// enqueueAgainstStore decides on msg by the message for the same object in the store, and
+// enqueues it if it should go. It returns false if the store holds no such message.
+func (md *messageDispatcher) enqueueAgainstStore(nodeID string, nodeMessagePool *common.NodeMessagePool, messageKey string, msg *beehivemodel.Message) bool {
+	nodeStore := nodeMessagePool.AckMessageStore
+	nodeMessagePool.AckMessageLock.Lock()
+	defer nodeMessagePool.AckMessageLock.Unlock()
+
+	// If the message operation is delete, force to sync the resource message
+	// If the message operation is response, force to sync the resource message,
+	// since the edgeCore requests it.
+	if isDeleteMessage(msg) || msg.GetOperation() == beehivemodel.ResponseOperation {
+		addAckMessage(nodeMessagePool, messageKey, msg)
+		return true
+	}
+
+	item, exist, _ := nodeStore.GetByKey(messageKey)
+	if !exist {
+		return false
+	}
+	msgInStore := item.(*beehivemodel.Message)
+	if isDeleteMessage(msgInStore) {
+		// The object was added back to the node after its delete was queued. Send this
+		// message instead of the delete, or after it if the delete is already on the wire.
+		if common.AddsBackAfterDelete(msg, msgInStore) {
+			klog.Infof("message %s %s %s (resourceVersion %s) for node %s replaces pending delete %s (resourceVersion %s)",
+				msg.GetID(), msg.GetOperation(), msg.GetResource(), msg.GetResourceVersion(), nodeID, msgInStore.GetID(), msgInStore.GetResourceVersion())
+			addAckMessage(nodeMessagePool, messageKey, msg)
+			return true
+		}
+		common.DroppedBehindDeleteLogf(msg)("drop message %s %s %s from %s (resourceVersion %s) for node %s: delete %s (resourceVersion %q) of the same object is pending",
+			msg.GetID(), msg.GetOperation(), msg.GetResource(), msg.GetSource(), msg.GetResourceVersion(), nodeID, msgInStore.GetID(), msgInStore.GetResourceVersion())
+		return true
+	}
+	// A message not newer than the one in store is discarded.
+	if synccontroller.CompareResourceVersion(msg.GetResourceVersion(), msgInStore.GetResourceVersion()) > 0 {
+		addAckMessage(nodeMessagePool, messageKey, msg)
+	}
+	return true
+}
+
+// addAckMessage puts msg in the store and its key in the queue. The caller holds AckMessageLock.
+func addAckMessage(nodeMessagePool *common.NodeMessagePool, messageKey string, msg *beehivemodel.Message) {
+	if err := nodeMessagePool.AckMessageStore.Add(msg); err != nil {
+		klog.Errorf("fail to add message %v nodeStore, err: %v", msg, err)
+		return
+	}
+	nodeMessagePool.AckMessageQueue.Add(messageKey)
 }
 
 func (md *messageDispatcher) enqueueNonNamespacedResource(nodeID string, msg *beehivemodel.Message) bool {

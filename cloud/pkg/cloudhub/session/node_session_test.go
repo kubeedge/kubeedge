@@ -18,11 +18,13 @@ package session
 
 import (
 	"errors"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
 	"github.com/kubeedge/api/apis/reliablesyncs/v1alpha1"
@@ -31,6 +33,7 @@ import (
 	beehivemodel "github.com/kubeedge/beehive/pkg/core/model"
 	"github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common"
 	tf "github.com/kubeedge/kubeedge/cloud/pkg/cloudhub/common/testing"
+	"github.com/kubeedge/kubeedge/cloud/pkg/common/modules"
 	mockcon "github.com/kubeedge/kubeedge/pkg/viaduct/pkg/conn/testing"
 )
 
@@ -370,6 +373,88 @@ func TestNodeSessionReceiveMessageAckConcurrently(t *testing.T) {
 		if _, exist := ns.ackMessageCache.Load(parentID); exist {
 			t.Fatalf("ack channel of %s was not removed from the cache", parentID)
 		}
+	}
+}
+
+// A message for the same UID arrives while a DELETE waits for its ACK, and replaces it in
+// the store. The ACK removes that message, so the edge gets only the DELETE: a response
+// sent after it would make metamanager store the object again, and the edge handles a
+// DELETE without resourceVersion (synccontroller.gcOrphanedObjectSync) on its own.
+func TestNodeSessionAckDropsReplacingMessage(t *testing.T) {
+	deleteWithoutRV := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, ""), "delete")
+	deleteWithRV := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "4"), "delete")
+	response := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "3"), beehivemodel.ResponseOperation)
+	pcDelete := tf.FromPolicyController(tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "4"), "delete"))
+	addBack := tf.FromPolicyController(tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "6"), "update"))
+	sameRVAddBack := tf.FromPolicyController(tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "4"), "update"))
+	olderUpdate := tf.FromPolicyController(tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "3"), "update"))
+	terminatingPod := tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "6")
+	terminatingPod.DeletionTimestamp = &metav1.Time{}
+	terminating := tf.FromPolicyController(tf.NewPodMessage(terminatingPod, "update"))
+	// The sync loop resends as edgecontroller. Over a policycontroller delete it can only
+	// replace an add-back, since enqueueAckMessage drops it otherwise.
+	syncLoop := tf.NewPodMessage(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "7"), "update")
+	syncLoop.Router.Source = modules.EdgeControllerModuleName
+
+	tests := []struct {
+		name     string
+		inFlight *beehivemodel.Message
+		arriving *beehivemodel.Message
+		// wantResent: the arriving message adds the object back and is sent after the ACK.
+		wantResent bool
+	}{
+		{"delete with resourceVersion arrives while one without waits", deleteWithoutRV, deleteWithRV, false},
+		{"response arrives while a delete with resourceVersion waits", deleteWithRV, response, false},
+		{"response arrives while a delete without resourceVersion waits", deleteWithoutRV, response, false},
+		{"older update replaces a policycontroller delete", pcDelete, olderUpdate, false},
+		{"update with deletionTimestamp replaces a policycontroller delete", pcDelete, terminating, false},
+		{"sync loop resend replaces the add-back of a policycontroller delete", pcDelete, syncLoop, true},
+		{"newer policycontroller update replaces its delete", pcDelete, addBack, true},
+		{"policycontroller update with the delete's resourceVersion replaces its delete", pcDelete, sameRVAddBack, true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			client := &fake.Clientset{}
+			wg := sync.WaitGroup{}
+			stopCh := make(chan struct{})
+			session, mockController, mockConn := openNodeSession(t, &wg, stopCh, tf.NormalSendKeepaliveInterval, client)
+			defer mockController.Finish()
+			mockConn.EXPECT().Close().AnyTimes()
+
+			var lock sync.Mutex
+			var sent []string
+			mockConn.EXPECT().WriteMessageAsync(gomock.Any()).DoAndReturn(func(msg *beehivemodel.Message) error {
+				lock.Lock()
+				sent = append(sent, msg.GetID())
+				lock.Unlock()
+				if msg.GetID() == test.inFlight.GetID() {
+					enqueueAckMessage(session.nodeMessagePool, test.arriving)
+				}
+				session.ReceiveMessageAck(msg.GetID())
+				return nil
+			}).AnyTimes()
+
+			reactor := tf.NewObjectSyncReactor(client, tf.NoErrors)
+			reactor.AddObjectSyncs([]*v1alpha1.ObjectSync{
+				tf.NewObjectSync(tf.NewTestPodResource(tf.TestPodName, tf.TestPodUID, "2"), "Pod"),
+			})
+			enqueueAckMessage(session.nodeMessagePool, test.inFlight)
+			time.Sleep(2 * time.Second)
+
+			want := []string{test.inFlight.GetID()}
+			if test.wantResent {
+				want = append(want, test.arriving.GetID())
+			}
+			lock.Lock()
+			if !reflect.DeepEqual(sent, want) {
+				t.Errorf("sent %v, want %v", sent, want)
+			}
+			lock.Unlock()
+
+			close(stopCh)
+			session.Terminating()
+			wg.Wait()
+		})
 	}
 }
 

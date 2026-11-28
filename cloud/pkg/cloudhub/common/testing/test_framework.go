@@ -342,6 +342,12 @@ func NewPodMessage(pod *v1.Pod, operation string) *beehivemodel.Message {
 	return message.BuildRouter("edgecontroller", "resource", resource, operation)
 }
 
+// FromPolicyController returns msg as policycontroller sends it.
+func FromPolicyController(msg *beehivemodel.Message) *beehivemodel.Message {
+	msg.Router.Source = modules.PolicyControllerModuleName
+	return msg
+}
+
 func NewTestConfigMapResource(name, UID, resourceVersion string) *v1.ConfigMap {
 	return &v1.ConfigMap{
 		TypeMeta: v12.TypeMeta{
