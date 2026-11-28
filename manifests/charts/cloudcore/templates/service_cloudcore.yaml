@@ -12,6 +12,14 @@ metadata:
 spec:
   {{- if and (eq .Values.cloudCore.service.type "NodePort") ( not .Values.cloudCore.hostNetWork) }}
   type: {{ .Values.cloudCore.service.type }}
+  {{- else if and (eq .Values.cloudCore.service.type "LoadBalancer") ( not .Values.cloudCore.hostNetWork) }}
+  type: LoadBalancer
+  {{- with .Values.cloudCore.service.loadBalancerClass }}
+  loadBalancerClass: {{ . }}
+  {{- end }}
+  {{- with .Values.cloudCore.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges: {{- toYaml . | nindent 4 }}
+  {{- end }}
   {{- else }}
   type: ClusterIP
   {{- end }}

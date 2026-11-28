@@ -34,12 +34,14 @@ helm upgrade --install cloudcore ./cloudcore --namespace kubeedge --create-names
 - `cloudCore.modules.cloudStream.enable`, default `true`.
 - `cloudCore.modules.dynamicController.enable`,  default `false`.
 - `cloudCore.modules.router.enable`,  default `false`.
-- `cloudCore.service.type`,  default `NodePort`.
+- `cloudCore.service.type`,  default `NodePort`. Set it to `LoadBalancer` to expose cloudcore through a load balancer, for example on a managed cluster where nodes have no public address. Both only apply when `cloudCore.hostNetWork` is `false`, otherwise the service is `ClusterIP`. With `LoadBalancer`, set `cloudCore.modules.cloudHub.advertiseAddress` to the load balancer address so the cloudcore certificate covers it.
 - `cloudCore.service.cloudhubNodePort`,  default `30000`, which defines the exposed node port for cloudhub service.
 - `cloudCore.service.cloudhubQuicNodePort`,  default `30001`, which defines the exposed node port for cloudhub quic protocol.
 - `cloudCore.service.cloudhubHttpsNodePort`,  default `30002`, which defines the exposed node port for cloudhub https protocol.
 - `cloudCore.service.cloudstreamNodePort`,  default `30003`, which defines the exposed node port for cloud stream service.
 - `cloudCore.service.tunnelNodePort`,  default `30004`, which defines the exposed node port for cloud tunnel service.
+- `cloudCore.service.loadBalancerClass`, optional load balancer class, only used with `LoadBalancer`.
+- `cloudCore.service.loadBalancerSourceRanges`, optional list of CIDRs allowed to reach the load balancer, only used with `LoadBalancer`.
 - `cloudCore.service.annotations`, defines the annotations for service.
 
 ### iptables-manager
